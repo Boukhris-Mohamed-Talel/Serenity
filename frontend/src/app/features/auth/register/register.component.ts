@@ -122,7 +122,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
   private initGoogleSignIn(): void {
     const checkGoogle = setInterval(() => {
-      if (typeof google !== 'undefined' && google.accounts) {
+      if (google !== undefined && google.accounts) {
         clearInterval(checkGoogle);
         try {
           google.accounts.id.initialize({
@@ -161,7 +161,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
   private initFacebookSdk(): void {
     const checkFB = setInterval(() => {
-      if (typeof FB !== 'undefined') {
+      if (FB !== undefined) {
         clearInterval(checkFB);
         try {
           FB.init({

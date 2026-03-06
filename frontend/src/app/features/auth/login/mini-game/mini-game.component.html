@@ -32,7 +32,7 @@
 
     <!-- Zen Garden -->
     <div *ngIf="activeTab === 'garden'" class="garden-game">
-      <div class="garden-area" (click)="onGardenClick($event)">
+      <div class="garden-area" (click)="onGardenClick($event)" (keydown.enter)="onGardenKeyPlant()" tabindex="0" role="button">
         <span *ngIf="gardenPlants.length === 0" class="garden-hint">Click anywhere to plant</span>
         <span
           *ngFor="let plant of gardenPlants"
@@ -64,6 +64,9 @@
           [class.flipped]="card.flipped"
           [class.matched]="card.matched"
           (click)="flipCard(card)"
+          (keydown.enter)="flipCard(card)"
+          tabindex="0"
+          role="button"
         >
           <div class="card-inner">
             <div class="card-front">?</div>

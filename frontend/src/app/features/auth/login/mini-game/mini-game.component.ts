@@ -112,6 +112,13 @@ export class MiniGameComponent implements OnInit, OnDestroy {
     this.gardenPlants.push({ x, y, emoji, id: this.plantId++ });
   }
 
+  onGardenKeyPlant(): void {
+    const x = Math.random() * 80 + 10;
+    const y = Math.random() * 80 + 10;
+    const emoji = this.plantEmojis[Math.floor(Math.random() * this.plantEmojis.length)];
+    this.gardenPlants.push({ x, y, emoji, id: this.plantId++ });
+  }
+
   clearGarden(): void {
     this.gardenPlants = [];
   }
