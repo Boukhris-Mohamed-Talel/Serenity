@@ -26,9 +26,9 @@ export class ProfileComponent implements OnInit {
   ];
 
   constructor(
-    private fb: FormBuilder,
-    private userService: UserService,
-    public authService: AuthService
+    private readonly fb: FormBuilder,
+    private readonly userService: UserService,
+    public readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {

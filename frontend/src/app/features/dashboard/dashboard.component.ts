@@ -12,8 +12,8 @@ export class DashboardComponent implements OnInit {
   private user: UserResponse | null = null;
 
   constructor(
-    public authService: AuthService,
-    private userService: UserService
+    public readonly authService: AuthService,
+    private readonly userService: UserService
   ) {}
 
   ngOnInit(): void {

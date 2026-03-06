@@ -23,9 +23,9 @@ export class AdminLayoutComponent implements OnInit {
   ];
 
   constructor(
-    public authService: AuthService,
-    private userService: UserService,
-    private router: Router
+    public readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {

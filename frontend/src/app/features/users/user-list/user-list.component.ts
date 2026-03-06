@@ -12,7 +12,7 @@ export class UserListComponent implements OnInit {
   loading = true;
   errorMessage = '';
 
-  constructor(private userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
   ngOnInit(): void {
     this.loadUsers();

@@ -13,12 +13,12 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
 
-  private currentUserSubject = new BehaviorSubject<AuthResponse | null>(this.getStoredUser());
+  private readonly currentUserSubject = new BehaviorSubject<AuthResponse | null>(this.getStoredUser());
   currentUser$ = this.currentUserSubject.asObservable();
 
-  private onLogoutCallbacks: (() => void)[] = [];
+  private readonly onLogoutCallbacks: (() => void)[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   register(request: UserRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, request).pipe(

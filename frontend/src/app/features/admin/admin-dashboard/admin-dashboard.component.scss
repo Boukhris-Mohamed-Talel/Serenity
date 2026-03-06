@@ -60,10 +60,10 @@ $accent: #3BA4A0;
   justify-content: center;
   flex-shrink: 0;
 
-  &.blue { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
-  &.green { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
-  &.teal { background: rgba(59, 164, 160, 0.12); color: $accent; }
-  &.purple { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
+  &.blue { background: rgba(59, 130, 246, 0.2); color: #93bbfd; }
+  &.green { background: rgba(16, 185, 129, 0.2); color: #86efce; }
+  &.teal { background: rgba(59, 164, 160, 0.2); color: #5ec4c0; }
+  &.purple { background: rgba(139, 92, 246, 0.2); color: #bfa6f8; }
 }
 
 .stat-info {
@@ -155,10 +155,10 @@ $accent: #3BA4A0;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 
-  &[data-role="ADMIN"] { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
-  &[data-role="DOCTOR"] { background: rgba(59, 164, 160, 0.12); color: $accent; }
-  &[data-role="PATIENT"] { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
-  &[data-role="PHARMACIST"] { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
+  &[data-role="ADMIN"] { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+  &[data-role="DOCTOR"] { background: rgba(59, 164, 160, 0.2); color: #5ec4c0; }
+  &[data-role="PATIENT"] { background: rgba(59, 130, 246, 0.2); color: #93bbfd; }
+  &[data-role="PHARMACIST"] { background: rgba(139, 92, 246, 0.2); color: #bfa6f8; }
 }
 
 .status-dot {

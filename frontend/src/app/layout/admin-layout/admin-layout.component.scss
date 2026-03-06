@@ -278,13 +278,13 @@ $accent-glow: rgba(59, 164, 160, 0.12);
     .alert-error {
       background: rgba(224, 93, 93, 0.12);
       border-color: rgba(224, 93, 93, 0.25);
-      color: #f08080;
+      color: #f5a3a3;
     }
 
     .alert-success {
-      background: rgba(59, 164, 160, 0.12);
-      border-color: rgba(59, 164, 160, 0.25);
-      color: $accent;
+      background: rgba(59, 164, 160, 0.2);
+      border-color: rgba(59, 164, 160, 0.3);
+      color: #5ec4c0;
     }
 
     table {
@@ -310,12 +310,12 @@ $accent-glow: rgba(59, 164, 160, 0.12);
         color: $accent;
       }
       &-success {
-        background: rgba(93, 175, 106, 0.12);
-        color: #6ee7b7;
+        background: rgba(93, 175, 106, 0.2);
+        color: #86efce;
       }
       &-danger {
-        background: rgba(224, 93, 93, 0.12);
-        color: #f08080;
+        background: rgba(224, 93, 93, 0.2);
+        color: #f5a3a3;
       }
     }
 

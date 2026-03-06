@@ -15,8 +15,8 @@ import { AuthService } from '../services/auth.service';
 export class AuthInterceptor implements HttpInterceptor {
 
   constructor(
-    private authService: AuthService,
-    private router: Router
+    private readonly authService: AuthService,
+    private readonly router: Router
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {

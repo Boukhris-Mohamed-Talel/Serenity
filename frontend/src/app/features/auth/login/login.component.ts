@@ -23,10 +23,10 @@ export class LoginComponent implements OnInit, AfterViewInit {
   facebookReady = false;
 
   constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private ngZone: NgZone
+    private readonly fb: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly ngZone: NgZone
   ) {}
 
   ngOnInit(): void {

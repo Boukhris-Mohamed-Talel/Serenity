@@ -14,10 +14,10 @@ export class UserService {
   private readonly API_URL = `${environment.apiUrl}/users`;
   private cachedUser: UserResponse | null = null;
   private userRequest$: Observable<UserResponse> | null = null;
-  private currentUserSubject = new BehaviorSubject<UserResponse | null>(null);
+  private readonly currentUserSubject = new BehaviorSubject<UserResponse | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  constructor(private readonly http: HttpClient, private readonly authService: AuthService) {
     this.authService.onLogout(() => this.clearCache());
   }
 

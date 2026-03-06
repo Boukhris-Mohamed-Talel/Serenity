@@ -11,7 +11,7 @@ export class AdminDashboardComponent implements OnInit {
   users: UserResponse[] = [];
   loading = true;
 
-  constructor(private userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
   ngOnInit(): void {
     this.userService.getAllUsers().subscribe({

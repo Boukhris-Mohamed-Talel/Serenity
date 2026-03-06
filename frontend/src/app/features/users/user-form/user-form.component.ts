@@ -17,10 +17,10 @@ export class UserFormComponent implements OnInit {
   availableRoles = ['PATIENT', 'DOCTOR', 'PHARMACIST', 'ADMIN'];
 
   constructor(
-    private fb: FormBuilder,
-    private userService: UserService,
-    private route: ActivatedRoute,
-    private router: Router
+    private readonly fb: FormBuilder,
+    private readonly userService: UserService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
