@@ -29,7 +29,7 @@ export class MiniGameComponent implements OnInit, OnDestroy {
   breathPhase: BreathPhase = 'in';
   breathLabel = 'Breathe in...';
   breathActive = false;
-  private breathTimer: any;
+  private breathTimer: ReturnType<typeof setTimeout> | null = null;
   private phaseIndex = 0;
   private readonly phases: { phase: BreathPhase; label: string; duration: number }[] = [
     { phase: 'in', label: 'Breathe in...', duration: 4000 },
@@ -78,8 +78,9 @@ export class MiniGameComponent implements OnInit, OnDestroy {
 
   private stopBreathing(): void {
     this.breathActive = false;
-    if (this.breathTimer) {
+    if (this.breathTimer !== null) {
       clearTimeout(this.breathTimer);
+      this.breathTimer = null;
     }
   }
 
