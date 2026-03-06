@@ -18,7 +18,7 @@
     </div>
 
     <div class="navbar-actions" *ngIf="authService.isLoggedIn()">
-      <span class="user-greeting">Hi, {{ getDisplayName() }}</span>
+      <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>
 

@@ -67,7 +67,7 @@ export class UserFormComponent implements OnInit {
 
     const formValue = this.userForm.getRawValue();
     if (!formValue.password) {
-      delete formValue.password;
+      formValue.password = null;
     }
 
     this.userService.updateUser(this.userId, formValue).subscribe({

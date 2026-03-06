@@ -31,7 +31,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/']);
+      this.redirectAfterLogin();
     }
 
     this.loginForm = this.fb.group({
@@ -53,7 +53,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => this.redirectAfterLogin(),
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Invalid email or password';
@@ -88,7 +88,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
         this.ngZone.run(() => {
           if (response.authResponse) {
             this.authService.loginWithFacebook(response.authResponse.accessToken).subscribe({
-              next: () => this.router.navigate(['/']),
+              next: () => this.redirectAfterLogin(),
               error: (err) => {
                 this.socialLoading = false;
                 this.errorMessage = err.error?.message || 'Facebook login failed';
@@ -135,13 +135,18 @@ export class LoginComponent implements OnInit, AfterViewInit {
       this.errorMessage = '';
 
       this.authService.loginWithGoogle(response.credential).subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.redirectAfterLogin(),
         error: (err) => {
           this.socialLoading = false;
           this.errorMessage = err.error?.message || 'Google login failed';
         }
       });
     });
+  }
+
+  private redirectAfterLogin(): void {
+    const destination = this.authService.isAdmin() ? '/admin' : '/';
+    this.router.navigate([destination]);
   }
 
   private initFacebookSdk(): void {

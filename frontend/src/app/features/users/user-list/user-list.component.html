@@ -44,9 +44,12 @@
           </td>
           <td>{{ user.createdAt | date:'mediumDate' }}</td>
           <td class="actions">
-            <a [routerLink]="['/users/edit', user.id]" class="btn btn-secondary btn-sm">Edit</a>
+            <a [routerLink]="['edit', user.id]" class="btn btn-secondary btn-sm">Edit</a>
             <button *ngIf="user.isActive" class="btn btn-secondary btn-sm" (click)="deactivateUser(user.id)">
               Deactivate
+            </button>
+            <button *ngIf="!user.isActive" class="btn btn-primary btn-sm" (click)="activateUser(user.id)">
+              Activate
             </button>
             <button class="btn btn-danger btn-sm" (click)="deleteUser(user.id)">
               Delete

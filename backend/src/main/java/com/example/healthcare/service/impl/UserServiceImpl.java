@@ -14,6 +14,7 @@ import com.example.healthcare.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -90,6 +91,8 @@ public class UserServiceImpl implements UserService {
                     .email(user.getEmail())
                     .role(user.getRole().name())
                     .build();
+        } catch (DisabledException e) {
+            throw new InvalidCredentialsException("Your account has been deactivated. Please contact an administrator.");
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException();
         }
@@ -165,6 +168,14 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         user.setIsActive(false);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        user.setIsActive(true);
         userRepository.save(user);
     }
 

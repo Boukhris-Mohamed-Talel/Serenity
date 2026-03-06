@@ -1,0 +1,173 @@
+$dark-bg: #0f1119;
+$dark-surface: #181b2a;
+$dark-card: #1e2235;
+$dark-border: #272b3f;
+$dark-hover: #252940;
+$dark-text: #8b90a7;
+$dark-text-bright: #e2e5f0;
+$accent: #3BA4A0;
+
+.admin-page {
+  max-width: 1200px;
+}
+
+.page-title {
+  margin-bottom: 1.75rem;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: $dark-text-bright;
+    margin-bottom: 0.2rem;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: $dark-text;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: $dark-card;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid $dark-border;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: lighten($dark-border, 8%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+  }
+}
+
+.stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.blue { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+  &.green { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
+  &.teal { background: rgba(59, 164, 160, 0.12); color: $accent; }
+  &.purple { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: $dark-text-bright;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: $dark-text;
+  font-weight: 500;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: $dark-text;
+  font-size: 0.9rem;
+}
+
+.recent-section {
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $dark-text-bright;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.table-card {
+  background: $dark-card;
+  border-radius: 14px;
+  border: 1px solid $dark-border;
+  overflow: hidden;
+
+  table {
+    th {
+      background: $dark-surface;
+      color: $dark-text;
+      border-bottom-color: $dark-border;
+    }
+
+    td {
+      color: $dark-text-bright;
+      border-bottom-color: $dark-border;
+    }
+
+    tbody tr:hover {
+      background: $dark-hover;
+    }
+  }
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.user-avatar-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, $accent, darken($accent, 8%));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &[data-role="ADMIN"] { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+  &[data-role="DOCTOR"] { background: rgba(59, 164, 160, 0.12); color: $accent; }
+  &[data-role="PATIENT"] { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+  &[data-role="PHARMACIST"] { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+
+  &.active { background: #6ee7b7; box-shadow: 0 0 6px rgba(110, 231, 183, 0.4); }
+  &.inactive { background: #4b5068; }
+}

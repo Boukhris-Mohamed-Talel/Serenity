@@ -43,6 +43,15 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  activateUser(id: number): void {
+    this.userService.activateUser(id).subscribe({
+      next: () => this.loadUsers(),
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to activate user';
+      }
+    });
+  }
+
   deleteUser(id: number): void {
     if (!confirm('Are you sure you want to permanently delete this user?')) return;
 

@@ -16,6 +16,8 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<AuthResponse | null>(this.getStoredUser());
   currentUser$ = this.currentUserSubject.asObservable();
 
+  private onLogoutCallbacks: (() => void)[] = [];
+
   constructor(private http: HttpClient) {}
 
   register(request: UserRequest): Observable<AuthResponse> {
@@ -42,10 +44,15 @@ export class AuthService {
     );
   }
 
+  onLogout(callback: () => void): void {
+    this.onLogoutCallbacks.push(callback);
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
+    this.onLogoutCallbacks.forEach(cb => cb());
   }
 
   getToken(): string | null {

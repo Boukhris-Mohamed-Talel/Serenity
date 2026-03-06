@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
 import { UserResponse } from '../shared/models/user.model';
@@ -12,8 +13,9 @@ import { UserResponse } from '../shared/models/user.model';
 export class LayoutComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   characterVisible = false;
-  private user: UserResponse | null = null;
+  user: UserResponse | null = null;
   private peekInterval: any;
+  private userSub!: Subscription;
 
   constructor(
     public authService: AuthService,
@@ -23,9 +25,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      this.userService.getCurrentUser().subscribe({
-        next: (user) => {
-          this.user = user;
+      this.userService.getCurrentUser().subscribe();
+
+      this.userSub = this.userService.currentUser$.subscribe(user => {
+        this.user = user;
+        if (user && !this.peekInterval) {
           this.startPeekAnimation();
         }
       });
@@ -35,6 +39,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.peekInterval) {
       clearInterval(this.peekInterval);
+    }
+    if (this.userSub) {
+      this.userSub.unsubscribe();
     }
   }
 

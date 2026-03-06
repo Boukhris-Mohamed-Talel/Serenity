@@ -22,5 +22,7 @@ public interface UserService {
 
     void deactivateUser(Long id);
 
+    void activateUser(Long id);
+
     void deleteUser(Long id);
 }

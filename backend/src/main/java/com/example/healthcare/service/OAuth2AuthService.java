@@ -102,6 +102,9 @@ public class OAuth2AuthService {
 
         if (existing.isPresent()) {
             User user = existing.get();
+            if (!user.getIsActive()) {
+                throw new InvalidCredentialsException("Your account has been deactivated. Please contact an administrator.");
+            }
             if (user.getAuthProvider() == AuthProvider.LOCAL) {
                 user.setAuthProvider(provider);
                 userRepository.save(user);
