@@ -21,6 +21,7 @@ target/
 .idea/
 *.iml
 .vscode/
+.ai/
 
 # --- Environment / secrets ---
 .env
