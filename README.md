@@ -2,11 +2,13 @@
 
 A Mental healthcare management system built with Angular and Spring Boot. The repository is organized in a **microservice-oriented layout** — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Repository layout
+## Repository layout (microservice-ready)
 
-- **apps/web-app** — Angular SPA (patients & admins)
-- **apps/insurance-portal** — External insurance portal (Node/Express)
-- **services/platform-api** — Core backend API (auth, users, insurance)
+- **apps/** — User-facing apps. One folder = one app. See [apps/README.md](apps/README.md).
+- **services/** — Backend services. One folder = one service. See [services/README.md](services/README.md).
+- **docs/** — [ARCHITECTURE.md](docs/ARCHITECTURE.md), [ADDING_A_SERVICE.md](docs/ADDING_A_SERVICE.md).
+
+Current: **apps/web-app** (Angular SPA), **services/user-service** (auth, users). New services (e.g. insurance) go as **sibling folders** under `services/`.
 
 ## Tech Stack
 
@@ -28,7 +30,7 @@ A Mental healthcare management system built with Angular and Spring Boot. The re
 ### Platform API (backend)
 
 ```bash
-cd services/platform-api
+cd services/user-service
 mvn clean install
 mvn spring-boot:run
 ```
@@ -45,16 +47,6 @@ ng serve
 
 Runs on **http://localhost:4200**
 
-### Insurance portal (optional)
-
-```bash
-cd apps/insurance-portal
-npm install
-npm start
-```
-
-Runs on **http://localhost:3000**
-
 ### Database
 
-The platform API auto-creates the database on first run. Make sure MySQL is running and update credentials in `services/platform-api/src/main/resources/application.yml` if needed.
+The platform API auto-creates the database on first run. Make sure MySQL is running and update credentials in `services/user-service/src/main/resources/application.yml` if needed.
