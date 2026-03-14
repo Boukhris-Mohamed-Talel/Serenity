@@ -1,0 +1,54 @@
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a routerLink="/" class="navbar-brand">
+      <img src="assets/logo.png" alt="Serenity" class="brand-logo" />
+      <span>Serenity</span>
+    </a>
+
+    <div class="navbar-links" *ngIf="authService.isLoggedIn()">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Dashboard
+      </a>
+      <a routerLink="/profile" routerLinkActive="active">
+        Profile
+      </a>
+      <!-- Reimbursements (uncomment when insurance module exists)
+      <a routerLink="/insurance" routerLinkActive="active">
+        Reimbursements
+      </a>
+      -->
+      <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">
+        Users
+      </a>
+    </div>
+
+    <div class="navbar-actions" *ngIf="authService.isLoggedIn()">
+      <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
+      <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
+    </div>
+
+    <div class="peek-character" *ngIf="authService.isLoggedIn() && characterVisible">
+      <span class="peek-emoji">{{ getCharacterEmoji() }}</span>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="footer" *ngIf="authService.isLoggedIn()">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo.png" alt="Serenity" class="footer-logo" />
+      <span class="footer-name">Serenity</span>
+    </div>
+    <p class="footer-tagline">Wellness &amp; Balance</p>
+    <div class="footer-links">
+      <a routerLink="/">Dashboard</a>
+      <a routerLink="/profile">Profile</a>
+    </div>
+    <div class="footer-divider"></div>
+    <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>
+  </div>
+</footer>
