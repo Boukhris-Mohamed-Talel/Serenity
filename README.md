@@ -1,6 +1,12 @@
 # Serenity
 
-A Mental healthcare management system built with Angular and Spring Boot.
+A Mental healthcare management system built with Angular and Spring Boot. The repository is organized in a **microservice-oriented layout** — see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Repository layout
+
+- **apps/web-app** — Angular SPA (patients & admins)
+- **apps/insurance-portal** — External insurance portal (Node/Express)
+- **services/platform-api** — Core backend API (auth, users, insurance)
 
 ## Tech Stack
 
@@ -19,26 +25,36 @@ A Mental healthcare management system built with Angular and Spring Boot.
 - MySQL 8.0+
 - Angular CLI — `npm install -g @angular/cli`
 
-### Backend
+### Platform API (backend)
 
 ```bash
-cd backend
+cd services/platform-api
 mvn clean install
 mvn spring-boot:run
 ```
 
 Runs on **http://localhost:8081**
 
-### Frontend
+### Web app (frontend)
 
 ```bash
-cd frontend
+cd apps/web-app
 npm install
 ng serve
 ```
 
 Runs on **http://localhost:4200**
 
+### Insurance portal (optional)
+
+```bash
+cd apps/insurance-portal
+npm install
+npm start
+```
+
+Runs on **http://localhost:3000**
+
 ### Database
 
-The app auto-creates the database on first run. Make sure MySQL is running and update credentials in `backend/src/main/resources/application.yml` if needed.
+The platform API auto-creates the database on first run. Make sure MySQL is running and update credentials in `services/platform-api/src/main/resources/application.yml` if needed.
