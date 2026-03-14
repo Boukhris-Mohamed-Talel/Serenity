@@ -1,17 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { InsuranceClaimRequest, InsuranceClaimResponse } from '../../shared/models/insurance.model';
+import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InsuranceService {
 
-  private readonly API_URL = `${environment.apiUrl}/insurance`;
+  private readonly API_URL = `${environment.insuranceApiUrl}/insurance`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly userService: UserService
+  ) {}
 
   submitClaim(request: InsuranceClaimRequest, files: File[]): Observable<InsuranceClaimResponse> {
     const formData = new FormData();
@@ -20,11 +25,25 @@ export class InsuranceService {
     formData.append('insuranceCompany', request.insuranceCompany);
     formData.append('insuranceGrade', request.insuranceGrade.toString());
     files.forEach(file => formData.append('files', file));
-    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims`, formData);
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims`, formData, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
   }
 
   getMyClaims(): Observable<InsuranceClaimResponse[]> {
-    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`);
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
   }
 
   getAllClaims(): Observable<InsuranceClaimResponse[]> {

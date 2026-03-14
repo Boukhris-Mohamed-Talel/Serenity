@@ -1,42 +1,39 @@
 # Serenity — Microservice-oriented architecture
 
-This repository is organized to reflect a **microservice-style layout**: applications and backend services live under clear top-level namespaces. The codebase can evolve toward multiple deployable services without a big reshuffle.
+The repo is organized so each backend domain is a **separate service** under `services/`. One folder = one deployable API.
 
-## Repository layout (arborescence)
+## Repository layout
 
 ```
 healthcare-system/
-├── apps/                          # Frontends & user-facing applications
-│   ├── web-app/                   # Angular SPA (patients, admins)
-│   └── insurance-portal/          # External insurance company portal (Node/Express)
+├── apps/
+│   └── web-app/                 # Angular SPA (calls user-service + insurance-service)
 │
-├── services/                      # Backend services (APIs)
-│   └── platform-api/             # Core platform API (auth, users, insurance)
+├── services/
+│   ├── user-service/            # Auth, user CRUD, profiles (port 8081)
+│   ├── insurance-service/      # Claims, reimbursements (port 8082)
+│   └── README.md
 │
-├── docs/                         # Architecture and project docs
-│   └── ARCHITECTURE.md
-├── README.md
-└── .gitignore
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── ADDING_A_SERVICE.md
+└── README.md
 ```
 
-## Rationale
+## Services
 
-| Directory   | Role |
-|------------|------|
-| **apps/**  | All runnable “front-end” or external apps. Each app can have its own stack and deploy pipeline. |
-| **services/** | All runnable backend services. Today there is one API (`platform-api`); later you can add e.g. `auth-service`, `insurance-service` without changing the overall tree. |
-| **docs/**   | Central place for architecture and high-level documentation. |
+| Service             | Port | Role |
+|---------------------|------|------|
+| **user-service**    | 8081 | Login, register, user management, profiles. JWT auth. |
+| **insurance-service** | 8082 | Submit claims, list claims, approve/reject. Uses `X-User-Id` header for caller identity. |
 
-## Current vs future
-
-- **Today:** One backend service (`platform-api`) handles auth, users, and insurance. Two apps: `web-app` (Angular) and `insurance-portal` (Node).
-- **Later:** You can add new entries under `services/` (e.g. `services/insurance-service/`) and under `apps/` without reworking the rest of the tree. Shared contracts or libs can go in a top-level `shared/` or inside each service as needed.
+The web-app talks to both: user-service for auth and users, insurance-service for insurance endpoints (and passes the logged-in user id in `X-User-Id`).
 
 ## Run order
 
-1. **Database** — MySQL (or Postgres) up and database created.
-2. **services/platform-api** — `mvn spring-boot:run` (e.g. port 8081).
-3. **apps/web-app** — `npm install && ng serve` (e.g. port 4200).
-4. **apps/insurance-portal** (optional) — `npm start` (e.g. port 3000).
+1. MySQL up, database created.
+2. `cd services/user-service && mvn spring-boot:run`
+3. `cd services/insurance-service && mvn spring-boot:run`
+4. `cd apps/web-app && npm install && ng serve`
 
-See [README.md](../README.md) for exact commands and prerequisites.
+See [README.md](../README.md) and [services/README.md](../services/README.md) for details.
