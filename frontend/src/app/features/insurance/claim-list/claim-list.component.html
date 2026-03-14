@@ -1,0 +1,49 @@
+<div class="container">
+  <div class="page-header">
+    <h1>{{ isAdmin ? 'All Insurance Claims' : 'My Insurance Claims' }}</h1>
+    <a *ngIf="!isAdmin" routerLink="new" class="btn btn-primary">Submit New Claim</a>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div *ngIf="loading" class="loading-container">
+    <span class="spinner"></span>
+    <p>Loading claims...</p>
+  </div>
+
+  <div *ngIf="!loading && claims.length === 0" class="empty-state card">
+    <p *ngIf="!isAdmin">You haven't submitted any claims yet.</p>
+    <p *ngIf="isAdmin">No insurance claims have been submitted yet.</p>
+    <a *ngIf="!isAdmin" routerLink="new" class="btn btn-primary" style="margin-top: 1rem;">Submit your first claim</a>
+  </div>
+
+  <div *ngIf="!loading && claims.length > 0" class="claims-grid">
+    <div *ngFor="let claim of claims" class="card claim-card">
+      <div class="claim-header">
+        <span [class]="getStatusClass(claim.status)">{{ claim.status }}</span>
+        <span class="claim-date">{{ claim.claimDate | date:'mediumDate' }}</span>
+      </div>
+      <p class="claim-patient" *ngIf="isAdmin">{{ claim.userFullName }}</p>
+      <h3 class="claim-title">{{ claim.description }}</h3>
+      <div class="claim-details">
+        <div class="detail">
+          <span class="detail-label">Insurance</span>
+          <span class="detail-value">{{ claim.insuranceCompany }} — Grade {{ claim.insuranceGrade }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Amount Paid</span>
+          <span class="detail-value">{{ claim.amount | currency:'TND':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Reimbursement</span>
+          <span class="detail-value reimbursed">{{ claim.reimbursementAmount | currency:'TND':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Files</span>
+          <span class="detail-value">{{ claim.filePaths.length || 0 }} prescription(s)</span>
+        </div>
+      </div>
+      <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">View Details</a>
+    </div>
+  </div>
+</div>
