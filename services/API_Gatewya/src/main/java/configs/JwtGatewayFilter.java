@@ -43,7 +43,7 @@ public class JwtGatewayFilter implements WebFilter {
             // Forward userId and roles to downstream services
             exchange.getRequest().mutate()
                     .header("userId", claims.get("userId", String.class))
-                    .header("roles", claims.get("roles", String.class))
+                    .header("role", claims.get("role", String.class))
                     .build();
 
         } catch (Exception e) {
