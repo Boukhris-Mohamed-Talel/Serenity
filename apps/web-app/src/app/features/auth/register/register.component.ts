@@ -27,7 +27,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly ngZone: NgZone
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
