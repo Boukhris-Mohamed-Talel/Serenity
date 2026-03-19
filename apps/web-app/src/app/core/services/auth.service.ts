@@ -86,4 +86,23 @@ export class AuthService {
     const stored = localStorage.getItem(this.USER_KEY);
     return stored ? JSON.parse(stored) : null;
   }
+
+  updateUserRole(role: string) {
+    const token = this.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    return this.http
+      .put<AuthResponse>(
+        `${environment.apiUrl}/users/update-role?role=${role.toUpperCase()}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      .pipe(
+        tap((updatedUser) => {
+        
+          localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
+          this.currentUserSubject.next(updatedUser);
+        })
+      );
+  }
 }
