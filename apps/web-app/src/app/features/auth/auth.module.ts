@@ -5,11 +5,12 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { MiniGameComponent } from './login/mini-game/mini-game.component';
 import { SelectRoleComponent } from './select-role/select-role.component';
+import { SelectRoleGuard } from '../../core/guards/select-role.guard';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'select-role', component: SelectRoleComponent },
+  { path: 'select-role', component: SelectRoleComponent, canActivate: [SelectRoleGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' }
 ];
 

@@ -64,7 +64,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     this.authService.register(formValue).subscribe({
-      next: () => this.router.navigate(['/auth/select-role']),
+      next: (res) => {
+        sessionStorage.setItem('passedRegister', 'true');
+        this.router.navigate(['/auth/select-role']);
+      },      
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';

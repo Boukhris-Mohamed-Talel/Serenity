@@ -66,5 +66,7 @@ export class SelectRoleComponent {
       },
       error: (err) => console.error('Failed to update role:', err)
     });
+    
   }
+  
 }
