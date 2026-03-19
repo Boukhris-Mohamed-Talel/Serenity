@@ -2,6 +2,7 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-doctor',
@@ -18,9 +19,18 @@ export class DoctorComponent {
   imageFile: File | null = null;
   successMessage: string = '';
   errorMessage: string = '';
+  userId!: number;
 
-  constructor(private formBuilder: FormBuilder,private router: Router) {
+  constructor(private formBuilder: FormBuilder,private router: Router,private AuthService: AuthService) {
     this.initializeForm();
+  }
+
+  ngOnInit() {
+    const storedId = localStorage.getItem('userId'); // assign to property
+    if (!storedId) {
+      this.router.navigate(['/auth/login']);
+    }
+    this.userId = Number(storedId);
   }
 
   initializeForm() {
@@ -70,21 +80,24 @@ export class DoctorComponent {
   }
 
   onSubmit() {
-    if (this.doctorForm.valid) {
-      // Handle form submission
-      console.log('Form submitted:', {
-        speciality: this.doctorForm.get('speciality')?.value,
-        image: this.imageFile
-      });
-      this.successMessage = 'Profile updated successfully!';
-      setTimeout(() => {
-        this.successMessage = '';
-        this.router.navigate(['/']);
-      }, 3000);
-    } else {
-      this.errorMessage = 'Please fill in all required fields';
-    }
+  if (this.doctorForm.valid && this.imageFile) {
+    const speciality = this.doctorForm.get('speciality')?.value;
+
+    this.AuthService.addDoctor(this.userId, speciality, this.imageFile).subscribe({
+      next: () => {
+        this.successMessage = 'Profile updated successfully!';
+        setTimeout(() => {
+          this.router.navigate(['/']);
+        }, 3000);
+      },
+      error: () => {
+        this.errorMessage = 'Error while creating doctor profile';
+      }
+    });
+  } else {
+    this.errorMessage = 'Please fill in all required fields';
   }
+}
 
   removeImage() {
     this.selectedImage = null;

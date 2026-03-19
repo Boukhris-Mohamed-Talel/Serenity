@@ -49,7 +49,7 @@ export class SelectRoleComponent {
 
         switch (this.selectedRole) {
           case 'doctor':
-            this.router.navigate(['/']);
+            this.router.navigate(['/auth/doctor']);
             break;
           case 'pharmacist':
             this.router.navigate(['/']);

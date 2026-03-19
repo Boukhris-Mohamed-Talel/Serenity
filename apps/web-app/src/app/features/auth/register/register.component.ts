@@ -65,6 +65,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     this.authService.register(formValue).subscribe({
       next: (res) => {
+        localStorage.setItem('userId', res.userId.toString());
         sessionStorage.setItem('passedRegister', 'true');
         this.router.navigate(['/auth/select-role']);
       },      
