@@ -74,6 +74,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponseDTO updateUserRole(String email, String role) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        user.setRole(Role.valueOf(role.toUpperCase()));
+        userRepository.save(user);
+
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
             Authentication authentication = authenticationManager.authenticate(

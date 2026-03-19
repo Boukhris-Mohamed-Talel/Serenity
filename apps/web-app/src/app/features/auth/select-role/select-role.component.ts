@@ -21,6 +21,11 @@ export class SelectRoleComponent {
       icon: 'health_and_safety'
     },
     {
+      id: 'pharmacist',
+      title: 'I am a pharmacist wanting to collaborate with Serenity',
+      icon: 'local_pharmacy'
+    },
+    {
       id: 'insurer',
       title: 'I am an Insurer wanting to work with you',
       icon: 'admin_panel_settings'

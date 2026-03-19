@@ -8,6 +8,8 @@ public interface UserService {
 
     AuthResponseDTO registerUser(UserRequestDTO request);
 
+    UserResponseDTO updateUserRole(String email, String role);
+
     AuthResponseDTO login(LoginRequestDTO request);
 
     List<UserResponseDTO> getAllUsers();

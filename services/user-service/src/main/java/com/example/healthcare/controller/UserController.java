@@ -70,4 +70,15 @@ public class UserController {
         userService.activateUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/update-role")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDTO> updateUserRole(
+            Authentication authentication,
+            @RequestParam String role) {
+
+        String email = authentication.getName();
+        UserResponseDTO updatedUser = userService.updateUserRole(email, role);
+        return ResponseEntity.ok(updatedUser);
+    }
 }
