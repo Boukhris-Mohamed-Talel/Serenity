@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8082}
+  port: ${SERVER_PORT:8090}
 
 spring:
   datasource:
@@ -26,3 +26,7 @@ spring:
 app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  insurance-portal:
+    api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
+  status-poller:
+    fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS:5000}

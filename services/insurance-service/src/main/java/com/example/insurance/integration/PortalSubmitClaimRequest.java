@@ -1,0 +1,20 @@
+package com.example.insurance.integration;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PortalSubmitClaimRequest {
+    private String ref;
+    private String patientName;
+    private String description;
+    private Double amount;
+    private String insuranceCompany;
+    private Double insuranceGrade;
+}
+

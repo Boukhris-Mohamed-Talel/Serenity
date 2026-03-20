@@ -16,6 +16,9 @@ public class InsuranceClaimResponseDTO {
     private String description;
     private Date claimDate;
     private Double amount;
+    private Double reimbursementAmount;
+    private String insuranceCompany;
+    private Double insuranceGrade;
     private String status;
     private String externalRef;
     private List<String> filePaths;

@@ -18,4 +18,11 @@ public class InsuranceClaimRequestDTO {
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
     private Double amount;
+
+    @NotBlank(message = "Insurance company is required")
+    private String insuranceCompany;
+
+    @NotNull(message = "Insurance grade is required")
+    @Positive(message = "Insurance grade must be positive")
+    private Double insuranceGrade;
 }

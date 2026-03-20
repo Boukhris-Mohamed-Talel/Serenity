@@ -30,6 +30,15 @@ public class InsuranceClaim {
     @Column(nullable = false)
     private Double amount;
 
+    @Column(name = "reimbursement_amount", nullable = false)
+    private Double reimbursementAmount;
+
+    @Column(name = "insurance_company", nullable = false)
+    private String insuranceCompany;
+
+    @Column(name = "insurance_grade", nullable = false)
+    private Double insuranceGrade;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

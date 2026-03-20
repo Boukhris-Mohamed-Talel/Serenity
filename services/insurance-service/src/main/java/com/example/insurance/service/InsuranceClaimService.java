@@ -19,4 +19,6 @@ public interface InsuranceClaimService {
     InsuranceClaimResponseDTO approveClaim(Long id, Double montant);
 
     InsuranceClaimResponseDTO rejectClaim(Long id);
+
+    void deleteClaim(Long id);
 }

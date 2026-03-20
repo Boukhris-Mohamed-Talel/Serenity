@@ -240,6 +240,8 @@
   </div>
 
   <script>
+    // External insurance provider (this Node server keeps claims in-memory under /api/claims).
+    // Keep API relative so it works on http://localhost:3000
     const API = '';
 
     async function loadClaims() {
@@ -302,7 +304,7 @@
                     </div>
                   ` : `
                     <span class="processed">
-                      ${c.status === 'APPROVED' ? `Reimbursed ${Number(c.reimbursementAmount).toFixed(2)} TND` : 'Declined'}
+                      ${c.status === 'APPROVED' ? `Reimbursed ${Number(c.reimbursementAmount || 0).toFixed(2)} TND` : 'Declined'}
                     </span>
                   `}
                 </td>

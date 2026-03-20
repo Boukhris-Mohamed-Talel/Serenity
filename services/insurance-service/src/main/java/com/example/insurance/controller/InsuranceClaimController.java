@@ -23,8 +23,15 @@ public class InsuranceClaimController {
             @RequestHeader(value = "X-User-Id", required = true) Long userId,
             @RequestParam("description") String description,
             @RequestParam("amount") Double amount,
+            @RequestParam("insuranceCompany") String insuranceCompany,
+            @RequestParam("insuranceGrade") Double insuranceGrade,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-        InsuranceClaimRequestDTO request = new InsuranceClaimRequestDTO(description, amount);
+        InsuranceClaimRequestDTO request = InsuranceClaimRequestDTO.builder()
+                .description(description)
+                .amount(amount)
+                .insuranceCompany(insuranceCompany)
+                .insuranceGrade(insuranceGrade)
+                .build();
         return ResponseEntity.ok(insuranceClaimService.submitClaim(userId, request, files));
     }
 
@@ -54,5 +61,11 @@ public class InsuranceClaimController {
     @PatchMapping("/claims/{id}/reject")
     public ResponseEntity<InsuranceClaimResponseDTO> rejectClaim(@PathVariable Long id) {
         return ResponseEntity.ok(insuranceClaimService.rejectClaim(id));
+    }
+
+    @DeleteMapping("/claims/{id}")
+    public ResponseEntity<Void> deleteClaim(@PathVariable Long id) {
+        insuranceClaimService.deleteClaim(id);
+        return ResponseEntity.noContent().build();
     }
 }

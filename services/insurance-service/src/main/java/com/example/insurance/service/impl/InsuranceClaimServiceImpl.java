@@ -3,6 +3,8 @@ package com.example.insurance.service.impl;
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
 import com.example.insurance.dto.RemboursementResponseDTO;
+import com.example.insurance.integration.InsurancePortalClient;
+import com.example.insurance.integration.PortalSubmitClaimRequest;
 import com.example.insurance.entity.ClaimStatus;
 import com.example.insurance.entity.InsuranceClaim;
 import com.example.insurance.entity.Remboursement;
@@ -30,6 +32,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
     private final InsuranceClaimRepository claimRepository;
     private final RemboursementRepository remboursementRepository;
+    private final InsurancePortalClient insurancePortalClient;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -43,9 +46,15 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
         String externalRef = UUID.randomUUID().toString();
 
+        // Used to populate the DB column `reimbursement_amount` (non-null in schema)
+        Double reimbursementAmount = calculateReimbursement(request.getAmount(), request.getInsuranceGrade());
+
         InsuranceClaim claim = InsuranceClaim.builder()
                 .description(request.getDescription())
                 .amount(request.getAmount())
+                .reimbursementAmount(reimbursementAmount)
+                .insuranceCompany(request.getInsuranceCompany())
+                .insuranceGrade(request.getInsuranceGrade())
                 .status(ClaimStatus.PENDING)
                 .externalRef(externalRef)
                 .userId(userId)
@@ -53,6 +62,19 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .build();
 
         claimRepository.save(claim);
+
+        // Fire-and-forget: external provider may accept/reject asynchronously.
+        // Our scheduler will poll portal status and update this claim.
+        PortalSubmitClaimRequest portalReq = new PortalSubmitClaimRequest(
+                externalRef,
+                String.valueOf(userId), // portal displays patientName; we only have userId here
+                request.getDescription(),
+                request.getAmount(),
+                request.getInsuranceCompany(),
+                request.getInsuranceGrade()
+        );
+        insurancePortalClient.submitClaim(portalReq);
+
         return toResponseDTO(claim);
     }
 
@@ -83,6 +105,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
         claim.setStatus(ClaimStatus.APPROVED);
+        // Reimbursement becomes known at approval time
+        claim.setReimbursementAmount(montant);
         Remboursement remboursement = Remboursement.builder()
                 .montant(montant)
                 .statut(ClaimStatus.APPROVED)
@@ -98,8 +122,20 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
         claim.setStatus(ClaimStatus.REJECTED);
+        // Schema expects non-null reimbursement_amount
+        claim.setReimbursementAmount(0.0);
         claimRepository.save(claim);
         return toResponseDTO(claim);
+    }
+
+    @Override
+    public void deleteClaim(Long id) {
+        // Throws if missing to make debugging easier
+        InsuranceClaim claim = claimRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
+
+        // JPA mappings (cascade + orphanRemoval) handle remboursements + files cleanup where configured.
+        claimRepository.delete(claim);
     }
 
     private List<String> saveFiles(List<MultipartFile> files, Long userId) {
@@ -137,11 +173,32 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .description(claim.getDescription())
                 .claimDate(claim.getClaimDate())
                 .amount(claim.getAmount())
+                .reimbursementAmount(claim.getReimbursementAmount())
+                .insuranceCompany(claim.getInsuranceCompany())
+                .insuranceGrade(claim.getInsuranceGrade())
                 .status(claim.getStatus().name())
                 .externalRef(claim.getExternalRef())
                 .filePaths(claim.getFilePaths())
                 .userId(claim.getUserId())
                 .remboursements(rembDtos)
                 .build();
+    }
+
+    private Double calculateReimbursement(Double amount, Double insuranceGrade) {
+        if (amount == null || insuranceGrade == null) {
+            return 0.0;
+        }
+        int grade = insuranceGrade.intValue();
+        // Keep in sync with Angular `INSURANCE_GRADES` percentages
+        int percentage;
+        switch (grade) {
+            case 1 -> percentage = 10;
+            case 2 -> percentage = 12;
+            case 3 -> percentage = 18;
+            case 4 -> percentage = 25;
+            case 5 -> percentage = 45;
+            default -> percentage = 0;
+        }
+        return Math.round((amount * percentage / 100.0) * 100.0) / 100.0;
     }
 }

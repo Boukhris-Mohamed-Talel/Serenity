@@ -21,9 +21,22 @@ public class JwtGatewayFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         String path = exchange.getRequest().getURI().getPath();
+        String method = exchange.getRequest().getMethod() != null ? exchange.getRequest().getMethod().name() : "";
+
+        // CORS preflight requests: browsers often send OPTIONS without Authorization header.
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return chain.filter(exchange);
+        }
 
         // Allow auth endpoints without JWT
         if (path.startsWith("/api/auth")) {
+            return chain.filter(exchange);
+        }
+
+        // Allow insurance endpoints without JWT.
+        // insurance-service endpoints currently rely on X-User-Id (for /claims/me) and do not enforce JWT.
+        // Be defensive with matching to avoid accidental blocking due to path formatting.
+        if (path.contains("/api/insurance")) {
             return chain.filter(exchange);
         }
 
