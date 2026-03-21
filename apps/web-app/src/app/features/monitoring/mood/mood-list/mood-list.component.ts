@@ -2,7 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MonitoringService } from '../../../../core/services/monitoring.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { MoodEntryResponse } from '../../../../shared/models/mood.model';
+import {
+  EmotionalTriggerRequest,
+  EmotionalTriggerResponse,
+  MoodEntryResponse
+} from '../../../../shared/models/mood.model';
 
 @Component({
   selector: 'app-mood-list',
@@ -11,6 +15,13 @@ import { MoodEntryResponse } from '../../../../shared/models/mood.model';
 })
 export class MoodListComponent implements OnInit {
   moodEntries: MoodEntryResponse[] = [];
+  triggerMap: Record<number, EmotionalTriggerResponse[]> = {};
+  triggerPanelOpen: Record<number, boolean> = {};
+  triggerLoading: Record<number, boolean> = {};
+  triggerSaving: Record<number, boolean> = {};
+  triggerError: Record<number, string> = {};
+  triggerForm: Record<number, EmotionalTriggerRequest> = {};
+  editTriggerId: Record<number, number | null> = {};
   loading = true;
   errorMessage = '';
   emptyState = false;
@@ -42,6 +53,17 @@ export class MoodListComponent implements OnInit {
     9: 'Very Excellent',
     10: 'Perfect'
   };
+
+  readonly triggerTypes: string[] = [
+    'WORK_STRESS',
+    'SLEEP_DEPRIVATION',
+    'FAMILY_CONFLICT',
+    'SOCIAL_ISOLATION',
+    'TRAUMA',
+    'FINANCIAL_STRESS',
+    'COGNITIVE_OVERLOAD',
+    'OTHER'
+  ];
 
   constructor(
     private readonly monitoringService: MonitoringService,
@@ -155,5 +177,105 @@ export class MoodListComponent implements OnInit {
 
   getDoctorDisplayName(entry: MoodEntryResponse): string {
     return entry.doctorName?.trim() || 'Not assigned yet';
+  }
+
+  toggleTriggerPanel(moodEntryId: number): void {
+    const isOpen = this.triggerPanelOpen[moodEntryId];
+    this.triggerPanelOpen[moodEntryId] = !isOpen;
+
+    if (!isOpen) {
+      this.loadTriggers(moodEntryId);
+      this.resetTriggerForm(moodEntryId);
+    }
+  }
+
+  loadTriggers(moodEntryId: number): void {
+    this.triggerLoading[moodEntryId] = true;
+    this.triggerError[moodEntryId] = '';
+
+    this.monitoringService.getTriggersByMoodEntryId(moodEntryId).subscribe({
+      next: (triggers) => {
+        this.triggerMap[moodEntryId] = triggers || [];
+        this.triggerLoading[moodEntryId] = false;
+      },
+      error: (err) => {
+        this.triggerError[moodEntryId] = err.error?.message || 'Failed to load clinical triggers';
+        this.triggerLoading[moodEntryId] = false;
+      }
+    });
+  }
+
+  submitTrigger(moodEntryId: number): void {
+    const form = this.triggerForm[moodEntryId];
+    if (!form || !form.triggerType || !form.description || !form.intensity) {
+      this.triggerError[moodEntryId] = 'Please fill all trigger fields correctly.';
+      return;
+    }
+    if (form.description.trim().length < 10) {
+      this.triggerError[moodEntryId] = 'Description must be at least 10 characters.';
+      return;
+    }
+
+    this.triggerSaving[moodEntryId] = true;
+    this.triggerError[moodEntryId] = '';
+
+    const request: EmotionalTriggerRequest = {
+      moodEntryId,
+      triggerType: form.triggerType,
+      description: form.description.trim(),
+      intensity: Number(form.intensity)
+    };
+
+    const currentEditId = this.editTriggerId[moodEntryId];
+    const save$ = currentEditId
+      ? this.monitoringService.updateTrigger(currentEditId, request)
+      : this.monitoringService.createTrigger(moodEntryId, request);
+
+    save$.subscribe({
+      next: () => {
+        this.triggerSaving[moodEntryId] = false;
+        this.resetTriggerForm(moodEntryId);
+        this.loadTriggers(moodEntryId);
+      },
+      error: (err) => {
+        this.triggerSaving[moodEntryId] = false;
+        this.triggerError[moodEntryId] = err.error?.message || 'Failed to save clinical trigger';
+      }
+    });
+  }
+
+  startEditTrigger(moodEntryId: number, trigger: EmotionalTriggerResponse): void {
+    this.editTriggerId[moodEntryId] = trigger.id;
+    this.triggerForm[moodEntryId] = {
+      moodEntryId,
+      triggerType: trigger.triggerType,
+      description: trigger.description,
+      intensity: trigger.intensity
+    };
+  }
+
+  cancelEditTrigger(moodEntryId: number): void {
+    this.resetTriggerForm(moodEntryId);
+  }
+
+  deleteTrigger(moodEntryId: number, triggerId: number): void {
+    if (!confirm('Delete this clinical trigger?')) return;
+
+    this.monitoringService.deleteTrigger(triggerId).subscribe({
+      next: () => this.loadTriggers(moodEntryId),
+      error: (err) => {
+        this.triggerError[moodEntryId] = err.error?.message || 'Failed to delete trigger';
+      }
+    });
+  }
+
+  private resetTriggerForm(moodEntryId: number): void {
+    this.editTriggerId[moodEntryId] = null;
+    this.triggerForm[moodEntryId] = {
+      moodEntryId,
+      triggerType: '',
+      description: '',
+      intensity: 5
+    };
   }
 }

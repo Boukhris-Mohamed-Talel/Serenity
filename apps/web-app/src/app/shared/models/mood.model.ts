@@ -19,3 +19,20 @@ export interface MoodEntryResponse {
 }
 
 export interface MoodEntry extends MoodEntryResponse {}
+
+export interface EmotionalTriggerRequest {
+  moodEntryId: number;
+  triggerType: string;
+  description: string;
+  intensity: number;
+}
+
+export interface EmotionalTriggerResponse {
+  id: number;
+  moodEntryId: number;
+  doctorId: number;
+  triggerType: string;
+  description: string;
+  intensity: number;
+  recordedAt: string;
+}

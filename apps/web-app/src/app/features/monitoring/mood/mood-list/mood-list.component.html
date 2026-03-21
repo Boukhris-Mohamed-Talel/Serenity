@@ -1,97 +1,156 @@
-<div class="container mood-list-container">
-  <!-- Header -->
-  <div class="header-section">
-    <div class="header-content">
-      <h1>{{ getHeaderTitle() }}</h1>
-      <p>{{ getHeaderSubtitle() }}</p>
+<div class="monitoring-page">
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <h1>Monitoring Dashboard</h1>
+        <p>Patient mood entries and clinical trigger analysis</p>
+      </div>
+      <button *ngIf="!isDoctorView" class="btn-primary-main" (click)="createNewEntry()">
+        <span class="material-icons">add</span>
+        New Entry
+      </button>
+    </header>
+
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading mood entries...</p>
     </div>
-    <button *ngIf="!isDoctorView" class="btn btn-primary" (click)="createNewEntry()">
-      <span class="material-icons">add</span>
-      New Entry
-    </button>
-  </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading your mood entries...</p>
-  </div>
-
-  <!-- Error Message -->
-  <div *ngIf="errorMessage" class="error-message">
-    <span class="material-icons">error</span>
-    {{ errorMessage }}
-  </div>
-
-  <!-- Empty State -->
-  <div *ngIf="emptyState && !loading" class="empty-state">
-    <div class="empty-icon">📊</div>
-    <h2>No mood entries yet</h2>
-    <p *ngIf="!isDoctorView">Start tracking your mood to get insights about your emotional wellness</p>
-    <p *ngIf="isDoctorView">No patient mood entries are assigned to you yet.</p>
-    <button *ngIf="!isDoctorView" class="btn btn-primary" (click)="createNewEntry()">
-      <span class="material-icons">add</span>
-      Create First Entry
-    </button>
-  </div>
-
-  <!-- Mood Entries Grid -->
-  <div *ngIf="!loading && !emptyState" class="mood-grid">
-    <div *ngFor="let entry of moodEntries" class="mood-card">
-      <!-- Mood Score Badge -->
-      <div class="mood-badge" [style.backgroundColor]="getMoodColor(entry.moodScore)">
-        <div class="mood-emoji">{{ getMoodEmoji(entry.moodScore) }}</div>
-        <div class="mood-score">{{ entry.moodScore }}/10</div>
-      </div>
-
-      <!-- Card Content -->
-      <div class="card-content">
-        <!-- Mood Label -->
-        <div class="mood-label">{{ getMoodLabel(entry.moodScore) }}</div>
-
-        <!-- Condition -->
-        <div class="condition">
-          <p>{{ entry.moodDescription }}</p>
-        </div>
-
-        <!-- Triggers (if exists) -->
-        <div *ngIf="entry.triggers" class="triggers">
-          <span class="trigger-label">Triggers:</span>
-          <p>{{ entry.triggers }}</p>
-        </div>
-
-        <!-- Date -->
-        <div class="entry-date">
-          <span class="material-icons">schedule</span>
-          {{ formatDate(entry.createdAt) }}
-        </div>
-
-        <!-- Doctor View Info -->
-        <div *ngIf="isDoctorView" class="entry-meta">
-          <span><strong>Patient:</strong> {{ getPatientDisplayName(entry) }}</span>
-        </div>
-
-        <!-- Patient View Info -->
-        <div *ngIf="!isDoctorView" class="entry-meta">
-          <span><strong>Responsible Doctor:</strong> {{ getDoctorDisplayName(entry) }}</span>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="card-actions" *ngIf="!isDoctorView">
-        <button
-          class="btn btn-icon btn-edit"
-          (click)="editEntry(entry.id)"
-          title="Edit entry">
-          <span class="material-icons">edit</span>
-        </button>
-        <button
-          class="btn btn-icon btn-delete"
-          (click)="deleteEntry(entry.id)"
-          title="Delete entry">
-          <span class="material-icons">delete</span>
-        </button>
-      </div>
+    <div *ngIf="errorMessage" class="error-banner">
+      <span class="material-icons">error</span>
+      <span>{{ errorMessage }}</span>
     </div>
+
+    <div *ngIf="emptyState && !loading" class="empty-state">
+      <div class="empty-icon">🧠</div>
+      <h2>No mood entries yet</h2>
+      <p>Patients will appear here once they log their first entry</p>
+      <button *ngIf="!isDoctorView" class="btn-primary-main" (click)="createNewEntry()">
+        <span class="material-icons">add</span>
+        Create First Entry
+      </button>
+    </div>
+
+    <section *ngIf="!loading && !emptyState" class="mood-grid">
+      <article *ngFor="let entry of moodEntries; let i = index" class="mood-card" [style.--i]="i">
+        <div class="card-main">
+          <div class="card-header">
+            <div class="score-block">
+              <div class="score-badge" [style.color]="getMoodColor(entry.moodScore)" [style.backgroundColor]="getMoodColor(entry.moodScore) + '26'">
+                {{ entry.moodScore }}/10
+              </div>
+              <div class="score-text">
+                <span class="score-label" [style.color]="getMoodColor(entry.moodScore)">{{ getMoodLabel(entry.moodScore) }}</span>
+              </div>
+            </div>
+            <div class="entry-date">
+              <span class="material-icons">schedule</span>
+              {{ formatDate(entry.createdAt) }}
+            </div>
+          </div>
+
+          <div class="notes-section">
+            <p>{{ entry.moodDescription }}</p>
+          </div>
+
+          <div class="preview-triggers">
+            <div class="section-label">EMOTIONAL TRIGGERS</div>
+            <div class="chip-list" *ngIf="entry.triggers; else noRootTriggers">
+              <span class="chip">{{ entry.triggers }}</span>
+            </div>
+            <ng-template #noRootTriggers>
+              <div class="no-trigger-text">No triggers recorded</div>
+            </ng-template>
+          </div>
+
+          <div class="card-footer">
+            <div class="person-line" *ngIf="isDoctorView">
+              <div class="avatar">{{ (getPatientDisplayName(entry) || 'U').slice(0, 1).toUpperCase() }}</div>
+              <span class="person-name">{{ getPatientDisplayName(entry) }}</span>
+            </div>
+            <div class="person-line" *ngIf="!isDoctorView">
+              <div class="avatar doctor">{{ (getDoctorDisplayName(entry) || 'D').slice(0, 1).toUpperCase() }}</div>
+              <span class="person-name">{{ getDoctorDisplayName(entry) }}</span>
+            </div>
+
+            <button *ngIf="isDoctorView" class="btn-clinical" (click)="toggleTriggerPanel(entry.id)">
+              Clinical Triggers {{ triggerPanelOpen[entry.id] ? '▴' : '▾' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="card-actions" *ngIf="!isDoctorView">
+          <button class="icon-btn edit" (click)="editEntry(entry.id)" title="Edit entry">
+            <span class="material-icons">edit</span>
+          </button>
+          <button class="icon-btn delete" (click)="deleteEntry(entry.id)" title="Delete entry">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
+
+        <section *ngIf="isDoctorView" class="clinical-panel-wrap" [class.open]="triggerPanelOpen[entry.id]">
+          <div *ngIf="triggerPanelOpen[entry.id]" class="clinical-panel">
+            <div class="panel-header">
+              <h3>Clinical Triggers</h3>
+            </div>
+
+            <div *ngIf="triggerLoading[entry.id]" class="trigger-loading">Loading triggers...</div>
+            <div *ngIf="triggerError[entry.id]" class="trigger-error">{{ triggerError[entry.id] }}</div>
+
+            <div *ngIf="!triggerLoading[entry.id] && (!triggerMap[entry.id] || triggerMap[entry.id].length === 0)" class="trigger-empty">
+              No clinical triggers recorded yet.
+            </div>
+
+            <div *ngIf="!triggerLoading[entry.id] && triggerMap[entry.id] && triggerMap[entry.id].length > 0" class="trigger-list">
+              <div *ngFor="let trigger of triggerMap[entry.id]" class="trigger-item">
+                <div class="trigger-row-top">
+                  <span class="trigger-type">{{ trigger.triggerType }}</span>
+                  <span class="intensity-dot">{{ trigger.intensity }}</span>
+                </div>
+                <p class="trigger-description">{{ trigger.description }}</p>
+                <div class="trigger-row-bottom">
+                  <span class="trigger-date">{{ formatDate(trigger.recordedAt) }}</span>
+                  <div class="trigger-actions">
+                    <button class="icon-inline edit" (click)="startEditTrigger(entry.id, trigger)" title="Edit Trigger">
+                      ✏️
+                    </button>
+                    <button class="icon-inline delete" (click)="deleteTrigger(entry.id, trigger.id)" title="Delete Trigger">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="trigger-form">
+              <h4>{{ editTriggerId[entry.id] ? 'Update Clinical Trigger' : '+ Record Clinical Trigger' }}</h4>
+              <div class="trigger-form-row">
+                <div class="field-group">
+                  <label>Trigger Type</label>
+                  <select [(ngModel)]="triggerForm[entry.id].triggerType" [ngModelOptions]="{standalone: true}">
+                    <option value="" disabled>Select type</option>
+                    <option *ngFor="let type of triggerTypes" [value]="type">{{ type }}</option>
+                  </select>
+                </div>
+                <div class="field-group intensity-group">
+                  <label>Intensity</label>
+                  <input type="number" min="1" max="10" [(ngModel)]="triggerForm[entry.id].intensity" [ngModelOptions]="{standalone: true}" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label>Clinical Observation</label>
+                <textarea rows="3" [(ngModel)]="triggerForm[entry.id].description" [ngModelOptions]="{standalone: true}" placeholder="Describe the root cause..."></textarea>
+              </div>
+              <div class="trigger-form-actions">
+                <button *ngIf="editTriggerId[entry.id]" class="btn-cancel" (click)="cancelEditTrigger(entry.id)">Cancel</button>
+                <button class="btn-record" [disabled]="triggerSaving[entry.id]" (click)="submitTrigger(entry.id)">
+                  {{ triggerSaving[entry.id] ? 'Saving...' : (editTriggerId[entry.id] ? 'Update Trigger' : 'Record Trigger') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </article>
+    </section>
   </div>
 </div>
