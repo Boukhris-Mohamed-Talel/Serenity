@@ -1,0 +1,97 @@
+<div class="container mood-list-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-content">
+      <h1>{{ getHeaderTitle() }}</h1>
+      <p>{{ getHeaderSubtitle() }}</p>
+    </div>
+    <button *ngIf="!isDoctorView" class="btn btn-primary" (click)="createNewEntry()">
+      <span class="material-icons">add</span>
+      New Entry
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your mood entries...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="material-icons">error</span>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="emptyState && !loading" class="empty-state">
+    <div class="empty-icon">📊</div>
+    <h2>No mood entries yet</h2>
+    <p *ngIf="!isDoctorView">Start tracking your mood to get insights about your emotional wellness</p>
+    <p *ngIf="isDoctorView">No patient mood entries are assigned to you yet.</p>
+    <button *ngIf="!isDoctorView" class="btn btn-primary" (click)="createNewEntry()">
+      <span class="material-icons">add</span>
+      Create First Entry
+    </button>
+  </div>
+
+  <!-- Mood Entries Grid -->
+  <div *ngIf="!loading && !emptyState" class="mood-grid">
+    <div *ngFor="let entry of moodEntries" class="mood-card">
+      <!-- Mood Score Badge -->
+      <div class="mood-badge" [style.backgroundColor]="getMoodColor(entry.moodScore)">
+        <div class="mood-emoji">{{ getMoodEmoji(entry.moodScore) }}</div>
+        <div class="mood-score">{{ entry.moodScore }}/10</div>
+      </div>
+
+      <!-- Card Content -->
+      <div class="card-content">
+        <!-- Mood Label -->
+        <div class="mood-label">{{ getMoodLabel(entry.moodScore) }}</div>
+
+        <!-- Condition -->
+        <div class="condition">
+          <p>{{ entry.moodDescription }}</p>
+        </div>
+
+        <!-- Triggers (if exists) -->
+        <div *ngIf="entry.triggers" class="triggers">
+          <span class="trigger-label">Triggers:</span>
+          <p>{{ entry.triggers }}</p>
+        </div>
+
+        <!-- Date -->
+        <div class="entry-date">
+          <span class="material-icons">schedule</span>
+          {{ formatDate(entry.createdAt) }}
+        </div>
+
+        <!-- Doctor View Info -->
+        <div *ngIf="isDoctorView" class="entry-meta">
+          <span><strong>Patient:</strong> {{ getPatientDisplayName(entry) }}</span>
+        </div>
+
+        <!-- Patient View Info -->
+        <div *ngIf="!isDoctorView" class="entry-meta">
+          <span><strong>Responsible Doctor:</strong> {{ getDoctorDisplayName(entry) }}</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card-actions" *ngIf="!isDoctorView">
+        <button
+          class="btn btn-icon btn-edit"
+          (click)="editEntry(entry.id)"
+          title="Edit entry">
+          <span class="material-icons">edit</span>
+        </button>
+        <button
+          class="btn btn-icon btn-delete"
+          (click)="deleteEntry(entry.id)"
+          title="Delete entry">
+          <span class="material-icons">delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

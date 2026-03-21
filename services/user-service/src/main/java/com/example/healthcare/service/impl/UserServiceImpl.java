@@ -185,4 +185,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.delete(user);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> getDoctors() {
+        List<User> doctors = userRepository.findByRole(Role.DOCTOR);
+        return userMapper.toResponseDTOList(doctors);
+    }
 }

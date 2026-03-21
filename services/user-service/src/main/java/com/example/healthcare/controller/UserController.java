@@ -70,4 +70,9 @@ public class UserController {
         userService.activateUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<UserResponseDTO>> getDoctors() {
+        return ResponseEntity.ok(userService.getDoctors());
+    }
 }

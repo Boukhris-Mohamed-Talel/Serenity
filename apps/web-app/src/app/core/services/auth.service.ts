@@ -72,6 +72,14 @@ export class AuthService {
     return this.hasRole('ADMIN');
   }
 
+  isPatient(): boolean {
+    return this.hasRole('PATIENT');
+  }
+
+  isDoctor(): boolean {
+    return this.hasRole('DOCTOR');
+  }
+
   getCurrentUser(): AuthResponse | null {
     return this.currentUserSubject.value;
   }

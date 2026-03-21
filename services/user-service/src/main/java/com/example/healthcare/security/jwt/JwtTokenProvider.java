@@ -31,16 +31,42 @@ public class JwtTokenProvider {
         String roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        return generateToken(email, roles);
+        
+        // Extract userId from CustomUserDetails if available
+        Long userId = null;
+        if (authentication.getPrincipal() instanceof com.example.healthcare.security.userdetails.CustomUserDetails) {
+            userId = ((com.example.healthcare.security.userdetails.CustomUserDetails) authentication.getPrincipal()).getId();
+        }
+        
+        return generateToken(email, roles, userId);
     }
 
+    /**
+     * Deprecated: use generateToken(String email, String roles, Long userId) instead.
+     * This method is kept for backward compatibility.
+     */
+    @Deprecated
     public String generateToken(String email, String roles) {
+        return generateToken(email, roles, null);
+    }
+
+    /**
+     * Generates token with userId claim for microservice communication.
+     */
+    public String generateToken(String email, String roles, Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(email)
-                .claim("roles", roles)
+                .claim("roles", roles);
+        
+        // Include userId if available (required by monitoring-service and other microservices)
+        if (userId != null) {
+            builder.claim("userId", userId);
+        }
+        
+        return builder
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())

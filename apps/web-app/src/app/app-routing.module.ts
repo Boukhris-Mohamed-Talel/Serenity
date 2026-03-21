@@ -37,6 +37,12 @@ const routes: Routes = [
         path: 'users',
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
       },
+      {
+        path: 'monitoring',
+        canActivate: [RoleGuard],
+        data: { roles: ['PATIENT', 'DOCTOR'] },
+        loadChildren: () => import('./features/monitoring/monitoring.module').then(m => m.MonitoringModule)
+      },
       // Insurance module (uncomment when features/insurance exists)
       // {
       //   path: 'insurance',
