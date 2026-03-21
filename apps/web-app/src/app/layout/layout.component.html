@@ -12,6 +12,9 @@
       <a routerLink="/profile" routerLinkActive="active">
         Profile
       </a>
+      <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">
+        Pharmacy Workspace
+      </a>
       <!-- Reimbursements (uncomment when insurance module exists)
       <a routerLink="/insurance" routerLinkActive="active">
         Reimbursements
@@ -47,6 +50,7 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

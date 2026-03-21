@@ -30,6 +30,10 @@ const routes: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       {
+        path: 'pharmacy',
+        loadChildren: () => import('./features/pharmacy/pharmacy.module').then(m => m.PharmacyModule)
+      },
+      {
         path: 'profile',
         loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
       },
