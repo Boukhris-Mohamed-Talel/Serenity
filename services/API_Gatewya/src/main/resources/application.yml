@@ -16,6 +16,10 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/doctors/**
+        - id : image-uploads
+          uri: http://localhost:8081
+          predicates:
+            - Path=/uploads/**
       globalcors:
         cors-configurations:
           '[/**]':
