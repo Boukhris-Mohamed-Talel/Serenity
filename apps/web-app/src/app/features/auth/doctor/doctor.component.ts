@@ -82,8 +82,9 @@ export class DoctorComponent {
   onSubmit() {
   if (this.doctorForm.valid && this.imageFile) {
     const speciality = this.doctorForm.get('speciality')?.value;
+    /*const uploadedUrl = await this.uploadImage(file);*/
 
-    this.AuthService.addDoctor(this.userId, speciality, this.imageFile).subscribe({
+    this.AuthService.addDoctor(this.userId, speciality/*, this.imageFile*/).subscribe({
       next: () => {
         this.successMessage = 'Profile updated successfully!';
         setTimeout(() => {

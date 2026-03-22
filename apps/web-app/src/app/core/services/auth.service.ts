@@ -106,11 +106,14 @@ export class AuthService {
       );
   }
 
-  addDoctor(userId: number, speciality: string, image: File) {
-    const formData = new FormData();
-    formData.append('specialty', speciality);
-    formData.append('image', image);
+  addDoctor(userId: number, speciality: string,/* imageUrl: string*/) {
+  const body = {
+    specialty: speciality,
+    /*profilePictureUrl: imageUrl // just a string URL, not the file itself*/
+  };
 
-    return this.http.post(`${environment.apiUrl}/doctors/${userId}`, formData);
-  }
+  return this.http.post(`${environment.apiUrl}/doctors/${userId}`, body, {
+    withCredentials: true
+  });
+}
 }
