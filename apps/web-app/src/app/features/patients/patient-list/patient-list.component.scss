@@ -1,0 +1,94 @@
+.medical-page {
+  padding: 2rem 0 3rem;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  h1 {
+    font-size: 1.75rem;
+    color: var(--text);
+  }
+}
+
+.state-muted {
+  color: var(--text-light);
+  padding: 2rem 0;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border);
+  color: var(--text-light);
+}
+
+.table-wrap {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    background: var(--primary-light);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  tr:hover td {
+    background: rgba(59, 164, 160, 0.04);
+  }
+}
+
+.cell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+:host ::ng-deep .btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}

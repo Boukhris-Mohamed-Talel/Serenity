@@ -1,0 +1,24 @@
+@import '../../patients/patient-list/patient-list.component.scss';
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+
+  .sep {
+    margin: 0 0.35rem;
+    opacity: 0.6;
+  }
+}
+
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+:host ::ng-deep .btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}

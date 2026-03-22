@@ -1,0 +1,49 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>{{ isEdit ? 'Modifier le patient' : 'Nouveau patient' }}</h1>
+  </div>
+
+  <div *ngIf="loading" class="state-muted">Chargement…</div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
+    <div class="form-grid">
+      <label class="field">
+        <span>Prénom *</span>
+        <input type="text" formControlName="firstName" autocomplete="given-name" />
+        <small class="err" *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched">2–50 caractères requis</small>
+      </label>
+      <label class="field">
+        <span>Nom *</span>
+        <input type="text" formControlName="lastName" autocomplete="family-name" />
+        <small class="err" *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched">2–50 caractères requis</small>
+      </label>
+      <label class="field">
+        <span>Date de naissance</span>
+        <input type="date" formControlName="dateOfBirth" />
+      </label>
+      <label class="field">
+        <span>Genre</span>
+        <input type="text" formControlName="gender" maxlength="10" />
+      </label>
+      <label class="field">
+        <span>Groupe sanguin</span>
+        <input type="text" formControlName="bloodType" maxlength="5" />
+      </label>
+      <label class="field">
+        <span>Téléphone</span>
+        <input type="text" formControlName="phone" maxlength="20" />
+      </label>
+      <label class="field full">
+        <span>Allergies</span>
+        <textarea formControlName="allergies" rows="3" maxlength="500"></textarea>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        {{ isEdit ? 'Enregistrer' : 'Créer' }}
+      </button>
+    </div>
+  </form>
+</div>

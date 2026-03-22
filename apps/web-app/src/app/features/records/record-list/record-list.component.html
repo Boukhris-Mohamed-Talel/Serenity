@@ -1,0 +1,50 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>Dossiers médicaux</h1>
+    <div class="head-actions" *ngIf="patientId">
+      <a [routerLink]="['/patients', patientId]" class="btn btn-secondary">Fiche patient</a>
+      <a [routerLink]="['new']" class="btn btn-primary">Nouveau dossier</a>
+    </div>
+  </div>
+
+  <p class="breadcrumb" *ngIf="patientId">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId]">Patient #{{ patientId }}</a>
+    <span class="sep">/</span>
+    <span>Dossiers</span>
+  </p>
+
+  <div *ngIf="loading" class="state-muted">Chargement…</div>
+
+  <div *ngIf="!loading && !records.length" class="empty-state">Aucun dossier pour ce patient.</div>
+
+  <div class="table-wrap" *ngIf="!loading && records.length">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Diagnostic</th>
+          <th>Sévérité</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of records">
+          <td>{{ r.id }}</td>
+          <td>{{ r.date }}</td>
+          <td>{{ r.diagnosis }}</td>
+          <td>{{ r.severity }}</td>
+          <td>{{ r.status }}</td>
+          <td class="cell-actions">
+            <a [routerLink]="[r.id, 'prescriptions']" class="btn btn-primary btn-sm">Prescriptions</a>
+            <a [routerLink]="[r.id, 'edit']" class="btn btn-secondary btn-sm">Modifier</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="deleteRecord(r.id)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

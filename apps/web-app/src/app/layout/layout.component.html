@@ -1,3 +1,5 @@
+<app-toast></app-toast>
+
 <nav class="navbar">
   <div class="container navbar-inner">
     <a routerLink="/" class="navbar-brand">
@@ -19,6 +21,9 @@
       -->
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">
         Users
+      </a>
+      <a routerLink="/patients" routerLinkActive="active">
+        Patients
       </a>
     </div>
 
@@ -47,6 +52,7 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/patients">Patients</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

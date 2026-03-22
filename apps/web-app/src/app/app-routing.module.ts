@@ -37,6 +37,10 @@ const routes: Routes = [
         path: 'users',
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
       },
+      {
+        path: 'patients',
+        loadChildren: () => import('./features/patients/patients.module').then(m => m.PatientsModule)
+      },
       // Insurance module (uncomment when features/insurance exists)
       // {
       //   path: 'insurance',

@@ -1,0 +1,46 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>Patients</h1>
+    <a routerLink="new" class="btn btn-primary">Nouveau patient</a>
+  </div>
+
+  <div *ngIf="loading" class="state-muted">Chargement…</div>
+
+  <div *ngIf="!loading && page?.empty" class="empty-state">Aucun patient pour le moment.</div>
+
+  <div class="table-wrap" *ngIf="!loading && page && !page.empty">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Prénom</th>
+          <th>Téléphone</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of page!.content">
+          <td>{{ p.id }}</td>
+          <td>{{ p.lastName }}</td>
+          <td>{{ p.firstName }}</td>
+          <td>{{ p.phone || '—' }}</td>
+          <td class="cell-actions">
+            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Détail</a>
+            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Modifier</a>
+            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Dossiers</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="deletePatient(p.id, p.firstName + ' ' + p.lastName)">
+              Supprimer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pagination-bar" *ngIf="page.totalPages > 1">
+      <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Précédent</button>
+      <span class="page-info">Page {{ page.pageNumber + 1 }} / {{ page.totalPages }} ({{ page.totalElements }} patients)</span>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Suivant</button>
+    </div>
+  </div>
+</div>

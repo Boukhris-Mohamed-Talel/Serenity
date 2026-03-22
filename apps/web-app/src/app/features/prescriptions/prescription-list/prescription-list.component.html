@@ -1,0 +1,51 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>Prescriptions</h1>
+    <div class="head-actions" *ngIf="patientId && recordId">
+      <a [routerLink]="['/patients', patientId, 'records']" class="btn btn-secondary">Dossiers</a>
+      <a [routerLink]="['new']" class="btn btn-primary">Nouvelle prescription</a>
+    </div>
+  </div>
+
+  <p class="breadcrumb" *ngIf="patientId && recordId">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId]">Patient #{{ patientId }}</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId, 'records']">Dossiers</a>
+    <span class="sep">/</span>
+    <span>Dossier #{{ recordId }}</span>
+  </p>
+
+  <div *ngIf="loading" class="state-muted">Chargement…</div>
+
+  <div *ngIf="!loading && !prescriptions.length" class="empty-state">Aucune prescription pour ce dossier.</div>
+
+  <div class="table-wrap" *ngIf="!loading && prescriptions.length">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Médicament</th>
+          <th>Dosage</th>
+          <th>Fréquence</th>
+          <th>Début</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of prescriptions">
+          <td>{{ p.medicationName }}</td>
+          <td>{{ p.dosage }}</td>
+          <td>{{ p.frequency }}</td>
+          <td>{{ p.startDate }}</td>
+          <td>{{ p.status }}</td>
+          <td class="cell-actions">
+            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Modifier</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="deletePrescription(p.id)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

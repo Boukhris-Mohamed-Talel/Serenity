@@ -1,0 +1,20 @@
+@import '../../patients/patient-form/patient-form.component.scss';
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+
+  .sep {
+    margin: 0 0.35rem;
+    opacity: 0.6;
+  }
+}
+
+select {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}

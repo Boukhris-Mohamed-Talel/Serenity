@@ -1,0 +1,57 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>{{ isEdit ? 'Modifier la prescription' : 'Nouvelle prescription' }}</h1>
+  </div>
+
+  <p class="breadcrumb" *ngIf="patientId && recordId">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId, 'records']">Dossiers</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId, 'records', recordId, 'prescriptions']">Prescriptions</a>
+  </p>
+
+  <div *ngIf="loading" class="state-muted">Chargement…</div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
+    <div class="form-grid">
+      <label class="field full">
+        <span>Médicament *</span>
+        <input type="text" formControlName="medicationName" maxlength="100" />
+      </label>
+      <label class="field">
+        <span>Dosage *</span>
+        <input type="text" formControlName="dosage" maxlength="50" />
+      </label>
+      <label class="field">
+        <span>Fréquence *</span>
+        <input type="text" formControlName="frequency" maxlength="50" />
+      </label>
+      <label class="field">
+        <span>Quantité *</span>
+        <input type="number" formControlName="quantity" min="1" />
+      </label>
+      <label class="field">
+        <span>Date début *</span>
+        <input type="date" formControlName="startDate" />
+      </label>
+      <label class="field">
+        <span>Date fin</span>
+        <input type="date" formControlName="endDate" />
+      </label>
+      <label class="field">
+        <span>Statut *</span>
+        <input type="text" formControlName="status" placeholder="ACTIVE ou COMPLETED" />
+      </label>
+      <label class="field full">
+        <span>Instructions</span>
+        <textarea formControlName="instructions" rows="3" maxlength="500"></textarea>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">Enregistrer</button>
+    </div>
+  </form>
+</div>
