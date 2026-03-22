@@ -14,8 +14,8 @@ export interface PharmacyUpsertRequest {
   addressLine?: string;
   city?: string;
   governorate?: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   supportsEmergency?: boolean;
 }
 

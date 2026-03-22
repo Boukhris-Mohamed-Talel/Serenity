@@ -44,16 +44,18 @@
         <input formControlName="governorate" type="text" />
       </label>
 
-      <div class="grid-2">
-        <label>
-          Latitude
-          <input formControlName="latitude" type="number" step="0.000001" />
-        </label>
-
-        <label>
-          Longitude
-          <input formControlName="longitude" type="number" step="0.000001" />
-        </label>
+      <div class="location-block">
+        <p class="location-title">Exact Pharmacy Location</p>
+        <app-location-picker
+          [latitude]="form.get('latitude')?.value"
+          [longitude]="form.get('longitude')?.value"
+          (locationSelected)="onLocationSelected($event)">
+        </app-location-picker>
+        <p
+          class="field-error"
+          *ngIf="(form.get('latitude')?.touched || form.get('longitude')?.touched) && (form.get('latitude')?.invalid || form.get('longitude')?.invalid)">
+          Exact location is required to save your pharmacy.
+        </p>
       </div>
 
       <label class="checkbox-row">
@@ -61,7 +63,9 @@
         Supports emergency pickup
       </label>
 
-      <button type="submit" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Pharmacy' }}</button>
+      <button class="btn btn-primary" type="submit" [disabled]="saving || form.invalid">
+        {{ saving ? 'Saving...' : 'Save Pharmacy' }}
+      </button>
     </form>
   </section>
 </div>

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
+import { PharmacyUpsertRequest } from '../../../shared/models/pharmacy.model';
+import { PickerLocation } from '../../../shared/components/location-picker/location-picker.component';
 
 @Component({
   selector: 'app-my-pharmacy',
@@ -28,8 +30,8 @@ export class MyPharmacyComponent implements OnInit {
       addressLine: [''],
       city: [''],
       governorate: [''],
-      latitude: [null],
-      longitude: [null],
+      latitude: [null, [Validators.required, Validators.min(-90), Validators.max(90)]],
+      longitude: [null, [Validators.required, Validators.min(-180), Validators.max(180)]],
       supportsEmergency: [false]
     });
 
@@ -51,13 +53,25 @@ export class MyPharmacyComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      if (this.form.get('latitude')?.invalid || this.form.get('longitude')?.invalid) {
+        this.errorMessage = 'Please select your pharmacy exact location on the map.';
+      }
+      return;
+    }
 
     this.saving = true;
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.pharmacyService.upsertMyPharmacy(this.form.value).subscribe({
+    const payload: PharmacyUpsertRequest = {
+      ...this.form.value,
+      latitude: Number(this.form.get('latitude')?.value),
+      longitude: Number(this.form.get('longitude')?.value)
+    };
+
+    this.pharmacyService.upsertMyPharmacy(payload).subscribe({
       next: () => {
         this.successMessage = 'Pharmacy profile saved successfully.';
         this.saving = false;
@@ -67,5 +81,16 @@ export class MyPharmacyComponent implements OnInit {
         this.saving = false;
       }
     });
+  }
+
+  onLocationSelected(location: PickerLocation): void {
+    this.form.patchValue({
+      latitude: location.latitude,
+      longitude: location.longitude
+    });
+    this.form.get('latitude')?.markAsTouched();
+    this.form.get('longitude')?.markAsTouched();
+    this.form.get('latitude')?.updateValueAndValidity();
+    this.form.get('longitude')?.updateValueAndValidity();
   }
 }
