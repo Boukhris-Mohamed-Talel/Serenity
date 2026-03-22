@@ -6,7 +6,9 @@ import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -22,9 +24,13 @@ public class DoctorController {
     @PermitAll
     public ResponseEntity<Doctor> createDoctorForExistingUser(
             @PathVariable Long userId,
-            @RequestBody Doctor doctorDetails
-    ) {
-        Doctor doctor = doctorService.createDoctorForExistingUser(userId, doctorDetails);
+            @RequestParam("speciality") String speciality,
+            @RequestParam("image") MultipartFile image
+    ) throws IOException {
+
+
+        Doctor doctor = doctorService.createDoctorForExistingUser(userId, speciality, image);
+
         return ResponseEntity.ok(doctor);
     }
 

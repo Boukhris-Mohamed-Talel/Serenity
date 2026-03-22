@@ -81,22 +81,21 @@ export class DoctorComponent {
 
   onSubmit() {
   if (this.doctorForm.valid && this.imageFile) {
-    const speciality = this.doctorForm.get('speciality')?.value;
-    /*const uploadedUrl = await this.uploadImage(file);*/
+    const speciality = this.doctorForm.get('speciality')?.value
 
-    this.AuthService.addDoctor(this.userId, speciality/*, this.imageFile*/).subscribe({
+    this.AuthService.addDoctor(this.userId, speciality, this.imageFile).subscribe({
       next: () => {
-        this.successMessage = 'Profile updated successfully!';
+        this.successMessage = 'Profile updated successfully!'
         setTimeout(() => {
-          this.router.navigate(['/']);
-        }, 3000);
+          this.router.navigate(['/'])
+        }, 3000)
       },
       error: () => {
-        this.errorMessage = 'Error while creating doctor profile';
+        this.errorMessage = 'Error while creating doctor profile'
       }
-    });
+    })
   } else {
-    this.errorMessage = 'Please fill in all required fields';
+    this.errorMessage = 'Please fill in all required fields'
   }
 }
 

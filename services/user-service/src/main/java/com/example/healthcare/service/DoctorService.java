@@ -7,7 +7,13 @@ import com.example.healthcare.repository.DoctorRepository;
 import com.example.healthcare.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +27,8 @@ public class DoctorService implements IDoctorService {
     private UserRepository userRepository;
 
     @Override
-    public Doctor createDoctorForExistingUser(Long userId, Doctor doctorDetails) {
+    public Doctor createDoctorForExistingUser(Long userId, String speciality, MultipartFile image) throws IOException {
+
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -29,10 +36,19 @@ public class DoctorService implements IDoctorService {
             throw new RuntimeException("User is not a doctor");
         }
 
+        // Save the file
+        String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+        String uploadDir = "uploads/";
+
+        Path filePath = Paths.get(uploadDir + fileName);
+        Files.createDirectories(filePath.getParent());
+        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Create doctor and set DB fields
         Doctor doctor = new Doctor();
-        doctor.setUser(existingUser); // link to existing user
-        doctor.setSpecialty(doctorDetails.getSpecialty());
-        doctor.setProfilePictureUrl(doctorDetails.getProfilePictureUrl());
+        doctor.setUser(existingUser);
+        doctor.setSpecialty(speciality);
+        doctor.setProfilePictureUrl("uploads/" + fileName);
 
         return doctorRepository.save(doctor);
     }
