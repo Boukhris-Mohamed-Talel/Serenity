@@ -17,6 +17,8 @@ public class MoodEntryResponseDTO {
     private Long id;
     private Long patientId;
     private String patientName;
+    /** Profile avatar URL from {@code user_profiles.avatar} (optional). */
+    private String patientAvatarUrl;
     private Long doctorId;  // Assigned doctor who tracks this patient's mood entries
     private String doctorName;
     private Integer moodScore;

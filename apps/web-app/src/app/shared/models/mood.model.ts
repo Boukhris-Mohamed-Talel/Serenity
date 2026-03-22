@@ -9,6 +9,8 @@ export interface MoodEntryResponse {
   id: number;
   patientId: number;
   patientName?: string;
+  /** From user_profiles.avatar (when set in Profile). */
+  patientAvatarUrl?: string | null;
   doctorId: number;
   doctorName?: string;
   moodScore: number;

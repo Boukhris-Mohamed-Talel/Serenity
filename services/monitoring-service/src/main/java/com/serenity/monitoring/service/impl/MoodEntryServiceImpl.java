@@ -5,8 +5,10 @@ import com.serenity.monitoring.dto.MoodEntryResponseDTO;
 import com.serenity.monitoring.entity.MoodEntry;
 import com.serenity.monitoring.entity.UserAccount;
 import com.serenity.monitoring.mapper.MoodEntryMapper;
+import com.serenity.monitoring.entity.UserProfileSnapshot;
 import com.serenity.monitoring.repository.MoodEntryRepository;
 import com.serenity.monitoring.repository.UserAccountRepository;
+import com.serenity.monitoring.repository.UserProfileSnapshotRepository;
 import com.serenity.monitoring.service.DoctorAssignmentService;
 import com.serenity.monitoring.service.MoodEntryService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class MoodEntryServiceImpl implements MoodEntryService {
     private final MoodEntryMapper moodEntryMapper;
     private final DoctorAssignmentService doctorAssignmentService;
     private final UserAccountRepository userAccountRepository;
+    private final UserProfileSnapshotRepository userProfileSnapshotRepository;
 
     @Override
     public MoodEntryResponseDTO createMoodEntry(MoodEntryRequestDTO request) {
@@ -108,10 +113,25 @@ public class MoodEntryServiceImpl implements MoodEntryService {
         Map<Long, UserAccount> usersById = new HashMap<>();
         userAccountRepository.findAllById(userIds).forEach(user -> usersById.put(user.getId(), user));
 
+        Set<Long> patientIds = responses.stream()
+                .map(MoodEntryResponseDTO::getPatientId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, UserProfileSnapshot> profileByPatientId = new HashMap<>();
+        if (!patientIds.isEmpty()) {
+            userProfileSnapshotRepository.findAllByUserIdIn(patientIds)
+                    .forEach(profile -> profileByPatientId.put(profile.getUserId(), profile));
+        }
+
         for (MoodEntryResponseDTO response : responses) {
             UserAccount patient = usersById.get(response.getPatientId());
             if (patient != null) {
                 response.setPatientName(buildDisplayName(patient));
+            }
+            UserProfileSnapshot profile = profileByPatientId.get(response.getPatientId());
+            if (profile != null && profile.getAvatar() != null && !profile.getAvatar().isBlank()) {
+                response.setPatientAvatarUrl(profile.getAvatar().trim());
             }
             UserAccount doctor = usersById.get(response.getDoctorId());
             if (doctor != null) {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MonitoringService } from '../../../../core/services/monitoring.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -8,6 +8,17 @@ import {
   MoodEntryResponse
 } from '../../../../shared/models/mood.model';
 
+/** Sidebar row for doctor view — unique patients derived from mood entries. */
+export interface DoctorPatientRow {
+  id: number;
+  firstName: string;
+  lastName: string;
+  /** From user_profiles.avatar (same as entry.patientAvatarUrl). */
+  avatarUrl?: string;
+  entryCount: number;
+  hasCrisis: boolean;
+}
+
 @Component({
   selector: 'app-mood-list',
   templateUrl: './mood-list.component.html',
@@ -15,6 +26,12 @@ import {
 })
 export class MoodListComponent implements OnInit {
   moodEntries: MoodEntryResponse[] = [];
+  /** Doctor view: unique patients for sidebar (built from moodEntries). */
+  patients: DoctorPatientRow[] = [];
+  /** Doctor view: selected sidebar patient (null until user picks one). */
+  selectedPatient: DoctorPatientRow | null = null;
+  /** Doctor view: sidebar filter. */
+  searchQuery = '';
   triggerMap: Record<number, EmotionalTriggerResponse[]> = {};
   triggerPanelOpen: Record<number, boolean> = {};
   triggerLoading: Record<number, boolean> = {};
@@ -94,6 +111,15 @@ export class MoodListComponent implements OnInit {
         this.moodEntries = entries;
         this.emptyState = entries.length === 0;
         this.loading = false;
+        if (this.isDoctorView) {
+          this.buildPatientList();
+          // Pre-select first patient so the two-panel layout is obviously different from the old flat grid.
+          this.selectedPatient = this.patients.length > 0 ? this.patients[0] : null;
+        } else {
+          this.patients = [];
+          this.selectedPatient = null;
+          this.searchQuery = '';
+        }
       },
       error: (err) => {
         console.error('Error loading mood entries:', err);
@@ -142,6 +168,10 @@ export class MoodListComponent implements OnInit {
         next: () => {
           this.moodEntries = this.moodEntries.filter(entry => entry.id !== id);
           this.emptyState = this.moodEntries.length === 0;
+          if (this.isDoctorView) {
+            this.buildPatientList();
+            this.syncDoctorSelectionAfterDataChange();
+          }
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to delete mood entry';
@@ -177,6 +207,96 @@ export class MoodListComponent implements OnInit {
 
   getDoctorDisplayName(entry: MoodEntryResponse): string {
     return entry.doctorName?.trim() || 'Not assigned yet';
+  }
+
+  /**
+   * Builds unique patient rows for the doctor sidebar from loaded mood entries.
+   */
+  buildPatientList(): void {
+    const map = new Map<number, DoctorPatientRow>();
+    for (const e of this.moodEntries) {
+      if (!map.has(e.patientId)) {
+        const { firstName, lastName } = this.splitPatientName(e.patientName);
+        map.set(e.patientId, {
+          id: e.patientId,
+          firstName,
+          lastName,
+          avatarUrl: e.patientAvatarUrl?.trim() || undefined,
+          entryCount: 0,
+          hasCrisis: false
+        });
+      }
+      const p = map.get(e.patientId)!;
+      p.entryCount++;
+      if (e.moodScore <= 3) {
+        p.hasCrisis = true;
+      }
+      if (e.patientAvatarUrl?.trim()) {
+        p.avatarUrl = e.patientAvatarUrl.trim();
+      }
+    }
+    this.patients = Array.from(map.values()).sort((a, b) =>
+      `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, undefined, {
+        sensitivity: 'base'
+      })
+    );
+  }
+
+  get filteredPatients(): DoctorPatientRow[] {
+    if (!this.searchQuery?.trim()) {
+      return this.patients;
+    }
+    const q = this.searchQuery.toLowerCase().trim();
+    return this.patients.filter((p) =>
+      `${p.firstName} ${p.lastName}`.toLowerCase().includes(q)
+    );
+  }
+
+  selectPatient(patient: DoctorPatientRow): void {
+    this.selectedPatient = patient;
+  }
+
+  get selectedPatientEntries(): MoodEntryResponse[] {
+    if (!this.selectedPatient) {
+      return [];
+    }
+    return this.moodEntries.filter((e) => e.patientId === this.selectedPatient!.id);
+  }
+
+  get averageMood(): number {
+    const list = this.selectedPatientEntries;
+    if (!list.length) {
+      return 0;
+    }
+    const sum = list.reduce((acc, e) => acc + e.moodScore, 0);
+    return Math.round(sum / list.length);
+  }
+
+  private splitPatientName(patientName?: string): { firstName: string; lastName: string } {
+    const raw = patientName?.trim() || 'Unknown Patient';
+    const parts = raw.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+      return { firstName: 'Unknown', lastName: 'Patient' };
+    }
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: '' };
+    }
+    return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+  }
+
+  private syncDoctorSelectionAfterDataChange(): void {
+    if (!this.isDoctorView) {
+      return;
+    }
+    if (!this.selectedPatient) {
+      return;
+    }
+    const still = this.patients.find((p) => p.id === this.selectedPatient!.id);
+    if (!still) {
+      this.selectedPatient = this.patients.length > 0 ? this.patients[0] : null;
+    } else {
+      this.selectedPatient = still;
+    }
   }
 
   toggleTriggerPanel(moodEntryId: number): void {

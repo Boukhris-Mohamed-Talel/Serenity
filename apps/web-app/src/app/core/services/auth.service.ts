@@ -65,7 +65,10 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     const user = this.currentUserSubject.value;
-    return user?.role === role;
+    if (!user?.role) {
+      return false;
+    }
+    return user.role.toUpperCase() === role.toUpperCase();
   }
 
   isAdmin(): boolean {
