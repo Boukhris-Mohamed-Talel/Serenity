@@ -1,0 +1,68 @@
+<div class="container">
+  <section class="page">
+    <header class="page-header">
+      <div>
+        <h1>Stock Management</h1>
+        <p>Search medicines and manage quantity, availability, and archive state.</p>
+      </div>
+      <a routerLink="/pharmacy/stock/new" class="btn btn-primary">Add New Medicine</a>
+    </header>
+
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="toolbar card">
+      <div class="toolbar-main">
+        <label class="search-label">
+          <span>Search medicine</span>
+          <div class="search-input-wrap">
+            <input
+              type="text"
+              [(ngModel)]="query"
+              placeholder="Try: Aspirin, Panadol, Vitamin C"
+              (keyup.enter)="loadStock()" />
+          </div>
+        </label>
+
+        <button type="button" class="btn btn-primary search-btn" (click)="loadStock()">Search</button>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="includeArchived" />
+        Show archived medicines
+      </label>
+    </div>
+
+    <p *ngIf="!loading && items.length === 0" class="empty-state">No medicines found.</p>
+
+    <div class="stock-grid" *ngIf="!loading && items.length > 0">
+      <article class="stock-card card" *ngFor="let item of items; trackBy: trackById">
+        <div class="stock-head">
+          <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.medicineName" />
+          <div>
+            <h3>{{ item.medicineName }}</h3>
+            <span class="state" [class.out]="item.state === 'OUT_OF_STOCK'">{{ item.state }}</span>
+          </div>
+        </div>
+
+        <p class="description" *ngIf="item.description">{{ item.description }}</p>
+
+        <p class="qty">Quantity: <strong>{{ item.quantity }}</strong></p>
+
+        <div class="inline-actions quantity-row">
+          <input
+            type="number"
+            min="1"
+            [(ngModel)]="incrementValue[item.id]"
+            placeholder="+qty" />
+          <button type="button" class="btn btn-secondary" (click)="increment(item)">Add Quantity</button>
+        </div>
+
+        <div class="inline-actions action-row">
+          <button type="button" class="btn btn-state" (click)="markOutOfStock(item)">Mark Out Of Stock</button>
+          <button type="button" class="btn btn-danger" (click)="archive(item)">Delete (Archive)</button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>

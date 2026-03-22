@@ -4,6 +4,8 @@ import { SharedModule } from '../../shared/shared.module';
 import { PharmacistDashboardComponent } from './pharmacist-dashboard/pharmacist-dashboard.component';
 import { MyPharmacyComponent } from './my-pharmacy/my-pharmacy.component';
 import { PrescriptionInboxComponent } from './prescription-inbox';
+import { StockManagementComponent } from './stock-management/stock-management.component';
+import { AddMedicineComponent } from './add-medicine/add-medicine.component';
 
 const routes: Routes = [
   {
@@ -17,6 +19,14 @@ const routes: Routes = [
   {
     path: 'inbox',
     component: PrescriptionInboxComponent
+  },
+  {
+    path: 'stock',
+    component: StockManagementComponent
+  },
+  {
+    path: 'stock/new',
+    component: AddMedicineComponent
   }
 ];
 
@@ -24,7 +34,9 @@ const routes: Routes = [
   declarations: [
     PharmacistDashboardComponent,
     MyPharmacyComponent,
-    PrescriptionInboxComponent
+    PrescriptionInboxComponent,
+    StockManagementComponent,
+    AddMedicineComponent
   ],
   imports: [SharedModule, RouterModule.forChild(routes)]
 })

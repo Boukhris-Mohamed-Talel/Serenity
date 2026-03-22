@@ -70,3 +70,29 @@ export interface PrescriptionResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';
+
+export interface StockItemCreateRequest {
+  medicineName: string;
+  quantity: number;
+  imageUrl?: string;
+  description?: string;
+}
+
+export interface StockQuantityIncrementRequest {
+  incrementBy: number;
+}
+
+export interface StockItemResponse {
+  id: number;
+  pharmacyId: number;
+  medicineName: string;
+  quantity: number;
+  imageUrl?: string;
+  description?: string;
+  state: StockState;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

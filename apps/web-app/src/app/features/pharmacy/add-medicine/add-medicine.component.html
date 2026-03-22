@@ -1,0 +1,59 @@
+<div class="container">
+  <section class="page">
+    <header class="page-header">
+      <div>
+        <h1>Add New Medicine</h1>
+        <p>Create a medicine item with quantity and image information.</p>
+      </div>
+    </header>
+
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="card form">
+      <div class="fields-grid">
+        <label class="field">
+          <span class="field-title">Medicine Name</span>
+          <input formControlName="medicineName" type="text" placeholder="e.g. Paracetamol 500mg" />
+        </label>
+
+        <label class="field">
+          <span class="field-title">Stock Quantity</span>
+          <input formControlName="quantity" type="number" min="0" />
+        </label>
+      </div>
+
+      <div class="upload-row">
+        <div class="upload-panel">
+          <label class="field">
+            <span class="field-title">Upload Image</span>
+            <input type="file" accept="image/*" (change)="onImageSelected($event)" />
+          </label>
+          <p class="hint" *ngIf="uploadingImage">Reading image...</p>
+
+          <label class="field">
+            <span class="field-title">Or Image URL</span>
+            <input formControlName="imageUrl" type="text" placeholder="https://..." />
+          </label>
+        </div>
+
+        <div class="preview card" *ngIf="imagePreviewUrl || form.value.imageUrl">
+          <h3>Image Preview</h3>
+          <img [src]="imagePreviewUrl || form.value.imageUrl" alt="Medicine preview" />
+        </div>
+      </div>
+
+      <label class="field">
+        <span class="field-title">Description</span>
+        <textarea formControlName="description" rows="4" placeholder="Optional details"></textarea>
+      </label>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving || uploadingImage">
+          {{ saving ? 'Saving...' : 'Add Medicine' }}
+        </button>
+        <a routerLink="/pharmacy/stock" class="btn">Cancel</a>
+      </div>
+    </form>
+  </section>
+</div>

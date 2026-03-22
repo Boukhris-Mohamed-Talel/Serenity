@@ -7,7 +7,10 @@ import {
   PharmacyUpsertRequest,
   PrescriptionCreateRequest,
   PrescriptionResponse,
-  PrescriptionStatusUpdateRequest
+  PrescriptionStatusUpdateRequest,
+  StockItemCreateRequest,
+  StockItemResponse,
+  StockQuantityIncrementRequest
 } from '../../shared/models/pharmacy.model';
 
 @Injectable({
@@ -43,5 +46,32 @@ export class PharmacyService {
       `${this.API_URL}/prescriptions/${prescriptionId}/status`,
       payload
     );
+  }
+
+  listStock(query?: string, includeArchived = false): Observable<StockItemResponse[]> {
+    const params: string[] = [`includeArchived=${includeArchived}`];
+    if (query && query.trim()) {
+      params.push(`query=${encodeURIComponent(query.trim())}`);
+    }
+    return this.http.get<StockItemResponse[]>(`${this.API_URL}/stock?${params.join('&')}`);
+  }
+
+  createStockItem(payload: StockItemCreateRequest): Observable<StockItemResponse> {
+    return this.http.post<StockItemResponse>(`${this.API_URL}/stock`, payload);
+  }
+
+  incrementStockItem(
+    stockItemId: number,
+    payload: StockQuantityIncrementRequest
+  ): Observable<StockItemResponse> {
+    return this.http.patch<StockItemResponse>(`${this.API_URL}/stock/${stockItemId}/increment`, payload);
+  }
+
+  markOutOfStock(stockItemId: number): Observable<StockItemResponse> {
+    return this.http.post<StockItemResponse>(`${this.API_URL}/stock/${stockItemId}/out-of-stock`, {});
+  }
+
+  archiveStockItem(stockItemId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/stock/${stockItemId}`);
   }
 }
