@@ -36,6 +36,39 @@ export interface PharmacyResponse {
   updatedAt: string;
 }
 
+export interface PatientDefaultPharmacyRequest {
+  pharmacyId: number;
+}
+
+export interface PatientDefaultPharmacyResponse {
+  patientId: number;
+  pharmacyId: number;
+  pharmacyName: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine?: string;
+  city?: string;
+  governorate?: string;
+  latitude?: number;
+  longitude?: number;
+  supportsEmergency?: boolean;
+  selectedAt?: string;
+}
+
+export interface PharmacyCandidateResponse {
+  id: number;
+  name: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine?: string;
+  city?: string;
+  governorate?: string;
+  latitude?: number;
+  longitude?: number;
+  supportsEmergency?: boolean;
+  distanceKm?: number;
+}
+
 export interface PrescriptionCreateRequest {
   pharmacyId: number;
   patientId: number;
