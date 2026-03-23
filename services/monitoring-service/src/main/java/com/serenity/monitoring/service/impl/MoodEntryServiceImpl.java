@@ -2,6 +2,7 @@ package com.serenity.monitoring.service.impl;
 
 import com.serenity.monitoring.dto.MoodEntryRequestDTO;
 import com.serenity.monitoring.dto.MoodEntryResponseDTO;
+import com.serenity.monitoring.dto.CrisisAlertPayload;
 import com.serenity.monitoring.entity.MoodEntry;
 import com.serenity.monitoring.entity.UserAccount;
 import com.serenity.monitoring.mapper.MoodEntryMapper;
@@ -10,8 +11,10 @@ import com.serenity.monitoring.repository.MoodEntryRepository;
 import com.serenity.monitoring.repository.UserAccountRepository;
 import com.serenity.monitoring.repository.UserProfileSnapshotRepository;
 import com.serenity.monitoring.service.DoctorAssignmentService;
+import com.serenity.monitoring.service.CrisisAlertService;
 import com.serenity.monitoring.service.MoodEntryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +24,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MoodEntryServiceImpl implements MoodEntryService {
 
     private final MoodEntryRepository moodEntryRepository;
     private final MoodEntryMapper moodEntryMapper;
     private final DoctorAssignmentService doctorAssignmentService;
+    private final CrisisAlertService crisisAlertService;
     private final UserAccountRepository userAccountRepository;
     private final UserProfileSnapshotRepository userProfileSnapshotRepository;
 
@@ -38,12 +44,34 @@ public class MoodEntryServiceImpl implements MoodEntryService {
     public MoodEntryResponseDTO createMoodEntry(MoodEntryRequestDTO request) {
         // Get or assign doctor for this patient (Round-Robin algorithm)
         Long assignedDoctorId = doctorAssignmentService.getOrAssignDoctor(request.getPatientId());
+        log.info("Creating mood entry for patientId={} assignedDoctorId={} moodScore={}",
+                request.getPatientId(), assignedDoctorId, request.getMoodScore());
         
         // Set the doctor ID in the request
         request.setDoctorId(assignedDoctorId);
         
         MoodEntry moodEntry = moodEntryMapper.toEntity(request);
         MoodEntry savedEntry = moodEntryRepository.save(moodEntry);
+
+        if (savedEntry.getMoodScore() != null && savedEntry.getMoodScore() <= 3) {
+            UserAccount patient = userAccountRepository.findById(savedEntry.getPatientId()).orElse(null);
+            String patientName = patient != null ? buildDisplayName(patient) : "Unknown Patient";
+
+            CrisisAlertPayload payload = CrisisAlertPayload.builder()
+                    .doctorId(savedEntry.getDoctorId())
+                    .patientId(savedEntry.getPatientId())
+                    .patientFullName(patientName)
+                    .moodLevel(savedEntry.getMoodScore())
+                    .message("Crisis alert: " + patientName + " submitted a low mood score")
+                    .timestamp(savedEntry.getCreatedAt() != null ? savedEntry.getCreatedAt() : new Date())
+                    .build();
+
+            crisisAlertService.sendCrisisAlert(payload);
+        } else {
+            log.debug("Mood entry {} not considered crisis (moodScore={})",
+                    savedEntry.getId(), savedEntry.getMoodScore());
+        }
+
         return enrichResponse(moodEntryMapper.toResponseDTO(savedEntry));
     }
 

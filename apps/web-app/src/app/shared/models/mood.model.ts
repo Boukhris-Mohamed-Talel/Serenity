@@ -38,3 +38,13 @@ export interface EmotionalTriggerResponse {
   intensity: number;
   recordedAt: string;
 }
+
+export interface CrisisAlertPayload {
+  doctorId: number;
+  patientId: number;
+  patientFullName: string;
+  moodLevel: number;
+  message: string;
+  timestamp: string;
+}
+

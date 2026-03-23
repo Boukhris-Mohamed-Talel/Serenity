@@ -26,6 +26,35 @@
     </div>
 
     <div class="navbar-actions" *ngIf="authService.isLoggedIn()">
+      <div class="notif-bell-wrap" *ngIf="authService.isDoctor()">
+        <button class="notif-bell-btn" (click)="toggleNotificationPanel()" aria-label="Crisis alerts">
+          <span class="material-icons">notifications</span>
+          <span class="notif-badge" *ngIf="alerts.length > 0">{{ alerts.length }}</span>
+        </button>
+
+        <div class="notif-panel" *ngIf="notificationPanelOpen">
+          <div class="notif-header">
+            <span>Crisis Alerts</span>
+            <button (click)="clearAllAlerts()" *ngIf="alerts.length > 0">Clear all</button>
+          </div>
+
+          <div class="notif-list" *ngIf="alerts.length > 0; else emptyAlertsTpl">
+            <div class="notif-item" *ngFor="let alert of alerts">
+              <span class="notif-icon">🚨</span>
+              <div class="notif-body">
+                <p class="notif-message">{{ alert.message }}</p>
+                <span class="notif-time">{{ alert.timestamp | date: 'MMM d, y, h:mm a' }}</span>
+              </div>
+              <span class="mood-badge crisis">{{ alert.moodLevel }}/10</span>
+            </div>
+          </div>
+
+          <ng-template #emptyAlertsTpl>
+            <div class="notif-empty">No alerts in this session</div>
+          </ng-template>
+        </div>
+      </div>
+
       <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>

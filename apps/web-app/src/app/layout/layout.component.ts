@@ -2,7 +2,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
+import { CrisisAlertService } from '../core/services/crisis-alert.service';
 import { UserService } from '../core/services/user.service';
+import { CrisisAlertPayload } from '../shared/models/mood.model';
 import { UserResponse } from '../shared/models/user.model';
 
 @Component({
@@ -14,11 +16,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   characterVisible = false;
   user: UserResponse | null = null;
+  alerts: CrisisAlertPayload[] = [];
+  notificationPanelOpen = false;
   private peekInterval: any;
   private userSub!: Subscription;
+  private alertsSub!: Subscription;
+  private authSub!: Subscription;
 
   constructor(
     public readonly authService: AuthService,
+    private readonly crisisAlertService: CrisisAlertService,
     private readonly userService: UserService,
     private readonly router: Router
   ) {}
@@ -33,7 +40,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
           this.startPeekAnimation();
         }
       });
+
+      this.alertsSub = this.crisisAlertService.alerts$.subscribe(alerts => {
+        this.alerts = alerts;
+      });
     }
+
+    this.authSub = this.authService.currentUser$.subscribe((authUser) => {
+      if (authUser && this.authService.isDoctor() && authUser.userId) {
+        this.crisisAlertService.connect(authUser.userId);
+        return;
+      }
+      this.crisisAlertService.disconnect();
+    });
   }
 
   ngOnDestroy(): void {
@@ -43,6 +62,27 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.userSub) {
       this.userSub.unsubscribe();
     }
+    if (this.alertsSub) {
+      this.alertsSub.unsubscribe();
+    }
+    if (this.authSub) {
+      this.authSub.unsubscribe();
+    }
+    if (this.authService.isDoctor()) {
+      this.crisisAlertService.disconnect();
+    }
+  }
+
+  toggleNotificationPanel(): void {
+    if (!this.authService.isDoctor()) {
+      return;
+    }
+    this.notificationPanelOpen = !this.notificationPanelOpen;
+  }
+
+  clearAllAlerts(): void {
+    this.crisisAlertService.clearAlerts();
+    this.notificationPanelOpen = false;
   }
 
   getDisplayName(): string {
@@ -72,6 +112,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.notificationPanelOpen = false;
     this.router.navigate(['/auth/login']);
   }
 }

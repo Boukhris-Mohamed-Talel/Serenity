@@ -19,7 +19,7 @@
 
   &.doctor-view {
     flex: 1;
-    min-height: 0;
+    min-height: calc(100vh - 72px);
     display: flex;
     flex-direction: column;
     padding: 24px 0 0;
@@ -36,7 +36,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 0;
+    min-height: calc(100vh - 120px);
   }
 }
 
@@ -161,7 +161,7 @@
 .doctor-monitoring-layout {
   display: flex;
   flex: 1;
-  min-height: 0;
+  min-height: 560px;
   background: #f8fafc;
   overflow: hidden;
   margin-top: 8px;
@@ -924,6 +924,213 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Real-time crisis notifications */
+.crisis-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.2);
+  max-width: 400px;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.toast-body {
+  flex: 1;
+}
+
+.toast-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef4444;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toast-message {
+  font-size: 13px;
+  color: #374151;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.toast-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.toast-mood {
+  background: #fee2e2;
+  color: #ef4444;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #374151;
+  }
+}
+
+.notif-bell {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 1001;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 20px;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.notif-panel {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  width: 380px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a2e;
+
+  button {
+    font-size: 12px;
+    color: #ef4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+  }
+}
+
+.notif-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f8fafc;
+  background: #fef2f2;
+}
+
+.notif-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-message {
+  font-size: 13px;
+  color: #374151;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.mood-badge.crisis {
+  background: #fee2e2;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.notif-empty {
+  padding: 32px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
 }
 
 @media (max-width: 920px) {

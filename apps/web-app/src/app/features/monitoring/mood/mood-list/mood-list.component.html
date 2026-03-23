@@ -1,5 +1,17 @@
 <div class="monitoring-page" [class.doctor-view]="isDoctorView">
+  <div *ngIf="isDoctorView && toastAlert" class="crisis-toast">
+    <span class="toast-icon">🚨</span>
+    <div class="toast-body">
+      <p class="toast-title">Crisis Alert</p>
+      <p class="toast-message">{{ toastAlert.message }}</p>
+      <span class="toast-time">{{ formatDate(toastAlert.timestamp) }}</span>
+    </div>
+    <span class="toast-mood">{{ toastAlert.moodLevel }}/10</span>
+    <button class="toast-close" (click)="dismissToast()" aria-label="Close alert">✕</button>
+  </div>
+
   <div class="page-shell" [class.doctor-shell]="isDoctorView">
+
     <header class="page-header">
       <div>
         <h1>Monitoring Dashboard</h1>

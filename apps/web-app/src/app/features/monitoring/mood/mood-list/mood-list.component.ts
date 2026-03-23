@@ -1,8 +1,11 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MonitoringService } from '../../../../core/services/monitoring.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { CrisisAlertService } from '../../../../core/services/crisis-alert.service';
 import {
+  CrisisAlertPayload,
   EmotionalTriggerRequest,
   EmotionalTriggerResponse,
   MoodEntryResponse
@@ -24,7 +27,7 @@ export interface DoctorPatientRow {
   templateUrl: './mood-list.component.html',
   styleUrls: ['./mood-list.component.scss']
 })
-export class MoodListComponent implements OnInit {
+export class MoodListComponent implements OnInit, OnDestroy {
   moodEntries: MoodEntryResponse[] = [];
   /** Doctor view: unique patients for sidebar (built from moodEntries). */
   patients: DoctorPatientRow[] = [];
@@ -43,6 +46,10 @@ export class MoodListComponent implements OnInit {
   errorMessage = '';
   emptyState = false;
   isDoctorView = false;
+  toastAlert: CrisisAlertPayload | null = null;
+
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private alertSubscription: Subscription | null = null;
 
   // Mood score color mapping
   moodColors: { [key: number]: string } = {
@@ -85,11 +92,27 @@ export class MoodListComponent implements OnInit {
   constructor(
     private readonly monitoringService: MonitoringService,
     private readonly authService: AuthService,
+    private readonly crisisAlertService: CrisisAlertService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (this.authService.isDoctor() && currentUser?.userId) {
+      this.alertSubscription = this.crisisAlertService.newAlert$.subscribe((alert) => {
+        this.showCrisisToast(alert);
+      });
+    }
+
     this.loadMoodEntries();
+  }
+
+  ngOnDestroy(): void {
+    this.alertSubscription?.unsubscribe();
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
   }
 
   loadMoodEntries(): void {
@@ -397,5 +420,24 @@ export class MoodListComponent implements OnInit {
       description: '',
       intensity: 5
     };
+  }
+
+  dismissToast(): void {
+    this.toastAlert = null;
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+  }
+
+  private showCrisisToast(alert: CrisisAlertPayload): void {
+    this.toastAlert = alert;
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => {
+      this.toastAlert = null;
+      this.toastTimer = null;
+    }, 8000);
   }
 }
