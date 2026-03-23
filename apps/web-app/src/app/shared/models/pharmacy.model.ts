@@ -70,10 +70,18 @@ export interface PharmacyCandidateResponse {
 }
 
 export interface PrescriptionCreateRequest {
-  pharmacyId: number;
+  pharmacyId?: number;
   patientId: number;
   patientName: string;
   doctorName: string;
+  medicationName?: string;
+  dosage?: string;
+  quantity?: number;
+  instructions?: string;
+  medicineLines?: PrescriptionLineCreateRequest[];
+}
+
+export interface PrescriptionLineCreateRequest {
   medicationName: string;
   dosage: string;
   quantity: number;
@@ -87,21 +95,50 @@ export interface PrescriptionStatusUpdateRequest {
 
 export interface PrescriptionResponse {
   id: number;
-  pharmacyId: number;
-  pharmacyName: string;
+  pharmacyId?: number;
+  pharmacyName?: string;
   doctorId: number;
   patientId: number;
   doctorName: string;
   patientName: string;
+  assignedToPharmacy?: boolean;
+  assignmentMessage?: string;
   medicationName: string;
   dosage: string;
   quantity: number;
   instructions?: string;
+  medicineLines?: PrescriptionLineResponse[];
   status: PrescriptionStatus;
   rejectionReason?: string;
   readyAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PrescriptionLineResponse {
+  id: number;
+  medicationName: string;
+  dosage: string;
+  quantity: number;
+  instructions?: string;
+}
+
+export type DoctorSuggestionStockStatus = 'IN_STOCK' | 'OUT_OF_STOCK' | 'UNRESOLVED';
+
+export interface DoctorMedicineSuggestionItem {
+  medicineName: string;
+  stockStatus: DoctorSuggestionStockStatus;
+  availableQuantity?: number;
+  guidanceMessage?: string;
+}
+
+export interface DoctorMedicineSuggestionResponse {
+  patientId: number;
+  hasDefaultPharmacy: boolean;
+  pharmacyId?: number;
+  pharmacyName?: string;
+  guidanceMessage?: string;
+  suggestions: DoctorMedicineSuggestionItem[];
 }
 
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';

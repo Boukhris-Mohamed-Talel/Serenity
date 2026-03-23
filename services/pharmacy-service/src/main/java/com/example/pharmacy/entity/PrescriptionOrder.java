@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "prescription_orders")
@@ -18,7 +20,7 @@ public class PrescriptionOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pharmacy_id")
     private Pharmacy pharmacy;
 
@@ -34,13 +36,13 @@ public class PrescriptionOrder {
     @Column(nullable = false)
     private String patientName;
 
-    @Column(nullable = false)
+    @Column
     private String medicationName;
 
-    @Column(nullable = false)
+    @Column
     private String dosage;
 
-    @Column(nullable = false)
+    @Column
     private Integer quantity;
 
     @Column(length = 1500)
@@ -57,6 +59,10 @@ public class PrescriptionOrder {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "prescriptionOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PrescriptionLine> medicineLines = new ArrayList<>();
 
     @PrePersist
     public void onCreate() {

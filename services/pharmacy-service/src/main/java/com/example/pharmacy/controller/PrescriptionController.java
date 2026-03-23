@@ -51,4 +51,13 @@ public class PrescriptionController {
     ) {
         return ResponseEntity.ok(prescriptionService.updatePrescriptionStatus(id, request));
     }
+
+    @PostMapping("/{id}/status")
+    @PreAuthorize("hasRole('PHARMACIST')")
+    public ResponseEntity<PrescriptionResponseDTO> updatePrescriptionStatusPost(
+        @PathVariable Long id,
+        @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
+    ) {
+        return ResponseEntity.ok(prescriptionService.updatePrescriptionStatus(id, request));
+    }
 }

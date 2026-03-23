@@ -96,6 +96,9 @@
                 <span [class]="statusClass(item.status)">{{ item.status }}</span>
               </div>
               <p class="meta">Pharmacy: {{ item.pharmacyName }}</p>
+              <p class="meta" *ngIf="item.assignedToPharmacy === false && item.assignmentMessage">
+                {{ item.assignmentMessage }}
+              </p>
               <p class="meta">Doctor: {{ item.doctorName }}</p>
               <p class="meta">Dosage: {{ item.dosage }} | Quantity: {{ item.quantity }}</p>
               <p class="meta" *ngIf="item.instructions">Instructions: {{ item.instructions }}</p>

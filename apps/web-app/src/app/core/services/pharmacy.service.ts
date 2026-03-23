@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  DoctorMedicineSuggestionResponse,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
   PharmacyCandidateResponse,
@@ -35,6 +36,13 @@ export class PharmacyService {
 
   createPrescription(payload: PrescriptionCreateRequest): Observable<PrescriptionResponse> {
     return this.http.post<PrescriptionResponse>(`${this.API_URL}/prescriptions`, payload);
+  }
+
+  suggestDoctorMedicines(patientId: number, query: string): Observable<DoctorMedicineSuggestionResponse> {
+    const encodedQuery = encodeURIComponent(query.trim());
+    return this.http.get<DoctorMedicineSuggestionResponse>(
+      `${this.API_URL}/doctor/medicine-suggestions?patientId=${patientId}&query=${encodedQuery}`
+    );
   }
 
   getInbox(): Observable<PrescriptionResponse[]> {

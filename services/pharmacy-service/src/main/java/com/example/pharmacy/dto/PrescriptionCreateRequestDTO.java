@@ -2,8 +2,9 @@ package com.example.pharmacy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -12,7 +13,6 @@ import lombok.*;
 @Builder
 public class PrescriptionCreateRequestDTO {
 
-    @NotNull(message = "Pharmacy id is required")
     private Long pharmacyId;
 
     @NotNull(message = "Patient id is required")
@@ -24,15 +24,13 @@ public class PrescriptionCreateRequestDTO {
     @NotBlank(message = "Doctor name is required")
     private String doctorName;
 
-    @NotBlank(message = "Medication name is required")
     private String medicationName;
 
-    @NotBlank(message = "Dosage is required")
     private String dosage;
 
-    @NotNull(message = "Quantity is required")
-    @Positive(message = "Quantity must be greater than zero")
     private Integer quantity;
 
     private String instructions;
+
+    private List<PrescriptionLineCreateRequestDTO> medicineLines;
 }
