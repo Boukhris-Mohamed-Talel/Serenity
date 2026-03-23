@@ -3,11 +3,21 @@
   gap: 1rem;
 }
 
+.page-columns {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(420px, 1.6fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.left-column,
+.right-column {
+  display: grid;
+  gap: 1rem;
+}
+
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.8rem;
+  display: block;
 }
 
 .page-header p {
@@ -30,8 +40,7 @@
   color: #456564;
 }
 
-.nearest-header,
-.list-head {
+.change-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -59,8 +68,7 @@
   padding: 0.58rem 0.72rem;
 }
 
-.nearest-list,
-.list {
+.candidate-results {
   display: grid;
   gap: 0.65rem;
   margin-top: 0.9rem;
@@ -97,20 +105,87 @@
   color: #b52424;
 }
 
-@media (max-width: 700px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.prescriptions-head h2 {
+  margin: 0;
+}
 
+.prescriptions-head p {
+  margin: 0.25rem 0 0;
+  color: #5f7e7c;
+}
+
+.prescriptions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.top-row h3 {
+  margin: 0;
+}
+
+.status {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: #eef4f4;
+  color: #386260;
+}
+
+.status.pending {
+  background: #fff8e8;
+  color: #886920;
+}
+
+.status.accepted {
+  background: #e6f7ee;
+  color: #1d7a2a;
+}
+
+.status.rejected,
+.status.expired {
+  background: #fdeeee;
+  color: #b42d2d;
+}
+
+.status.ready_for_pickup,
+.status.collected {
+  background: #e9f4ff;
+  color: #1f5689;
+}
+
+.pickup {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  background: #eaf7ec;
+  color: #196a24;
+  font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+  .page-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
   .candidate {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .page-header .btn,
   .candidate .btn,
-  .nearest-header .btn,
+  .change-head .btn,
   .filters .btn {
     width: 100%;
   }

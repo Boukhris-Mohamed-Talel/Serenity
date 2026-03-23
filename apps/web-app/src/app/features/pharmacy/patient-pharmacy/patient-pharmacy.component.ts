@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
   PatientDefaultPharmacyResponse,
-  PharmacyCandidateResponse
+  PharmacyCandidateResponse,
+  PrescriptionResponse,
+  PrescriptionStatus
 } from '../../../shared/models/pharmacy.model';
 
 @Component({
@@ -11,23 +13,26 @@ import {
   styleUrls: ['./patient-pharmacy.component.scss']
 })
 export class PatientPharmacyComponent implements OnInit {
-  loading = true;
+  loading = false;
   nearestLoading = false;
   saving = false;
+  prescriptionsLoading = true;
+  hasSearchedCandidates = false;
 
   errorMessage = '';
   successMessage = '';
+  prescriptionsErrorMessage = '';
 
   cityFilter = '';
   governorateFilter = '';
 
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
-  pharmacies: PharmacyCandidateResponse[] = [];
-  nearestCandidates: PharmacyCandidateResponse[] = [];
+  candidateResults: PharmacyCandidateResponse[] = [];
+  prescriptions: PrescriptionResponse[] = [];
 
   ngOnInit(): void {
     this.loadDefaultPharmacy();
-    this.loadPharmacies();
+    this.loadPrescriptions();
   }
 
   constructor(private readonly pharmacyService: PharmacyService) {}
@@ -46,23 +51,43 @@ export class PatientPharmacyComponent implements OnInit {
     });
   }
 
+  loadPrescriptions(): void {
+    this.prescriptionsLoading = true;
+    this.prescriptionsErrorMessage = '';
+
+    this.pharmacyService.getMyPrescriptions().subscribe({
+      next: (items) => {
+        this.prescriptions = items;
+        this.prescriptionsLoading = false;
+      },
+      error: (err) => {
+        this.prescriptionsErrorMessage = err.error?.message || 'Failed to load your prescriptions';
+        this.prescriptionsLoading = false;
+      }
+    });
+  }
+
   loadPharmacies(): void {
     this.loading = true;
+    this.hasSearchedCandidates = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     this.pharmacyService.listPatientPharmacies(this.cityFilter, this.governorateFilter).subscribe({
       next: (items) => {
-        this.pharmacies = items;
+        this.candidateResults = items;
         this.loading = false;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to load pharmacies';
+        this.candidateResults = [];
         this.loading = false;
       }
     });
   }
 
   useMyLocation(): void {
+    this.hasSearchedCandidates = true;
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -79,7 +104,7 @@ export class PatientPharmacyComponent implements OnInit {
           .suggestNearestPharmacies(position.coords.latitude, position.coords.longitude)
           .subscribe({
             next: (items) => {
-              this.nearestCandidates = items;
+              this.candidateResults = items;
               this.nearestLoading = false;
               if (items.length === 0) {
                 this.errorMessage = 'No nearby pharmacies were found in the selected radius.';
@@ -87,6 +112,7 @@ export class PatientPharmacyComponent implements OnInit {
             },
             error: (err) => {
               this.errorMessage = err.error?.message || 'Failed to fetch nearest pharmacies';
+              this.candidateResults = [];
               this.nearestLoading = false;
             }
           });
@@ -119,5 +145,17 @@ export class PatientPharmacyComponent implements OnInit {
 
   isDefault(pharmacyId: number): boolean {
     return this.defaultPharmacy?.pharmacyId === pharmacyId;
+  }
+
+  isCandidatesLoading(): boolean {
+    return this.loading || this.nearestLoading;
+  }
+
+  statusClass(status: PrescriptionStatus): string {
+    return `status ${status.toLowerCase()}`;
+  }
+
+  isReadyForPickup(status: PrescriptionStatus): boolean {
+    return status === 'READY_FOR_PICKUP';
   }
 }

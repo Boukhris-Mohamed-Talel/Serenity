@@ -5,96 +5,108 @@
         <h1>Choose Your Pharmacy</h1>
         <p>Select your default pharmacy for prescription pickup and status tracking.</p>
       </div>
-      <a class="btn btn-secondary" routerLink="/pharmacy/patient/prescriptions">My Prescriptions</a>
     </header>
 
-    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
-    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <div class="page-columns">
+      <div class="left-column">
+        <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-    <article class="card default-card" *ngIf="defaultPharmacy as selected; else noDefault">
-      <h3>Current Default Pharmacy</h3>
-      <p class="name">{{ selected.pharmacyName }}</p>
-      <p class="meta" *ngIf="selected.addressLine">{{ selected.addressLine }}</p>
-      <p class="meta" *ngIf="selected.city || selected.governorate">
-        {{ selected.city || 'Unknown city' }}{{ selected.city && selected.governorate ? ', ' : '' }}{{ selected.governorate || '' }}
-      </p>
-      <p class="meta" *ngIf="selected.openingHours">Hours: {{ selected.openingHours }}</p>
-    </article>
-
-    <ng-template #noDefault>
-      <article class="card default-card empty">
-        <h3>No default pharmacy selected yet</h3>
-        <p>Select one now so your prescriptions can be processed and prepared for pickup.</p>
-      </article>
-    </ng-template>
-
-    <article class="card nearest-card">
-      <div class="nearest-header">
-        <h3>Nearest Suggestion</h3>
-        <button type="button" class="btn btn-primary" (click)="useMyLocation()" [disabled]="nearestLoading || saving">
-          {{ nearestLoading ? 'Checking location...' : 'Use My Location' }}
-        </button>
-      </div>
-
-      <p class="hint">Allow location access to get nearby pharmacies sorted by distance.</p>
-
-      <div class="nearest-list" *ngIf="nearestCandidates.length > 0">
-        <article class="candidate" *ngFor="let item of nearestCandidates">
-          <div>
-            <p class="candidate-name">{{ item.name }}</p>
-            <p class="candidate-meta" *ngIf="item.distanceKm != null">{{ item.distanceKm }} km away</p>
-            <p class="candidate-meta" *ngIf="item.openingHours">Hours: {{ item.openingHours }}</p>
-          </div>
-          <button
-            class="btn btn-secondary"
-            type="button"
-            (click)="setDefault(item.id)"
-            [disabled]="saving || isDefault(item.id)">
-            {{ isDefault(item.id) ? 'Default' : 'Confirm' }}
-          </button>
+        <article class="card default-card" *ngIf="defaultPharmacy as selected; else noDefault">
+          <h3>Current Default Pharmacy</h3>
+          <p class="name">{{ selected.pharmacyName }}</p>
+          <p class="meta" *ngIf="selected.addressLine">{{ selected.addressLine }}</p>
+          <p class="meta" *ngIf="selected.city || selected.governorate">
+            {{ selected.city || 'Unknown city' }}{{ selected.city && selected.governorate ? ', ' : '' }}{{ selected.governorate || '' }}
+          </p>
+          <p class="meta" *ngIf="selected.openingHours">Hours: {{ selected.openingHours }}</p>
+          <p class="meta" *ngIf="selected.phone">Phone: {{ selected.phone }}</p>
         </article>
-      </div>
-    </article>
 
-    <article class="card">
-      <div class="list-head">
-        <h3>Choose From List</h3>
-      </div>
+        <ng-template #noDefault>
+          <article class="card default-card empty">
+            <h3>No default pharmacy selected yet</h3>
+            <p>Select one now so your prescriptions can be processed and prepared for pickup.</p>
+          </article>
+        </ng-template>
 
-      <div class="filters">
-        <label>
-          City
-          <input type="text" [(ngModel)]="cityFilter" placeholder="e.g. Cairo" />
-        </label>
-        <label>
-          Governorate
-          <input type="text" [(ngModel)]="governorateFilter" placeholder="e.g. Cairo" />
-        </label>
-        <button type="button" class="btn btn-secondary" (click)="loadPharmacies()" [disabled]="loading || saving">
-          {{ loading ? 'Loading...' : 'Search' }}
-        </button>
-      </div>
-
-      <div class="list" *ngIf="!loading && pharmacies.length > 0">
-        <article class="candidate" *ngFor="let item of pharmacies">
-          <div>
-            <p class="candidate-name">{{ item.name }}</p>
-            <p class="candidate-meta" *ngIf="item.addressLine">{{ item.addressLine }}</p>
-            <p class="candidate-meta" *ngIf="item.city || item.governorate">
-              {{ item.city || 'Unknown city' }}{{ item.city && item.governorate ? ', ' : '' }}{{ item.governorate || '' }}
-            </p>
+        <article class="card">
+          <div class="change-head">
+            <h3>Change Default Pharmacy</h3>
+            <button type="button" class="btn btn-primary" (click)="useMyLocation()" [disabled]="nearestLoading || saving">
+              {{ nearestLoading ? 'Checking location...' : 'Use My Location' }}
+            </button>
           </div>
-          <button
-            class="btn btn-secondary"
-            type="button"
-            (click)="setDefault(item.id)"
-            [disabled]="saving || isDefault(item.id)">
-            {{ isDefault(item.id) ? 'Default' : 'Set Default' }}
-          </button>
+
+          <div class="filters">
+            <label>
+              City
+              <input type="text" [(ngModel)]="cityFilter" placeholder="e.g. Tunis" />
+            </label>
+            <label>
+              Governorate
+              <input type="text" [(ngModel)]="governorateFilter" placeholder="e.g. Monplaisir" />
+            </label>
+            <button type="button" class="btn btn-secondary" (click)="loadPharmacies()" [disabled]="loading || saving">
+              {{ loading ? 'Loading...' : 'Search' }}
+            </button>
+          </div>
+
+          <p class="hint">Use your location or search by city/governorate. Results appear below in one list.</p>
+
+          <div class="candidate-results" *ngIf="!isCandidatesLoading() && candidateResults.length > 0">
+            <article class="candidate" *ngFor="let item of candidateResults">
+              <div>
+                <p class="candidate-name">{{ item.name }}</p>
+                <p class="candidate-meta" *ngIf="item.distanceKm != null">{{ item.distanceKm }} km away</p>
+                <p class="candidate-meta" *ngIf="item.addressLine">{{ item.addressLine }}</p>
+                <p class="candidate-meta" *ngIf="item.city || item.governorate">
+                  {{ item.city || 'Unknown city' }}{{ item.city && item.governorate ? ', ' : '' }}{{ item.governorate || '' }}
+                </p>
+                <p class="candidate-meta" *ngIf="item.openingHours">Hours: {{ item.openingHours }}</p>
+              </div>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                (click)="setDefault(item.id)"
+                [disabled]="saving || isDefault(item.id)">
+                {{ isDefault(item.id) ? 'Default' : 'Set Default' }}
+              </button>
+            </article>
+          </div>
+
+          <p class="hint" *ngIf="hasSearchedCandidates && isCandidatesLoading()">Loading pharmacies...</p>
+          <p class="hint" *ngIf="hasSearchedCandidates && !isCandidatesLoading() && candidateResults.length === 0">No pharmacies found for your search.</p>
         </article>
       </div>
 
-      <p class="hint" *ngIf="!loading && pharmacies.length === 0">No pharmacies found for your filter.</p>
-    </article>
+      <div class="right-column">
+        <article class="card prescriptions-card">
+          <div class="prescriptions-head">
+            <h2>My Prescriptions</h2>
+            <p>Track statuses and pickup readiness.</p>
+          </div>
+
+          <p class="error" *ngIf="prescriptionsErrorMessage">{{ prescriptionsErrorMessage }}</p>
+
+          <div class="prescriptions-grid" *ngIf="!prescriptionsLoading && prescriptions.length > 0">
+            <article class="card prescription-card" *ngFor="let item of prescriptions">
+              <div class="top-row">
+                <h3>{{ item.medicationName }}</h3>
+                <span [class]="statusClass(item.status)">{{ item.status }}</span>
+              </div>
+              <p class="meta">Pharmacy: {{ item.pharmacyName }}</p>
+              <p class="meta">Doctor: {{ item.doctorName }}</p>
+              <p class="meta">Dosage: {{ item.dosage }} | Quantity: {{ item.quantity }}</p>
+              <p class="meta" *ngIf="item.instructions">Instructions: {{ item.instructions }}</p>
+              <p class="pickup" *ngIf="isReadyForPickup(item.status)">Go collect it.</p>
+            </article>
+          </div>
+
+          <p class="hint" *ngIf="!prescriptionsLoading && prescriptions.length === 0">No prescriptions yet.</p>
+          <p class="hint" *ngIf="prescriptionsLoading">Loading prescriptions...</p>
+        </article>
+      </div>
+    </div>
   </section>
 </div>
