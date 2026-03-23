@@ -5,8 +5,13 @@ import org.springframework.web.bind.annotation.*;
 import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.service.IDoctorVerificationService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/doctor-verifications")
@@ -17,7 +22,11 @@ public class DoctorVerificationController {
 
     // Create
     @PostMapping("/add_verification")
-    public DoctorVerification create(@RequestBody DoctorVerification verification) {
+    public DoctorVerification create(
+            @RequestBody DoctorVerification verification,
+            @RequestHeader("X-User-Id") Long userId) {  // read the header added by the filter
+
+        verification.setDoctorId(userId);
         return service.save(verification);
     }
 

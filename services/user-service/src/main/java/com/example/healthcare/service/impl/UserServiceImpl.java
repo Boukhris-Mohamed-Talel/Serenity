@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        String token = jwtTokenProvider.generateToken(authentication);
+        String token = jwtTokenProvider.generateToken(authentication,user.getId());
 
         return AuthResponseDTO.builder()
                 .accessToken(token)
@@ -90,10 +90,10 @@ public class UserServiceImpl implements UserService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-            String token = jwtTokenProvider.generateToken(authentication);
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(InvalidCredentialsException::new);
+
+            String token = jwtTokenProvider.generateToken(authentication, user.getId());
 
             return AuthResponseDTO.builder()
                     .accessToken(token)

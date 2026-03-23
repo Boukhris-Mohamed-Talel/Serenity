@@ -20,6 +20,11 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/uploads/**
+        - id: doctor-microservice
+          uri: http://localhost:8083
+          predicates:
+            - Path=/doctor-verifications/**
+
       globalcors:
         cors-configurations:
           '[/**]':
@@ -40,3 +45,5 @@ app:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
     expiration-ms: ${JWT_EXPIRATION:86400000}
+
+debug: false

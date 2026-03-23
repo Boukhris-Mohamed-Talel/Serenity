@@ -26,21 +26,22 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(Authentication authentication, Long userId) {
         String email = authentication.getName();
         String roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        return generateToken(email, roles);
+        return generateToken(email, roles, userId);
     }
 
-    public String generateToken(String email, String roles) {
+    public String generateToken(String email, String roles, Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(email)
                 .claim("roles", roles)
+                .claim("userId", userId)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
