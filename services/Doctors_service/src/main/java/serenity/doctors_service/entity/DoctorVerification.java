@@ -17,7 +17,9 @@ public class DoctorVerification {
 
     private String nationalId;
 
-    private String documentUrl;
+    private String CV;
+
+    private String diploma;
 
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -68,12 +70,20 @@ public class DoctorVerification {
         this.nationalId = nationalId;
     }
 
-    public String getDocumentUrl() {
-        return documentUrl;
+    public String getDiploma() {
+        return diploma;
     }
 
-    public void setDocumentUrl(String documentUrl) {
-        this.documentUrl = documentUrl;
+    public void setDiploma(String diploma) {
+        this.diploma = diploma;
+    }
+
+    public String getCV() {
+        return CV;
+    }
+
+    public void setCV(String CV) {
+        this.CV = CV;
     }
 
     public Status getStatus() {
