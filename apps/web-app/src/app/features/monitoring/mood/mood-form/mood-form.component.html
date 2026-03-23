@@ -19,12 +19,6 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Success Message -->
-    <div *ngIf="successMessage" class="alert alert-success">
-      <span class="material-icons">check_circle</span>
-      {{ successMessage }}
-    </div>
-
     <!-- Mood Score Section -->
     <div class="form-section">
       <div class="section-header">
@@ -144,4 +138,33 @@
       </button>
     </div>
   </form>
+
+  <div *ngIf="showQuoteOverlay" class="quote-overlay">
+    <div class="overlay-success-icon">✅</div>
+    <p class="overlay-success-text">Mood entry saved successfully</p>
+
+    <div class="overlay-divider"></div>
+
+    <section class="overlay-quote-section">
+      <p class="overlay-quote-label">✨ A message for you</p>
+
+      <div *ngIf="quoteLoading || !currentQuote" class="overlay-quote-loading">
+        <span class="overlay-spinner"></span>
+      </div>
+
+      <ng-container *ngIf="!quoteLoading && currentQuote">
+        <p class="overlay-quote-text">"{{ currentQuote.text }}"</p>
+        <p class="overlay-quote-author">&mdash; {{ currentQuote.author }}</p>
+      </ng-container>
+    </section>
+
+    <div class="overlay-divider"></div>
+
+    <p class="overlay-redirect-text">Redirecting to your entries...</p>
+    <div class="overlay-dots" aria-hidden="true">
+      <span class="dot dot-1">●</span>
+      <span class="dot dot-2">●</span>
+      <span class="dot dot-3">●</span>
+    </div>
+  </div>
 </div>

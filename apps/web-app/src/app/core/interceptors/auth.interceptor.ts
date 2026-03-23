@@ -21,8 +21,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.authService.getToken();
+    const shouldAttachToken = this.shouldAttachToken(request.url);
 
-    if (token) {
+    if (token && shouldAttachToken) {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -47,5 +48,16 @@ export class AuthInterceptor implements HttpInterceptor {
         return throwError(() => error);
       })
     );
+  }
+
+  private shouldAttachToken(url: string): boolean {
+    // Keep auth headers on Serenity APIs only; skip third-party URLs (quotes/proxies) to avoid CORS preflight failures.
+    if (!/^https?:\/\//i.test(url)) {
+      return true;
+    }
+
+    return url.startsWith('http://localhost:8082') ||
+      url.startsWith('http://localhost:8085') ||
+      url.includes('/api/');
   }
 }
