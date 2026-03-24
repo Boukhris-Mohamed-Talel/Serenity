@@ -1,4 +1,4 @@
-package configs;
+package serenity.api_gatewya;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

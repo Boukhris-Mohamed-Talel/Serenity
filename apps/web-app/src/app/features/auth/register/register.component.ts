@@ -63,6 +63,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       delete formValue.dateOfBirth;
     }
 
+    const token = this.authService.getToken();
+    console.log('JWT Token being sent:', token);
     this.authService.register(formValue).subscribe({
       next: (res) => {
         localStorage.setItem('userId', res.userId.toString());

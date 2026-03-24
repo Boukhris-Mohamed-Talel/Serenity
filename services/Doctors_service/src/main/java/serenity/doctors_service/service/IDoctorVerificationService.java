@@ -1,12 +1,17 @@
 package serenity.doctors_service.service;
 
+import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 public interface IDoctorVerificationService {
     DoctorVerification save(DoctorVerification verification);
+
+    DoctorVerification saveVerification(Long doctorId, MultipartFile cv, MultipartFile diploma,
+                                        String licenseNumber, String nationalId) throws IOException;
 
     List<DoctorVerification> findAll();
 

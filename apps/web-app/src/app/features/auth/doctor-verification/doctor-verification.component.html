@@ -71,6 +71,11 @@
                 <span class="material-icons">close</span>
                 License number must be at least 5 characters
               </div>
+              <div class="error-message" *ngIf="licenseNumber?.touched && licenseNumber?.hasError('pattern')">
+                <span class="material-icons">close</span>
+                License number can't have special characters
+              </div>
+
             </div>
 
             <div class="form-group">
@@ -92,7 +97,15 @@
               </div>
               <div class="error-message" *ngIf="nationalId?.touched && nationalId?.hasError('minlength')">
                 <span class="material-icons">close</span>
-                National ID must be at least 5 characters
+                National ID must be 8 characters
+              </div>
+              <div class="error-message" *ngIf="nationalId?.touched && nationalId?.hasError('pattern')">
+                <span class="material-icons">close</span>
+                National ID must be a valid number
+              </div>
+              <div class="error-message" *ngIf="nationalId?.touched && nationalId?.hasError('maxlength')">
+                <span class="material-icons">close</span>
+                National ID must be 8 characters
               </div>
             </div>
 

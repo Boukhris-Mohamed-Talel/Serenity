@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-doctor-verification',
@@ -24,7 +25,7 @@ export class DoctorVerificationComponent implements OnInit {
   cvDragOver = false;
   diplomaDragOver = false;
 
-  constructor(private readonly fb: FormBuilder) {}
+  constructor(private readonly fb: FormBuilder, private readonly authService: AuthService) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -32,8 +33,8 @@ export class DoctorVerificationComponent implements OnInit {
 
   initForm(): void {
     this.verificationForm = this.fb.group({
-      licenseNumber: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(20)]],
-      nationalId: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(20)]],
+      licenseNumber: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(20), Validators.pattern('^[A-Za-z0-9 ]+$')]],
+      nationalId: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8), Validators.pattern('^[0-9 ]+$')]],
       cv: [null, Validators.required],
       diploma: [null, Validators.required]
     });
@@ -174,14 +175,38 @@ export class DoctorVerificationComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.verificationForm.invalid) {
-      this.errorMessage = 'Please complete all required fields';
-      return;
-    }
+  if (this.verificationForm.invalid) {
+    this.errorMessage = 'Please complete all required fields';
+    console.warn('Form invalid:', this.verificationForm.value);
+    return;
+  }
 
-    this.loading = true;
-    // Simulating API call
-    setTimeout(() => {
+  this.loading = true;
+
+  const token = this.authService.getToken();
+  console.log('JWT Token being sent:', token);
+
+  // Prepare FormData
+  const formData = new FormData();
+  formData.append('cv', this.cvFile as File);
+  formData.append('diploma', this.diplomaFile as File);
+  formData.append('licenseNumber', this.verificationForm.value.licenseNumber);
+  formData.append('nationalId', this.verificationForm.value.nationalId);
+
+  // Debug: show all FormData entries
+  console.log('FormData contents:');
+  formData.forEach((value, key) => {
+    console.log(key, value);
+  });
+
+  this.authService.addDoctorVerification(
+    this.cvFile as File,
+    this.diplomaFile as File,
+    this.verificationForm.value.licenseNumber,
+    this.verificationForm.value.nationalId
+  ).subscribe({
+    next: (res) => {
+      console.log('Server response:', res);
       this.loading = false;
       this.successMessage = 'Verification submitted successfully! We will review your documents.';
       setTimeout(() => {
@@ -193,8 +218,20 @@ export class DoctorVerificationComponent implements OnInit {
         this.currentStep = 1;
         this.successMessage = '';
       }, 2000);
-    }, 1500);
-  }
+    },
+    error: (err) => {
+      console.error('Error from backend:', err);
+      if (err.status) {
+        console.error('HTTP Status:', err.status);
+      }
+      if (err.error) {
+        console.error('Error body:', err.error);
+      }
+      this.loading = false;
+      this.errorMessage = 'Error while submitting verification';
+    }
+  });
+}
 
   getFileName(file: File | null): string {
     return file ? file.name : '';

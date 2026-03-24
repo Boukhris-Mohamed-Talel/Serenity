@@ -23,7 +23,7 @@ spring:
         - id: doctor-microservice
           uri: http://localhost:8083
           predicates:
-            - Path=/doctor-verifications/**
+            - Path=/api/doctor-verifications/**
 
       globalcors:
         cors-configurations:
@@ -35,7 +35,10 @@ spring:
               - PUT
               - DELETE
               - OPTIONS
-            allowed-headers: "*"
+            allowed-headers:
+              - Authorization
+              - Content-Type
+              - Accept
             allow-credentials: true
 
 server:

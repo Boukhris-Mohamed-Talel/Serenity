@@ -114,4 +114,22 @@ export class AuthService {
 
     return this.http.post(`${environment.apiUrl}/doctors/${userId}`, formData)
   }
+
+  addDoctorVerification( cv: File, diploma: File, licenseNumber: string, nationalId: string) {
+    const formData = new FormData()
+    
+    const token = this.getToken()
+    formData.append('cv', cv)
+    formData.append('diploma', diploma)
+    formData.append('licenseNumber', licenseNumber)
+    formData.append('nationalId', nationalId)
+
+    return this.http.post(
+      `${environment.apiUrl}/doctor-verifications/add_verification`,
+      formData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+  }
+
 }

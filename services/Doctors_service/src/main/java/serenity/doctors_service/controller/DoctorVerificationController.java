@@ -1,57 +1,71 @@
 package serenity.doctors_service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.service.IDoctorVerificationService;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
-import java.time.LocalDateTime;
-
 @RestController
-@RequestMapping("/doctor-verifications")
+@RequestMapping("/api/doctor-verifications")
 public class DoctorVerificationController {
 
     @Autowired
     private IDoctorVerificationService service;
 
-    // Create
+    // Create verification with files
     @PostMapping("/add_verification")
-    public DoctorVerification create(
-            @RequestBody DoctorVerification verification,
-            @RequestHeader("X-User-Id") Long userId) {  // read the header added by the filter
+    public ResponseEntity<DoctorVerification> create(
+            @RequestParam("cv") MultipartFile cv,
+            @RequestParam("diploma") MultipartFile diploma,
+            @RequestParam("licenseNumber") String licenseNumber,
+            @RequestParam("nationalId") String nationalId,
+            @RequestHeader("X-User-Id") String userIdHeader
+    ) throws IOException {
 
-        verification.setDoctorId(userId);
-        return service.save(verification);
+        Long doctorId = Long.parseLong(userIdHeader);
+
+        DoctorVerification verification = service.saveVerification(
+                doctorId, cv, diploma, licenseNumber, nationalId
+        );
+
+        return ResponseEntity.ok(verification);
     }
 
-    // Update
+    // Update verification
     @PutMapping("/update_verification/{id}")
-    public DoctorVerification update(@PathVariable("id") Long id, @RequestBody DoctorVerification verification) {
+    public ResponseEntity<DoctorVerification> update(
+            @PathVariable Long id,
+            @RequestBody DoctorVerification verification
+    ) {
         verification.setVerification_id(id);
-        return service.save(verification);
+        DoctorVerification updated = service.save(verification);
+        return ResponseEntity.ok(updated);
     }
 
-    // Get all
+    // Get all verifications
     @GetMapping
-    public List<DoctorVerification> findAll() {
-        return service.findAll();
+    public ResponseEntity<List<DoctorVerification>> findAll() {
+        return ResponseEntity.ok(service.findAll());
     }
 
-    // Get by ID
+    // Get verification by ID
     @GetMapping("/{id}")
-    public Optional<DoctorVerification> findById(@PathVariable("id") Long id) {
-        return service.findById(id);
+    public ResponseEntity<Optional<DoctorVerification>> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findById(id));
     }
 
-    // Delete by ID
+    // Delete verification by ID
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         service.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
