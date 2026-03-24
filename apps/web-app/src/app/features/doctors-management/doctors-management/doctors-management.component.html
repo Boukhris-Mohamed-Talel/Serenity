@@ -1,1 +1,47 @@
-<p>doctors-management works!</p>
+<div class="container">
+  <div class="page-header">
+    <h1>Doctors Management</h1>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <span class="spinner"></span>
+    <p>Loading doctors...</p>
+  </div>
+
+  <div *ngIf="!isLoading && doctors.length === 0" class="empty-state card">
+    <p>No doctors found.</p>
+  </div>
+
+  <div *ngIf="!isLoading && doctors.length > 0" class="card table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Specialty</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let doctor of doctors">
+          <td>{{ doctor.id }}</td>
+          <td>{{ getFullName(doctor) }}</td>
+          <td>{{ doctor.specialty || 'N/A' }}</td>
+          <td>{{ doctor.email }}</td>
+          <td>{{ doctor.phone }}</td>
+          <td>
+            <span [class]="doctor.isActive ? 'badge badge-success' : 'badge badge-danger'">
+              {{ doctor.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
