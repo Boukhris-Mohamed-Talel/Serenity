@@ -35,6 +35,15 @@ export class SelectRoleComponent {
 
   constructor(private router: Router, private authService: AuthService) {}
 
+  ngOnInit() {
+    const user = this.authService.getCurrentUser();
+    console.log('Current user:', user);
+    if (!user || user.role !== 'DOCTOR') {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+  }
+
   selectRole(roleId: string) {
     this.selectedRole = roleId;
   }

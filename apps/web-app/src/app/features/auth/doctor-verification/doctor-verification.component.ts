@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-doctor-verification',
@@ -25,9 +26,15 @@ export class DoctorVerificationComponent implements OnInit {
   cvDragOver = false;
   diplomaDragOver = false;
 
-  constructor(private readonly fb: FormBuilder, private readonly authService: AuthService) {}
+  constructor(private readonly fb: FormBuilder, private readonly authService: AuthService, private readonly router: Router) {}
 
   ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    console.log('Current user:', user);
+    if (!user || user.role !== 'DOCTOR') {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
     this.initForm();
   }
 
@@ -217,6 +224,7 @@ export class DoctorVerificationComponent implements OnInit {
         this.diplomaPreview = null;
         this.currentStep = 1;
         this.successMessage = '';
+        this.router.navigate(['/']);
       }, 2000);
     },
     error: (err) => {
