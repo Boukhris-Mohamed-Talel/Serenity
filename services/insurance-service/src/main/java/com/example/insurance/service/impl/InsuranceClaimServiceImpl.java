@@ -70,6 +70,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 String.valueOf(userId), // portal displays patientName; we only have userId here
                 request.getDescription(),
                 request.getAmount(),
+                reimbursementAmount,
                 request.getInsuranceCompany(),
                 request.getInsuranceGrade()
         );

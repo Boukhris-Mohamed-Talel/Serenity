@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -21,6 +22,7 @@ export class ClaimDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly http: HttpClient,
     private readonly insuranceService: InsuranceService,
     private readonly authService: AuthService
   ) {}
@@ -93,13 +95,7 @@ export class ClaimDetailComponent implements OnInit {
   }
 
   getFileUrl(path: string): string {
-    const parts = path.replace(/\\/g, '/').split('/');
-    const claimsIdx = parts.indexOf('claims');
-    if (claimsIdx > -1) {
-      const relativePath = parts.slice(claimsIdx).join('/');
-      return `${environment.apiUrl}/files/${relativePath}`;
-    }
-    return `${environment.apiUrl}/files/${path}`;
+    return `${environment.insuranceApiUrl}/files/open?path=${encodeURIComponent(path)}`;
   }
 
   getFileName(path: string): string {
@@ -107,6 +103,21 @@ export class ClaimDetailComponent implements OnInit {
     const full = parts[parts.length - 1];
     const underscoreIdx = full.indexOf('_');
     return underscoreIdx > -1 ? full.substring(underscoreIdx + 1) : full;
+  }
+
+  openFile(path: string, event: Event): void {
+    event.preventDefault();
+    const url = this.getFileUrl(path);
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        window.open(objectUrl, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60_000);
+      },
+      error: () => {
+        this.errorMessage = 'Failed to open attachment';
+      }
+    });
   }
 
   getStatusClass(status: string): string {

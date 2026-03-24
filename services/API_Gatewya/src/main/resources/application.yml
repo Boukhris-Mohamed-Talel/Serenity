@@ -16,6 +16,10 @@ spring:
           uri: http://localhost:8090
           predicates:
             - Path=/api/insurance/**
+        - id: insurance-files
+          uri: http://localhost:8090
+          predicates:
+            - Path=/api/files/**
       globalcors:
         cors-configurations:
           '[/**]':

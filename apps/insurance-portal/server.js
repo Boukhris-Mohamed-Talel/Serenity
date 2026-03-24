@@ -12,20 +12,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 const claims = [];
 
 app.post('/api/claims', (req, res) => {
-  const { ref, patientName, description, amount, insuranceCompany, insuranceGrade } = req.body;
+  const { ref, patientName, description, amount, reimbursementAmount, insuranceCompany, insuranceGrade } = req.body;
   if (!ref || !description || !amount) {
     return res.status(400).json({ error: 'ref, description, and amount are required' });
   }
+
+  const numericAmount = Number(amount);
+  const numericReimbursement = reimbursementAmount != null ? Number(reimbursementAmount) : numericAmount;
 
   const claim = {
     ref,
     patientName: patientName || 'Unknown',
     description,
-    amount: Number(amount),
+    amount: numericAmount,
     insuranceCompany: insuranceCompany || 'N/A',
     insuranceGrade: insuranceGrade || 0,
     status: 'PENDING',
-    reimbursementAmount: null,
+    // Default to proposed reimbursement from healthcare app (grade-based)
+    reimbursementAmount: Number.isFinite(numericReimbursement) ? numericReimbursement : numericAmount,
     receivedAt: new Date().toISOString(),
     processedAt: null
   };
@@ -54,7 +58,7 @@ app.patch('/api/claims/:ref/approve', (req, res) => {
   const claim = claims.find(c => c.ref === req.params.ref);
   if (!claim) return res.status(404).json({ error: 'Claim not found' });
 
-  const montant = Number(req.body.reimbursementAmount || claim.amount);
+  const montant = Number(req.body.reimbursementAmount ?? claim.reimbursementAmount ?? claim.amount);
   claim.status = 'APPROVED';
   claim.reimbursementAmount = montant;
   claim.processedAt = new Date().toISOString();

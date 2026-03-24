@@ -14,6 +14,7 @@ public class PortalSubmitClaimRequest {
     private String patientName;
     private String description;
     private Double amount;
+    private Double reimbursementAmount;
     private String insuranceCompany;
     private Double insuranceGrade;
 }
