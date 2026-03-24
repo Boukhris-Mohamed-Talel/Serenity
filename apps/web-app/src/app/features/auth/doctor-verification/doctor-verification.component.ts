@@ -29,12 +29,12 @@ export class DoctorVerificationComponent implements OnInit {
   constructor(private readonly fb: FormBuilder, private readonly authService: AuthService, private readonly router: Router) {}
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
+    /*const user = this.authService.getCurrentUser();
     console.log('Current user:', user);
     if (!user || user.role !== 'DOCTOR') {
       this.router.navigate(['/auth/login']);
       return;
-    }
+    }*/
     this.initForm();
   }
 

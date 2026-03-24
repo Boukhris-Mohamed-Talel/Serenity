@@ -1,8 +1,8 @@
 package com.example.healthcare.service;
 
 import com.example.healthcare.entity.Doctor;
+import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
-import com.example.healthcare.entity.UserProfile;
 import com.example.healthcare.repository.DoctorRepository;
 import com.example.healthcare.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,29 +27,40 @@ public class DoctorService implements IDoctorService {
     private UserRepository userRepository;
 
     @Override
-    public Doctor createDoctorForExistingUser(Long userId, String speciality, MultipartFile image) throws IOException {
+    public Doctor createDoctorForExistingUser(Long userId, String specialty, MultipartFile image) throws IOException {
 
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        if (!existingUser.getRole().name().equals("DOCTOR")) {
-            throw new RuntimeException("User is not a doctor");
+        if (existingUser.getRole() != Role.DOCTOR) {
+            throw new RuntimeException("User with id " + userId + " does not have the DOCTOR role");
         }
 
-        // Save the file
+        // Save the uploaded image
         String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-        String uploadDir = "uploads/";
-
-        Path filePath = Paths.get(uploadDir + fileName);
+        Path filePath = Paths.get("uploads/", fileName);
         Files.createDirectories(filePath.getParent());
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Create doctor and set DB fields
+        // Build Doctor by copying all User fields (since Doctor now extends User)
         Doctor doctor = new Doctor();
-        doctor.setUser(existingUser);
-        doctor.setSpecialty(speciality);
+        doctor.setId(existingUser.getId());
+        doctor.setEmail(existingUser.getEmail());
+        doctor.setPassword(existingUser.getPassword());
+        doctor.setFirstName(existingUser.getFirstName());
+        doctor.setLastName(existingUser.getLastName());
+        doctor.setPhone(existingUser.getPhone());
+        doctor.setDateOfBirth(existingUser.getDateOfBirth());
+        doctor.setRole(existingUser.getRole());
+        doctor.setAuthProvider(existingUser.getAuthProvider());
+        doctor.setIsActive(existingUser.getIsActive());
+
+        // Doctor-specific fields
+        doctor.setSpecialty(specialty);
         doctor.setProfilePictureUrl("uploads/" + fileName);
 
+        // Delete the plain User row and save as Doctor (joined table)
+        userRepository.delete(existingUser);
         return doctorRepository.save(doctor);
     }
 
@@ -64,9 +75,9 @@ public class DoctorService implements IDoctorService {
     }
 
     @Override
-    public Doctor updateDoctor(Long userId, Doctor doctorDetails) {
-        Doctor existingDoctor = doctorRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+    public Doctor updateDoctor(Long id, Doctor doctorDetails) {
+        Doctor existingDoctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
 
         if (doctorDetails.getSpecialty() != null) {
             existingDoctor.setSpecialty(doctorDetails.getSpecialty());
@@ -74,6 +85,19 @@ public class DoctorService implements IDoctorService {
 
         if (doctorDetails.getProfilePictureUrl() != null) {
             existingDoctor.setProfilePictureUrl(doctorDetails.getProfilePictureUrl());
+        }
+
+        // Optionally allow updating base User fields too
+        if (doctorDetails.getFirstName() != null) {
+            existingDoctor.setFirstName(doctorDetails.getFirstName());
+        }
+
+        if (doctorDetails.getLastName() != null) {
+            existingDoctor.setLastName(doctorDetails.getLastName());
+        }
+
+        if (doctorDetails.getPhone() != null) {
+            existingDoctor.setPhone(doctorDetails.getPhone());
         }
 
         return doctorRepository.save(existingDoctor);

@@ -30,12 +30,12 @@ export class DoctorComponent {
     if (!storedId) {
       this.router.navigate(['/auth/login']);
     }
-    const user = this.AuthService.getCurrentUser();
+    /*const user = this.AuthService.getCurrentUser();
     console.log('Current user:', user);
     if (!user || user.role !== 'DOCTOR') {
       this.router.navigate(['/auth/login']);
       return;
-    }
+    }*/
     this.userId = Number(storedId);
   }
 
