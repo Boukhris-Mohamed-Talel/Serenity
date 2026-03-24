@@ -16,8 +16,9 @@
   h2 {
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--text);
+    color: #e6edf7;
     margin: 0;
+    line-height: 1.45;
   }
 }
 
@@ -30,13 +31,14 @@
 
   .label {
     font-size: 0.85rem;
-    color: var(--text-light);
+    color: #b6c1d8;
+    font-weight: 500;
   }
 
   .value {
     font-weight: 600;
     font-size: 0.9rem;
-    color: var(--text);
+    color: #e6edf7;
 
     &.amount {
       font-size: 1rem;
@@ -56,7 +58,7 @@
   h3 {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--text);
+    color: #d8e2f2;
     margin-bottom: 0.75rem;
   }
 }
@@ -78,6 +80,7 @@
   color: var(--primary);
   font-weight: 600;
   font-size: 0.85rem;
+  color: #7dd3fc;
   text-decoration: none;
   transition: background 0.15s;
 

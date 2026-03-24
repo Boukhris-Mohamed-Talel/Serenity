@@ -1,3 +1,190 @@
+.filters {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 8px 24px rgba(2, 8, 23, 0.22);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  label {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  select,
+  input {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    padding: 0.42rem 0.65rem;
+    font-size: 0.82rem;
+    color: #dbe4f3;
+    background: rgba(15, 23, 42, 0.35);
+    min-height: 32px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+    &:focus {
+      border-color: rgba(125, 211, 252, 0.45);
+      box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.12);
+      background: rgba(15, 23, 42, 0.5);
+    }
+  }
+
+  input[type='date'] {
+    color-scheme: dark;
+    position: relative;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    background-color: rgba(165, 180, 252, 0.18);
+    border: 1px solid rgba(165, 180, 252, 0.3);
+    border-radius: 999px;
+    padding: 0.16rem;
+    cursor: pointer;
+    filter: invert(0.92) sepia(0.08) saturate(2.1) hue-rotate(188deg) brightness(0.96);
+  }
+
+  input[type='date']::-webkit-datetime-edit {
+    color: #dbe4f3;
+  }
+}
+
+.custom-select {
+  position: relative;
+}
+
+.select-trigger {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  padding: 0.42rem 0.65rem;
+  min-height: 32px;
+  font-size: 0.82rem;
+  color: #dbe4f3;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+  &:focus,
+  &:hover {
+    border-color: rgba(125, 211, 252, 0.45);
+    box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.12);
+    background: rgba(15, 23, 42, 0.5);
+  }
+}
+
+.chevron {
+  color: #a5b4fc;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.select-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: #0f172a;
+  box-shadow: 0 14px 30px rgba(2, 8, 23, 0.45);
+  overflow: hidden;
+
+  button {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: #dbe4f3;
+    font-size: 0.82rem;
+    padding: 0.55rem 0.65rem;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.22);
+      color: #ffffff;
+    }
+  }
+}
+
+.claim-list-page.user-mode {
+  .filters {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+  }
+
+  .filter-item label {
+    color: #64748b;
+  }
+
+  .filter-item input {
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #0f172a;
+    background: #ffffff;
+  }
+
+  .select-trigger {
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #0f172a;
+    background: #ffffff;
+  }
+
+  .chevron {
+    color: #64748b;
+  }
+
+  .select-menu {
+    border-color: rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
+
+    button {
+      color: #0f172a;
+
+      &:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: #0f172a;
+      }
+    }
+  }
+
+  .result-count {
+    color: #64748b;
+  }
+}
+
+.filter-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.result-count {
+  font-size: 0.76rem;
+  color: var(--text-light);
+}
+
 .claims-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -7,6 +194,10 @@
 .claim-card {
   display: flex;
   flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 8px 24px rgba(2, 8, 23, 0.2);
+  overflow: hidden;
 }
 
 .claim-header {
@@ -22,10 +213,11 @@
 }
 
 .claim-patient {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--primary);
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b; // softer slate tone for comfortable readability
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.01em;
 }
 
 .claim-title {
@@ -74,4 +266,6 @@
   text-align: center;
   padding: 3rem;
   color: var(--text-light);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
 }
