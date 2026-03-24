@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { InsuranceClaimResponse } from '../../../shared/models/insurance.model';
@@ -11,13 +12,14 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './claim-detail.component.html',
   styleUrls: ['./claim-detail.component.scss']
 })
-export class ClaimDetailComponent implements OnInit {
+export class ClaimDetailComponent implements OnInit, OnDestroy {
   claim: InsuranceClaimResponse | null = null;
   loading = true;
   errorMessage = '';
   reimbursementAmount: number | null = null;
   isAdmin = false;
   processing = false;
+  private routeSub?: Subscription;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -29,14 +31,21 @@ export class ClaimDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.loadClaim(id);
-    }
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (id) {
+        this.loadClaim(id);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   loadClaim(id: number): void {
     this.loading = true;
+    this.errorMessage = '';
     this.insuranceService.getClaimById(id).subscribe({
       next: (claim) => {
         this.claim = claim;

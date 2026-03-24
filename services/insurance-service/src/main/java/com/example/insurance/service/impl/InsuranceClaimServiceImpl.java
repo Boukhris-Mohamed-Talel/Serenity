@@ -7,10 +7,12 @@ import com.example.insurance.integration.InsurancePortalClient;
 import com.example.insurance.integration.PortalSubmitClaimRequest;
 import com.example.insurance.entity.ClaimStatus;
 import com.example.insurance.entity.InsuranceClaim;
+import com.example.insurance.entity.NotificationType;
 import com.example.insurance.entity.Remboursement;
 import com.example.insurance.repository.InsuranceClaimRepository;
 import com.example.insurance.repository.RemboursementRepository;
 import com.example.insurance.service.InsuranceClaimService;
+import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     private final InsuranceClaimRepository claimRepository;
     private final RemboursementRepository remboursementRepository;
     private final InsurancePortalClient insurancePortalClient;
+    private final NotificationService notificationService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -75,6 +78,14 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 request.getInsuranceGrade()
         );
         insurancePortalClient.submitClaim(portalReq);
+
+        notificationService.createNotification(
+                userId,
+                claim.getId(),
+                NotificationType.CLAIM_SENT_TO_INSURER,
+                "Claim sent to insurer",
+                "Your claim has been sent to the external insurance portal and is awaiting their decision."
+        );
 
         return toResponseDTO(claim);
     }

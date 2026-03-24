@@ -18,6 +18,43 @@
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">
         Users
       </a>
+
+      <div class="notification-menu">
+        <button class="notification-btn" type="button" (click)="toggleNotifications($event)" aria-label="Open notifications">
+          <span class="bell">🔔</span>
+          <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+        </button>
+        <div class="notification-dropdown" *ngIf="notificationsOpen" (click)="$event.stopPropagation()">
+          <div class="notification-header">
+            <strong>Notifications</strong>
+            <button type="button" class="mark-all-btn" (click)="markAllAsRead($event)" *ngIf="unreadNotificationCount > 0">
+              Mark all read
+            </button>
+          </div>
+
+          <div class="notification-state" *ngIf="notificationsLoading">Loading...</div>
+
+          <div class="notification-state" *ngIf="!notificationsLoading && notifications.length === 0">
+            No notifications yet.
+          </div>
+
+          <div class="notification-list" *ngIf="!notificationsLoading && notifications.length > 0">
+            <button
+              type="button"
+              class="notification-item"
+              *ngFor="let notification of notifications"
+              [class.unread]="!notification.isRead"
+              (click)="onNotificationClick(notification, $event)">
+              <div class="notification-title-row">
+                <span class="notification-title">{{ notification.title }}</span>
+                <span class="dot" *ngIf="!notification.isRead"></span>
+              </div>
+              <p class="notification-message">{{ notification.message }}</p>
+              <small class="notification-date">{{ formatNotificationDate(notification.createdAt) }}</small>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="navbar-actions" *ngIf="authService.isLoggedIn()">

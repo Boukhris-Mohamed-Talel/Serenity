@@ -44,3 +44,18 @@ export interface RemboursementResponse {
   statut: string;
   claimId: number;
 }
+
+export interface InsuranceNotification {
+  id: number;
+  userId: number;
+  claimId: number | null;
+  type: 'CLAIM_SENT_TO_INSURER' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED' | 'DOCUMENTS_REQUESTED';
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationUnreadCountResponse {
+  unreadCount: number;
+}

@@ -3,7 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { InsuranceClaimRequest, InsuranceClaimResponse } from '../../shared/models/insurance.model';
+import {
+  InsuranceClaimRequest,
+  InsuranceClaimResponse,
+  InsuranceNotification,
+  NotificationUnreadCountResponse
+} from '../../shared/models/insurance.model';
 import { UserService } from './user.service';
 
 @Injectable({
@@ -64,5 +69,49 @@ export class InsuranceService {
 
   deleteClaim(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/claims/${id}`);
+  }
+
+  getMyNotifications(): Observable<InsuranceNotification[]> {
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications/me`, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
+  }
+
+  getUnreadNotificationsCount(): Observable<NotificationUnreadCountResponse> {
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.get<NotificationUnreadCountResponse>(`${this.API_URL}/notifications/me/unread-count`, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
+  }
+
+  markNotificationAsRead(notificationId: number): Observable<void> {
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.patch<void>(`${this.API_URL}/notifications/me/${notificationId}/read`, {}, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
+  }
+
+  markAllNotificationsAsRead(): Observable<void> {
+    return this.userService.getCurrentUser().pipe(
+      take(1),
+      switchMap(user =>
+        this.http.patch<void>(`${this.API_URL}/notifications/me/read-all`, {}, {
+          headers: { 'X-User-Id': String(user.id) }
+        })
+      )
+    );
   }
 }

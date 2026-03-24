@@ -2,9 +2,11 @@ package com.example.insurance.integration;
 
 import com.example.insurance.entity.ClaimStatus;
 import com.example.insurance.entity.InsuranceClaim;
+import com.example.insurance.entity.NotificationType;
 import com.example.insurance.entity.Remboursement;
 import com.example.insurance.repository.InsuranceClaimRepository;
 import com.example.insurance.repository.RemboursementRepository;
+import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ public class InsuranceStatusPoller {
     private final InsuranceClaimRepository claimRepository;
     private final RemboursementRepository remboursementRepository;
     private final InsurancePortalClient insurancePortalClient;
+    private final NotificationService notificationService;
 
     @Scheduled(fixedDelayString = "${app.status-poller.fixed-delay-ms}")
     public void pollPendingClaims() {
@@ -54,6 +57,13 @@ public class InsuranceStatusPoller {
                         .build();
                 remboursementRepository.save(remboursement);
                 claimRepository.save(claim);
+                notificationService.createNotification(
+                        claim.getUserId(),
+                        claim.getId(),
+                        NotificationType.CLAIM_APPROVED,
+                        "External insurer approved your claim",
+                        "Your claim was approved by the insurance portal with reimbursement amount: " + amount
+                );
                 log.info("Updated claim {} from portal status APPROVED", externalRef);
             } else if ("REJECTED".equals(portalStatus)) {
                 claim.setStatus(ClaimStatus.REJECTED);
@@ -64,6 +74,13 @@ public class InsuranceStatusPoller {
                     claim.getRemboursements().clear();
                 }
                 claimRepository.save(claim);
+                notificationService.createNotification(
+                        claim.getUserId(),
+                        claim.getId(),
+                        NotificationType.CLAIM_REJECTED,
+                        "External insurer rejected your claim",
+                        "Your claim was rejected by the insurance portal."
+                );
                 log.info("Updated claim {} from portal status REJECTED", externalRef);
             }
         }

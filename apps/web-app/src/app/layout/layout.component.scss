@@ -42,7 +42,8 @@
 
 .navbar-links {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  align-items: center;
 
   a {
     padding: 0.5rem 0.75rem;
@@ -71,6 +72,155 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.notification-menu {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 0.2rem;
+
+  &:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+  }
+}
+
+.bell {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -8px;
+  width: min(380px, 92vw);
+  max-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+  z-index: 120;
+}
+
+.navbar-actions .user-greeting {
+  margin-left: 0.35rem;
+}
+
+.notification-header {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mark-all-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notification-state {
+  padding: 1rem;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.notification-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  text-align: left;
+  padding: 0.72rem 0.85rem;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.unread {
+    background: rgba(59, 164, 160, 0.08);
+  }
+}
+
+.notification-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.notification-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.notification-message {
+  margin: 0.22rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.notification-date {
+  margin-top: 0.3rem;
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--text-light);
 }
 
 .user-greeting {
