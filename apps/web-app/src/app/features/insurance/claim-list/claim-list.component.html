@@ -122,6 +122,10 @@
           <span class="detail-label">Files</span>
           <span class="detail-value">{{ claim.filePaths.length || 0 }} prescription(s)</span>
         </div>
+        <div class="detail" *ngIf="claim.reason">
+          <span class="detail-label">Reason</span>
+          <span class="detail-value">{{ claim.reason }}</span>
+        </div>
       </div>
       <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">View Details</a>
     </div>

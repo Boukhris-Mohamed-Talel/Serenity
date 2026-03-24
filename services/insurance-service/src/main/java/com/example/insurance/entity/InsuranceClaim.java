@@ -39,6 +39,9 @@ public class InsuranceClaim {
     @Column(name = "insurance_grade", nullable = false)
     private Double insuranceGrade;
 
+    @Column(length = 1000)
+    private String reason;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

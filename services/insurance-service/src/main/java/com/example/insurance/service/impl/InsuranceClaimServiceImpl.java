@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
+    @Value("${app.public-base-url:http://localhost:8090}")
+    private String publicBaseUrl;
 
     @Override
     public InsuranceClaimResponseDTO submitClaim(Long userId, InsuranceClaimRequestDTO request, List<MultipartFile> files) {
@@ -58,6 +62,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .reimbursementAmount(reimbursementAmount)
                 .insuranceCompany(request.getInsuranceCompany())
                 .insuranceGrade(request.getInsuranceGrade())
+                .reason(null)
                 .status(ClaimStatus.PENDING)
                 .externalRef(externalRef)
                 .userId(userId)
@@ -75,7 +80,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 request.getAmount(),
                 reimbursementAmount,
                 request.getInsuranceCompany(),
-                request.getInsuranceGrade()
+                request.getInsuranceGrade(),
+                buildAttachmentUrls(filePaths)
         );
         insurancePortalClient.submitClaim(portalReq);
 
@@ -119,6 +125,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         claim.setStatus(ClaimStatus.APPROVED);
         // Reimbursement becomes known at approval time
         claim.setReimbursementAmount(montant);
+        claim.setReason(null);
         Remboursement remboursement = Remboursement.builder()
                 .montant(montant)
                 .statut(ClaimStatus.APPROVED)
@@ -136,6 +143,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         claim.setStatus(ClaimStatus.REJECTED);
         // Schema expects non-null reimbursement_amount
         claim.setReimbursementAmount(0.0);
+        claim.setReason(null);
         claimRepository.save(claim);
         return toResponseDTO(claim);
     }
@@ -188,6 +196,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .reimbursementAmount(claim.getReimbursementAmount())
                 .insuranceCompany(claim.getInsuranceCompany())
                 .insuranceGrade(claim.getInsuranceGrade())
+                .reason(claim.getReason())
                 .status(claim.getStatus().name())
                 .externalRef(claim.getExternalRef())
                 .filePaths(claim.getFilePaths())
@@ -212,5 +221,18 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             default -> percentage = 0;
         }
         return Math.round((amount * percentage / 100.0) * 100.0) / 100.0;
+    }
+
+    private List<String> buildAttachmentUrls(List<String> filePaths) {
+        if (filePaths == null || filePaths.isEmpty()) {
+            return List.of();
+        }
+        List<String> urls = new ArrayList<>(filePaths.size());
+        String base = publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
+        for (String path : filePaths) {
+            String encoded = URLEncoder.encode(path, StandardCharsets.UTF_8);
+            urls.add(base + "/api/files/open?path=" + encoded);
+        }
+        return urls;
     }
 }

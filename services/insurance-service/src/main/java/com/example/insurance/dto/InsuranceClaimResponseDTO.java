@@ -19,6 +19,7 @@ public class InsuranceClaimResponseDTO {
     private Double reimbursementAmount;
     private String insuranceCompany;
     private Double insuranceGrade;
+    private String reason;
     private String status;
     private String externalRef;
     private List<String> filePaths;

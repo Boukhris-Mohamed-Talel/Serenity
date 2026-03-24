@@ -13,5 +13,6 @@ public class PortalClaimStatusResponse {
     private String ref;
     private String status;
     private Double reimbursementAmount;
+    private String reason;
 }
 

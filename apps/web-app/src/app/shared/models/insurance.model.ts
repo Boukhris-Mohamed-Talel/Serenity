@@ -13,6 +13,7 @@ export interface InsuranceClaimResponse {
   insuranceCompany: string;
   insuranceGrade: number;
   reimbursementAmount: number;
+  reason?: string | null;
   status: string;
   externalRef: string;
   filePaths: string[];

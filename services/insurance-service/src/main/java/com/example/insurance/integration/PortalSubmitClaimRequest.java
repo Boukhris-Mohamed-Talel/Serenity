@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,5 +19,6 @@ public class PortalSubmitClaimRequest {
     private Double reimbursementAmount;
     private String insuranceCompany;
     private Double insuranceGrade;
+    private List<String> attachmentUrls;
 }
 

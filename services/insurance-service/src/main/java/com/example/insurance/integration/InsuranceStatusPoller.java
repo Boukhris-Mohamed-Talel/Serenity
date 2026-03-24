@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class InsuranceStatusPoller {
     private final InsurancePortalClient insurancePortalClient;
     private final NotificationService notificationService;
 
+    @Transactional
     @Scheduled(fixedDelayString = "${app.status-poller.fixed-delay-ms}")
     public void pollPendingClaims() {
         List<InsuranceClaim> pendingClaims = claimRepository.findByStatusOrderByClaimDateDesc(ClaimStatus.PENDING);
@@ -49,6 +51,7 @@ public class InsuranceStatusPoller {
                 Double amount = status.getReimbursementAmount() != null ? status.getReimbursementAmount() : 0.0;
                 claim.setStatus(ClaimStatus.APPROVED);
                 claim.setReimbursementAmount(amount);
+                claim.setReason(status.getReason());
 
                 Remboursement remboursement = Remboursement.builder()
                         .montant(amount)
@@ -63,12 +66,14 @@ public class InsuranceStatusPoller {
                         NotificationType.CLAIM_APPROVED,
                         "External insurer approved your claim",
                         "Your claim was approved by the insurance portal with reimbursement amount: " + amount
+                                + (status.getReason() != null && !status.getReason().isBlank() ? ". Reason: " + status.getReason() : "")
                 );
                 log.info("Updated claim {} from portal status APPROVED", externalRef);
             } else if ("REJECTED".equals(portalStatus)) {
                 claim.setStatus(ClaimStatus.REJECTED);
                 // DB schema requires a non-null reimbursement_amount
                 claim.setReimbursementAmount(0.0);
+                claim.setReason(status.getReason());
                 // If remboursements exist, clear them (orphanRemoval should handle)
                 if (claim.getRemboursements() != null) {
                     claim.getRemboursements().clear();
@@ -80,6 +85,7 @@ public class InsuranceStatusPoller {
                         NotificationType.CLAIM_REJECTED,
                         "External insurer rejected your claim",
                         "Your claim was rejected by the insurance portal."
+                                + (status.getReason() != null && !status.getReason().isBlank() ? " Reason: " + status.getReason() : "")
                 );
                 log.info("Updated claim {} from portal status REJECTED", externalRef);
             }

@@ -42,6 +42,10 @@
         <span class="label">Reimbursement Amount</span>
         <span class="value reimbursed">{{ claim.reimbursementAmount | currency:'TND':'symbol':'1.2-2' }}</span>
       </div>
+      <div class="detail-row" *ngIf="claim.reason">
+        <span class="label">Decision Reason</span>
+        <span class="value">{{ claim.reason }}</span>
+      </div>
 
       <div class="prescriptions-section" *ngIf="claim.filePaths && claim.filePaths.length > 0">
         <h3>Uploaded Prescriptions</h3>

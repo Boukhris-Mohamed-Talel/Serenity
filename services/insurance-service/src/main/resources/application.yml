@@ -26,6 +26,7 @@ spring:
 app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  public-base-url: ${INSURANCE_PUBLIC_BASE_URL:http://localhost:8090}
   insurance-portal:
     api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
   status-poller:
