@@ -103,9 +103,9 @@ export interface PrescriptionResponse {
   patientName: string;
   assignedToPharmacy?: boolean;
   assignmentMessage?: string;
-  medicationName: string;
-  dosage: string;
-  quantity: number;
+  medicationName?: string;
+  dosage?: string;
+  quantity?: number;
   instructions?: string;
   medicineLines?: PrescriptionLineResponse[];
   status: PrescriptionStatus;
@@ -139,6 +139,16 @@ export interface DoctorMedicineSuggestionResponse {
   pharmacyName?: string;
   guidanceMessage?: string;
   suggestions: DoctorMedicineSuggestionItem[];
+}
+
+export interface DoctorPatientSuggestionItem {
+  patientId: number;
+  displayName: string;
+  profilePictureUrl?: string;
+}
+
+export interface DoctorPatientSuggestionResponse {
+  suggestions: DoctorPatientSuggestionItem[];
 }
 
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';

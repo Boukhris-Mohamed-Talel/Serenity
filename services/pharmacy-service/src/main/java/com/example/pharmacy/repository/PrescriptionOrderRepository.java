@@ -10,4 +10,5 @@ public interface PrescriptionOrderRepository extends JpaRepository<PrescriptionO
     List<PrescriptionOrder> findByPharmacyOwnerUserIdOrderByCreatedAtDesc(Long ownerUserId);
     List<PrescriptionOrder> findByPatientIdOrderByCreatedAtDesc(Long patientId);
     List<PrescriptionOrder> findByPatientIdAndPharmacyIsNullAndStatusOrderByCreatedAtDesc(Long patientId, PrescriptionStatus status);
+    List<PrescriptionOrder> findByDoctorIdOrderByCreatedAtDesc(Long doctorId);
 }

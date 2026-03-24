@@ -5,6 +5,7 @@ import { UserService } from '../../../core/services/user.service';
 import {
   DoctorMedicineSuggestionItem,
   DoctorMedicineSuggestionResponse,
+  DoctorPatientSuggestionItem,
   PrescriptionCreateRequest,
   PrescriptionResponse
 } from '../../../shared/models/pharmacy.model';
@@ -25,6 +26,12 @@ export class DoctorPrescriptionComponent implements OnInit {
   defaultPharmacyName = '';
   defaultPharmacyWarning = '';
 
+  patientLookupError = '';
+  patientMatches: DoctorPatientSuggestionItem[] = [];
+  selectedPatientId: number | null = null;
+  selectedPatientName = '';
+  showPatientMatches = false;
+
   lineSuggestions: Record<number, DoctorMedicineSuggestionItem[]> = {};
 
   constructor(
@@ -33,7 +40,6 @@ export class DoctorPrescriptionComponent implements OnInit {
     private readonly userService: UserService
   ) {
     this.form = this.fb.group({
-      patientId: [null, [Validators.required, Validators.min(1)]],
       patientName: ['', [Validators.required, Validators.minLength(2)]],
       doctorName: ['', [Validators.required, Validators.minLength(2)]],
       medicineLines: this.fb.array([this.createLineGroup()])
@@ -74,10 +80,10 @@ export class DoctorPrescriptionComponent implements OnInit {
   }
 
   onMedicineInput(index: number): void {
-    const patientId = Number(this.form.get('patientId')?.value);
+    const patientId = this.selectedPatientId;
     const medicineName = String(this.medicineLines.at(index).get('medicationName')?.value || '').trim();
 
-    if (!patientId || patientId <= 0 || medicineName.length < 2) {
+    if (!patientId || medicineName.length < 2) {
       this.lineSuggestions[index] = [];
       return;
     }
@@ -94,9 +100,66 @@ export class DoctorPrescriptionComponent implements OnInit {
     this.medicineLines.at(index).patchValue({ medicationName: item.medicineName });
   }
 
+  onPatientNameInput(): void {
+    const query = String(this.form.get('patientName')?.value || '').trim();
+
+    if (query.length < 1) {
+      this.patientMatches = [];
+      this.showPatientMatches = false;
+      this.selectedPatientId = null;
+      this.selectedPatientName = '';
+      return;
+    }
+
+    if (!this.selectedPatientName || this.selectedPatientName.toLowerCase() !== query.toLowerCase()) {
+      this.selectedPatientId = null;
+    }
+
+    this.patientLookupError = '';
+    this.pharmacyService.suggestDoctorPatients(query).subscribe({
+      next: (response) => {
+        this.patientMatches = response.suggestions || [];
+        this.showPatientMatches = true;
+      },
+      error: (err) => {
+        this.patientMatches = [];
+        this.showPatientMatches = false;
+        this.patientLookupError = err.error?.message || 'Unable to search patients right now.';
+      }
+    });
+  }
+
+  selectPatient(patient: DoctorPatientSuggestionItem): void {
+    const displayName = patient.displayName;
+    this.selectedPatientId = patient.patientId;
+    this.selectedPatientName = displayName;
+    this.form.patchValue({ patientName: displayName });
+    this.patientMatches = [];
+    this.showPatientMatches = false;
+  }
+
+  hidePatientMatches(): void {
+    setTimeout(() => {
+      this.showPatientMatches = false;
+    }, 120);
+  }
+
+  patientAvatarUrl(patient: DoctorPatientSuggestionItem): string {
+    return patient.profilePictureUrl || '';
+  }
+
+  getPatientDisplayName(patient: DoctorPatientSuggestionItem): string {
+    return patient.displayName;
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (!this.selectedPatientId) {
+      this.errorMessage = 'Please select a patient from the name list.';
       return;
     }
 
@@ -150,13 +213,9 @@ export class DoctorPrescriptionComponent implements OnInit {
     }));
 
     return {
-      patientId: Number(this.form.get('patientId')?.value),
+      patientId: this.selectedPatientId!,
       patientName: String(this.form.get('patientName')?.value || '').trim(),
       doctorName: String(this.form.get('doctorName')?.value || '').trim(),
-      medicationName: lines[0].medicationName,
-      dosage: lines[0].dosage,
-      quantity: lines[0].quantity,
-      instructions: lines[0].instructions,
       medicineLines: lines
     };
   }
@@ -175,9 +234,13 @@ export class DoctorPrescriptionComponent implements OnInit {
 
   private resetForm(): void {
     this.form.patchValue({
-      patientId: null,
       patientName: ''
     });
+
+    this.selectedPatientId = null;
+    this.selectedPatientName = '';
+    this.patientMatches = [];
+    this.showPatientMatches = false;
 
     while (this.medicineLines.length > 1) {
       this.medicineLines.removeAt(this.medicineLines.length - 1);

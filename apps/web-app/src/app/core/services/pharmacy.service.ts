@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   DoctorMedicineSuggestionResponse,
+  DoctorPatientSuggestionResponse,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
   PharmacyCandidateResponse,
@@ -42,6 +43,13 @@ export class PharmacyService {
     const encodedQuery = encodeURIComponent(query.trim());
     return this.http.get<DoctorMedicineSuggestionResponse>(
       `${this.API_URL}/doctor/medicine-suggestions?patientId=${patientId}&query=${encodedQuery}`
+    );
+  }
+
+  suggestDoctorPatients(query: string): Observable<DoctorPatientSuggestionResponse> {
+    const encodedQuery = encodeURIComponent(query.trim());
+    return this.http.get<DoctorPatientSuggestionResponse>(
+      `${this.API_URL}/doctor/patient-suggestions?query=${encodedQuery}`
     );
   }
 

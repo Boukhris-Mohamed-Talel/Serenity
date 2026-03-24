@@ -92,7 +92,10 @@
           <div class="prescriptions-grid" *ngIf="!prescriptionsLoading && prescriptions.length > 0">
             <article class="card prescription-card" *ngFor="let item of prescriptions">
               <div class="top-row">
-                <h3>{{ item.medicationName }}</h3>
+                <h3>
+                  {{ primaryMedication(item) }}
+                  <small *ngIf="additionalLinesCount(item) > 0">+{{ additionalLinesCount(item) }} more</small>
+                </h3>
                 <span [class]="statusClass(item.status)">{{ item.status }}</span>
               </div>
               <p class="meta">Pharmacy: {{ item.pharmacyName }}</p>
@@ -100,7 +103,7 @@
                 {{ item.assignmentMessage }}
               </p>
               <p class="meta">Doctor: {{ item.doctorName }}</p>
-              <p class="meta">Dosage: {{ item.dosage }} | Quantity: {{ item.quantity }}</p>
+              <p class="meta">Dosage: {{ primaryDosage(item) }} | Quantity: {{ primaryQuantity(item) }}</p>
               <p class="meta" *ngIf="item.instructions">Instructions: {{ item.instructions }}</p>
               <p class="pickup" *ngIf="isReadyForPickup(item.status)">Go collect it.</p>
             </article>

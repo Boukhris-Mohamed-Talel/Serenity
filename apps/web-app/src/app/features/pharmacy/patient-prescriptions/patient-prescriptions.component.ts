@@ -56,4 +56,20 @@ export class PatientPrescriptionsComponent implements OnInit {
   isReadyForPickup(status: PrescriptionStatus): boolean {
     return status === 'READY_FOR_PICKUP';
   }
+
+  primaryMedication(item: PrescriptionResponse): string {
+    return item.medicineLines?.[0]?.medicationName || item.medicationName || '-';
+  }
+
+  primaryDosage(item: PrescriptionResponse): string {
+    return item.medicineLines?.[0]?.dosage || item.dosage || '-';
+  }
+
+  primaryQuantity(item: PrescriptionResponse): number | string {
+    return item.medicineLines?.[0]?.quantity ?? item.quantity ?? '-';
+  }
+
+  additionalLinesCount(item: PrescriptionResponse): number {
+    return item.medicineLines && item.medicineLines.length > 1 ? item.medicineLines.length - 1 : 0;
+  }
 }

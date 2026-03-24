@@ -39,7 +39,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         Long doctorId = currentUserService.getCurrentUserId();
         Pharmacy pharmacy = resolvePharmacyForPrescription(request);
         List<PrescriptionLineCreateRequestDTO> lineRequests = resolveLineRequests(request);
-        PrescriptionLineCreateRequestDTO firstLine = lineRequests.get(0);
+        PrescriptionLineCreateRequestDTO summaryLine = lineRequests.get(0);
 
         PrescriptionOrder order = PrescriptionOrder.builder()
             .pharmacy(pharmacy)
@@ -47,10 +47,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             .patientId(request.getPatientId())
             .doctorName(request.getDoctorName())
             .patientName(request.getPatientName())
-            .medicationName(firstLine.getMedicationName())
-            .dosage(firstLine.getDosage())
-            .quantity(firstLine.getQuantity())
-            .instructions(request.getInstructions())
+            .medicationName(summaryLine.getMedicationName())
+            .dosage(summaryLine.getDosage())
+            .quantity(summaryLine.getQuantity())
+            .instructions(summaryLine.getInstructions())
             .status(PrescriptionStatus.PENDING)
             .build();
 
@@ -143,6 +143,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     }
 
     private PrescriptionResponseDTO toResponse(PrescriptionOrder order) {
+        List<PrescriptionLineResponseDTO> lines = order.getMedicineLines() == null
+            ? List.of()
+            : order.getMedicineLines().stream().map(this::toLineResponse).toList();
+
+        PrescriptionLineResponseDTO summaryLine = lines.isEmpty() ? null : lines.get(0);
+
         return PrescriptionResponseDTO.builder()
             .id(order.getId())
             .pharmacyId(order.getPharmacy() != null ? order.getPharmacy().getId() : null)
@@ -153,13 +159,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             .patientName(order.getPatientName())
             .assignedToPharmacy(order.getPharmacy() != null)
             .assignmentMessage(order.getPharmacy() == null ? "Patient has no default pharmacy yet" : null)
-            .medicationName(order.getMedicationName())
-            .dosage(order.getDosage())
-            .quantity(order.getQuantity())
-            .instructions(order.getInstructions())
-            .medicineLines(order.getMedicineLines() == null
-                ? List.of()
-                : order.getMedicineLines().stream().map(this::toLineResponse).toList())
+            .medicationName(summaryLine != null ? summaryLine.getMedicationName() : order.getMedicationName())
+            .dosage(summaryLine != null ? summaryLine.getDosage() : order.getDosage())
+            .quantity(summaryLine != null ? summaryLine.getQuantity() : order.getQuantity())
+            .instructions(summaryLine != null ? summaryLine.getInstructions() : order.getInstructions())
+            .medicineLines(lines)
             .status(order.getStatus())
             .rejectionReason(order.getRejectionReason())
             .readyAt(order.getReadyAt() != null ? order.getReadyAt().toString() : null)
@@ -192,16 +196,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     private List<PrescriptionLineCreateRequestDTO> resolveLineRequests(PrescriptionCreateRequestDTO request) {
         List<PrescriptionLineCreateRequestDTO> explicitLines = request.getMedicineLines();
-        if (explicitLines != null && !explicitLines.isEmpty()) {
-            return explicitLines.stream().map(this::validateAndNormalizeLine).toList();
+        if (explicitLines == null || explicitLines.isEmpty()) {
+            throw new IllegalArgumentException("At least one medicine line is required");
         }
 
-        return List.of(validateAndNormalizeLine(PrescriptionLineCreateRequestDTO.builder()
-            .medicationName(request.getMedicationName())
-            .dosage(request.getDosage())
-            .quantity(request.getQuantity())
-            .instructions(request.getInstructions())
-            .build()));
+        return explicitLines.stream().map(this::validateAndNormalizeLine).toList();
     }
 
     private PrescriptionLineCreateRequestDTO validateAndNormalizeLine(PrescriptionLineCreateRequestDTO line) {

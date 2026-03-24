@@ -19,15 +19,41 @@
       Suggestions currently scoped to: <strong>{{ defaultPharmacyName }}</strong>
     </article>
 
+    <p class="error" *ngIf="patientLookupError">{{ patientLookupError }}</p>
+
     <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
       <label>
-        Patient ID
-        <input type="number" formControlName="patientId" min="1" placeholder="e.g. 17" />
-      </label>
-
-      <label>
         Patient Name
-        <input type="text" formControlName="patientName" placeholder="Patient full name" />
+        <div class="patient-picker">
+          <input
+            type="text"
+            formControlName="patientName"
+            placeholder="Start typing patient name"
+            (input)="onPatientNameInput()"
+            (focus)="onPatientNameInput()"
+            (blur)="hidePatientMatches()" />
+
+          <div class="patient-list" *ngIf="showPatientMatches">
+            <button
+              type="button"
+              class="patient-item"
+              *ngFor="let patient of patientMatches"
+              (click)="selectPatient(patient)">
+              <img
+                *ngIf="patientAvatarUrl(patient)"
+                [src]="patientAvatarUrl(patient)"
+                [alt]="getPatientDisplayName(patient)" />
+              <div class="avatar-fallback" *ngIf="!patientAvatarUrl(patient)">
+                {{ getPatientDisplayName(patient).charAt(0) }}
+              </div>
+              <span>{{ getPatientDisplayName(patient) }}</span>
+            </button>
+
+            <div class="patient-empty" *ngIf="patientMatches.length === 0">
+              No patients found for this name.
+            </div>
+          </div>
+        </div>
       </label>
 
       <label class="full-row">
