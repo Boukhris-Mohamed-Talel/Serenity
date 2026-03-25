@@ -20,8 +20,8 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Name</th>
+          <th>Doctor Name</th>
+          <th>Photo</th>
           <th>Specialty</th>
           <th>Email</th>
           <th>Phone</th>
@@ -30,8 +30,17 @@
       </thead>
       <tbody>
         <tr *ngFor="let doctor of doctors">
-          <td>{{ doctor.id }}</td>
           <td>{{ getFullName(doctor) }}</td>
+          <td>
+            <img 
+              *ngIf="getProfilePictureUrl(doctor) as imageUrl"
+              [src]="imageUrl" 
+              alt="{{ getFullName(doctor) }} profile picture"
+              class="profile-picture"
+              (error)="onImageError($event)"
+            />
+            <span *ngIf="!getProfilePictureUrl(doctor)" class="no-image">No image</span>
+          </td>
           <td>{{ doctor.specialty || 'N/A' }}</td>
           <td>{{ doctor.email }}</td>
           <td>{{ doctor.phone }}</td>

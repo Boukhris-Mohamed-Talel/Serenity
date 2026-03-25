@@ -13,3 +13,17 @@
   color: var(--text-light);
 }
 
+.profile-picture {
+  max-width: 80px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.no-image {
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
