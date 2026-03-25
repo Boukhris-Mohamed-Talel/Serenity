@@ -67,7 +67,7 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
           console.log('New doctor received from WebSocket:', newDoctor);
           // Add new doctor to the beginning of the list
           this.doctors = [newDoctor, ...this.doctors];
-          this.showToast(`New doctor ${newDoctor.firstName} ${newDoctor.lastName} added!`, 'success');
+          this.showToast('A new doctor has been added', 'success');
         },
         error: (err) => {
           console.error('Error receiving new doctor:', err);

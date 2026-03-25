@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { DoctorResponse } from '../../shared/models/doctor.model';
+import { DoctorVerification } from '../../shared/models/doctor-verification.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,9 @@ export class WebSocketService {
 
   private newDoctorSubject = new Subject<DoctorResponse>();
   public newDoctor$ = this.newDoctorSubject.asObservable();
+
+  private newVerificationSubject = new Subject<DoctorVerification>();
+  public newVerification$ = this.newVerificationSubject.asObservable();
   private client: any = null;
   private reconnectInterval = 5000; // 5 seconds
   private reconnectAttempts = 0;
@@ -39,6 +43,15 @@ export class WebSocketService {
                 this.newDoctorSubject.next(doctor);
               } catch (error) {
                 console.error('❌ Error parsing doctor message:', error);
+              }
+            });
+
+            this.client.subscribe('/topic/doctor-verifications', (message: any) => {
+              try {
+                const verification = JSON.parse(message.body);
+                this.newVerificationSubject.next(verification);
+              } catch (error) {
+                console.error('❌ Error parsing verification message:', error);
               }
             });
           }

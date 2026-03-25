@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.repository.DoctorVerificationRepository;
+import serenity.doctors_service.service.RedisPublisher;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,9 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Autowired
     private DoctorVerificationRepository repository;
     private final String uploadDir = "uploads/";
+
+    @Autowired
+    private RedisPublisher publisher;
 
     @Override
     public DoctorVerification save(DoctorVerification verification) {
@@ -55,7 +59,11 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
         System.out.println("UPLOAD PATH = " + uploadPath);
 
-        return repository.save(verification);
+        DoctorVerification savedVerification = repository.save(verification);
+
+        publisher.publishVerification(savedVerification);
+
+        return savedVerification;
     }
 
 

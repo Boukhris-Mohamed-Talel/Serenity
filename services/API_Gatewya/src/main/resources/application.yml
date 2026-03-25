@@ -24,8 +24,12 @@ spring:
           uri: http://localhost:8083
           predicates:
             - Path=/api/doctor-verifications/**
-        - id: websocket-route
+        - id: websocket-route-doctor
           uri: ws://localhost:8081
+          predicates:
+            - Path=/ws/**
+        - id: websocket-route-doctor-verification
+          uri: ws://localhost:8083
           predicates:
             - Path=/ws/**
 
