@@ -15,6 +15,7 @@ export class StockManagementComponent implements OnInit {
   query = '';
   includeArchived = false;
   incrementValue: Record<number, number> = {};
+  selectedImageItem: StockItemResponse | null = null;
 
   items: StockItemResponse[] = [];
 
@@ -74,7 +75,11 @@ export class StockManagementComponent implements OnInit {
     this.pharmacyService.archiveStockItem(item.id).subscribe({
       next: () => {
         this.successMessage = `${item.medicineName} archived`;
-        this.items = this.items.filter(x => x.id !== item.id);
+        if (!this.includeArchived) {
+          this.items = this.items.filter(x => x.id !== item.id);
+          return;
+        }
+        this.replaceItem({ ...item, archived: true });
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to archive medicine';
@@ -82,8 +87,39 @@ export class StockManagementComponent implements OnInit {
     });
   }
 
+  restore(item: StockItemResponse): void {
+    this.pharmacyService.restoreStockItem(item.id).subscribe({
+      next: (updated) => {
+        this.successMessage = `${updated.medicineName} restored`;
+        this.replaceItem(updated);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to restore medicine';
+      }
+    });
+  }
+
   trackById(_: number, item: StockItemResponse): number {
     return item.id;
+  }
+
+  openImageModal(item: StockItemResponse): void {
+    this.selectedImageItem = item;
+  }
+
+  closeImageModal(): void {
+    this.selectedImageItem = null;
+  }
+
+  formatUpdated(updatedAt?: string): string {
+    if (!updatedAt) {
+      return '-';
+    }
+    const date = new Date(updatedAt);
+    if (Number.isNaN(date.getTime())) {
+      return updatedAt;
+    }
+    return date.toLocaleString();
   }
 
   private replaceItem(updated: StockItemResponse): void {

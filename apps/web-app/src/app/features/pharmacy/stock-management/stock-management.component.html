@@ -35,34 +35,101 @@
 
     <p *ngIf="!loading && items.length === 0" class="empty-state">No medicines found.</p>
 
-    <div class="stock-grid" *ngIf="!loading && items.length > 0">
-      <article class="stock-card card" *ngFor="let item of items; trackBy: trackById">
-        <div class="stock-head">
-          <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.medicineName" />
-          <div>
-            <h3>{{ item.medicineName }}</h3>
-            <span class="state" [class.out]="item.state === 'OUT_OF_STOCK'">{{ item.state }}</span>
-          </div>
-        </div>
+    <div class="table-card card" *ngIf="!loading && items.length > 0">
+      <div class="table-wrap">
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Status</th>
+              <th>Quantity</th>
+              <th>Archived</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of items; trackBy: trackById" [class.out-stock]="item.state === 'OUT_OF_STOCK'" [class.archived-row]="item.archived">
+              <td [attr.data-label]="'Medicine'" class="medicine-cell">
+                <div class="medicine-main">
+                  <span class="medicine-name">{{ item.medicineName }}</span>
+                  <p class="description" *ngIf="item.description">{{ item.description }}</p>
+                </div>
+              </td>
+              <td [attr.data-label]="'Status'">
+                <span class="state-badge" [class.out]="item.state === 'OUT_OF_STOCK'">{{ item.state }}</span>
+              </td>
+              <td [attr.data-label]="'Quantity'" class="qty-cell">
+                <strong>{{ item.quantity }}</strong>
+              </td>
+              <td [attr.data-label]="'Archived'" class="archived-cell">
+                <span class="archived-badge" [class.yes]="item.archived">{{ item.archived ? 'YES' : 'NO' }}</span>
+              </td>
+              <td [attr.data-label]="'Updated'" class="updated-cell">
+                {{ formatUpdated(item.updatedAt) }}
+              </td>
+              <td [attr.data-label]="'Actions'" class="actions-cell">
+                <div class="actions">
+                  <div class="increment-group">
+                    <input
+                      type="number"
+                      min="1"
+                      [(ngModel)]="incrementValue[item.id]"
+                      placeholder="+qty"
+                      [disabled]="item.archived" />
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      (click)="increment(item)"
+                      [disabled]="item.archived">
+                      Add Quantity
+                    </button>
+                  </div>
 
-        <p class="description" *ngIf="item.description">{{ item.description }}</p>
+                  <button
+                    type="button"
+                    class="btn btn-state"
+                    (click)="markOutOfStock(item)"
+                    [disabled]="item.state === 'OUT_OF_STOCK' || item.archived">
+                    Mark Out Of Stock
+                  </button>
 
-        <p class="qty">Quantity: <strong>{{ item.quantity }}</strong></p>
+                  <button
+                    type="button"
+                    class="btn"
+                    [class.btn-danger]="!item.archived"
+                    [class.btn-secondary]="item.archived"
+                    (click)="item.archived ? restore(item) : archive(item)">
+                    {{ item.archived ? 'Restore' : 'Archive' }}
+                  </button>
 
-        <div class="inline-actions quantity-row">
-          <input
-            type="number"
-            min="1"
-            [(ngModel)]="incrementValue[item.id]"
-            placeholder="+qty" />
-          <button type="button" class="btn btn-secondary" (click)="increment(item)">Add Quantity</button>
-        </div>
-
-        <div class="inline-actions action-row">
-          <button type="button" class="btn btn-state" (click)="markOutOfStock(item)">Mark Out Of Stock</button>
-          <button type="button" class="btn btn-danger" (click)="archive(item)">Delete (Archive)</button>
-        </div>
-      </article>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    (click)="openImageModal(item)">
+                    View Image
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </section>
+</div>
+
+<div class="image-modal-backdrop" *ngIf="selectedImageItem" (click)="closeImageModal()">
+  <section class="image-modal card" (click)="$event.stopPropagation()">
+    <header class="modal-head">
+      <h3>{{ selectedImageItem.medicineName }}</h3>
+      <button type="button" class="btn btn-secondary" (click)="closeImageModal()">Close</button>
+    </header>
+    <div class="modal-body" *ngIf="selectedImageItem.imageUrl; else missingImage">
+      <img [src]="selectedImageItem.imageUrl" [alt]="selectedImageItem.medicineName" />
+    </div>
+    <ng-template #missingImage>
+      <p class="no-image">No image available for this medicine.</p>
+    </ng-template>
   </section>
 </div>

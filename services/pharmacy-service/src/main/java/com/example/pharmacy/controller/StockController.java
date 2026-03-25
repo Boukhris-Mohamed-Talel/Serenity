@@ -58,7 +58,22 @@ public class StockController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{stockItemId}/restore")
+    public ResponseEntity<StockItemResponseDTO> restoreStockItem(@PathVariable Long stockItemId) {
+        return handleRestoreStockItem(stockItemId);
+    }
+
+    @PostMapping("/{stockItemId}/restore")
+    // Backward-compatible alias for clients still using POST instead of PATCH.
+    public ResponseEntity<StockItemResponseDTO> restoreStockItemPost(@PathVariable Long stockItemId) {
+        return handleRestoreStockItem(stockItemId);
+    }
+
     private ResponseEntity<StockItemResponseDTO> handleMarkOutOfStock(Long stockItemId) {
         return ResponseEntity.ok(stockService.markOutOfStock(stockItemId));
+    }
+
+    private ResponseEntity<StockItemResponseDTO> handleRestoreStockItem(Long stockItemId) {
+        return ResponseEntity.ok(stockService.restoreStockItem(stockItemId));
     }
 }

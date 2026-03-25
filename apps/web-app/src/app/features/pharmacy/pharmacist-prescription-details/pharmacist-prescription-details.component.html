@@ -1,0 +1,60 @@
+<div class="container">
+  <section class="page">
+    <header class="page-header">
+      <div>
+        <h1>Prescription Details</h1>
+        <p>Review the full prescription and update the status.</p>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="goBack()">Back to Inbox</button>
+    </header>
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <article class="card details-card" *ngIf="!loading && prescription as selected">
+      <div class="details-head">
+        <div>
+          <p class="meta"><strong>Patient:</strong> {{ selected.patientName }}</p>
+          <p class="meta"><strong>Doctor:</strong> {{ selected.doctorName }}</p>
+          <p class="meta"><strong>Status:</strong> {{ selected.status }}</p>
+        </div>
+        <div class="actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="updateStatus('ACCEPTED')"
+            [disabled]="!canProcess(selected.status)">
+            Accept
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="updateStatus('REJECTED')"
+            [disabled]="!canProcess(selected.status)">
+            Reject
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="updateStatus('READY_FOR_PICKUP')"
+            [disabled]="selected.status !== 'ACCEPTED'">
+            Ready
+          </button>
+        </div>
+      </div>
+
+      <div class="line-items">
+        <h3>Medicines</h3>
+        <ul>
+          <li *ngFor="let line of medicineLines()">
+            <span class="med-name">{{ line.medicationName }}</span>
+            <span class="meta">Dosage: {{ line.dosage }}</span>
+            <span class="meta">Qty: {{ line.quantity }}</span>
+            <span class="meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</span>
+          </li>
+        </ul>
+      </div>
+    </article>
+
+    <p class="hint" *ngIf="loading">Loading prescription...</p>
+  </section>
+</div>

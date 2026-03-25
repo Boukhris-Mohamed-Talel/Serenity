@@ -5,6 +5,7 @@ import { RoleGuard } from '../../core/guards/role.guard';
 import { PharmacistDashboardComponent } from './pharmacist-dashboard/pharmacist-dashboard.component';
 import { MyPharmacyComponent } from './my-pharmacy/my-pharmacy.component';
 import { PrescriptionInboxComponent } from './prescription-inbox';
+import { PharmacistPrescriptionDetailsComponent } from './pharmacist-prescription-details/pharmacist-prescription-details.component';
 import { StockManagementComponent } from './stock-management/stock-management.component';
 import { AddMedicineComponent } from './add-medicine/add-medicine.component';
 import { PatientPharmacyComponent } from './patient-pharmacy/patient-pharmacy.component';
@@ -27,6 +28,12 @@ const routes: Routes = [
   {
     path: 'inbox',
     component: PrescriptionInboxComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['PHARMACIST'] }
+  },
+  {
+    path: 'inbox/:id',
+    component: PharmacistPrescriptionDetailsComponent,
     canActivate: [RoleGuard],
     data: { roles: ['PHARMACIST'] }
   },
@@ -67,6 +74,7 @@ const routes: Routes = [
     PharmacistDashboardComponent,
     MyPharmacyComponent,
     PrescriptionInboxComponent,
+    PharmacistPrescriptionDetailsComponent,
     StockManagementComponent,
     AddMedicineComponent,
     PatientPharmacyComponent,

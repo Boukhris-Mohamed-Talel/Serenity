@@ -15,6 +15,7 @@ export class MyPharmacyComponent implements OnInit {
   saving = false;
   successMessage = '';
   errorMessage = '';
+  private openingHoursPrefix = '';
 
   constructor(
     private readonly fb: FormBuilder,
@@ -27,9 +28,11 @@ export class MyPharmacyComponent implements OnInit {
       licenseNumber: ['', [Validators.required]],
       phone: [''],
       openingHours: [''],
-      addressLine: [''],
-      city: [''],
-      governorate: [''],
+      openingFrom: [''],
+      openingTo: [''],
+      addressLine: ['', [Validators.required, Validators.minLength(2)]],
+      city: ['', [Validators.required, Validators.minLength(2)]],
+      governorate: ['', [Validators.required, Validators.minLength(2)]],
       latitude: [null, [Validators.required, Validators.min(-90), Validators.max(90)]],
       longitude: [null, [Validators.required, Validators.min(-180), Validators.max(180)]],
       supportsEmergency: [false]
@@ -43,6 +46,7 @@ export class MyPharmacyComponent implements OnInit {
     this.pharmacyService.getMyPharmacy().subscribe({
       next: (pharmacy) => {
         this.form.patchValue(pharmacy);
+        this.applyOpeningHours(pharmacy.openingHours);
         this.loading = false;
       },
       error: () => {
@@ -67,6 +71,7 @@ export class MyPharmacyComponent implements OnInit {
 
     const payload: PharmacyUpsertRequest = {
       ...this.form.value,
+      openingHours: this.buildOpeningHours(),
       latitude: Number(this.form.get('latitude')?.value),
       longitude: Number(this.form.get('longitude')?.value)
     };
@@ -92,5 +97,33 @@ export class MyPharmacyComponent implements OnInit {
     this.form.get('longitude')?.markAsTouched();
     this.form.get('latitude')?.updateValueAndValidity();
     this.form.get('longitude')?.updateValueAndValidity();
+  }
+
+  private applyOpeningHours(openingHours?: string): void {
+    if (!openingHours) {
+      return;
+    }
+    const match = openingHours.match(/^(.*?)(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+    if (!match) {
+      return;
+    }
+    this.openingHoursPrefix = match[1].trim();
+    this.form.patchValue({
+      openingFrom: match[2],
+      openingTo: match[3]
+    });
+  }
+
+  private buildOpeningHours(): string {
+    const from = String(this.form.get('openingFrom')?.value || '').trim();
+    const to = String(this.form.get('openingTo')?.value || '').trim();
+    const existing = String(this.form.get('openingHours')?.value || '').trim();
+
+    if (from && to) {
+      const prefix = this.openingHoursPrefix ? `${this.openingHoursPrefix} ` : '';
+      return `${prefix}${from}-${to}`.trim();
+    }
+
+    return existing;
   }
 }

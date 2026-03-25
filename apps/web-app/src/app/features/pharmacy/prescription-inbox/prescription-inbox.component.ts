@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
   PrescriptionResponse,
@@ -15,9 +16,11 @@ export class PrescriptionInboxComponent implements OnInit {
   loading = true;
   errorMessage = '';
   prescriptions: PrescriptionResponse[] = [];
-  selectedPrescription: PrescriptionResponse | null = null;
 
-  constructor(private readonly pharmacyService: PharmacyService) {}
+  constructor(
+    private readonly pharmacyService: PharmacyService,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadInbox();
@@ -28,10 +31,6 @@ export class PrescriptionInboxComponent implements OnInit {
     this.pharmacyService.getInbox().subscribe({
       next: (rows) => {
         this.prescriptions = rows;
-        if (this.selectedPrescription) {
-          const refreshed = rows.find(row => row.id === this.selectedPrescription?.id) || null;
-          this.selectedPrescription = refreshed;
-        }
         this.loading = false;
       },
       error: (err) => {
@@ -54,9 +53,6 @@ export class PrescriptionInboxComponent implements OnInit {
       next: (updated) => {
         const idx = this.prescriptions.findIndex(p => p.id === updated.id);
         if (idx !== -1) this.prescriptions[idx] = updated;
-        if (this.selectedPrescription?.id === updated.id) {
-          this.selectedPrescription = updated;
-        }
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to update prescription status';
@@ -69,11 +65,7 @@ export class PrescriptionInboxComponent implements OnInit {
   }
 
   openPrescription(row: PrescriptionResponse): void {
-    this.selectedPrescription = row;
-  }
-
-  closeDetails(): void {
-    this.selectedPrescription = null;
+    this.router.navigate(['/pharmacy/inbox', row.id]);
   }
 
   medicineLines(row: PrescriptionResponse): Array<{ medicationName: string; dosage: string; quantity: number; instructions?: string }> {

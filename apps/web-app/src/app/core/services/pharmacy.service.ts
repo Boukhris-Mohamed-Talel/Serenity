@@ -150,4 +150,8 @@ export class PharmacyService {
   archiveStockItem(stockItemId: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/stock/${stockItemId}`);
   }
+
+  restoreStockItem(stockItemId: number): Observable<StockItemResponse> {
+    return this.http.patch<StockItemResponse>(`${this.API_URL}/stock/${stockItemId}/restore`, {});
+  }
 }

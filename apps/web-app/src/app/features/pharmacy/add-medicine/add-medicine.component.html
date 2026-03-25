@@ -25,13 +25,23 @@
 
       <div class="upload-row">
         <div class="upload-panel">
-          <label class="field">
+          <div class="field">
             <span class="field-title">Upload Image</span>
-            <input type="file" accept="image/*" (change)="onImageSelected($event)" />
-          </label>
+            <input
+              class="file-input"
+              type="file"
+              accept="image/*"
+              id="medicineUpload"
+              (change)="onImageSelected($event)" />
+            <label class="upload-box" for="medicineUpload">
+              <span class="upload-title">Click to upload</span>
+              <span class="upload-subtitle">PNG, JPG up to 5MB</span>
+              <span class="upload-meta">A clear package photo helps patients recognize the medicine.</span>
+            </label>
+          </div>
           <p class="hint" *ngIf="uploadingImage">Reading image...</p>
 
-          <label class="field">
+          <label class="field secondary">
             <span class="field-title">Or Image URL</span>
             <input formControlName="imageUrl" type="text" placeholder="https://..." />
           </label>

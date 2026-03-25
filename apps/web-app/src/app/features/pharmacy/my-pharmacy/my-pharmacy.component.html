@@ -8,41 +8,68 @@
     <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" class="form" *ngIf="!loading">
-      <label>
-        Pharmacy Name
-        <input formControlName="name" type="text" />
-      </label>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form card" *ngIf="!loading">
+      <div class="form-grid">
+        <label class="field span-2">
+          <span class="field-title">Pharmacy Name</span>
+          <input formControlName="name" type="text" />
+          <span class="field-error" *ngIf="form.get('name')?.touched && form.get('name')?.invalid">
+            Pharmacy name is required.
+          </span>
+        </label>
 
-      <label>
-        License Number
-        <input formControlName="licenseNumber" type="text" />
-      </label>
+        <label class="field">
+          <span class="field-title">License Number</span>
+          <input formControlName="licenseNumber" type="text" />
+          <span class="field-error" *ngIf="form.get('licenseNumber')?.touched && form.get('licenseNumber')?.invalid">
+            License number is required.
+          </span>
+        </label>
 
-      <label>
-        Phone
-        <input formControlName="phone" type="text" />
-      </label>
+        <label class="field">
+          <span class="field-title">Phone</span>
+          <input formControlName="phone" type="tel" />
+        </label>
 
-      <label>
-        Opening Hours
-        <input formControlName="openingHours" type="text" placeholder="Mon-Sat 08:00-22:00" />
-      </label>
+        <div class="field span-2">
+          <span class="field-title">Opening Hours</span>
+          <div class="hours-grid">
+            <label class="mini-field">
+              <span>Open</span>
+              <input formControlName="openingFrom" type="time" />
+            </label>
+            <label class="mini-field">
+              <span>Close</span>
+              <input formControlName="openingTo" type="time" />
+            </label>
+          </div>
+          <p class="field-hint">Times are saved as HH:MM-HH:MM.</p>
+        </div>
 
-      <label>
-        Address
-        <input formControlName="addressLine" type="text" />
-      </label>
+        <label class="field span-2">
+          <span class="field-title">Address</span>
+          <input formControlName="addressLine" type="text" />
+          <span class="field-error" *ngIf="form.get('addressLine')?.touched && form.get('addressLine')?.invalid">
+            Address is required.
+          </span>
+        </label>
 
-      <label>
-        City
-        <input formControlName="city" type="text" />
-      </label>
+        <label class="field">
+          <span class="field-title">City</span>
+          <input formControlName="city" type="text" />
+          <span class="field-error" *ngIf="form.get('city')?.touched && form.get('city')?.invalid">
+            City is required.
+          </span>
+        </label>
 
-      <label>
-        Governorate
-        <input formControlName="governorate" type="text" />
-      </label>
+        <label class="field">
+          <span class="field-title">Governorate</span>
+          <input formControlName="governorate" type="text" />
+          <span class="field-error" *ngIf="form.get('governorate')?.touched && form.get('governorate')?.invalid">
+            Governorate is required.
+          </span>
+        </label>
+      </div>
 
       <div class="location-block">
         <p class="location-title">Exact Pharmacy Location</p>
@@ -63,9 +90,12 @@
         Supports emergency pickup
       </label>
 
-      <button class="btn btn-primary" type="submit" [disabled]="saving || form.invalid">
-        {{ saving ? 'Saving...' : 'Save Pharmacy' }}
-      </button>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="saving || form.invalid">
+          {{ saving ? 'Saving...' : 'Save Pharmacy' }}
+        </button>
+        <a class="btn btn-secondary" routerLink="/pharmacy">Cancel</a>
+      </div>
     </form>
   </section>
 </div>

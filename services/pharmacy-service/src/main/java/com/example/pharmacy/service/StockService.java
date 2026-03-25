@@ -10,5 +10,6 @@ public interface StockService {
     StockItemResponseDTO createStockItem(StockItemCreateRequestDTO request);
     StockItemResponseDTO incrementQuantity(Long stockItemId, Integer incrementBy);
     StockItemResponseDTO markOutOfStock(Long stockItemId);
+    StockItemResponseDTO restoreStockItem(Long stockItemId);
     void archiveStockItem(Long stockItemId);
 }

@@ -81,6 +81,15 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
+    public StockItemResponseDTO restoreStockItem(Long stockItemId) {
+        MedicineStockItem item = getOwnedItem(stockItemId);
+        item.setArchived(false);
+        int safeQuantity = item.getQuantity() == null ? 0 : item.getQuantity();
+        item.setState(safeQuantity > 0 ? StockState.IN_STOCK : StockState.OUT_OF_STOCK);
+        return toResponse(medicineStockItemRepository.save(item));
+    }
+
+    @Override
     public void archiveStockItem(Long stockItemId) {
         MedicineStockItem item = getOwnedItem(stockItemId);
         item.setArchived(true);

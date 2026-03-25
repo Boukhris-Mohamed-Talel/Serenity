@@ -13,7 +13,7 @@
 
     <article class="card details-card" *ngIf="!loading && prescription as item">
       <div class="details-head">
-        <h2>Prescription #{{ item.id }}</h2>
+        <h2>Prescription</h2>
         <span [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span>
       </div>
 

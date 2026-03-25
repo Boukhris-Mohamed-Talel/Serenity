@@ -20,9 +20,12 @@
 }
 
 .form {
-  max-width: 760px;
+  max-width: 780px;
   display: grid;
   gap: 1.2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%);
+  border: 1px solid #d3e6e4;
+  box-shadow: 0 12px 28px rgba(34, 92, 88, 0.08);
 }
 
 .fields-grid {
@@ -33,7 +36,7 @@
 
 .upload-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -68,6 +71,52 @@ input[type='file'] {
 
 input[type='file'] {
   padding: 0.5rem 0.65rem;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-box {
+  border: 2px dashed #a9cbc8;
+  border-radius: 16px;
+  padding: 1.2rem;
+  background: #f6fbfb;
+  display: grid;
+  gap: 0.35rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.upload-box:hover {
+  border-color: #3ba4a0;
+  box-shadow: 0 10px 20px rgba(59, 164, 160, 0.12);
+  transform: translateY(-1px);
+}
+
+.upload-title {
+  font-weight: 800;
+  color: #1f3b39;
+}
+
+.upload-subtitle {
+  font-size: 0.85rem;
+  color: #5a7e7b;
+}
+
+.upload-meta {
+  font-size: 0.78rem;
+  color: #7a9592;
+}
+
+.field.secondary .field-title {
+  color: #4d6765;
+  font-weight: 600;
 }
 
 textarea {

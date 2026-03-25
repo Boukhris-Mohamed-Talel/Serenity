@@ -1,0 +1,62 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-header p {
+  margin-top: 0.35rem;
+  color: #5d7d7a;
+}
+
+.details-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.details-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.line-items ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.line-items li {
+  margin-bottom: 0.4rem;
+}
+
+.med-name {
+  font-weight: 700;
+  margin-right: 0.55rem;
+}
+
+.meta {
+  margin-right: 0.75rem;
+  color: #47627b;
+}
+
+.hint {
+  color: #5b6570;
+}
+
+.error {
+  color: #b52424;
+}

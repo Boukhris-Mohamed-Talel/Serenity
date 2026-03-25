@@ -11,7 +11,6 @@
       <table>
         <thead>
           <tr>
-            <th>ID</th>
             <th>Patient</th>
             <th>Doctor</th>
             <th>Medication</th>
@@ -25,9 +24,7 @@
           <tr
             *ngFor="let row of prescriptions"
             class="clickable"
-            [class.active]="selectedPrescription?.id === row.id"
             (click)="openPrescription(row)">
-            <td>#{{ row.id }}</td>
             <td>{{ row.patientName }}</td>
             <td>{{ row.doctorName }}</td>
             <td>
@@ -40,6 +37,11 @@
               <span class="status" [class]="'status ' + row.status.toLowerCase()">{{ row.status }}</span>
             </td>
             <td class="actions">
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); openPrescription(row)">
+                Details
+              </button>
               <button
                 type="button"
                 (click)="$event.stopPropagation(); updateStatus(row, 'ACCEPTED')"
@@ -63,28 +65,5 @@
         </tbody>
       </table>
     </div>
-
-    <article class="details card" *ngIf="selectedPrescription as selected">
-      <div class="details-head">
-        <h3>Prescription #{{ selected.id }} Details</h3>
-        <button type="button" class="close-btn" (click)="closeDetails()">Close</button>
-      </div>
-
-      <p><strong>Patient:</strong> {{ selected.patientName }}</p>
-      <p><strong>Doctor:</strong> {{ selected.doctorName }}</p>
-      <p><strong>Status:</strong> {{ selected.status }}</p>
-
-      <div class="line-items">
-        <h4>Medicines</h4>
-        <ul>
-          <li *ngFor="let line of medicineLines(selected)">
-            <span class="med-name">{{ line.medicationName }}</span>
-            <span class="meta">Dosage: {{ line.dosage }}</span>
-            <span class="meta">Qty: {{ line.quantity }}</span>
-            <span class="meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</span>
-          </li>
-        </ul>
-      </div>
-    </article>
   </section>
 </div>

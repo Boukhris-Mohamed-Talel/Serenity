@@ -13,14 +13,19 @@
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
         <article class="card default-card" *ngIf="defaultPharmacy as selected; else noDefault">
-          <h3>Current Default Pharmacy</h3>
+          <div class="default-head">
+            <h3>Current Default Pharmacy</h3>
+            <span class="default-chip">Active</span>
+          </div>
           <p class="name">{{ selected.pharmacyName }}</p>
           <p class="meta" *ngIf="selected.addressLine">{{ selected.addressLine }}</p>
           <p class="meta" *ngIf="selected.city || selected.governorate">
             {{ selected.city || 'Unknown city' }}{{ selected.city && selected.governorate ? ', ' : '' }}{{ selected.governorate || '' }}
           </p>
-          <p class="meta" *ngIf="selected.openingHours">Hours: {{ selected.openingHours }}</p>
-          <p class="meta" *ngIf="selected.phone">Phone: {{ selected.phone }}</p>
+          <div class="default-meta" *ngIf="selected.openingHours || selected.phone">
+            <span *ngIf="selected.openingHours">Hours: {{ selected.openingHours }}</span>
+            <span *ngIf="selected.phone">Phone: {{ selected.phone }}</span>
+          </div>
         </article>
 
         <ng-template #noDefault>
@@ -33,7 +38,7 @@
         <article class="card">
           <div class="change-head">
             <h3>Change Default Pharmacy</h3>
-            <button type="button" class="btn btn-primary" (click)="useMyLocation()" [disabled]="nearestLoading || saving">
+            <button type="button" class="btn btn-primary btn-compact" (click)="useMyLocation()" [disabled]="nearestLoading || saving">
               {{ nearestLoading ? 'Checking location...' : 'Use My Location' }}
             </button>
           </div>
@@ -89,28 +94,21 @@
 
           <p class="error" *ngIf="prescriptionsErrorMessage">{{ prescriptionsErrorMessage }}</p>
 
-          <div class="prescriptions-grid" *ngIf="!prescriptionsLoading && prescriptionCards.length > 0">
+          <div class="prescriptions-list" *ngIf="!prescriptionsLoading && prescriptionCards.length > 0">
             <article
-              class="card prescription-card"
+              class="prescription-row"
               *ngFor="let card of prescriptionCards; trackBy: trackByPrescriptionId"
               tabindex="0"
               (click)="openPrescriptionDetails(card)"
               (keyup.enter)="openPrescriptionDetails(card)">
-              <div class="top-row">
+              <div class="row-main">
                 <h3>
                   {{ card.primaryLine.medicationName }}
                   <small *ngIf="card.extraLinesCount > 0">+{{ card.extraLinesCount }} more</small>
                 </h3>
                 <span class="status" [class]="'status ' + card.raw.status.toLowerCase()">{{ card.raw.status }}</span>
               </div>
-              <p class="meta">Pharmacy: {{ card.raw.pharmacyName || 'Not assigned yet' }}</p>
-              <p class="meta" *ngIf="card.raw.assignedToPharmacy === false && card.raw.assignmentMessage">
-                {{ card.raw.assignmentMessage }}
-              </p>
-              <p class="meta">Doctor: {{ card.raw.doctorName }}</p>
-              <p class="meta">Dosage: {{ card.primaryLine.dosage }} | Quantity: {{ card.primaryLine.quantity }}</p>
-              <p class="meta" *ngIf="card.primaryLine.instructions">Instructions: {{ card.primaryLine.instructions }}</p>
-              <p class="pickup" *ngIf="card.raw.status === 'READY_FOR_PICKUP'">Ready for pickup now.</p>
+              <p class="row-meta">Pharmacy: {{ card.raw.pharmacyName || 'Not assigned yet' }}</p>
               <p class="detail-cta">View full details</p>
             </article>
           </div>
