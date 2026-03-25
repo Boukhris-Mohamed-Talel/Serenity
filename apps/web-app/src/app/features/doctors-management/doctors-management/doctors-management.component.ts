@@ -33,6 +33,8 @@ export class DoctorsManagementComponent implements OnInit {
 
   documentImageCache = new Map<string, SafeUrl>();
 
+  toastMessages: Array<{ message: string; type: 'success' | 'error' | 'warning' }> = [];
+
   constructor(
     private readonly doctorService: DoctorService,
     private readonly doctorVerificationService: DoctorVerificationService,
@@ -148,6 +150,78 @@ export class DoctorsManagementComponent implements OnInit {
     this.showImageModal = false;
     this.selectedImageUrl = null;
     this.selectedImageTitle = '';
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'warning'): void {
+    this.toastMessages.push({ message, type });
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      this.toastMessages.shift();
+    }, 4000);
+  }
+
+  approveVerification(): void {
+    if (!this.selectedVerification) return;
+
+    const verificationId = this.selectedVerification.verification_id;
+    this.doctorVerificationService.approveVerification(verificationId).subscribe({
+      next: () => {
+        console.log('Verification approved successfully');
+        this.showToast('Verification approved successfully', 'success');
+        setTimeout(() => {
+          this.closeVerificationModal();
+          this.loadDoctors();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error approving verification:', err);
+        this.showToast('Failed to approve verification', 'error');
+      }
+    });
+  }
+
+  rejectVerification(): void {
+    if (!this.selectedVerification) return;
+
+    const verificationId = this.selectedVerification.verification_id;
+    this.doctorVerificationService.rejectVerification(verificationId).subscribe({
+      next: () => {
+        console.log('Verification rejected successfully');
+        this.showToast('Verification rejected successfully', 'success');
+        setTimeout(() => {
+          this.closeVerificationModal();
+          this.loadDoctors();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error rejecting verification:', err);
+        this.showToast('Failed to reject verification', 'error');
+      }
+    });
+  }
+
+  deleteVerification(): void {
+    if (!this.selectedVerification) return;
+
+    if (!confirm('Are you sure you want to delete this verification record? This action cannot be undone.')) {
+      return;
+    }
+
+    const verificationId = this.selectedVerification.verification_id;
+    this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+      next: () => {
+        console.log('Verification deleted successfully');
+        this.showToast('Verification deleted successfully', 'success');
+        setTimeout(() => {
+          this.closeVerificationModal();
+          this.loadDoctors();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error deleting verification:', err);
+        this.showToast('Failed to delete verification', 'error');
+      }
+    });
   }
 
   getStatusBadgeClass(status: string | undefined): string {

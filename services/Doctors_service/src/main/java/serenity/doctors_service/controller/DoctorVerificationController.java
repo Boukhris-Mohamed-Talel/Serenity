@@ -73,4 +73,16 @@ public class DoctorVerificationController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("Approve/{id}")
+    public ResponseEntity<Void> approve(@PathVariable Long id) {
+        service.Approve(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("Reject/{id}")
+    public ResponseEntity<Void> reject(@PathVariable Long id) {
+        service.Reject(id);
+        return ResponseEntity.noContent().build();
+    }
 }

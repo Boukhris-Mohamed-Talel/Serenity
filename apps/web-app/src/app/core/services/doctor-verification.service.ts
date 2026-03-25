@@ -30,4 +30,16 @@ export class DoctorVerificationService {
   getVerificationById(id: number): Observable<DoctorVerification> {
     return this.http.get<DoctorVerification>(`${this.API_URL}/${id}`);
   }
+
+  approveVerification(verificationId: number): Observable<any> {
+    return this.http.put(`${this.API_URL}/Approve/${verificationId}`, {});
+  }
+
+  rejectVerification(verificationId: number): Observable<any> {
+    return this.http.put(`${this.API_URL}/Reject/${verificationId}`, {});
+  }
+
+  deleteVerification(verificationId: number): Observable<any> {
+    return this.http.delete(`${this.API_URL}/${verificationId}`);
+  }
 }

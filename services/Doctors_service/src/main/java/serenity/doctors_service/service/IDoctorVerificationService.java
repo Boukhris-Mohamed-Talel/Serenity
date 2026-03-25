@@ -20,4 +20,8 @@ public interface IDoctorVerificationService {
     List<DoctorVerification> findByDoctorId(Long id);
 
     void deleteById(Long verification_id);
+
+    void Approve(Long verification_id);
+
+    void Reject(Long verification_id);
 }

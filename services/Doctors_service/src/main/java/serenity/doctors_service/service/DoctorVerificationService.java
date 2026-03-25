@@ -83,5 +83,19 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         repository.deleteById(verification_id);
     }
 
+    @Override
+    public void Approve(Long verification_id){
+        DoctorVerification verification = repository.findById(verification_id).get();
+        verification.setStatus(DoctorVerification.Status.APPROVED);
+        repository.save(verification);
+    }
+
+    @Override
+    public void Reject(Long verification_id){
+        DoctorVerification verification = repository.findById(verification_id).get();
+        verification.setStatus(DoctorVerification.Status.REJECTED);
+        repository.save(verification);
+    }
+
 
 }
