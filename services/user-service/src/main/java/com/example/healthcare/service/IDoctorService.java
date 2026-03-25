@@ -17,4 +17,6 @@ public interface IDoctorService {
     Doctor updateDoctor(Long userId, Doctor doctorDetails);
 
     void deleteDoctor(Long id);
+
+    void Verify(Long id);
 }

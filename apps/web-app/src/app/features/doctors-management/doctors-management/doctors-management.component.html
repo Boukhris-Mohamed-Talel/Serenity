@@ -90,10 +90,23 @@
         <p>Loading verification details...</p>
       </div>
 
-      <div *ngIf="verificationError" class="alert alert-error">
-        {{ verificationError }}
+      <!-- Already Verified Case -->
+      <div *ngIf="!verificationLoading && verificationError === 'ALREADY_VERIFIED'" class="verification-message">
+        <div class="message-content">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-verify"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <h3>This doctor is already verified!</h3>
+        </div>
       </div>
 
+      <!-- Not Submitted Case -->
+      <div *ngIf="!verificationLoading && verificationError === 'NOT_SUBMITTED'" class="verification-message">
+        <div class="message-content">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-warning"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <h3>This doctor hasn't submitted his verification, do you want to delete this profile?</h3>
+        </div>
+      </div>
+
+      <!-- Normal Verification Details -->
       <div *ngIf="!verificationLoading && selectedVerification" class="verification-details">
         <div class="detail-section">
           <h3>Doctor Information</h3>
@@ -174,10 +187,24 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeVerificationModal()">Close</button>
-      <button class="btn-success" (click)="approveVerification()">Approve</button>
-      <button class="btn-warning" (click)="rejectVerification()">Reject</button>
-      <button class="btn-danger" (click)="deleteVerification()">Delete</button>
+      <!-- Already Verified Case - Only Close Button -->
+      <div *ngIf="verificationError === 'ALREADY_VERIFIED'" class="footer-buttons">
+        <button class="btn-secondary" (click)="closeVerificationModal()">Close</button>
+      </div>
+
+      <!-- Not Submitted Case - Yes and No Buttons -->
+      <div *ngIf="verificationError === 'NOT_SUBMITTED'" class="footer-buttons">
+        <button class="btn-secondary" (click)="closeVerificationModal()">No</button>
+        <button class="btn-danger" (click)="deleteUnverifiedDoctor()">Yes</button>
+      </div>
+
+      <!-- Normal Verification Case - All Action Buttons -->
+      <div *ngIf="selectedVerification && !verificationError" class="footer-buttons">
+        <button class="btn-secondary" (click)="closeVerificationModal()">Close</button>
+        <button class="btn-success" (click)="approveVerification()">Approve</button>
+        <button class="btn-warning" (click)="rejectVerification()">Reject</button>
+        <button class="btn-danger" (click)="deleteVerification()">Delete</button>
+      </div>
     </div>
   </div>
 </div>

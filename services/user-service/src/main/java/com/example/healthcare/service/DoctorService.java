@@ -112,4 +112,13 @@ public class DoctorService implements IDoctorService {
     public void deleteDoctor(Long id) {
         doctorRepository.deleteById(id);
     }
+
+    @Override
+    public void Verify(Long id){
+        Doctor existingDoctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
+
+        existingDoctor.setIsActive(true);
+        doctorRepository.save(existingDoctor);
+    }
 }

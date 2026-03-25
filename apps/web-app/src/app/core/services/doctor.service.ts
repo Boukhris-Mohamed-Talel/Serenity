@@ -19,4 +19,12 @@ export class DoctorService {
   getDoctorById(id: number): Observable<DoctorResponse> {
     return this.http.get<DoctorResponse>(`${this.API_URL}/${id}`);
   }
+
+  verifyDoctor(doctorId: number): Observable<any> {
+    return this.http.put(`${this.API_URL}/VerifyDoctor/${doctorId}`, {});
+  }
+
+  deleteDoctor(doctorId: number): Observable<any> {
+    return this.http.delete(`${this.API_URL}/${doctorId}`);
+  }
 }

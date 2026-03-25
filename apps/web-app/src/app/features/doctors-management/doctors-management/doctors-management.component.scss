@@ -644,3 +644,48 @@
   font-size: 0.875rem;
 }
 
+// Verification message styles
+.verification-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  min-height: 280px;
+
+  .message-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--text-bright, #e2e5f0);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    svg {
+      margin-bottom: 16px;
+
+      &.icon-verify {
+        color: #4CAF50;
+      }
+
+      &.icon-warning {
+        color: #FF9800;
+      }
+    }
+  }
+}
+
+// Footer buttons wrapper
+.footer-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  width: 100%;
+}
+

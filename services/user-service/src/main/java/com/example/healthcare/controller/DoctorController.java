@@ -61,4 +61,10 @@ public class DoctorController {
         doctorService.deleteDoctor(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("VerifyDoctor/{id}")
+    public ResponseEntity<Doctor> verifyDoctor(@PathVariable Long id){
+        doctorService.Verify(id);
+        return ResponseEntity.ok().build();
+    }
 }
