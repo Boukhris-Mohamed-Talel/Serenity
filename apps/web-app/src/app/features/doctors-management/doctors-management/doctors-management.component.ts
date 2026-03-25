@@ -29,6 +29,11 @@ export class DoctorsManagementComponent implements OnInit {
     this.loadDoctors();
   }
 
+  onViewVerification(doctor: DoctorResponse): void {
+    // Placeholder for navigation or modal logic
+    alert('View verification for ' + this.getFullName(doctor));
+  }
+
   loadDoctors(): void {
     this.isLoading = true;
     this.error = null;

@@ -53,7 +53,7 @@ public class DoctorService implements IDoctorService {
         doctor.setDateOfBirth(existingUser.getDateOfBirth());
         doctor.setRole(existingUser.getRole());
         doctor.setAuthProvider(existingUser.getAuthProvider());
-        doctor.setIsActive(existingUser.getIsActive());
+        doctor.setIsActive(false);
 
         // Doctor-specific fields
         doctor.setSpecialty(specialty);

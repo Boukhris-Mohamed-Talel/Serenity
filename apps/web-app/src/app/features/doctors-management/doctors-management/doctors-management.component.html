@@ -26,6 +26,7 @@
           <th>Email</th>
           <th>Phone</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -46,8 +47,14 @@
           <td>{{ doctor.phone }}</td>
           <td>
             <span [class]="doctor.isActive ? 'badge badge-success' : 'badge badge-danger'">
-              {{ doctor.isActive ? 'Active' : 'Inactive' }}
+              {{ doctor.isActive ? 'Verified' : 'Not Verified' }}
             </span>
+          </td>
+          <td class="actions-cell">
+            <button class="action-btn" (click)="onViewVerification(doctor)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              View Verification
+            </button>
           </td>
         </tr>
       </tbody>

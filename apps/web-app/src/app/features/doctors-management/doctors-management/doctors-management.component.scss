@@ -1,3 +1,27 @@
+// Actions button styling
+.actions-cell {
+  position: relative;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--card-bg, #23263a);
+  border: 1px solid var(--border-color, #2d3147);
+  border-radius: 6px;
+  color: var(--text-light, #8b90a7);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+
+.action-btn:hover {
+  background: rgba(59, 164, 160, 0.08);
+  color: var(--text-bright, #e2e5f0);
+}
 .loading-container {
   display: flex;
   flex-direction: column;
