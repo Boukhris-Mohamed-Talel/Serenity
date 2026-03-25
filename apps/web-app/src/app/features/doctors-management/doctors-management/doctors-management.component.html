@@ -83,13 +83,6 @@
       </div>
 
       <div *ngIf="!verificationLoading && selectedVerification" class="verification-details">
-        <div style="padding: 1rem; background: #3BA4A0; border-radius: 6px; margin-bottom: 1rem; color: white;">
-          <strong>Debug: Verification Loaded</strong>
-          <br>Status: {{ selectedVerification?.status }}
-          <br>License Number: {{ selectedVerification?.licenseNumber }}
-          <br>SubmittedAt: {{ selectedVerification?.submittedAt }}
-        </div>
-
         <div class="detail-section">
           <h3>Doctor Information</h3>
           <div class="info-grid">
@@ -100,6 +93,10 @@
             <div class="info-item">
               <label>License Number</label>
               <p>{{ selectedVerification.licenseNumber }}</p>
+            </div>
+            <div class="info-item">
+              <label>National ID</label>
+              <p>{{ selectedVerification.nationalId }}</p>
             </div>
           </div>
         </div>
@@ -125,43 +122,38 @@
 
         <div class="detail-section">
           <h3>Documents</h3>
-          <div style="padding: 0.5rem; background: rgba(255,255,0,0.1); border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
-            <strong>Debug - URLs:</strong>
-            <br>cv: {{ selectedVerification?.cv }}
-            <br>diploma: {{ selectedVerification?.diploma }}
-            <br>nationalId: {{ selectedVerification?.nationalId }}
-          </div>
           <div class="documents-grid">
-            <div class="document-item">
+            <div class="document-item" *ngIf="selectedVerification.cv">
               <label>CV</label>
-              <div class="document-preview">
-                <a *ngIf="selectedVerification.cv" [href]="selectedVerification.cv" target="_blank" class="doc-link">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <span>Download CV</span>
-                </a>
-                <span *ngIf="!selectedVerification.cv" class="no-document">No CV uploaded</span>
+              <div class="image-preview" (click)="openImageModal(selectedVerification.cv, 'CV')">
+                <img [src]="getDocumentImageUrl(selectedVerification.cv)" alt="CV" class="doc-image" />
+                <div class="overlay">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path></svg>
+                  <span>Click to view</span>
+                </div>
+              </div>
+            </div>
+            <div class="document-item empty-document" *ngIf="!selectedVerification.cv">
+              <label>CV</label>
+              <div class="image-preview empty">
+                <p>No CV uploaded</p>
               </div>
             </div>
 
-            <div class="document-item">
+            <div class="document-item" *ngIf="selectedVerification.diploma">
               <label>Diploma</label>
-              <div class="document-preview">
-                <a *ngIf="selectedVerification.diploma" [href]="selectedVerification.diploma" target="_blank" class="doc-link">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <span>Download Diploma</span>
-                </a>
-                <span *ngIf="!selectedVerification.diploma" class="no-document">No Diploma uploaded</span>
+              <div class="image-preview" (click)="openImageModal(selectedVerification.diploma, 'Diploma')">
+                <img [src]="getDocumentImageUrl(selectedVerification.diploma)" alt="Diploma" class="doc-image" />
+                <div class="overlay">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path></svg>
+                  <span>Click to view</span>
+                </div>
               </div>
             </div>
-
-            <div class="document-item">
-              <label>National ID</label>
-              <div class="document-preview">
-                <a *ngIf="selectedVerification.nationalId" [href]="selectedVerification.nationalId" target="_blank" class="doc-link">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <span>Download ID</span>
-                </a>
-                <span *ngIf="!selectedVerification.nationalId" class="no-document">No National ID uploaded</span>
+            <div class="document-item empty-document" *ngIf="!selectedVerification.diploma">
+              <label>Diploma</label>
+              <div class="image-preview empty">
+                <p>No Diploma uploaded</p>
               </div>
             </div>
           </div>
@@ -171,6 +163,21 @@
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="closeVerificationModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Viewer Modal -->
+<div class="image-modal-overlay" *ngIf="showImageModal" (click)="closeImageModal()">
+  <div class="image-modal" (click)="$event.stopPropagation()">
+    <div class="image-modal-header">
+      <h3>{{ selectedImageTitle }}</h3>
+      <button class="modal-close" (click)="closeImageModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="image-modal-body">
+      <img [src]="selectedImageUrl" alt="Document preview" class="enlarged-image" />
     </div>
   </div>
 </div>

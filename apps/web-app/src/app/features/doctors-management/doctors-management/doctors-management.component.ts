@@ -27,6 +27,12 @@ export class DoctorsManagementComponent implements OnInit {
   verificationLoading = false;
   verificationError: string | null = null;
 
+  showImageModal = false;
+  selectedImageUrl: SafeUrl | null = null;
+  selectedImageTitle = '';
+
+  documentImageCache = new Map<string, SafeUrl>();
+
   constructor(
     private readonly doctorService: DoctorService,
     private readonly doctorVerificationService: DoctorVerificationService,
@@ -78,6 +84,70 @@ export class DoctorsManagementComponent implements OnInit {
     this.showVerificationModal = false;
     this.selectedVerification = null;
     this.selectedDoctor = null;
+  }
+
+  getDocumentImageUrl(documentPath: string | undefined): SafeUrl | null {
+    if (!documentPath) {
+      return null;
+    }
+
+    // Convert backslashes to forward slashes
+    const normalizedPath = documentPath.replace(/\\\\/g, '/');
+
+    // Check if already cached
+    if (this.documentImageCache.has(normalizedPath)) {
+      return this.documentImageCache.get(normalizedPath) || null;
+    }
+
+    // Load image through HTTP client (with JWT auth)
+    const imageUrl = `http://localhost:8082/${normalizedPath}`;
+    this.httpClient.get(imageUrl, { responseType: 'blob' }).subscribe({
+      next: (imageBlob) => {
+        const objectUrl = URL.createObjectURL(imageBlob);
+        const safeUrl = this.sanitizer.bypassSecurityTrustUrl(objectUrl);
+        this.documentImageCache.set(normalizedPath, safeUrl);
+      },
+      error: (err) => {
+        console.error('Failed to load document image:', imageUrl, err);
+      }
+    });
+
+    return null;
+  }
+
+  openImageModal(documentPath: string | undefined, title: string): void {
+    if (!documentPath) return;
+
+    const normalizedPath = documentPath.replace(/\\\\/g, '/');
+    const imageUrl = `http://localhost:8082/${normalizedPath}`;
+
+    // Check if cached, if not load it
+    if (this.documentImageCache.has(normalizedPath)) {
+      this.selectedImageUrl = this.documentImageCache.get(normalizedPath) || null;
+      this.selectedImageTitle = title;
+      this.showImageModal = true;
+    } else {
+      // Load and show
+      this.httpClient.get(imageUrl, { responseType: 'blob' }).subscribe({
+        next: (imageBlob) => {
+          const objectUrl = URL.createObjectURL(imageBlob);
+          const safeUrl = this.sanitizer.bypassSecurityTrustUrl(objectUrl);
+          this.documentImageCache.set(normalizedPath, safeUrl);
+          this.selectedImageUrl = safeUrl;
+          this.selectedImageTitle = title;
+          this.showImageModal = true;
+        },
+        error: (err) => {
+          console.error('Failed to load document image:', imageUrl, err);
+        }
+      });
+    }
+  }
+
+  closeImageModal(): void {
+    this.showImageModal = false;
+    this.selectedImageUrl = null;
+    this.selectedImageTitle = '';
   }
 
   getStatusBadgeClass(status: string | undefined): string {
