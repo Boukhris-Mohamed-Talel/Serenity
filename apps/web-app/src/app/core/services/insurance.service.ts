@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   InsuranceClaimRequest,
@@ -9,7 +8,6 @@ import {
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
-import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,10 +16,7 @@ export class InsuranceService {
 
   private readonly API_URL = `${environment.insuranceApiUrl}/insurance`;
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly userService: UserService
-  ) {}
+  constructor(private readonly http: HttpClient) {}
 
   submitClaim(request: InsuranceClaimRequest, files: File[]): Observable<InsuranceClaimResponse> {
     const formData = new FormData();
@@ -30,25 +25,11 @@ export class InsuranceService {
     formData.append('insuranceCompany', request.insuranceCompany);
     formData.append('insuranceGrade', request.insuranceGrade.toString());
     files.forEach(file => formData.append('files', file));
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims`, formData, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims`, formData);
   }
 
   getMyClaims(): Observable<InsuranceClaimResponse[]> {
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`);
   }
 
   getAllClaims(): Observable<InsuranceClaimResponse[]> {
@@ -72,46 +53,18 @@ export class InsuranceService {
   }
 
   getMyNotifications(): Observable<InsuranceNotification[]> {
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications/me`, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications/me`);
   }
 
   getUnreadNotificationsCount(): Observable<NotificationUnreadCountResponse> {
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.get<NotificationUnreadCountResponse>(`${this.API_URL}/notifications/me/unread-count`, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.get<NotificationUnreadCountResponse>(`${this.API_URL}/notifications/me/unread-count`);
   }
 
   markNotificationAsRead(notificationId: number): Observable<void> {
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.patch<void>(`${this.API_URL}/notifications/me/${notificationId}/read`, {}, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.patch<void>(`${this.API_URL}/notifications/me/${notificationId}/read`, {});
   }
 
   markAllNotificationsAsRead(): Observable<void> {
-    return this.userService.getCurrentUser().pipe(
-      take(1),
-      switchMap(user =>
-        this.http.patch<void>(`${this.API_URL}/notifications/me/read-all`, {}, {
-          headers: { 'X-User-Id': String(user.id) }
-        })
-      )
-    );
+    return this.http.patch<void>(`${this.API_URL}/notifications/me/read-all`, {});
   }
 }
