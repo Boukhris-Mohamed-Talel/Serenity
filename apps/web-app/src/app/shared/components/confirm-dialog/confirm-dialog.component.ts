@@ -9,8 +9,8 @@ export class ConfirmDialogComponent {
   @Input() open = false;
   @Input() title = '';
   @Input() message = '';
-  @Input() confirmLabel = 'Confirmer';
-  @Input() cancelLabel = 'Annuler';
+  @Input() confirmLabel = 'Confirm';
+  @Input() cancelLabel = 'Cancel';
   @Input() danger = true;
 
   @Output() readonly confirm = new EventEmitter<void>();

@@ -1,22 +1,24 @@
 <div class="container medical-page">
   <div class="page-head">
-    <h1>{{ isEdit ? 'Modifier la prescription' : 'Nouvelle prescription' }}</h1>
+    <h1>{{ isEdit ? 'Edit prescription' : 'New prescription' }}</h1>
   </div>
 
   <p class="breadcrumb" *ngIf="patientId && recordId">
     <a routerLink="/patients">Patients</a>
     <span class="sep">/</span>
-    <a [routerLink]="['/patients', patientId, 'records']">Dossiers</a>
+    <a [routerLink]="['/patients', patientId]">Patient</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId, 'records']">Records</a>
     <span class="sep">/</span>
     <a [routerLink]="['/patients', patientId, 'records', recordId, 'prescriptions']">Prescriptions</a>
   </p>
 
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
+  <div *ngIf="loading" class="state-muted">Loading…</div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
       <label class="field full">
-        <span>Médicament *</span>
+        <span>Medication *</span>
         <input type="text" formControlName="medicationName" maxlength="100" />
       </label>
       <label class="field">
@@ -24,24 +26,24 @@
         <input type="text" formControlName="dosage" maxlength="50" />
       </label>
       <label class="field">
-        <span>Fréquence *</span>
+        <span>Frequency *</span>
         <input type="text" formControlName="frequency" maxlength="50" />
       </label>
       <label class="field">
-        <span>Quantité *</span>
+        <span>Quantity *</span>
         <input type="number" formControlName="quantity" min="1" />
       </label>
       <label class="field">
-        <span>Date début *</span>
+        <span>Start date *</span>
         <input type="date" formControlName="startDate" />
       </label>
       <label class="field">
-        <span>Date fin</span>
+        <span>End date</span>
         <input type="date" formControlName="endDate" />
       </label>
       <label class="field">
-        <span>Statut *</span>
-        <input type="text" formControlName="status" placeholder="ACTIVE ou COMPLETED" />
+        <span>Status *</span>
+        <input type="text" formControlName="status" placeholder="ACTIVE or COMPLETED" />
       </label>
       <label class="field full">
         <span>Instructions</span>
@@ -50,8 +52,8 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
-      <button type="submit" class="btn btn-primary" [disabled]="saving">Enregistrer</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">Save</button>
     </div>
   </form>
 </div>

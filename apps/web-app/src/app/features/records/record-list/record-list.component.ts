@@ -15,6 +15,8 @@ export class RecordListComponent implements OnInit {
   records: MedicalRecord[] = [];
   loading = false;
 
+  deleteConfirm: { id: number } | null = null;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -46,11 +48,21 @@ export class RecordListComponent implements OnInit {
     });
   }
 
-  deleteRecord(id: number): void {
-    if (!confirm('Supprimer ce dossier médical ?')) return;
+  openDeleteRecord(id: number): void {
+    this.deleteConfirm = { id };
+  }
+
+  closeDeleteConfirm(): void {
+    this.deleteConfirm = null;
+  }
+
+  confirmDeleteRecord(): void {
+    if (!this.deleteConfirm) return;
+    const { id } = this.deleteConfirm;
+    this.deleteConfirm = null;
     this.recordService.deleteRecord(id).subscribe({
       next: () => {
-        this.notification.success('Dossier supprimé');
+        this.notification.success('Record deleted');
         this.load();
       },
       error: () => {

@@ -15,6 +15,8 @@ export class PatientListComponent implements OnInit {
   pageIndex = 0;
   readonly pageSize = 10;
 
+  deleteConfirm: { id: number; name: string } | null = null;
+
   constructor(
     private readonly patientService: PatientService,
     private readonly notification: NotificationService
@@ -58,11 +60,21 @@ export class PatientListComponent implements OnInit {
     }
   }
 
-  deletePatient(id: number, name: string): void {
-    if (!confirm(`Supprimer le patient ${name} ?`)) return;
+  openDeletePatient(id: number, name: string): void {
+    this.deleteConfirm = { id, name };
+  }
+
+  closeDeleteConfirm(): void {
+    this.deleteConfirm = null;
+  }
+
+  confirmDeletePatient(): void {
+    if (!this.deleteConfirm) return;
+    const { id } = this.deleteConfirm;
+    this.deleteConfirm = null;
     this.patientService.deletePatient(id).subscribe({
       next: () => {
-        this.notification.success('Patient supprimé');
+        this.notification.success('Patient deleted');
         this.load();
       },
       error: () => {

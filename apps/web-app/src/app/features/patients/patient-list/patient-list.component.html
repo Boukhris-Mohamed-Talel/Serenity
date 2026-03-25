@@ -1,46 +1,72 @@
-<div class="container medical-page">
-  <div class="page-head">
-    <h1>Patients</h1>
-    <a routerLink="new" class="btn btn-primary">Nouveau patient</a>
-  </div>
+<section class="saas-page">
+  <header class="saas-page-header">
+    <div class="saas-page-title">
+      <h1>Patients</h1>
+      <p class="saas-lead">Manage patients and navigate to medical records and prescriptions.</p>
+    </div>
+    <div class="saas-toolbar">
+      <a routerLink="new" class="btn btn-primary btn-lg">+ New patient</a>
+    </div>
+  </header>
 
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
-
-  <div *ngIf="!loading && page?.empty" class="empty-state">Aucun patient pour le moment.</div>
-
-  <div class="table-wrap" *ngIf="!loading && page && !page.empty">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nom</th>
-          <th>Prénom</th>
-          <th>Téléphone</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of page!.content">
-          <td>{{ p.id }}</td>
-          <td>{{ p.lastName }}</td>
-          <td>{{ p.firstName }}</td>
-          <td>{{ p.phone || '—' }}</td>
-          <td class="cell-actions">
-            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Détail</a>
-            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Modifier</a>
-            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Dossiers</a>
-            <button type="button" class="btn btn-danger btn-sm" (click)="deletePatient(p.id, p.firstName + ' ' + p.lastName)">
-              Supprimer
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="pagination-bar" *ngIf="page.totalPages > 1">
-      <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Précédent</button>
-      <span class="page-info">Page {{ page.pageNumber + 1 }} / {{ page.totalPages }} ({{ page.totalElements }} patients)</span>
-      <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Suivant</button>
+  <div class="saas-card" *ngIf="loading">
+    <div class="saas-loading">
+      <span class="saas-spinner" aria-hidden="true"></span>
+      <span>Loading patients…</span>
     </div>
   </div>
-</div>
+
+  <div class="saas-card saas-empty" *ngIf="!loading && page?.empty">
+    <div class="saas-empty-icon" aria-hidden="true">👤</div>
+    <h2>No patients yet</h2>
+    <p>Create your first patient to start building medical records.</p>
+    <div class="saas-empty-actions">
+      <a routerLink="new" class="btn btn-primary">Create patient</a>
+    </div>
+  </div>
+
+  <div class="saas-card saas-card--flush" *ngIf="!loading && page && !page.empty">
+    <div class="patient-cards">
+      <article class="patient-card" *ngFor="let p of page!.content">
+        <div class="patient-info">
+          <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
+          <div class="patient-meta">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{ p.phone || '—' }}</span>
+          </div>
+        </div>
+
+        <div class="patient-actions">
+          <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
+          <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+          <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
+            Delete
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <footer class="saas-pagination" *ngIf="page.totalPages > 1">
+      <span class="saas-page-info">Page {{ page.pageNumber + 1 }} of {{ page.totalPages }} · {{ page.totalElements }} patient(s)</span>
+      <div class="saas-pagination-btns">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Previous</button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Next</button>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<app-confirm-dialog
+  [open]="!!deleteConfirm"
+  title="Delete this patient?"
+  [message]="deleteConfirm ? 'This action is permanent. ' + deleteConfirm.name + ' will be removed.' : ''"
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  [danger]="true"
+  (confirm)="confirmDeletePatient()"
+  (cancel)="closeDeleteConfirm()">
+</app-confirm-dialog>

@@ -1,30 +1,28 @@
 <div class="container medical-page">
   <div class="page-head">
-    <h1>Fiche patient</h1>
+    <h1>Patient details</h1>
     <div class="head-actions">
-      <a routerLink="/patients" class="btn btn-secondary">Liste</a>
-      <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'edit']" class="btn btn-secondary">Modifier</a>
-      <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'records']" class="btn btn-primary">Dossiers médicaux</a>
+      <a routerLink="/patients" class="btn btn-secondary">Back to list</a>
+      <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'edit']" class="btn btn-secondary">Edit</a>
+      <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'records']" class="btn btn-primary">Records</a>
     </div>
   </div>
 
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
+  <div *ngIf="loading" class="state-muted">Loading…</div>
 
   <div *ngIf="patient && !loading" class="detail-card">
     <dl class="detail-grid">
-      <dt>ID</dt>
-      <dd>{{ patient.id }}</dd>
-      <dt>Nom</dt>
+      <dt>Last name</dt>
       <dd>{{ patient.lastName }}</dd>
-      <dt>Prénom</dt>
+      <dt>First name</dt>
       <dd>{{ patient.firstName }}</dd>
-      <dt>Date de naissance</dt>
+      <dt>Date of birth</dt>
       <dd>{{ patient.dateOfBirth || '—' }}</dd>
-      <dt>Genre</dt>
+      <dt>Gender</dt>
       <dd>{{ patient.gender || '—' }}</dd>
-      <dt>Groupe sanguin</dt>
+      <dt>Blood type</dt>
       <dd>{{ patient.bloodType || '—' }}</dd>
-      <dt>Téléphone</dt>
+      <dt>Phone</dt>
       <dd>{{ patient.phone || '—' }}</dd>
       <dt>Allergies</dt>
       <dd>{{ patient.allergies || '—' }}</dd>

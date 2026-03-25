@@ -16,6 +16,8 @@ export class PrescriptionListComponent implements OnInit {
   prescriptions: Prescription[] = [];
   loading = false;
 
+  deleteConfirm: { id: number } | null = null;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -49,11 +51,21 @@ export class PrescriptionListComponent implements OnInit {
     });
   }
 
-  deletePrescription(id: number): void {
-    if (!confirm('Supprimer cette prescription ?')) return;
+  openDeletePrescription(id: number): void {
+    this.deleteConfirm = { id };
+  }
+
+  closeDeleteConfirm(): void {
+    this.deleteConfirm = null;
+  }
+
+  confirmDeletePrescription(): void {
+    if (!this.deleteConfirm) return;
+    const { id } = this.deleteConfirm;
+    this.deleteConfirm = null;
     this.prescriptionService.deletePrescription(id).subscribe({
       next: () => {
-        this.notification.success('Prescription supprimée');
+        this.notification.success('Prescription deleted');
         this.load();
       },
       error: () => {

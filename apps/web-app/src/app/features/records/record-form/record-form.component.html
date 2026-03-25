@@ -1,38 +1,38 @@
 <div class="container medical-page">
   <div class="page-head">
-    <h1>{{ isEdit ? 'Modifier le dossier médical' : 'Nouveau dossier médical' }}</h1>
+    <h1>{{ isEdit ? 'Edit medical record' : 'New medical record' }}</h1>
   </div>
 
   <p class="breadcrumb" *ngIf="patientId">
     <a routerLink="/patients">Patients</a>
     <span class="sep">/</span>
-    <a [routerLink]="['/patients', patientId]">Patient #{{ patientId }}</a>
+    <a [routerLink]="['/patients', patientId]">Patient</a>
     <span class="sep">/</span>
-    <a [routerLink]="['/patients', patientId, 'records']">Dossiers</a>
+    <a [routerLink]="['/patients', patientId, 'records']">Records</a>
   </p>
 
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
+  <div *ngIf="loading" class="state-muted">Loading…</div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
       <label class="field full">
-        <span>Diagnostic *</span>
+        <span>Diagnosis *</span>
         <input type="text" formControlName="diagnosis" maxlength="255" />
-        <small class="err" *ngIf="form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched">Obligatoire, max 255 caractères</small>
+        <small class="err" *ngIf="form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched">Required (max 255 characters)</small>
       </label>
       <label class="field">
         <span>Date *</span>
         <input type="date" formControlName="date" />
       </label>
       <label class="field">
-        <span>Sévérité *</span>
+        <span>Severity *</span>
         <select formControlName="severity">
           <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
         </select>
       </label>
       <label class="field">
-        <span>Statut *</span>
-        <input type="text" formControlName="status" placeholder="ACTIVE ou CLOSED" />
+        <span>Status *</span>
+        <input type="text" formControlName="status" placeholder="ACTIVE or CLOSED" />
       </label>
       <label class="field full">
         <span>Notes</span>
@@ -41,8 +41,8 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
-      <button type="submit" class="btn btn-primary" [disabled]="saving">Enregistrer</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">Save</button>
     </div>
   </form>
 </div>

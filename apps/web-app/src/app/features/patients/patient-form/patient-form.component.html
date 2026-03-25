@@ -1,36 +1,36 @@
 <div class="container medical-page">
   <div class="page-head">
-    <h1>{{ isEdit ? 'Modifier le patient' : 'Nouveau patient' }}</h1>
+    <h1>{{ isEdit ? 'Edit patient' : 'New patient' }}</h1>
   </div>
 
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
+  <div *ngIf="loading" class="state-muted">Loading…</div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
       <label class="field">
-        <span>Prénom *</span>
+        <span>First name *</span>
         <input type="text" formControlName="firstName" autocomplete="given-name" />
-        <small class="err" *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched">2–50 caractères requis</small>
+        <small class="err" *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched">Required (2–50 characters)</small>
       </label>
       <label class="field">
-        <span>Nom *</span>
+        <span>Last name *</span>
         <input type="text" formControlName="lastName" autocomplete="family-name" />
-        <small class="err" *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched">2–50 caractères requis</small>
+        <small class="err" *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched">Required (2–50 characters)</small>
       </label>
       <label class="field">
-        <span>Date de naissance</span>
+        <span>Date of birth</span>
         <input type="date" formControlName="dateOfBirth" />
       </label>
       <label class="field">
-        <span>Genre</span>
+        <span>Gender</span>
         <input type="text" formControlName="gender" maxlength="10" />
       </label>
       <label class="field">
-        <span>Groupe sanguin</span>
+        <span>Blood type</span>
         <input type="text" formControlName="bloodType" maxlength="5" />
       </label>
       <label class="field">
-        <span>Téléphone</span>
+        <span>Phone</span>
         <input type="text" formControlName="phone" maxlength="20" />
       </label>
       <label class="field full">
@@ -40,9 +40,9 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
       <button type="submit" class="btn btn-primary" [disabled]="saving">
-        {{ isEdit ? 'Enregistrer' : 'Créer' }}
+        {{ isEdit ? 'Save' : 'Create' }}
       </button>
     </div>
   </form>

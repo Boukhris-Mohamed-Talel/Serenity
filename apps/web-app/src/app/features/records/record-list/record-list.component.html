@@ -1,50 +1,88 @@
-<div class="container medical-page">
-  <div class="page-head">
-    <h1>Dossiers médicaux</h1>
-    <div class="head-actions" *ngIf="patientId">
-      <a [routerLink]="['/patients', patientId]" class="btn btn-secondary">Fiche patient</a>
-      <a [routerLink]="['new']" class="btn btn-primary">Nouveau dossier</a>
+<section class="saas-page">
+  <header class="saas-page-header">
+    <div class="saas-page-title">
+      <h1>Medical records</h1>
+      <p class="saas-lead">Track diagnoses, severity and status for this patient.</p>
+    </div>
+    <div class="saas-toolbar" *ngIf="patientId">
+      <a [routerLink]="['/patients', patientId]" class="btn btn-secondary btn-lg">Patient details</a>
+      <a [routerLink]="['new']" class="btn btn-primary btn-lg">+ New record</a>
+    </div>
+  </header>
+
+  <nav class="saas-breadcrumb" *ngIf="patientId" aria-label="Breadcrumb">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId]">Patient</a>
+    <span class="sep">/</span>
+    <span class="current">Records</span>
+  </nav>
+
+  <!-- Loading -->
+  <div class="saas-card" *ngIf="loading">
+    <div class="saas-loading">
+      <span class="saas-spinner" aria-hidden="true"></span>
+      <span>Loading records…</span>
     </div>
   </div>
 
-  <p class="breadcrumb" *ngIf="patientId">
-    <a routerLink="/patients">Patients</a>
-    <span class="sep">/</span>
-    <a [routerLink]="['/patients', patientId]">Patient #{{ patientId }}</a>
-    <span class="sep">/</span>
-    <span>Dossiers</span>
-  </p>
-
-  <div *ngIf="loading" class="state-muted">Chargement…</div>
-
-  <div *ngIf="!loading && !records.length" class="empty-state">Aucun dossier pour ce patient.</div>
-
-  <div class="table-wrap" *ngIf="!loading && records.length">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Date</th>
-          <th>Diagnostic</th>
-          <th>Sévérité</th>
-          <th>Statut</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let r of records">
-          <td>{{ r.id }}</td>
-          <td>{{ r.date }}</td>
-          <td>{{ r.diagnosis }}</td>
-          <td>{{ r.severity }}</td>
-          <td>{{ r.status }}</td>
-          <td class="cell-actions">
-            <a [routerLink]="[r.id, 'prescriptions']" class="btn btn-primary btn-sm">Prescriptions</a>
-            <a [routerLink]="[r.id, 'edit']" class="btn btn-secondary btn-sm">Modifier</a>
-            <button type="button" class="btn btn-danger btn-sm" (click)="deleteRecord(r.id)">Supprimer</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Empty state -->
+  <div class="saas-card saas-empty" *ngIf="!loading && !records.length">
+    <div class="saas-empty-icon" aria-hidden="true">🗂️</div>
+    <h2>No records</h2>
+    <p>Create a medical record to store diagnosis, notes and prescriptions.</p>
+    <div class="saas-empty-actions" *ngIf="patientId">
+      <a [routerLink]="['new']" class="btn btn-primary">Create record</a>
+    </div>
   </div>
-</div>
+
+  <!-- Card list -->
+  <div class="record-cards" *ngIf="!loading && records.length">
+    <article class="record-card" *ngFor="let r of records">
+
+      <div class="record-body">
+        <div class="record-main">
+          <div class="record-diagnosis">{{ r.diagnosis }}</div>
+          <div class="record-date">{{ r.date }}</div>
+        </div>
+        <div class="record-badges">
+          <span
+            class="badge-pill"
+            [ngClass]="{
+              'badge-low':    r.severity === 'LOW',
+              'badge-medium': r.severity === 'MEDIUM',
+              'badge-high':   r.severity === 'HIGH'
+            }">
+            {{ r.severity }}
+          </span>
+          <span
+            class="badge-pill"
+            [ngClass]="{
+              'badge-active': r.status === 'ACTIVE',
+              'badge-closed': r.status === 'CLOSED'
+            }">
+            {{ r.status }}
+          </span>
+        </div>
+      </div>
+
+      <div class="record-actions">
+        <a [routerLink]="[r.id, 'prescriptions']" class="btn btn-primary btn-sm">Prescriptions</a>
+        <a [routerLink]="[r.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+        <button type="button" class="btn btn-danger btn-sm" (click)="openDeleteRecord(r.id)">Delete</button>
+      </div>
+
+    </article>
+  </div>
+</section>
+
+<app-confirm-dialog
+  [open]="!!deleteConfirm"
+  title="Delete this record?"
+  message="This action is permanent. Related prescriptions may also be affected depending on server configuration."
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  [danger]="true"
+  (confirm)="confirmDeleteRecord()"
+  (cancel)="closeDeleteConfirm()">
+</app-confirm-dialog>

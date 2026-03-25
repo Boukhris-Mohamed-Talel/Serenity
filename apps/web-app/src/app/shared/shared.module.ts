@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastComponent } from './components/toast/toast.component';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 
 @NgModule({
-  declarations: [ToastComponent],
+  declarations: [ToastComponent, ConfirmDialogComponent],
   imports: [
     CommonModule,
     FormsModule,
@@ -17,7 +18,8 @@ import { ToastComponent } from './components/toast/toast.component';
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
-    ToastComponent
+    ToastComponent,
+    ConfirmDialogComponent
   ]
 })
 export class SharedModule {}
