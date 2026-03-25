@@ -1,0 +1,87 @@
+[
+  {
+    "ref": "6cce34f3-e8eb-4fba-9d37-a8bc57907cb5",
+    "patientName": "1",
+    "description": "this is another test for document passage",
+    "amount": 120,
+    "insuranceCompany": "Insurance 5",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-03-24T13:30:06.309Z",
+    "processedAt": "2026-03-24T13:35:47.035Z",
+    "rejectReason": "More documents are needed for review",
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F03d6dae4-0048-4eb8-a562-338f19383201_diagramme_classe_pi.png"
+    ]
+  },
+  {
+    "ref": "7a80c1a4-d297-4a91-a3d3-88e6f986d10a",
+    "patientName": "1",
+    "description": "ts=esting the reim calculation",
+    "amount": 119.98,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 21.6,
+    "receivedAt": "2026-03-24T13:38:29.795Z",
+    "processedAt": "2026-03-24T13:38:38.552Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F32af6880-3be2-4109-93a3-907e1a0009d8_Correction+%E2%80%93+TP7+%E2%80%93+Docker+swarm.pdf"
+    ]
+  },
+  {
+    "ref": "3a7a17ea-5d05-4dc8-85ba-392a340e8d9c",
+    "patientName": "1",
+    "description": "testing the amount change",
+    "amount": 119.97,
+    "insuranceCompany": "Insurance 4",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 25,
+    "receivedAt": "2026-03-24T13:39:08.479Z",
+    "processedAt": "2026-03-24T13:39:29.923Z",
+    "rejectReason": null,
+    "adjustmentReason": "amount has been lowered due to repetitive claims",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F0c648eef-c1e1-43d3-88eb-918ca3b02bb1_docker_exam_reference.pdf"
+    ]
+  },
+  {
+    "ref": "6341f119-a648-49b1-8ad1-4dad3759b813",
+    "patientName": "1",
+    "description": "testing if the reason passes correctly",
+    "amount": 125,
+    "insuranceCompany": "Insurance 5",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 31.25,
+    "receivedAt": "2026-03-24T13:46:28.924Z",
+    "processedAt": "2026-03-24T13:46:42.860Z",
+    "rejectReason": null,
+    "adjustmentReason": "this a testing reason",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F475527ab-f889-46f1-8d94-7223ecc04b76_usecase.png"
+    ]
+  },
+  {
+    "ref": "a6566e0c-767d-4e01-8862-21a8050f917c",
+    "patientName": "1",
+    "description": "this is a test after merge",
+    "amount": 150,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 27,
+    "receivedAt": "2026-03-25T10:50:52.150Z",
+    "processedAt": "2026-03-25T10:51:54.130Z",
+    "rejectReason": null,
+    "adjustmentReason": "document approved and everything is good you will receive your payment within the next 48 hours check your bank account, in case of delay please refer to the nearest agency to you",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2Ff1103eaf-0c58-4f20-b073-79669863b6c5_4884e3f3-e0bf-4e05-8362-d9f509c6bc92.jpg"
+    ]
+  }
+]

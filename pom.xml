@@ -13,5 +13,6 @@
 
     <modules>
         <module>services/user-service</module>
+        <module>services/insurance-service</module>
     </modules>
 </project>

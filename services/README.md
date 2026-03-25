@@ -1,26 +1,22 @@
 # Services
 
-Backend APIs and microservices. **One folder = one deployable service** (own process, own port, own config).
+Backend services. **One folder = one deployable service** (own process, port, config).
 
 ## Current services
 
-| Service          | Path               | Port | Description                    |
-|------------------|--------------------|------|--------------------------------|
-| **user-service** | `services/user-service/` | 8081 | Auth, user CRUD, profiles. |
+| Service             | Path                        | Port | Description              |
+|---------------------|-----------------------------|------|--------------------------|
+| **user-service**    | `services/user-service/`    | 8081 | Auth, user CRUD, profiles. |
+| **insurance-service** | `services/insurance-service/` | 8082 | Insurance claims, reimbursements. |
 
-## Adding a new microservice
+## Run order
 
-1. **Create a new folder** under `services/` with a clear name, e.g. `insurance-service`.
-2. **One service per folder**: own `pom.xml` (or build file), own `application.yml`, own main class. Do not put multiple runnable apps in one folder.
-3. **Own port**: assign a dedicated port (e.g. 8082, 8083) in that service’s config.
-4. **Communication**: services call each other via HTTP (REST) or message queue when you introduce one. No shared database per service when you go full microservices; for now, new services can share the same DB or use their own.
-5. **Convention**: same repo layout as `user-service` (e.g. `src/main/java`, `src/main/resources`) so the repo stays consistent.
+1. **user-service** — `cd services/user-service && mvn spring-boot:run`.
+2. **insurance-service** — `cd services/insurance-service && mvn spring-boot:run`.
 
-## Target layout (when more services are added)
+Both can share the same MySQL database (`healthcare_db`); insurance-service uses tables `insurance_claims`, `claim_files`, `remboursements`.  
+The web-app calls user-service for auth/users and insurance-service for claims (send `X-User-Id` header for the logged-in user id).
 
-```
-services/
-├── user-service/       # Auth, user CRUD, profiles (current)
-├── insurance-service/  # Claims, reimbursements (to be added)
-└── README.md           # this file
-```
+## Adding another service
+
+Create a new folder under `services/` (e.g. `notifications-service`), same layout as these two. See [docs/ADDING_A_SERVICE.md](../docs/ADDING_A_SERVICE.md).

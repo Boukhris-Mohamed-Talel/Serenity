@@ -37,11 +37,10 @@ const routes: Routes = [
         path: 'users',
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
       },
-      // Insurance module (uncomment when features/insurance exists)
-      // {
-      //   path: 'insurance',
-      //   loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
-      // }
+      {
+        path: 'insurance',
+        loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
+      }
     ]
   },
   { path: '**', redirectTo: '' }

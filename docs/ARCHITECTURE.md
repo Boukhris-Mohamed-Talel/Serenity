@@ -1,43 +1,39 @@
-# Serenity — Architecture (microservice-ready)
+# Serenity — Microservice-oriented architecture
 
-The repo is laid out so we can add real microservices later without reshuffling. Right now there is **one** backend service and **one** main app; the **tree** is already microservice-style.
+The repo is organized so each backend domain is a **separate service** under `services/`. One folder = one deployable API.
 
 ## Repository layout
 
-```text
+```
 healthcare-system/
-├── apps/                    # User-facing applications (one folder = one app)
-│   ├── web-app/             # Angular SPA — main Serenity UI
-│   └── README.md
+├── apps/
+│   └── web-app/                 # Angular SPA (calls user-service + insurance-service)
 │
-├── services/                # Backend services (one folder = one service)
-│   ├── user-service/        # Auth, user CRUD, profiles
+├── services/
+│   ├── user-service/            # Auth, user CRUD, profiles (port 8081)
+│   ├── insurance-service/      # Claims, reimbursements (port 8082)
 │   └── README.md
 │
 ├── docs/
-│   ├── ARCHITECTURE.md      # this file
-│   └── ADDING_A_SERVICE.md  # how to add a new microservice
-│
+│   ├── ARCHITECTURE.md
+│   └── ADDING_A_SERVICE.md
 └── README.md
 ```
 
-## Current vs target
+## Services
 
-| Layer     | Now                         | Target (when services are added)        |
-|----------|-----------------------------|-----------------------------------------|
-| **Apps** | `web-app` only              | `web-app` + e.g. `insurance-portal`      |
-| **Services** | `user-service` (auth + users) | `user-service` + `insurance-service` (and others as needed) |
-| **Communication** | N/A (one API)          | Apps → services via HTTP; services → each other via HTTP (or events later) |
+| Service             | Port | Role |
+|---------------------|------|------|
+| **user-service**    | 8081 | Login, register, user management, profiles. JWT auth. |
+| **insurance-service** | 8082 | Submit claims, list claims, approve/reject. Uses `X-User-Id` header for caller identity. |
 
-## Principles
+The web-app talks to both: user-service for auth and users, insurance-service for insurance endpoints (and passes the logged-in user id in `X-User-Id`).
 
-1. **One folder under `apps/` = one deployable frontend/app.** No second app hidden inside `web-app`.
-2. **One folder under `services/` = one deployable backend service.** `user-service` is auth + users. New domains (e.g. insurance) become **new folders** under `services/`, not packages inside `user-service`.
-3. **Same repo, clear boundaries.** Each service has its own code, config, and port; when you add a domain, create a new `services/<name>/` and call it via HTTP.
-4. **Docs and READMEs** under `services/` and `docs/` describe the layout and how to add a service so the repo is ready when you start adding more.
+## Run order
 
-## See also
+1. MySQL up, database created.
+2. `cd services/user-service && mvn spring-boot:run`
+3. `cd services/insurance-service && mvn spring-boot:run`
+4. `cd apps/web-app && npm install && ng serve`
 
-- **services/README.md** — What lives under `services/`, current services, and how to add one.
-- **apps/README.md** — What lives under `apps/` and how to add an app.
-- **docs/ADDING_A_SERVICE.md** — Step-by-step for adding a new microservice.
+See [README.md](../README.md) and [services/README.md](../services/README.md) for details.
