@@ -61,3 +61,116 @@
     </table>
   </div>
 </div>
+
+<!-- Verification Details Modal -->
+<div class="modal-overlay" *ngIf="showVerificationModal" (click)="closeVerificationModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Doctor Verification Details</h2>
+      <button class="modal-close" (click)="closeVerificationModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="verificationLoading" class="loading-state">
+        <span class="spinner"></span>
+        <p>Loading verification details...</p>
+      </div>
+
+      <div *ngIf="verificationError" class="alert alert-error">
+        {{ verificationError }}
+      </div>
+
+      <div *ngIf="!verificationLoading && selectedVerification" class="verification-details">
+        <div style="padding: 1rem; background: #3BA4A0; border-radius: 6px; margin-bottom: 1rem; color: white;">
+          <strong>Debug: Verification Loaded</strong>
+          <br>Status: {{ selectedVerification?.status }}
+          <br>License Number: {{ selectedVerification?.licenseNumber }}
+          <br>SubmittedAt: {{ selectedVerification?.submittedAt }}
+        </div>
+
+        <div class="detail-section">
+          <h3>Doctor Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Doctor Name</label>
+              <p>{{ selectedDoctor ? getFullName(selectedDoctor) : 'N/A' }}</p>
+            </div>
+            <div class="info-item">
+              <label>License Number</label>
+              <p>{{ selectedVerification.licenseNumber }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Verification Status</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Status</label>
+              <p>
+                <span *ngIf="selectedVerification?.status" [class]="'badge ' + getStatusBadgeClass(selectedVerification.status)">
+                  {{ getStatusLabel(selectedVerification.status) }}
+                </span>
+                <span *ngIf="!selectedVerification?.status" class="badge badge-warning">Pending</span>
+              </p>
+            </div>
+            <div class="info-item">
+              <label>Submitted At</label>
+              <p>{{ selectedVerification.submittedAt | date: 'mediumDate' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Documents</h3>
+          <div style="padding: 0.5rem; background: rgba(255,255,0,0.1); border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+            <strong>Debug - URLs:</strong>
+            <br>cv: {{ selectedVerification?.cv }}
+            <br>diploma: {{ selectedVerification?.diploma }}
+            <br>nationalId: {{ selectedVerification?.nationalId }}
+          </div>
+          <div class="documents-grid">
+            <div class="document-item">
+              <label>CV</label>
+              <div class="document-preview">
+                <a *ngIf="selectedVerification.cv" [href]="selectedVerification.cv" target="_blank" class="doc-link">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>Download CV</span>
+                </a>
+                <span *ngIf="!selectedVerification.cv" class="no-document">No CV uploaded</span>
+              </div>
+            </div>
+
+            <div class="document-item">
+              <label>Diploma</label>
+              <div class="document-preview">
+                <a *ngIf="selectedVerification.diploma" [href]="selectedVerification.diploma" target="_blank" class="doc-link">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>Download Diploma</span>
+                </a>
+                <span *ngIf="!selectedVerification.diploma" class="no-document">No Diploma uploaded</span>
+              </div>
+            </div>
+
+            <div class="document-item">
+              <label>National ID</label>
+              <div class="document-preview">
+                <a *ngIf="selectedVerification.nationalId" [href]="selectedVerification.nationalId" target="_blank" class="doc-link">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>Download ID</span>
+                </a>
+                <span *ngIf="!selectedVerification.nationalId" class="no-document">No National ID uploaded</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeVerificationModal()">Close</button>
+    </div>
+  </div>
+</div>

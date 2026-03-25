@@ -45,7 +45,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         Files.copy(diploma.getInputStream(), diplomaPath, StandardCopyOption.REPLACE_EXISTING);
 
         DoctorVerification verification = new DoctorVerification();
-        verification.setDoctorId(doctorId);
+        verification.setDoctorId(doctorId + 1L);
         verification.setCV(cvPath.toString());
         verification.setDiploma(diplomaPath.toString());
         verification.setLicenseNumber(licenseNumber);
@@ -66,8 +66,15 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
 
     @Override
-    public Optional<DoctorVerification> findById(Long verification_id) {
-        return repository.findById(verification_id);
+    public List<DoctorVerification> findById(Long verification_id) {
+        return repository.findById(verification_id)
+                .map(List::of)
+                .orElse(List.of());
+    }
+
+    @Override
+    public List<DoctorVerification> findByDoctorId(Long id) {
+        return repository.findByDoctorId(id);
     }
 
 

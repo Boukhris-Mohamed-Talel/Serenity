@@ -15,7 +15,9 @@ public interface IDoctorVerificationService {
 
     List<DoctorVerification> findAll();
 
-    Optional<DoctorVerification> findById(Long verification_id);
+    List<DoctorVerification> findById(Long verification_id);
+
+    List<DoctorVerification> findByDoctorId(Long id);
 
     void deleteById(Long verification_id);
 }

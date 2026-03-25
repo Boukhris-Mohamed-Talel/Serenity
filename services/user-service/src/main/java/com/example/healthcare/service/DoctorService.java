@@ -5,8 +5,12 @@ import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
 import com.example.healthcare.repository.DoctorRepository;
 import com.example.healthcare.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Transient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -25,6 +29,7 @@ public class DoctorService implements IDoctorService {
 
     @Autowired
     private UserRepository userRepository;
+
 
     @Override
     public Doctor createDoctorForExistingUser(Long userId, String specialty, MultipartFile image) throws IOException {

@@ -58,8 +58,13 @@ public class DoctorVerificationController {
 
     // Get verification by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<DoctorVerification>> findById(@PathVariable Long id) {
+    public ResponseEntity<List<DoctorVerification>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(service.findById(id));
+    }
+
+    @GetMapping("FindByDoctorID/{id}")
+    public ResponseEntity<List<DoctorVerification>> findByDoctorID(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findByDoctorId(id));
     }
 
     // Delete verification by ID
