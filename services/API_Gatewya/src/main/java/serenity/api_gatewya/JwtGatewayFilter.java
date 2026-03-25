@@ -33,7 +33,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
         log.info("🔥 Gateway is working! Request path: {}", path);
-        if (path.startsWith("/api/auth/")) {
+        if (path.startsWith("/api/auth/") || path.startsWith("/ws")) {
             return chain.filter(exchange);
         }
 

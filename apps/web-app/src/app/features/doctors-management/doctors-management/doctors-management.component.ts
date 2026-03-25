@@ -1,11 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { DoctorService } from '../../../core/services/doctor.service';
 import { DoctorVerificationService } from '../../../core/services/doctor-verification.service';
+import { WebSocketService } from '../../../core/services/web-socket.service';
 import { DoctorResponse } from '../../../shared/models/doctor.model';
 import { DoctorVerification } from '../../../shared/models/doctor-verification.model';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-doctors-management',
@@ -15,7 +18,7 @@ import { DoctorVerification } from '../../../shared/models/doctor-verification.m
   templateUrl: './doctors-management.component.html',
   styleUrl: './doctors-management.component.scss'
 })
-export class DoctorsManagementComponent implements OnInit {
+export class DoctorsManagementComponent implements OnInit, OnDestroy {
   doctors: DoctorResponse[] = [];
   isLoading = false;
   error: string | null = null;
@@ -34,16 +37,48 @@ export class DoctorsManagementComponent implements OnInit {
   documentImageCache = new Map<string, SafeUrl>();
 
   toastMessages: Array<{ message: string; type: 'success' | 'error' | 'warning' }> = [];
+  private destroy$ = new Subject<void>();
 
   constructor(
     private readonly doctorService: DoctorService,
     private readonly doctorVerificationService: DoctorVerificationService,
     private readonly httpClient: HttpClient,
-    private readonly sanitizer: DomSanitizer
+    private readonly sanitizer: DomSanitizer,
+    private readonly webSocketService: WebSocketService
   ) {}
 
   ngOnInit(): void {
     this.loadDoctors();
+    
+    // Connect to WebSocket after a short delay to ensure page is loaded
+    setTimeout(() => {
+      this.initializeWebSocket();
+    }, 1000);
+  }
+
+  private initializeWebSocket(): void {
+    this.webSocketService.connect();
+    
+    // Listen for new doctors from WebSocket
+    this.webSocketService.newDoctor$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (newDoctor: DoctorResponse) => {
+          console.log('New doctor received from WebSocket:', newDoctor);
+          // Add new doctor to the beginning of the list
+          this.doctors = [newDoctor, ...this.doctors];
+          this.showToast(`New doctor ${newDoctor.firstName} ${newDoctor.lastName} added!`, 'success');
+        },
+        error: (err) => {
+          console.error('Error receiving new doctor:', err);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.webSocketService.disconnect();
   }
 
   onViewVerification(doctor: DoctorResponse): void {

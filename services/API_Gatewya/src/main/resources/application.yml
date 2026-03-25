@@ -24,6 +24,10 @@ spring:
           uri: http://localhost:8083
           predicates:
             - Path=/api/doctor-verifications/**
+        - id: websocket-route
+          uri: ws://localhost:8081
+          predicates:
+            - Path=/ws/**
 
       globalcors:
         cors-configurations:

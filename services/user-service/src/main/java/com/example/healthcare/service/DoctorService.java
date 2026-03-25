@@ -30,6 +30,9 @@ public class DoctorService implements IDoctorService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private RedisPublisher redisPublisher;
+
 
     @Override
     public Doctor createDoctorForExistingUser(Long userId, String specialty, MultipartFile image) throws IOException {
@@ -66,7 +69,11 @@ public class DoctorService implements IDoctorService {
 
         // Delete the plain User row and save as Doctor (joined table)
         userRepository.delete(existingUser);
-        return doctorRepository.save(doctor);
+        Doctor savedDoctor = doctorRepository.save(doctor);
+
+        redisPublisher.publishDoctorEvent(savedDoctor);
+
+        return savedDoctor;
     }
 
     @Override

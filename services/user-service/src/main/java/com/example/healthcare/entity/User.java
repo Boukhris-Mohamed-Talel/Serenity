@@ -1,5 +1,6 @@
 package com.example.healthcare.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,6 +45,7 @@ public class User {
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(updatable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
     private Date createdAt;
 
     @Enumerated(EnumType.STRING)
