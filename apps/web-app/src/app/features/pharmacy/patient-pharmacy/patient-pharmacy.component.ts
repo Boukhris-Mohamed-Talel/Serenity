@@ -1,11 +1,19 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
   PatientDefaultPharmacyResponse,
   PharmacyCandidateResponse,
-  PrescriptionResponse,
-  PrescriptionStatus
+  PrescriptionLineResponse,
+  PrescriptionResponse
 } from '../../../shared/models/pharmacy.model';
+
+interface PrescriptionCardView {
+  raw: PrescriptionResponse;
+  lines: PrescriptionLineResponse[];
+  primaryLine: PrescriptionLineResponse;
+  extraLinesCount: number;
+}
 
 @Component({
   selector: 'app-patient-pharmacy',
@@ -28,14 +36,17 @@ export class PatientPharmacyComponent implements OnInit {
 
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
   candidateResults: PharmacyCandidateResponse[] = [];
-  prescriptions: PrescriptionResponse[] = [];
+  prescriptionCards: PrescriptionCardView[] = [];
 
   ngOnInit(): void {
     this.loadDefaultPharmacy();
     this.loadPrescriptions();
   }
 
-  constructor(private readonly pharmacyService: PharmacyService) {}
+  constructor(
+    private readonly pharmacyService: PharmacyService,
+    private readonly router: Router
+  ) {}
 
   loadDefaultPharmacy(): void {
     this.pharmacyService.getMyDefaultPharmacy().subscribe({
@@ -57,10 +68,11 @@ export class PatientPharmacyComponent implements OnInit {
 
     this.pharmacyService.getMyPrescriptions().subscribe({
       next: (items) => {
-        this.prescriptions = items;
+        this.prescriptionCards = items.map((item) => this.toPrescriptionCard(item));
         this.prescriptionsLoading = false;
       },
       error: (err) => {
+        this.prescriptionCards = [];
         this.prescriptionsErrorMessage = err.error?.message || 'Failed to load your prescriptions';
         this.prescriptionsLoading = false;
       }
@@ -135,6 +147,7 @@ export class PatientPharmacyComponent implements OnInit {
         this.defaultPharmacy = response;
         this.saving = false;
         this.successMessage = 'Default pharmacy updated successfully.';
+        this.loadPrescriptions();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to set default pharmacy';
@@ -151,27 +164,34 @@ export class PatientPharmacyComponent implements OnInit {
     return this.loading || this.nearestLoading;
   }
 
-  statusClass(status: PrescriptionStatus): string {
-    return `status ${status.toLowerCase()}`;
+  openPrescriptionDetails(card: PrescriptionCardView): void {
+    this.router.navigate(['/pharmacy/patient/prescriptions', card.raw.id]);
   }
 
-  isReadyForPickup(status: PrescriptionStatus): boolean {
-    return status === 'READY_FOR_PICKUP';
+  trackByCandidateId(_: number, item: PharmacyCandidateResponse): number {
+    return item.id;
   }
 
-  primaryMedication(item: PrescriptionResponse): string {
-    return item.medicineLines?.[0]?.medicationName || item.medicationName || '-';
+  trackByPrescriptionId(_: number, item: PrescriptionCardView): number {
+    return item.raw.id;
   }
 
-  primaryDosage(item: PrescriptionResponse): string {
-    return item.medicineLines?.[0]?.dosage || item.dosage || '-';
-  }
+  private toPrescriptionCard(item: PrescriptionResponse): PrescriptionCardView {
+    const lines = item.medicineLines && item.medicineLines.length > 0
+      ? item.medicineLines
+      : [{
+          id: item.id,
+          medicationName: item.medicationName || '-',
+          dosage: item.dosage || '-',
+          quantity: item.quantity ?? 0,
+          instructions: item.instructions
+        }];
 
-  primaryQuantity(item: PrescriptionResponse): number | string {
-    return item.medicineLines?.[0]?.quantity ?? item.quantity ?? '-';
-  }
-
-  additionalLinesCount(item: PrescriptionResponse): number {
-    return item.medicineLines && item.medicineLines.length > 1 ? item.medicineLines.length - 1 : 0;
+    return {
+      raw: item,
+      lines,
+      primaryLine: lines[0],
+      extraLinesCount: Math.max(lines.length - 1, 0)
+    };
   }
 }

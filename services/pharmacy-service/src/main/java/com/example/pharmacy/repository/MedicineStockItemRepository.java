@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface MedicineStockItemRepository extends JpaRepository<MedicineStockItem, Long> {
 
@@ -37,12 +38,15 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
     );
 
     @Query("""
-        select distinct m.medicineName from MedicineStockItem m
+        select m from MedicineStockItem m
         where m.archived = false
-          and lower(m.medicineName) like lower(concat('%', :query, '%'))
-        order by m.medicineName asc
+          and m.pharmacy.id in :pharmacyIds
+          and lower(m.medicineName) in :medicineNames
         """)
-    List<String> findDistinctMedicineNamesForSuggestion(@Param("query") String query);
+    List<MedicineStockItem> findActiveByPharmacyIdsAndMedicineNames(
+        @Param("pharmacyIds") Set<Long> pharmacyIds,
+        @Param("medicineNames") Set<String> medicineNames
+    );
 
     Optional<MedicineStockItem> findByIdAndPharmacyOwnerUserId(Long id, Long ownerUserId);
 }

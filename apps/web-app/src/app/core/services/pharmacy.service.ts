@@ -7,6 +7,8 @@ import {
   DoctorPatientSuggestionResponse,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
+  PrescriptionAlternativeResponse,
+  PrescriptionPharmacyReassignRequest,
   PharmacyCandidateResponse,
   PharmacyResponse,
   PharmacyUpsertRequest,
@@ -59,6 +61,27 @@ export class PharmacyService {
 
   getMyPrescriptions(): Observable<PrescriptionResponse[]> {
     return this.http.get<PrescriptionResponse[]>(`${this.API_URL}/prescriptions/mine`);
+  }
+
+  getPrescriptionById(prescriptionId: number): Observable<PrescriptionResponse> {
+    return this.http.get<PrescriptionResponse>(`${this.API_URL}/prescriptions/${prescriptionId}`);
+  }
+
+  getPrescriptionAlternatives(
+    prescriptionId: number,
+    latitude: number,
+    longitude: number
+  ): Observable<PrescriptionAlternativeResponse> {
+    return this.http.get<PrescriptionAlternativeResponse>(
+      `${this.API_URL}/prescriptions/${prescriptionId}/alternatives?latitude=${latitude}&longitude=${longitude}`
+    );
+  }
+
+  reassignPrescriptionPharmacy(
+    prescriptionId: number,
+    payload: PrescriptionPharmacyReassignRequest
+  ): Observable<PrescriptionResponse> {
+    return this.http.put<PrescriptionResponse>(`${this.API_URL}/prescriptions/${prescriptionId}/pharmacy`, payload);
   }
 
   getMyDefaultPharmacy(): Observable<PatientDefaultPharmacyResponse> {

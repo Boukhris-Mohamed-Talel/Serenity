@@ -24,12 +24,32 @@ public class PrescriptionCreateRequestDTO {
     @NotBlank(message = "Doctor name is required")
     private String doctorName;
 
+    /**
+     * Legacy single-line field kept for compatibility with older clients.
+     * New clients should use medicineLines instead.
+     */
+    @Deprecated
     private String medicationName;
 
+    /**
+     * Legacy single-line field kept for compatibility with older clients.
+     * New clients should use medicineLines instead.
+     */
+    @Deprecated
     private String dosage;
 
+    /**
+     * Legacy single-line field kept for compatibility with older clients.
+     * New clients should use medicineLines instead.
+     */
+    @Deprecated
     private Integer quantity;
 
+    /**
+     * Legacy single-line field kept for compatibility with older clients.
+     * New clients should use medicineLines instead.
+     */
+    @Deprecated
     private String instructions;
 
     private List<PrescriptionLineCreateRequestDTO> medicineLines;

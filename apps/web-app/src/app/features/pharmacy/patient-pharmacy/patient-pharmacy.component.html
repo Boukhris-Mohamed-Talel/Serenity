@@ -55,7 +55,7 @@
           <p class="hint">Use your location or search by city/governorate. Results appear below in one list.</p>
 
           <div class="candidate-results" *ngIf="!isCandidatesLoading() && candidateResults.length > 0">
-            <article class="candidate" *ngFor="let item of candidateResults">
+            <article class="candidate" *ngFor="let item of candidateResults; trackBy: trackByCandidateId">
               <div>
                 <p class="candidate-name">{{ item.name }}</p>
                 <p class="candidate-meta" *ngIf="item.distanceKm != null">{{ item.distanceKm }} km away</p>
@@ -84,32 +84,38 @@
         <article class="card prescriptions-card">
           <div class="prescriptions-head">
             <h2>My Prescriptions</h2>
-            <p>Track statuses and pickup readiness.</p>
+            <p>Track statuses and open each prescription on a dedicated details page.</p>
           </div>
 
           <p class="error" *ngIf="prescriptionsErrorMessage">{{ prescriptionsErrorMessage }}</p>
 
-          <div class="prescriptions-grid" *ngIf="!prescriptionsLoading && prescriptions.length > 0">
-            <article class="card prescription-card" *ngFor="let item of prescriptions">
+          <div class="prescriptions-grid" *ngIf="!prescriptionsLoading && prescriptionCards.length > 0">
+            <article
+              class="card prescription-card"
+              *ngFor="let card of prescriptionCards; trackBy: trackByPrescriptionId"
+              tabindex="0"
+              (click)="openPrescriptionDetails(card)"
+              (keyup.enter)="openPrescriptionDetails(card)">
               <div class="top-row">
                 <h3>
-                  {{ primaryMedication(item) }}
-                  <small *ngIf="additionalLinesCount(item) > 0">+{{ additionalLinesCount(item) }} more</small>
+                  {{ card.primaryLine.medicationName }}
+                  <small *ngIf="card.extraLinesCount > 0">+{{ card.extraLinesCount }} more</small>
                 </h3>
-                <span [class]="statusClass(item.status)">{{ item.status }}</span>
+                <span class="status" [class]="'status ' + card.raw.status.toLowerCase()">{{ card.raw.status }}</span>
               </div>
-              <p class="meta">Pharmacy: {{ item.pharmacyName }}</p>
-              <p class="meta" *ngIf="item.assignedToPharmacy === false && item.assignmentMessage">
-                {{ item.assignmentMessage }}
+              <p class="meta">Pharmacy: {{ card.raw.pharmacyName || 'Not assigned yet' }}</p>
+              <p class="meta" *ngIf="card.raw.assignedToPharmacy === false && card.raw.assignmentMessage">
+                {{ card.raw.assignmentMessage }}
               </p>
-              <p class="meta">Doctor: {{ item.doctorName }}</p>
-              <p class="meta">Dosage: {{ primaryDosage(item) }} | Quantity: {{ primaryQuantity(item) }}</p>
-              <p class="meta" *ngIf="item.instructions">Instructions: {{ item.instructions }}</p>
-              <p class="pickup" *ngIf="isReadyForPickup(item.status)">Go collect it.</p>
+              <p class="meta">Doctor: {{ card.raw.doctorName }}</p>
+              <p class="meta">Dosage: {{ card.primaryLine.dosage }} | Quantity: {{ card.primaryLine.quantity }}</p>
+              <p class="meta" *ngIf="card.primaryLine.instructions">Instructions: {{ card.primaryLine.instructions }}</p>
+              <p class="pickup" *ngIf="card.raw.status === 'READY_FOR_PICKUP'">Ready for pickup now.</p>
+              <p class="detail-cta">View full details</p>
             </article>
           </div>
 
-          <p class="hint" *ngIf="!prescriptionsLoading && prescriptions.length === 0">No prescriptions yet.</p>
+          <p class="hint" *ngIf="!prescriptionsLoading && prescriptionCards.length === 0">No prescriptions yet.</p>
           <p class="hint" *ngIf="prescriptionsLoading">Loading prescriptions...</p>
         </article>
       </div>

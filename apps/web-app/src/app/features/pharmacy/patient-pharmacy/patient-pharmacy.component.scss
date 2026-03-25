@@ -118,6 +118,24 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.85rem;
+  margin-top: 0.95rem;
+}
+
+.prescription-card {
+  border: 1px solid #d3e6e4;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.prescription-card:hover {
+  transform: translateY(-1px);
+  border-color: #96c9c5;
+  box-shadow: 0 8px 20px rgba(27, 75, 72, 0.09);
+}
+
+.prescription-card:focus-visible {
+  outline: 3px solid #82bfb9;
+  outline-offset: 2px;
 }
 
 .top-row {
@@ -129,6 +147,12 @@
 
 .top-row h3 {
   margin: 0;
+}
+
+.top-row small {
+  color: #537473;
+  font-weight: 600;
+  margin-left: 0.35rem;
 }
 
 .status {
@@ -169,6 +193,13 @@
   border-radius: 10px;
   background: #eaf7ec;
   color: #196a24;
+  font-weight: 700;
+}
+
+.detail-cta {
+  margin: 0.75rem 0 0;
+  color: #2f7b73;
+  font-size: 0.86rem;
   font-weight: 700;
 }
 

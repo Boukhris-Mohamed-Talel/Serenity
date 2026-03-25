@@ -13,7 +13,9 @@ import com.example.pharmacy.repository.PatientPharmacyPreferenceRepository;
 import com.example.pharmacy.repository.PrescriptionOrderRepository;
 import com.example.pharmacy.service.DoctorLookupService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +24,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,10 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class DoctorLookupServiceImpl implements DoctorLookupService {
 
+    private static final int SUGGESTION_LIMIT = 20;
     private static final String NO_DEFAULT_PHARMACY_MESSAGE = "Patient has no default pharmacy yet";
 
     private final PatientPharmacyPreferenceRepository preferenceRepository;
@@ -50,32 +53,28 @@ public class DoctorLookupServiceImpl implements DoctorLookupService {
     @Override
     public DoctorPatientSuggestionResponseDTO suggestPatients(String query) {
         String normalizedQuery = normalizeQuery(query);
-        String queryLower = normalizedQuery.toLowerCase();
 
         Map<Long, DoctorPatientSuggestionItemDTO> distinctByPatient = new LinkedHashMap<>();
 
         // Primary source: all patients from user database.
-        for (DoctorPatientSuggestionItemDTO candidate : fetchPatientsFromUserDb(queryLower)) {
+        for (DoctorPatientSuggestionItemDTO candidate : fetchPatientsFromUserDb(normalizedQuery)) {
             if (!distinctByPatient.containsKey(candidate.getPatientId())) {
                 distinctByPatient.put(candidate.getPatientId(), candidate);
             }
-            if (distinctByPatient.size() >= 20) {
+            if (distinctByPatient.size() >= SUGGESTION_LIMIT) {
                 break;
             }
         }
 
         // Fallback source: names already seen in pharmacy-service prescription data.
-        List<PrescriptionOrder> orders = prescriptionOrderRepository.findAll().stream()
-            .sorted(Comparator.comparing(PrescriptionOrder::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-            .toList();
+        int remaining = SUGGESTION_LIMIT - distinctByPatient.size();
+        List<PrescriptionOrder> orders = remaining > 0
+            ? prescriptionOrderRepository.findRecentByPatientNameContaining(normalizedQuery, PageRequest.of(0, remaining * 3))
+            : List.of();
 
         for (PrescriptionOrder order : orders) {
             String patientName = order.getPatientName();
             if (patientName == null || patientName.isBlank()) {
-                continue;
-            }
-
-            if (!patientName.toLowerCase().contains(queryLower)) {
                 continue;
             }
 
@@ -88,7 +87,7 @@ public class DoctorLookupServiceImpl implements DoctorLookupService {
                 .displayName(patientName)
                 .build());
 
-            if (distinctByPatient.size() >= 20) {
+            if (distinctByPatient.size() >= SUGGESTION_LIMIT) {
                 break;
             }
         }
@@ -98,43 +97,53 @@ public class DoctorLookupServiceImpl implements DoctorLookupService {
             .build();
     }
 
-    private List<DoctorPatientSuggestionItemDTO> fetchPatientsFromUserDb(String queryLower) {
+    private List<DoctorPatientSuggestionItemDTO> fetchPatientsFromUserDb(String query) {
         String sql = """
                         SELECT u.id, u.first_name, u.last_name, up.avatar
                         FROM users u
                         LEFT JOIN user_profiles up ON up.user_id = u.id
                         WHERE u.role = 'PATIENT'
                             AND (u.is_active = 1 OR u.is_active IS NULL)
+                            AND (
+                                LOWER(COALESCE(u.first_name, '')) LIKE ?
+                                OR LOWER(COALESCE(u.last_name, '')) LIKE ?
+                                OR LOWER(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) LIKE ?
+                            )
                         ORDER BY u.created_at DESC
+                        LIMIT 20
             """;
 
         List<DoctorPatientSuggestionItemDTO> result = new ArrayList<>();
+        String likeQuery = "%" + query.toLowerCase() + "%";
+
         try (Connection connection = DriverManager.getConnection(userDbUrl, userDbUsername, userDbPassword);
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            while (rs.next()) {
-                long id = rs.getLong("id");
-                String firstName = rs.getString("first_name");
-                String lastName = rs.getString("last_name");
-                String avatar = rs.getString("avatar");
-                String displayName = ((firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName)).trim();
+            statement.setString(1, likeQuery);
+            statement.setString(2, likeQuery);
+            statement.setString(3, likeQuery);
 
-                if (displayName.isBlank() || !displayName.toLowerCase().contains(queryLower)) {
-                    continue;
-                }
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    long id = rs.getLong("id");
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
+                    String avatar = rs.getString("avatar");
+                    String displayName = ((firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName)).trim();
 
-                result.add(DoctorPatientSuggestionItemDTO.builder()
-                    .patientId(id)
-                    .displayName(displayName)
-                    .profilePictureUrl(avatar == null || avatar.isBlank() ? null : avatar)
-                    .build());
+                    if (displayName.isBlank()) {
+                        continue;
+                    }
 
-                if (result.size() >= 20) {
-                    break;
+                    result.add(DoctorPatientSuggestionItemDTO.builder()
+                        .patientId(id)
+                        .displayName(displayName)
+                        .profilePictureUrl(avatar == null || avatar.isBlank() ? null : avatar)
+                        .build());
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            log.warn("Failed to fetch patient suggestions from user database", ex);
             return List.of();
         }
 
@@ -153,7 +162,7 @@ public class DoctorLookupServiceImpl implements DoctorLookupService {
                 .pharmacyId(null)
                 .pharmacyName(null)
                 .guidanceMessage(NO_DEFAULT_PHARMACY_MESSAGE)
-                .suggestions(buildUnresolvedSuggestions(normalizedQuery))
+                .suggestions(List.of())
                 .build();
         }
 
@@ -188,27 +197,7 @@ public class DoctorLookupServiceImpl implements DoctorLookupService {
                 .guidanceMessage(inStock ? null : "Currently out of stock in patient's default pharmacy")
                 .build());
 
-            if (suggestions.size() >= 20) {
-                break;
-            }
-        }
-
-        return suggestions;
-    }
-
-    private List<DoctorMedicineSuggestionItemDTO> buildUnresolvedSuggestions(String query) {
-        List<String> names = medicineStockItemRepository.findDistinctMedicineNamesForSuggestion(query);
-        List<DoctorMedicineSuggestionItemDTO> suggestions = new ArrayList<>();
-
-        for (String name : names) {
-            suggestions.add(DoctorMedicineSuggestionItemDTO.builder()
-                .medicineName(name)
-                .stockStatus("UNRESOLVED")
-                .availableQuantity(null)
-                .guidanceMessage(NO_DEFAULT_PHARMACY_MESSAGE)
-                .build());
-
-            if (suggestions.size() >= 20) {
+            if (suggestions.size() >= SUGGESTION_LIMIT) {
                 break;
             }
         }

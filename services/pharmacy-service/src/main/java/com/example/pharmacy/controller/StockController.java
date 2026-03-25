@@ -43,17 +43,22 @@ public class StockController {
 
     @PatchMapping("/{stockItemId}/out-of-stock")
     public ResponseEntity<StockItemResponseDTO> markOutOfStock(@PathVariable Long stockItemId) {
-        return ResponseEntity.ok(stockService.markOutOfStock(stockItemId));
+        return handleMarkOutOfStock(stockItemId);
     }
 
     @PostMapping("/{stockItemId}/out-of-stock")
+    // Backward-compatible alias for clients still using POST instead of PATCH.
     public ResponseEntity<StockItemResponseDTO> markOutOfStockPost(@PathVariable Long stockItemId) {
-        return ResponseEntity.ok(stockService.markOutOfStock(stockItemId));
+        return handleMarkOutOfStock(stockItemId);
     }
 
     @DeleteMapping("/{stockItemId}")
     public ResponseEntity<Void> archiveStockItem(@PathVariable Long stockItemId) {
         stockService.archiveStockItem(stockItemId);
         return ResponseEntity.noContent().build();
+    }
+
+    private ResponseEntity<StockItemResponseDTO> handleMarkOutOfStock(Long stockItemId) {
+        return ResponseEntity.ok(stockService.markOutOfStock(stockItemId));
     }
 }

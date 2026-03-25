@@ -36,6 +36,8 @@ public class PrescriptionOrder {
     @Column(nullable = false)
     private String patientName;
 
+    // Legacy single-line summary fields for backward compatibility.
+    // medicineLines remains the canonical line-based model.
     @Column
     private String medicationName;
 

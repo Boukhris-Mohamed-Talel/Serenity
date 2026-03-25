@@ -103,7 +103,7 @@ export class DoctorPrescriptionComponent implements OnInit {
   onPatientNameInput(): void {
     const query = String(this.form.get('patientName')?.value || '').trim();
 
-    if (query.length < 1) {
+    if (query.length < 2) {
       this.patientMatches = [];
       this.showPatientMatches = false;
       this.selectedPatientId = null;

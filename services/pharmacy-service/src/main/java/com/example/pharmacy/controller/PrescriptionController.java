@@ -1,6 +1,8 @@
 package com.example.pharmacy.controller;
 
 import com.example.pharmacy.dto.PrescriptionCreateRequestDTO;
+import com.example.pharmacy.dto.PrescriptionAlternativeResponseDTO;
+import com.example.pharmacy.dto.PrescriptionPharmacyReassignRequestDTO;
 import com.example.pharmacy.dto.PrescriptionResponseDTO;
 import com.example.pharmacy.dto.PrescriptionStatusUpdateRequestDTO;
 import com.example.pharmacy.service.PrescriptionService;
@@ -43,20 +45,47 @@ public class PrescriptionController {
         return ResponseEntity.ok(prescriptionService.getPrescription(id));
     }
 
+    @GetMapping("/{id}/alternatives")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<PrescriptionAlternativeResponseDTO> getAlternatives(
+        @PathVariable Long id,
+        @RequestParam Double latitude,
+        @RequestParam Double longitude
+    ) {
+        return ResponseEntity.ok(prescriptionService.getPatientAlternatives(id, latitude, longitude));
+    }
+
+    @PutMapping("/{id}/pharmacy")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<PrescriptionResponseDTO> reassignPharmacy(
+        @PathVariable Long id,
+        @Valid @RequestBody PrescriptionPharmacyReassignRequestDTO request
+    ) {
+        return ResponseEntity.ok(prescriptionService.reassignPatientPrescriptionPharmacy(id, request));
+    }
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('PHARMACIST')")
     public ResponseEntity<PrescriptionResponseDTO> updatePrescriptionStatus(
         @PathVariable Long id,
         @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
     ) {
-        return ResponseEntity.ok(prescriptionService.updatePrescriptionStatus(id, request));
+        return handleStatusUpdate(id, request);
     }
 
     @PostMapping("/{id}/status")
     @PreAuthorize("hasRole('PHARMACIST')")
+    // Backward-compatible alias for clients still using POST instead of PATCH.
     public ResponseEntity<PrescriptionResponseDTO> updatePrescriptionStatusPost(
         @PathVariable Long id,
         @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
+    ) {
+        return handleStatusUpdate(id, request);
+    }
+
+    private ResponseEntity<PrescriptionResponseDTO> handleStatusUpdate(
+        Long id,
+        PrescriptionStatusUpdateRequestDTO request
     ) {
         return ResponseEntity.ok(prescriptionService.updatePrescriptionStatus(id, request));
     }

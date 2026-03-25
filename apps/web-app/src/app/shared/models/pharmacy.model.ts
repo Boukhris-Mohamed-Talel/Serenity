@@ -115,6 +115,47 @@ export interface PrescriptionResponse {
   updatedAt: string;
 }
 
+export interface AlternativePharmacyOption {
+  pharmacyId: number;
+  pharmacyName: string;
+  addressLine?: string;
+  city?: string;
+  governorate?: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
+  availableQuantity?: number;
+}
+
+export interface PerMedicineAlternative {
+  lineId: number;
+  medicationName: string;
+  requiredQuantity: number;
+  pharmacies: AlternativePharmacyOption[];
+}
+
+export type RecommendationMode = 'FULL_MATCH' | 'PARTIAL_FALLBACK' | 'NONE';
+
+export interface PrescriptionAlternativeResponse {
+  prescriptionId: number;
+  status: PrescriptionStatus;
+  latitude: number;
+  longitude: number;
+  fullMatchRadiusKm: number;
+  partialRadiusKm: number;
+  recommendedMode: RecommendationMode;
+  message: string;
+  fullMatchPharmacies: AlternativePharmacyOption[];
+  perMedicineAlternatives: PerMedicineAlternative[];
+  selectablePharmacies: AlternativePharmacyOption[];
+}
+
+export interface PrescriptionPharmacyReassignRequest {
+  pharmacyId: number;
+  latitude: number;
+  longitude: number;
+}
+
 export interface PrescriptionLineResponse {
   id: number;
   medicationName: string;
