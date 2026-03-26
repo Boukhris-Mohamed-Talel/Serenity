@@ -3,6 +3,10 @@ spring:
     name: API_Gatewya
   cloud:
     gateway:
+      default-filters:
+        # User-service also sets CORS headers; dedupe avoids browser rejection
+        # ("Access-Control-Allow-Origin contains multiple values").
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
       routes:
         - id: auth-service
           uri: http://localhost:8081
