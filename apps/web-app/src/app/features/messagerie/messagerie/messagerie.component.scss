@@ -182,3 +182,38 @@
 .menu-item.delete:hover {
   color: red;
 }
+
+.search-bar {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.search-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.search-bar.user-search {
+  width: 80%;
+  border-radius: 20px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  outline: none;
+}
+
+.search-bar.conversation-search {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-radius: 20px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  outline: none;
+}

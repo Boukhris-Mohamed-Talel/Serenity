@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-messagerie',
   templateUrl: './messagerie.component.html',
-  styleUrl: './messagerie.component.scss'
+  styleUrls: ['./messagerie.component.scss']
 })
-export class MessagerieComponent {
+export class MessagerieComponent implements OnInit {
 
   messages: any[] = [
     { text: 'Hello!', type: 'received' },
@@ -22,6 +22,32 @@ export class MessagerieComponent {
   editingIndex = -1;
   editText = '';
 
+  // Barre de recherche et conversations
+  searchTerm: string = '';
+  conversations: any[] = [
+    { id: 1, name: 'John Doe', lastMessage: 'Last message preview...' },
+    { id: 2, name: 'Jane Smith', lastMessage: 'Another message...' }
+  ];
+  filteredConversations: any[] = [];
+  activeConversationId: number | null = null;
+  activeConversationName: string = '';
+
+  ngOnInit() {
+    this.filteredConversations = [...this.conversations];
+  }
+
+  filterConversations() {
+    this.filteredConversations = this.conversations.filter(c =>
+      c.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
+  }
+
+  selectConversation(convo: any) {
+    this.activeConversationId = convo.id;
+    this.activeConversationName = convo.name;
+    // Vous pouvez charger les messages de cette conversation ici
+  }
+
   sendMessage() {
     if (!this.newMessage.trim()) return;
 
@@ -35,7 +61,6 @@ export class MessagerieComponent {
 
   openMenu(event: MouseEvent, index: number) {
     event.preventDefault();
-
     this.menuVisible = true;
     this.menuX = event.clientX;
     this.menuY = event.clientY;
