@@ -26,6 +26,7 @@ spring:
 app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  public-base-url: ${USER_PUBLIC_BASE_URL:http://localhost:8081}
   insurance:
     api-url: ${INSURANCE_API_URL:http://localhost:3000/api}
   jwt:

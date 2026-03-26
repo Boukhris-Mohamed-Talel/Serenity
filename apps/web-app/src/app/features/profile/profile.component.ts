@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserResponse } from '../../shared/models/user.model';
@@ -17,6 +18,8 @@ export class ProfileComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   editMode = false;
+  selectedAvatarFile: File | null = null;
+  avatarPreviewUrl: string | null = null;
   languages = [
     { value: 'en', label: 'English' },
     { value: 'fr', label: 'Français' },
@@ -83,12 +86,18 @@ export class ProfileComponent implements OnInit {
     this.editMode = !this.editMode;
     this.successMessage = '';
     this.errorMessage = '';
+    if (this.editMode) {
+      this.selectedAvatarFile = null;
+      this.avatarPreviewUrl = this.user?.profile?.avatar || null;
+    }
   }
 
   cancelEdit(): void {
     this.editMode = false;
     this.successMessage = '';
     this.errorMessage = '';
+    this.selectedAvatarFile = null;
+    this.avatarPreviewUrl = null;
     if (this.user) {
       this.profileForm.patchValue({
         firstName: this.user.firstName,
@@ -100,6 +109,19 @@ export class ProfileComponent implements OnInit {
         preferredLanguage: this.user.profile?.preferredLanguage || 'en',
         isAnonymous: this.user.profile?.isAnonymous || false
       });
+    }
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files.length > 0 ? input.files[0] : null;
+    this.selectedAvatarFile = file;
+    if (file) {
+      this.avatarPreviewUrl = URL.createObjectURL(file);
+      // keep form control in sync; backend will overwrite with uploaded URL
+      this.profileForm.patchValue({ avatar: '' });
+    } else {
+      this.avatarPreviewUrl = this.user?.profile?.avatar || null;
     }
   }
 
@@ -117,18 +139,24 @@ export class ProfileComponent implements OnInit {
       delete formValue.dateOfBirth;
     }
 
-    this.userService.updateProfile(formValue).subscribe({
-      next: (user) => {
-        this.user = user;
-        this.saving = false;
-        this.editMode = false;
-        this.successMessage = 'Profile updated successfully';
-      },
-      error: (err) => {
-        this.saving = false;
-        this.errorMessage = err.error?.message || 'Failed to update profile';
-      }
-    });
+    const request$ = this.selectedAvatarFile
+      ? this.userService.uploadAvatar(this.selectedAvatarFile)
+      : this.userService.updateProfile(formValue);
+
+    request$
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: (user) => {
+          this.user = user;
+          this.editMode = false;
+          this.selectedAvatarFile = null;
+          this.avatarPreviewUrl = null;
+          this.successMessage = 'Profile updated successfully';
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || 'Failed to update profile';
+        }
+      });
   }
 
   getInitials(): string {

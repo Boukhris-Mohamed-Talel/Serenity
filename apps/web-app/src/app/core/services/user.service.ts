@@ -58,6 +58,17 @@ export class UserService {
     );
   }
 
+  uploadAvatar(file: File): Observable<UserResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UserResponse>(`${this.API_URL}/me/avatar`, formData).pipe(
+      tap(user => {
+        this.cachedUser = user;
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
   getAllUsers(): Observable<UserResponse[]> {
     return this.http.get<UserResponse[]>(this.API_URL);
   }

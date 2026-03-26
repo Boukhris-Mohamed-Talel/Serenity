@@ -6,10 +6,12 @@ import com.example.healthcare.dto.UserResponseDTO;
 import com.example.healthcare.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,6 +31,12 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> updateProfile(Authentication authentication,
                                                           @Valid @RequestBody ProfileUpdateDTO request) {
         return ResponseEntity.ok(userService.updateProfile(authentication.getName(), request));
+    }
+
+    @PostMapping("/me/avatar")
+    public ResponseEntity<UserResponseDTO> uploadAvatar(Authentication authentication,
+                                                        @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.uploadAvatar(authentication.getName(), file));
     }
 
     @GetMapping

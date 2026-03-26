@@ -155,8 +155,41 @@
         <h4>Profile Settings</h4>
 
         <div class="form-group">
-          <label for="avatar">Avatar URL</label>
-          <input id="avatar" type="url" formControlName="avatar" placeholder="https://example.com/avatar.jpg" />
+          <label for="avatarFile">Avatar</label>
+          <div class="avatar-upload-row">
+            <div class="avatar-preview">
+              <div class="avatar" *ngIf="!avatarPreviewUrl">{{ getInitials() }}</div>
+              <img *ngIf="avatarPreviewUrl" [src]="avatarPreviewUrl" alt="Avatar preview" class="avatar-img" />
+            </div>
+            <div class="avatar-upload-controls">
+              <input
+                id="avatarFile"
+                class="avatar-file-input"
+                type="file"
+                accept="image/*"
+                (change)="onAvatarSelected($event)" />
+
+              <div class="avatar-upload-actions">
+                <label class="avatar-upload-btn" for="avatarFile">Choose photo</label>
+                <button
+                  type="button"
+                  class="avatar-clear-btn"
+                  *ngIf="selectedAvatarFile"
+                  (click)="selectedAvatarFile = null; avatarPreviewUrl = user?.profile?.avatar || null">
+                  Remove
+                </button>
+              </div>
+
+              <div class="avatar-file-meta">
+                <span class="avatar-file-name" *ngIf="selectedAvatarFile">{{ selectedAvatarFile.name }}</span>
+                <span class="avatar-file-name" *ngIf="!selectedAvatarFile">No file selected</span>
+              </div>
+
+              <p class="field-hint">PNG/JPG recommended. Square image looks best.</p>
+            </div>
+          </div>
+          <!-- keep the control for backward compatibility / API payload shape -->
+          <input type="hidden" formControlName="avatar" />
         </div>
 
         <div class="form-group">

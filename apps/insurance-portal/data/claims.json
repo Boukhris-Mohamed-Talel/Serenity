@@ -100,5 +100,23 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F01b9ac9f-8dd8-40e1-bdfb-defdea64d184_repo.pdf"
     ]
+  },
+  {
+    "ref": "7ff6de99-6809-4a83-b54c-24ff47ce1f9b",
+    "patientName": "1",
+    "description": "test full insurance claim process",
+    "amount": 149.97,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 26.99,
+    "receivedAt": "2026-03-26T09:26:40.557Z",
+    "processedAt": "2026-03-26T09:28:08.573Z",
+    "rejectReason": null,
+    "adjustmentReason": "all good",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F940835ad-3f1f-4431-b2c0-8e9fc4ffbc26_docker_exam_reference+%281%29.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F2e5633c6-15da-44c8-a669-1370c6fd4db8_Correction+%E2%80%93+TP7+%E2%80%93+Docker+swarm.pdf"
+    ]
   }
 ]

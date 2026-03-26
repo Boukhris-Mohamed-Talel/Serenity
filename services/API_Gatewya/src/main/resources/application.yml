@@ -20,21 +20,8 @@ spring:
           uri: http://localhost:8090
           predicates:
             - Path=/api/files/**
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowed-origins:
-              - "http://localhost:4200"
-              - "http://localhost:3000"
-            allowed-methods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
-            allowed-headers: "*"
-            allow-credentials: true
+      # CORS is configured in `GatewayCorsConfig` (CorsWebFilter) to ensure OPTIONS preflight
+      # gets Access-Control-Allow-* headers instead of failing with 403.
 
 server:
   port: 8082

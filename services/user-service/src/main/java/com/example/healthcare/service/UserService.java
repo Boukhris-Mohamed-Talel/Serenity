@@ -1,6 +1,7 @@
 package com.example.healthcare.service;
 
 import com.example.healthcare.dto.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,6 +18,8 @@ public interface UserService {
     UserResponseDTO getUserByEmail(String email);
 
     UserResponseDTO updateProfile(String email, ProfileUpdateDTO request);
+
+    UserResponseDTO uploadAvatar(String email, MultipartFile file);
 
     UserResponseDTO updateUser(Long id, UserRequestDTO request);
 

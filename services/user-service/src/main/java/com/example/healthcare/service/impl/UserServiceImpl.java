@@ -12,6 +12,8 @@ import com.example.healthcare.repository.UserRepository;
 import com.example.healthcare.security.jwt.JwtTokenProvider;
 import com.example.healthcare.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -20,8 +22,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +43,12 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
+
+    @Value("${app.public-base-url:http://localhost:8081}")
+    private String publicBaseUrl;
 
     @Override
     public AuthResponseDTO registerUser(UserRequestDTO request) {
@@ -140,6 +156,47 @@ public class UserServiceImpl implements UserService {
         if (request.getPreferredLanguage() != null) profile.setPreferredLanguage(request.getPreferredLanguage());
         if (request.getIsAnonymous() != null) profile.setIsAnonymous(request.getIsAnonymous());
 
+        userRepository.save(user);
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
+    public UserResponseDTO uploadAvatar(String email, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Avatar file is required");
+        }
+        String contentType = file.getContentType();
+        if (!StringUtils.hasText(contentType) || !contentType.toLowerCase().startsWith("image/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image uploads are allowed");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        String original = file.getOriginalFilename();
+        String safeName = StringUtils.hasText(original)
+                ? original.replace("\\", "_").replace("/", "_").replace("..", "_")
+                : "avatar";
+        String filename = UUID.randomUUID() + "_" + safeName;
+
+        Path dir = Paths.get(uploadDir, "avatars", String.valueOf(user.getId()));
+        Path target = dir.resolve(filename).normalize();
+        try {
+            Files.createDirectories(dir);
+            file.transferTo(target.toAbsolutePath().toFile());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save avatar");
+        }
+
+        String base = publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
+        String avatarUrl = base + "/uploads/avatars/" + user.getId() + "/" + filename;
+
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            profile = UserProfile.builder().user(user).build();
+            user.setProfile(profile);
+        }
+        profile.setAvatar(avatarUrl);
         userRepository.save(user);
         return userMapper.toResponseDTO(user);
     }

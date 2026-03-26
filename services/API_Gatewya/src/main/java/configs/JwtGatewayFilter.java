@@ -35,7 +35,26 @@ public class JwtGatewayFilter implements WebFilter {
         String method = exchange.getRequest().getMethod() != null ? exchange.getRequest().getMethod().name() : "";
 
         if ("OPTIONS".equalsIgnoreCase(method)) {
-            return chain.filter(exchange);
+            // Short-circuit preflight so downstream services (and their CORS/security configs)
+            // cannot accidentally cause 403/401 and missing CORS headers.
+            String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
+            String reqMethod = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Method");
+            String reqHeaders = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Headers");
+
+            if (origin != null) {
+                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+                exchange.getResponse().getHeaders().set(HttpHeaders.VARY, "Origin");
+                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+
+                // Mirror requested preflight method/headers (or fall back to broad values).
+                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        reqMethod != null ? reqMethod : "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        reqHeaders != null ? reqHeaders : "*");
+            }
+
+            exchange.getResponse().setStatusCode(HttpStatus.OK);
+            return exchange.getResponse().setComplete();
         }
 
         if (path.startsWith("/api/auth")) {

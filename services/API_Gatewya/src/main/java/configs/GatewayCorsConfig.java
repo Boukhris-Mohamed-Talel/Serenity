@@ -11,7 +11,28 @@ import java.util.Arrays;
 @Configuration
 public class GatewayCorsConfig {
 
-    // Intentionally left blank:
-    // CORS is handled by downstream services (user-service + insurance-service)
-    // to avoid duplicate Access-Control-Allow-Origin headers being added by both gateway and services.
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:4200",
+                "http://localhost:3000"
+        ));
+        config.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+        // Be explicit: some CORS validators don't treat "*" as "all headers" reliably.
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "authorization",
+                "Content-Type",
+                "content-type"
+        ));
+        config.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsWebFilter(source);
+    }
 }
