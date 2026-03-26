@@ -46,6 +46,7 @@ export class MoodListComponent implements OnInit, OnDestroy {
   errorMessage = '';
   emptyState = false;
   isDoctorView = false;
+  exportingRecord = false;
   toastAlert: CrisisAlertPayload | null = null;
 
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -277,6 +278,45 @@ export class MoodListComponent implements OnInit, OnDestroy {
 
   selectPatient(patient: DoctorPatientRow): void {
     this.selectedPatient = patient;
+  }
+
+  exportSelectedPatientRecord(): void {
+    if (!this.isDoctorView || !this.selectedPatient || this.exportingRecord) {
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.userId) {
+      this.errorMessage = 'Doctor account not found. Please log in again.';
+      return;
+    }
+
+    this.exportingRecord = true;
+    this.errorMessage = '';
+
+    this.monitoringService.exportPatientRecordPdf(currentUser.userId, this.selectedPatient.id).subscribe({
+      next: (pdfBlob) => {
+        const fullName = `${this.selectedPatient?.firstName || 'patient'}-${this.selectedPatient?.lastName || ''}`
+          .trim()
+          .replace(/\s+/g, '-');
+        const filename = `mental-health-record-${fullName}-${Date.now()}.pdf`;
+
+        const objectUrl = URL.createObjectURL(pdfBlob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(objectUrl);
+
+        this.exportingRecord = false;
+      },
+      error: (err) => {
+        this.exportingRecord = false;
+        this.errorMessage = err?.error?.message || err?.message || 'Failed to export patient record PDF';
+      }
+    });
   }
 
   get selectedPatientEntries(): MoodEntryResponse[] {

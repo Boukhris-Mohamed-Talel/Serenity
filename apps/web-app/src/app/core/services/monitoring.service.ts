@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
@@ -64,6 +64,21 @@ export class MonitoringService {
    */
   deleteMoodEntry(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * Export one patient's full mental health record as a PDF for the assigned doctor.
+   */
+  exportPatientRecordPdf(doctorId: number, patientId: number): Observable<Blob> {
+    const token = this.authService.getToken();
+    const headers = token
+      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
+      : undefined;
+
+    return this.http.get(`${this.API_URL}/doctor/${doctorId}/patient/${patientId}/record-pdf`, {
+      headers,
+      responseType: 'blob'
+    });
   }
 
   /**

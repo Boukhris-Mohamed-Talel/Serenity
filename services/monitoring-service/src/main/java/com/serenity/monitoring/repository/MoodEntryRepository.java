@@ -23,6 +23,11 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
     List<MoodEntry> findByDoctorIdOrderByCreatedAtDesc(Long doctorId);
 
     /**
+     * Find all mood entries for one doctor-patient relationship.
+     */
+    List<MoodEntry> findByDoctorIdAndPatientIdOrderByCreatedAtDesc(Long doctorId, Long patientId);
+
+    /**
      * Find mood entries by patient ID and date range
      */
     @Query("SELECT m FROM MoodEntry m WHERE m.patientId = :patientId AND m.createdAt BETWEEN :startDate AND :endDate ORDER BY m.createdAt DESC")

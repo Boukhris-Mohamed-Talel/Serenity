@@ -3,11 +3,17 @@ package com.serenity.monitoring.controller;
 import com.serenity.monitoring.dto.MoodEntryRequestDTO;
 import com.serenity.monitoring.dto.MoodEntryResponseDTO;
 import com.serenity.monitoring.service.MoodEntryService;
+import com.serenity.monitoring.service.PatientRecordExportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.serenity.monitoring.security.userdetails.CustomUserDetails;
 
 import java.util.List;
 
@@ -17,6 +23,7 @@ import java.util.List;
 public class MoodEntryController {
 
     private final MoodEntryService moodEntryService;
+    private final PatientRecordExportService patientRecordExportService;
 
     /**
      * Create a new mood entry
@@ -77,5 +84,27 @@ public class MoodEntryController {
     public ResponseEntity<Void> deleteMoodEntry(@PathVariable Long id) {
         moodEntryService.deleteMoodEntry(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Export a full patient mental health record as PDF for the assigned doctor.
+     * GET /api/monitoring/mood/doctor/{doctorId}/patient/{patientId}/record-pdf
+     */
+    @GetMapping(value = "/doctor/{doctorId}/patient/{patientId}/record-pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<byte[]> exportPatientRecordPdf(@PathVariable Long doctorId,
+                                                         @PathVariable Long patientId,
+                                                         @AuthenticationPrincipal CustomUserDetails currentUser) {
+        if (currentUser == null || !doctorId.equals(currentUser.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only export records for your own doctor account");
+        }
+
+        byte[] pdf = patientRecordExportService.exportDoctorPatientRecordPdf(doctorId, patientId);
+        String filename = "patient-record-" + patientId + "-" + System.currentTimeMillis() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

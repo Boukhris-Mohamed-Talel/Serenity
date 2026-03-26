@@ -119,6 +119,10 @@
               <span class="avg-label">AVG MOOD</span>
               <span class="avg-value">{{ averageMood }}/10</span>
             </div>
+
+            <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
+              {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
+            </button>
           </div>
 
           <div class="entries-grid">
