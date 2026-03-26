@@ -15,9 +15,11 @@ import com.example.insurance.service.InsuranceClaimService;
 import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -112,16 +114,19 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
     @Override
     @Transactional(readOnly = true)
-    public InsuranceClaimResponseDTO getClaimById(Long id) {
+    public InsuranceClaimResponseDTO getClaimById(Long id, Long requesterUserId, boolean isAdmin) {
         InsuranceClaim claim = claimRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
+        if (!isAdmin && !claim.getUserId().equals(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to view this claim");
+        }
         return toResponseDTO(claim);
     }
 
     @Override
     public InsuranceClaimResponseDTO approveClaim(Long id, Double montant) {
         InsuranceClaim claim = claimRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
         claim.setStatus(ClaimStatus.APPROVED);
         // Reimbursement becomes known at approval time
         claim.setReimbursementAmount(montant);
@@ -139,7 +144,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     @Override
     public InsuranceClaimResponseDTO rejectClaim(Long id) {
         InsuranceClaim claim = claimRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
         claim.setStatus(ClaimStatus.REJECTED);
         // Schema expects non-null reimbursement_amount
         claim.setReimbursementAmount(0.0);
@@ -150,9 +155,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
     @Override
     public void deleteClaim(Long id) {
-        // Throws if missing to make debugging easier
         InsuranceClaim claim = claimRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Claim not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
 
         // JPA mappings (cascade + orphanRemoval) handle remboursements + files cleanup where configured.
         claimRepository.delete(claim);

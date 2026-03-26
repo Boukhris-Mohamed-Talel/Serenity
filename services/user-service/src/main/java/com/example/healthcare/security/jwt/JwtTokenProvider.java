@@ -1,5 +1,6 @@
 package com.example.healthcare.security.jwt;
 
+import com.example.healthcare.security.userdetails.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -27,24 +28,44 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        String email = authentication.getName();
         String roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-        return generateToken(email, roles);
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails details) {
+            return buildToken(details.getId(), details.getEmail(), roles);
+        }
+        throw new IllegalStateException("JWT requires CustomUserDetails principal, got: "
+                + (principal != null ? principal.getClass().getName() : "null"));
     }
 
-    public String generateToken(String email, String roles) {
+    /**
+     * OAuth and other flows where the principal is not a {@code CustomUserDetails}.
+     */
+    public String generateToken(String email, String roles, Long userId) {
+        return buildToken(userId, email, roles);
+    }
+
+    private String buildToken(Long userId, String email, String roles) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        String primaryRole = "";
+        if (roles != null && !roles.isEmpty()) {
+            int comma = roles.indexOf(',');
+            primaryRole = comma >= 0 ? roles.substring(0, comma).trim() : roles.trim();
+        }
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(email)
                 .claim("roles", roles)
+                .claim("role", primaryRole)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(getSigningKey())
-                .compact();
+                .signWith(getSigningKey());
+        if (userId != null) {
+            builder.claim("userId", userId);
+        }
+        return builder.compact();
     }
 
     public String getEmailFromToken(String token) {

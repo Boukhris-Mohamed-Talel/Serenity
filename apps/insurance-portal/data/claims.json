@@ -83,5 +83,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2Ff1103eaf-0c58-4f20-b073-79669863b6c5_4884e3f3-e0bf-4e05-8362-d9f509c6bc92.jpg"
     ]
+  },
+  {
+    "ref": "279f92ab-b74b-4373-865d-dd1471c42cb7",
+    "patientName": "1",
+    "description": "now testing reach to external",
+    "amount": 125,
+    "insuranceCompany": "Insurance 4",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 31.25,
+    "receivedAt": "2026-03-25T18:23:41.397Z",
+    "processedAt": "2026-03-25T18:23:55.917Z",
+    "rejectReason": null,
+    "adjustmentReason": "good",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F01b9ac9f-8dd8-40e1-bdfb-defdea64d184_repo.pdf"
+    ]
   }
 ]

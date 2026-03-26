@@ -14,7 +14,7 @@ public interface InsuranceClaimService {
 
     List<InsuranceClaimResponseDTO> getAllClaims();
 
-    InsuranceClaimResponseDTO getClaimById(Long id);
+    InsuranceClaimResponseDTO getClaimById(Long id, Long requesterUserId, boolean isAdmin);
 
     InsuranceClaimResponseDTO approveClaim(Long id, Double montant);
 

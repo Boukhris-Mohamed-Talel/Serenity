@@ -67,7 +67,7 @@ app.post('/api/claims', (req, res) => {
 
   claims.push(claim);
   saveClaimsToDisk();
-  console.log(`[RECEIVED] Claim ${ref} from ${claim.patientName} — ${amount} TND`);
+  console.log('[RECEIVED] Claim persisted. Queue size:', claims.length);
   res.status(201).json(claim);
 });
 
@@ -116,7 +116,7 @@ app.patch('/api/claims/:ref/approve', (req, res) => {
   claim.adjustmentReason = adjustmentReason || null;
   saveClaimsToDisk();
 
-  console.log(`[APPROVED] Claim ${claim.ref} — reimbursing ${montant} TND`);
+  console.log('[APPROVED] Claim status saved.');
   res.json(claim);
 });
 
@@ -135,7 +135,7 @@ app.patch('/api/claims/:ref/reject', (req, res) => {
   claim.adjustmentReason = null;
   saveClaimsToDisk();
 
-  console.log(`[REJECTED] Claim ${claim.ref} — reason: ${rejectReason}`);
+  console.log('[REJECTED] Claim status saved.');
   res.json(claim);
 });
 

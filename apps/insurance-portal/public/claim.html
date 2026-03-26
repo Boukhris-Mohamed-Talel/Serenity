@@ -131,15 +131,15 @@
 
   <script>
     const API = '';
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const ref = params.get('ref');
 
     const card = document.getElementById('claimCard');
 
-    if (!ref) {
-      card.textContent = 'Missing claim reference.';
-    } else {
+    if (ref) {
       loadClaim();
+    } else {
+      card.textContent = 'Missing claim reference.';
     }
 
     function esc(str) {
