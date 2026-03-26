@@ -1,0 +1,130 @@
+<div class="container">
+  <section class="page card">
+    <header class="page-header">
+      <div>
+        <h1>Doctor Prescription Workspace</h1>
+        <p>Create prescriptions with multiple medicines. Suggestions are scoped to the patient default pharmacy.</p>
+      </div>
+    </header>
+
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <article class="warning" *ngIf="!defaultPharmacyResolved && defaultPharmacyWarning">
+      {{ defaultPharmacyWarning }}
+      <span>This prescription can still be submitted and will stay pending until patient selects a default pharmacy.</span>
+    </article>
+
+    <article class="info" *ngIf="defaultPharmacyResolved && defaultPharmacyName">
+      Suggestions currently scoped to: <strong>{{ defaultPharmacyName }}</strong>
+    </article>
+
+    <p class="error" *ngIf="patientLookupError">{{ patientLookupError }}</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <label>
+        Patient Name
+        <div class="patient-picker">
+          <input
+            type="text"
+            formControlName="patientName"
+            placeholder="Start typing patient name"
+            (input)="onPatientNameInput()"
+            (focus)="onPatientNameInput()"
+            (blur)="hidePatientMatches()" />
+
+          <div class="patient-list" *ngIf="showPatientMatches">
+            <button
+              type="button"
+              class="patient-item"
+              *ngFor="let patient of patientMatches"
+              (mousedown)="onPatientMatchMouseDown($event, patient)">
+              <img
+                *ngIf="patientAvatarUrl(patient)"
+                [src]="patientAvatarUrl(patient)"
+                [alt]="getPatientDisplayName(patient)" />
+              <div class="avatar-fallback" *ngIf="!patientAvatarUrl(patient)">
+                {{ getPatientDisplayName(patient).charAt(0) }}
+              </div>
+              <span>{{ getPatientDisplayName(patient) }}</span>
+            </button>
+
+            <div class="patient-empty" *ngIf="patientMatches.length === 0">
+              No patients found for this name.
+            </div>
+          </div>
+        </div>
+      </label>
+
+      <label class="full-row">
+        Doctor Name
+        <input type="text" formControlName="doctorName" placeholder="Doctor full name" />
+      </label>
+
+      <section class="full-row lines">
+        <div class="lines-head">
+          <h3>Medicines</h3>
+          <button type="button" class="btn btn-secondary" (click)="addLine()">Add Medicine</button>
+        </div>
+
+        <div formArrayName="medicineLines" class="line-list">
+          <article
+            class="line-card"
+            *ngFor="let line of medicineLines.controls; let i = index"
+            [formGroupName]="i">
+
+            <div class="line-main">
+              <label>
+                Medicine
+                <input
+                  type="text"
+                  formControlName="medicationName"
+                  placeholder="Start typing medicine name"
+                  (input)="onMedicineInput(i)"
+                  (keydown.enter)="onLineEnter(i)" />
+              </label>
+
+              <label>
+                Dosage
+                <input type="text" formControlName="dosage" placeholder="e.g. 1 tablet twice daily" />
+              </label>
+
+              <label>
+                Quantity
+                <input type="number" min="1" formControlName="quantity" />
+              </label>
+
+              <button type="button" class="btn btn-danger" (click)="removeLine(i)" [disabled]="medicineLines.length === 1">
+                Remove
+              </button>
+            </div>
+
+            <label>
+              Instructions (optional)
+              <textarea rows="2" formControlName="instructions" placeholder="Optional instructions"></textarea>
+            </label>
+
+            <div class="suggestions" *ngIf="lineSuggestions[i]?.length">
+              <p class="hint">Suggestions</p>
+              <button
+                type="button"
+                class="suggestion-item"
+                *ngFor="let item of lineSuggestions[i]"
+                (click)="useSuggestion(i, item)">
+                <span class="name">{{ item.medicineName }}</span>
+                <span [class]="stockBadgeClass(item.stockStatus)">{{ item.stockStatus }}</span>
+                <span class="qty" *ngIf="item.availableQuantity != null">Qty: {{ item.availableQuantity }}</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="full-row actions">
+        <button class="btn btn-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Submitting...' : 'Submit Prescription' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
