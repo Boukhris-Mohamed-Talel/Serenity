@@ -197,7 +197,7 @@ export class MoodListComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to delete mood entry';
+          this.errorMessage = this.resolveDeleteMoodError(err);
         }
       });
     }
@@ -439,5 +439,21 @@ export class MoodListComponent implements OnInit, OnDestroy {
       this.toastAlert = null;
       this.toastTimer = null;
     }, 8000);
+  }
+
+  private resolveDeleteMoodError(err: any): string {
+    const backendMessage = (err?.error?.message || err?.message || '').toString();
+    const normalized = backendMessage.toLowerCase();
+
+    if (normalized.includes('clinical') || normalized.includes('trigger') || normalized.includes('related records')) {
+      return 'You cannot delete a mood entry that has a clinical record.';
+    }
+
+    // Keep UX stable even if backend still returns generic security text.
+    if (normalized.includes('full authentication is required')) {
+      return 'You cannot delete a mood entry that has a clinical record.';
+    }
+
+    return backendMessage || 'Failed to delete mood entry';
   }
 }

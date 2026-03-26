@@ -46,6 +46,7 @@ export class ZenQuotesService {
       author: 'Serenity'
     }
   ];
+  private lastFallbackQuoteIndex = -1;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -113,7 +114,16 @@ export class ZenQuotesService {
   }
 
   private getRandomFallbackQuote(): MotivationalQuote {
-    const randomIndex = Math.floor(Math.random() * this.FALLBACK_QUOTES.length);
+    if (this.FALLBACK_QUOTES.length === 1) {
+      return this.FALLBACK_QUOTES[0];
+    }
+
+    let randomIndex = Math.floor(Math.random() * this.FALLBACK_QUOTES.length);
+    while (randomIndex === this.lastFallbackQuoteIndex) {
+      randomIndex = Math.floor(Math.random() * this.FALLBACK_QUOTES.length);
+    }
+
+    this.lastFallbackQuoteIndex = randomIndex;
     return this.FALLBACK_QUOTES[randomIndex];
   }
 }

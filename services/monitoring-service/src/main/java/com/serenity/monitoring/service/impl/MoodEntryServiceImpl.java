@@ -8,6 +8,7 @@ import com.serenity.monitoring.entity.UserAccount;
 import com.serenity.monitoring.mapper.MoodEntryMapper;
 import com.serenity.monitoring.entity.UserProfileSnapshot;
 import com.serenity.monitoring.repository.MoodEntryRepository;
+import com.serenity.monitoring.repository.EmotionalTriggerRepository;
 import com.serenity.monitoring.repository.UserAccountRepository;
 import com.serenity.monitoring.repository.UserProfileSnapshotRepository;
 import com.serenity.monitoring.service.DoctorAssignmentService;
@@ -37,6 +38,7 @@ public class MoodEntryServiceImpl implements MoodEntryService {
     private final MoodEntryMapper moodEntryMapper;
     private final DoctorAssignmentService doctorAssignmentService;
     private final CrisisAlertService crisisAlertService;
+    private final EmotionalTriggerRepository emotionalTriggerRepository;
     private final UserAccountRepository userAccountRepository;
     private final UserProfileSnapshotRepository userProfileSnapshotRepository;
 
@@ -120,6 +122,11 @@ public class MoodEntryServiceImpl implements MoodEntryService {
         if (!moodEntryRepository.existsById(id)) {
             throw new IllegalArgumentException("Mood entry not found with ID: " + id);
         }
+
+        if (emotionalTriggerRepository.existsByMoodEntryId(id)) {
+            throw new IllegalStateException("Cannot delete this mood entry because it has linked clinical records.");
+        }
+
         moodEntryRepository.deleteById(id);
     }
 

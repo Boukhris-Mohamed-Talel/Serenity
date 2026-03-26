@@ -168,7 +168,7 @@ export class MoodFormComponent implements OnInit, OnDestroy {
 
     // Start quote request in parallel so success overlay can render immediately.
     if (this.isPatient && submittedMoodScore <= 5) {
-      this.prefetchQuote();
+      this.prefetchQuote(true);
     }
 
     if (this.isEditMode && this.editingId) {
@@ -224,8 +224,12 @@ export class MoodFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  private prefetchQuote(): void {
-    if (this.prefetchedQuote || this.quotePrefetchInFlight) {
+  private prefetchQuote(forceRefresh = false): void {
+    if (forceRefresh) {
+      this.prefetchedQuote = null;
+    }
+
+    if (!forceRefresh && (this.prefetchedQuote || this.quotePrefetchInFlight)) {
       return;
     }
 

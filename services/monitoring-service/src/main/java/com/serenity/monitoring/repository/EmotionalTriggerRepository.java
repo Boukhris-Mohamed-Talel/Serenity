@@ -14,5 +14,7 @@ public interface EmotionalTriggerRepository extends JpaRepository<EmotionalTrigg
     List<EmotionalTrigger> findByDoctorId(Long doctorId);
 
     List<EmotionalTrigger> findByMoodEntryIdAndDoctorId(Long moodEntryId, Long doctorId);
+
+    boolean existsByMoodEntryId(Long moodEntryId);
 }
 

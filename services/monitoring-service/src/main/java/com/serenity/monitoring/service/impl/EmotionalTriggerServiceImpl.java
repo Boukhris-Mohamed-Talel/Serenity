@@ -1,30 +1,25 @@
 package com.serenity.monitoring.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.serenity.monitoring.dto.EmotionalTriggerRequest;
 import com.serenity.monitoring.dto.EmotionalTriggerResponse;
 import com.serenity.monitoring.entity.EmotionalTrigger;
 import com.serenity.monitoring.entity.MoodEntry;
-import com.serenity.monitoring.entity.UserAccount;
 import com.serenity.monitoring.exception.ResourceNotFoundException;
 import com.serenity.monitoring.mapper.EmotionalTriggerMapper;
 import com.serenity.monitoring.repository.EmotionalTriggerRepository;
 import com.serenity.monitoring.repository.MoodEntryRepository;
-import com.serenity.monitoring.repository.UserAccountRepository;
+import com.serenity.monitoring.security.userdetails.CustomUserDetails;
 import com.serenity.monitoring.service.EmotionalTriggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -33,9 +28,7 @@ public class EmotionalTriggerServiceImpl implements EmotionalTriggerService {
 
     private final EmotionalTriggerRepository emotionalTriggerRepository;
     private final MoodEntryRepository moodEntryRepository;
-    private final UserAccountRepository userAccountRepository;
     private final EmotionalTriggerMapper emotionalTriggerMapper;
-    private final ObjectMapper objectMapper;
 
     /**
      * {@inheritDoc}
@@ -181,53 +174,19 @@ public class EmotionalTriggerServiceImpl implements EmotionalTriggerService {
     }
 
     private AuthUser extractCurrentUser() {
-        try {
-            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-            String authHeader = attrs.getRequest().getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new AccessDeniedException("Missing Bearer token");
-            }
-
-            String token = authHeader.substring(7);
-            String[] parts = token.split("\\.");
-            if (parts.length < 2) {
-                throw new AccessDeniedException("Invalid token format");
-            }
-
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            JsonNode payloadJson = objectMapper.readTree(payload);
-
-            String email = payloadJson.path("sub").asText(null);
-            if (email == null || email.isBlank()) {
-                throw new AccessDeniedException("Token subject is missing");
-            }
-
-            String roles = payloadJson.path("roles").asText("");
-            String role = parseRole(roles);
-
-            UserAccount user = userAccountRepository.findByEmail(email)
-                    .orElseThrow(() -> new AccessDeniedException("User not found for token subject"));
-
-            return new AuthUser(user.getId(), role);
-        } catch (AccessDeniedException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new AccessDeniedException("Unable to resolve user from token");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new AccessDeniedException("Missing authenticated user");
         }
-    }
 
-    private String parseRole(String rolesClaim) {
-        if (rolesClaim == null || rolesClaim.isBlank()) {
-            return "UNKNOWN";
-        }
-        for (String value : rolesClaim.split(",")) {
-            String role = value.trim();
-            if (role.startsWith("ROLE_")) {
-                return role.substring("ROLE_".length());
-            }
-        }
-        String first = rolesClaim.split(",")[0].trim();
-        return first.startsWith("ROLE_") ? first.substring("ROLE_".length()) : first;
+        String role = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring("ROLE_".length()))
+                .findFirst()
+                .orElse("UNKNOWN");
+
+        return new AuthUser(userDetails.getId(), role);
     }
 
     private record AuthUser(Long userId, String role) {
