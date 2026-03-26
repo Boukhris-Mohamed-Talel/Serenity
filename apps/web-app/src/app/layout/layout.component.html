@@ -12,11 +12,9 @@
       <a routerLink="/profile" routerLinkActive="active">
         Profile
       </a>
-      <!-- Reimbursements (uncomment when insurance module exists)
-      <a routerLink="/insurance" routerLinkActive="active">
-        Reimbursements
+      <a routerLink="/messagerie" routerLinkActive="active">
+        Messagerie
       </a>
-      -->
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">
         Users
       </a>

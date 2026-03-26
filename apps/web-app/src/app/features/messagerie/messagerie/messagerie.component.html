@@ -1,0 +1,63 @@
+<div class="messagerie">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>Messages</h3>
+    </div>
+
+    <div class="conversation-list">
+      <div class="conversation active">
+        <div class="avatar"></div>
+        <div class="conversation-info">
+          <div class="name">John Doe</div>
+          <div class="last-message">Last message preview...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-area">
+    <div class="chat-header">
+      <div class="avatar"></div>
+      <div class="chat-name">John Doe</div>
+    </div>
+
+    <div class="messages">
+      <div
+        class="message"
+        *ngFor="let msg of messages; let i = index"
+        [ngClass]="msg.type"
+        (contextmenu)="openMenu($event, i)"
+      >
+        <div class="bubble">
+          <span *ngIf="editingIndex !== i">{{ msg.text }}</span>
+
+          <input
+            *ngIf="editingIndex === i"
+            [(ngModel)]="editText"
+            (keydown.enter)="saveEdit()"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="context-menu"
+      *ngIf="menuVisible"
+      [style.top.px]="menuY"
+      [style.left.px]="menuX"
+    >
+      <div class="menu-item" (click)="editMessage()">Modifier</div>
+      <div class="menu-item delete" (click)="deleteMessage()">Supprimer</div>
+    </div>
+
+    <div class="message-input">
+      <input
+        type="text"
+        [(ngModel)]="newMessage"
+        placeholder="Type a message..."
+        (keydown.enter)="sendMessage()"
+      />
+      <button class="send-btn" (click)="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
