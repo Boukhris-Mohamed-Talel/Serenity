@@ -102,4 +102,16 @@ onSearch() {
     this.editingIndex = -1;
   }
 
+  searchActive: boolean = false; // nouvel état
+
+  onFocusSearch() {
+    this.searchActive = true;
+  }
+
+  cancelSearch() {
+    this.searchActive = false;
+    this.searchTerm = '';
+    this.filteredUsers = [];
+  }
+
 }

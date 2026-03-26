@@ -1,16 +1,39 @@
-
 <div class="main-content">
   <div class="messagerie">
+
+    <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
         <h3>Messages</h3>
-        <input type="text" placeholder="Search..." [(ngModel)]="searchTerm" (input)="onSearch()" />
-          <div *ngFor="let user of filteredUsers">
+
+        <div class="search-wrapper">
+          <input
+            type="text"
+            placeholder="Search..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            (focus)="onFocusSearch()"
+            class="search-bar"
+          />
+          <button
+            *ngIf="searchActive"
+            class="cancel-btn"
+            (click)="cancelSearch()"
+          >
+            X
+          </button>
+        </div>
+
+        <!-- Résultats de recherche -->
+        <div *ngIf="searchActive" class="search-results">
+          <div *ngFor="let user of filteredUsers" class="search-user">
             {{ user.firstName }} {{ user.lastName }}
           </div>
+        </div>
       </div>
 
-      <div class="conversation-list">
+      <!-- Liste des conversations cachée si recherche active -->
+      <div class="conversation-list" *ngIf="!searchActive">
         <div
           class="conversation"
           *ngFor="let convo of filteredConversations"
@@ -26,6 +49,7 @@
       </div>
     </div>
 
+    <!-- Chat Area -->
     <div class="chat-area">
       <div class="chat-header">
         <div class="avatar"></div>
@@ -41,7 +65,6 @@
         >
           <div class="bubble">
             <span *ngIf="editingIndex !== i">{{ msg.text }}</span>
-
             <input
               *ngIf="editingIndex === i"
               [(ngModel)]="editText"
@@ -71,5 +94,6 @@
         <button class="send-btn" (click)="sendMessage()">Send</button>
       </div>
     </div>
+
   </div>
 </div>

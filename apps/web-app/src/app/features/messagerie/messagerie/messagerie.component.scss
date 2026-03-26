@@ -8,7 +8,6 @@
 }
 
 /* Sidebar */
-
 .sidebar {
   width: 320px;
   background: var(--surface);
@@ -23,6 +22,7 @@
   font-weight: 700;
 }
 
+/* Conversations */
 .conversation-list {
   flex: 1;
   overflow-y: auto;
@@ -34,14 +34,14 @@
   padding: 0.75rem 1rem;
   cursor: pointer;
   transition: background 0.2s ease;
+}
 
-  &:hover {
-    background: var(--bg);
-  }
+.conversation:hover {
+  background: var(--bg);
+}
 
-  &.active {
-    background: var(--primary-light);
-  }
+.conversation.active {
+  background: var(--primary-light);
 }
 
 .avatar {
@@ -67,7 +67,6 @@
 }
 
 /* Chat Area */
-
 .chat-area {
   flex: 1;
   display: flex;
@@ -89,7 +88,6 @@
 }
 
 /* Messages */
-
 .messages {
   flex: 1;
   padding: 1rem;
@@ -129,7 +127,6 @@
 }
 
 /* Input */
-
 .message-input {
   display: flex;
   padding: 0.75rem;
@@ -160,6 +157,7 @@
   opacity: 0.9;
 }
 
+/* Context Menu */
 .context-menu {
   position: fixed;
   background: var(--surface);
@@ -183,37 +181,75 @@
   color: red;
 }
 
-.search-bar {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  outline: none;
-}
-
+/* Search */
 .search-wrapper {
+  position: relative;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  width: 100%;
   margin-bottom: 0.5rem;
 }
 
-.search-bar.user-search {
-  width: 80%;
-  border-radius: 20px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
+.search-bar {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
   outline: none;
+  transition: all 0.3s ease;
 }
 
-.search-bar.conversation-search {
-  width: 100%;
+.search-bar:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.cancel-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 22px;
+  text-align: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: #d9363e;
+  transform: translateY(-50%) scale(1.2);
+}
+
+.search-results {
   margin-top: 0.5rem;
-  border-radius: 20px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
-  outline: none;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0;
+  z-index: 10;
+}
+
+.search-user {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-user:hover {
+  background: #f0f0f0;
+  border-radius: 8px;
 }
