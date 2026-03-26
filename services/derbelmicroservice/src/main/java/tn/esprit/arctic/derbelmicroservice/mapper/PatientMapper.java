@@ -18,6 +18,7 @@ public class PatientMapper {
                 .bloodType(patient.getBloodType())
                 .allergies(patient.getAllergies())
                 .phone(patient.getPhone())
+                .doctorId(patient.getDoctorId())
                 .createdAt(patient.getCreatedAt())
                 .updatedAt(patient.getUpdatedAt())
                 .build();

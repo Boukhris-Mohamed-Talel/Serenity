@@ -5,9 +5,13 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import tn.esprit.arctic.derbelmicroservice.entity.converter.PrescriptionMedicationsConverter;
+import tn.esprit.arctic.derbelmicroservice.entity.value.PrescriptionMedication;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "prescriptions")
@@ -23,33 +27,35 @@ public class Prescription {
     private Long id;
 
     @NotBlank
-    @Size(max = 100)
-    @Column(nullable = false)
+    @Column(name = "medication_name", nullable = false)
     private String medicationName;
 
-    @NotBlank
-    @Size(max = 50)
-    @Column(nullable = false)
+    @NotEmpty
+    @Column(name = "medications_data", nullable = false, columnDefinition = "TEXT")
+    @Convert(converter = PrescriptionMedicationsConverter.class)
+    @Builder.Default
+    private List<PrescriptionMedication> medications = new ArrayList<>();
+
+    // Legacy columns kept to stay compatible with existing DB constraints.
+    @Column(name = "dosage", nullable = false)
     private String dosage;
 
-    @NotBlank
-    @Size(max = 50)
-    @Column(nullable = false)
+    @Column(name = "frequency", nullable = false)
     private String frequency;
 
-    @NotNull
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
+    @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Size(max = 500)
+    @Column(name = "instructions")
     private String instructions;
 
-    @Min(1)
+    @Column(name = "quantity", nullable = false)
     private int quantity;
 
-    @NotBlank
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)

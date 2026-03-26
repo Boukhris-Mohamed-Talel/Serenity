@@ -50,6 +50,25 @@
   line-height: 1.25;
 }
 
+.rx-med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rx-med-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.rx-med-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
 /* ── Meta row ──────────────────────────────────────────── */
 .rx-meta {
   display: flex;

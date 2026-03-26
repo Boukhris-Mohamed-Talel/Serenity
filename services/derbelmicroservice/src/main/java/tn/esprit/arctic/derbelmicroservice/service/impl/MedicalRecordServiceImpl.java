@@ -28,43 +28,52 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MedicalRecordResponseDTO> getAllRecords(Pageable pageable) {
-        return medicalRecordRepository.findAll(pageable)
+    public Page<MedicalRecordResponseDTO> getAllRecords(Pageable pageable, Long doctorId, boolean isAdmin) {
+        return (isAdmin
+                ? medicalRecordRepository.findAll(pageable)
+                : medicalRecordRepository.findAllByDoctorId(doctorId, pageable))
                 .map(medicalRecordMapper::toResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public MedicalRecordResponseDTO getRecordById(Long id) {
-        MedicalRecord record = medicalRecordRepository.findByIdWithPatient(id)
+    public MedicalRecordResponseDTO getRecordById(Long id, Long doctorId, boolean isAdmin) {
+        MedicalRecord record = (isAdmin
+                ? medicalRecordRepository.findByIdWithPatient(id)
+                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
         return medicalRecordMapper.toResponseDTO(record);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<MedicalRecordResponseDTO> getRecordsByPatientId(Long patientId) {
+    public List<MedicalRecordResponseDTO> getRecordsByPatientId(Long patientId, Long doctorId, boolean isAdmin) {
         if (!patientRepository.existsById(patientId)) {
             throw new ResourceNotFoundException("Patient", "id", patientId);
         }
-        return medicalRecordRepository.findByPatientId(patientId)
+        return (isAdmin
+                ? medicalRecordRepository.findByPatientId(patientId)
+                : medicalRecordRepository.findByPatientIdAndDoctorId(patientId, doctorId))
                 .stream()
                 .map(medicalRecordMapper::toResponseDTO)
                 .toList();
     }
 
     @Override
-    public MedicalRecordResponseDTO createRecord(MedicalRecordRequestDTO requestDTO) {
+    public MedicalRecordResponseDTO createRecord(MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
         Patient patient = patientRepository.findById(requestDTO.getPatientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", requestDTO.getPatientId()));
         MedicalRecord record = medicalRecordMapper.toEntity(requestDTO, patient);
+        record.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
         MedicalRecord saved = medicalRecordRepository.save(record);
         return medicalRecordMapper.toResponseDTO(saved, patient);
     }
 
     @Override
-    public MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO) {
-        MedicalRecord record = medicalRecordRepository.findByIdWithPatient(id)
+    public MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
+        MedicalRecord record = (isAdmin
+                ? medicalRecordRepository.findByIdWithPatient(id)
+                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
         Patient patientForResponse = record.getPatient();
         if (requestDTO.getPatientId() != null && !requestDTO.getPatientId().equals(patientForResponse.getId())) {
@@ -73,14 +82,24 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
             record.setPatient(patientForResponse);
         }
         medicalRecordMapper.updateEntityFromDTO(requestDTO, record);
+        record.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
         MedicalRecord updated = medicalRecordRepository.save(record);
         return medicalRecordMapper.toResponseDTO(updated, patientForResponse);
     }
 
     @Override
-    public void deleteRecord(Long id) {
-        MedicalRecord record = medicalRecordRepository.findByIdWithPatient(id)
+    public void deleteRecord(Long id, Long doctorId, boolean isAdmin) {
+        MedicalRecord record = (isAdmin
+                ? medicalRecordRepository.findByIdWithPatient(id)
+                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
         medicalRecordRepository.delete(record);
+    }
+
+    private Long resolveDoctorId(Long doctorIdFromRequest, Long authenticatedUserId, boolean isAdmin) {
+        if (isAdmin && doctorIdFromRequest != null) {
+            return doctorIdFromRequest;
+        }
+        return authenticatedUserId;
     }
 }

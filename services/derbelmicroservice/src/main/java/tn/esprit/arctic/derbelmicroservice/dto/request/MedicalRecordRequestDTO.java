@@ -33,6 +33,5 @@ public class MedicalRecordRequestDTO {
     @NotNull(message = "L'ID du patient est obligatoire")
     private Long patientId;
 
-    @NotNull(message = "L'ID du médecin est obligatoire")
     private Long doctorId;
 }

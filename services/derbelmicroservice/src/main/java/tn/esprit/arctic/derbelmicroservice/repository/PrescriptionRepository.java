@@ -20,9 +20,19 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
     @Query("SELECT p FROM Prescription p")
     Page<Prescription> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"medicalRecord"})
+    @Query("SELECT p FROM Prescription p WHERE p.doctorId = :doctorId")
+    Page<Prescription> findAllByDoctorId(@Param("doctorId") Long doctorId, Pageable pageable);
+
     @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord WHERE p.id = :id")
     Optional<Prescription> findByIdWithMedicalRecord(@Param("id") Long id);
 
+    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord WHERE p.id = :id AND p.doctorId = :doctorId")
+    Optional<Prescription> findByIdWithMedicalRecordAndDoctorId(@Param("id") Long id, @Param("doctorId") Long doctorId);
+
     @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId")
     List<Prescription> findByMedicalRecordId(@Param("recordId") Long medicalRecordId);
+
+    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId AND p.doctorId = :doctorId")
+    List<Prescription> findByMedicalRecordIdAndDoctorId(@Param("recordId") Long recordId, @Param("doctorId") Long doctorId);
 }

@@ -3,14 +3,7 @@
  */
 export interface Prescription {
   id: number;
-  medicationName: string;
-  dosage: string;
-  frequency: string;
-  startDate: string;
-  endDate: string | null;
-  instructions: string | null;
-  quantity: number;
-  status: string;
+  medications: PrescriptionMedication[];
   medicalRecordId: number;
   patientId: number;
   doctorId: number;
@@ -18,10 +11,7 @@ export interface Prescription {
   updatedAt: string;
 }
 
-/**
- * Aligné sur PrescriptionRequestDTO
- */
-export interface PrescriptionRequest {
+export interface PrescriptionMedication {
   medicationName: string;
   dosage: string;
   frequency: string;
@@ -29,8 +19,15 @@ export interface PrescriptionRequest {
   endDate: string | null;
   instructions: string | null;
   quantity: number;
-  status: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+/**
+ * Aligné sur PrescriptionRequestDTO
+ */
+export interface PrescriptionRequest {
+  medications: PrescriptionMedication[];
   medicalRecordId: number;
   patientId: number;
-  doctorId: number;
+  doctorId?: number;
 }

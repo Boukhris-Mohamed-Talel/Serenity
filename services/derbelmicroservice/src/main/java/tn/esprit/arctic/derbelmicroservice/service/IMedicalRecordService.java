@@ -9,15 +9,15 @@ import java.util.List;
 
 public interface IMedicalRecordService {
 
-    Page<MedicalRecordResponseDTO> getAllRecords(Pageable pageable);
+    Page<MedicalRecordResponseDTO> getAllRecords(Pageable pageable, Long doctorId, boolean isAdmin);
 
-    MedicalRecordResponseDTO getRecordById(Long id);
+    MedicalRecordResponseDTO getRecordById(Long id, Long doctorId, boolean isAdmin);
 
-    List<MedicalRecordResponseDTO> getRecordsByPatientId(Long patientId);
+    List<MedicalRecordResponseDTO> getRecordsByPatientId(Long patientId, Long doctorId, boolean isAdmin);
 
-    MedicalRecordResponseDTO createRecord(MedicalRecordRequestDTO requestDTO);
+    MedicalRecordResponseDTO createRecord(MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
-    MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO);
+    MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
-    void deleteRecord(Long id);
+    void deleteRecord(Long id, Long doctorId, boolean isAdmin);
 }

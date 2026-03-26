@@ -13,6 +13,7 @@ import tn.esprit.arctic.derbelmicroservice.dto.request.PrescriptionRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.ApiResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PageResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PrescriptionResponseDTO;
+import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IPrescriptionService;
 
 import java.util.List;
@@ -30,13 +31,16 @@ public class PrescriptionController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
 
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<PrescriptionResponseDTO> resultPage = prescriptionService.getAllPrescriptions(pageable);
+        Page<PrescriptionResponseDTO> resultPage = prescriptionService.getAllPrescriptions(pageable, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<PageResponseDTO<PrescriptionResponseDTO>>builder()
                 .status(HttpStatus.OK.value())
                 .message("Liste des prescriptions récupérée avec succès")
@@ -46,7 +50,11 @@ public class PrescriptionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<PrescriptionResponseDTO>> getPrescriptionById(@PathVariable Long id) {
-        PrescriptionResponseDTO prescription = prescriptionService.getPrescriptionById(id);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        PrescriptionResponseDTO prescription = prescriptionService.getPrescriptionById(id, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<PrescriptionResponseDTO>builder()
                 .status(HttpStatus.OK.value())
                 .message("Prescription récupérée avec succès")
@@ -57,7 +65,11 @@ public class PrescriptionController {
     @GetMapping("/record/{recordId}")
     public ResponseEntity<ApiResponseDTO<List<PrescriptionResponseDTO>>> getPrescriptionsByRecordId(
             @PathVariable Long recordId) {
-        List<PrescriptionResponseDTO> prescriptions = prescriptionService.getPrescriptionsByRecordId(recordId);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<PrescriptionResponseDTO> prescriptions = prescriptionService.getPrescriptionsByRecordId(recordId, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<List<PrescriptionResponseDTO>>builder()
                 .status(HttpStatus.OK.value())
                 .message("Prescriptions du dossier médical récupérées avec succès")
@@ -68,7 +80,11 @@ public class PrescriptionController {
     @PostMapping
     public ResponseEntity<ApiResponseDTO<PrescriptionResponseDTO>> createPrescription(
             @Valid @RequestBody PrescriptionRequestDTO requestDTO) {
-        PrescriptionResponseDTO created = prescriptionService.createPrescription(requestDTO);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        PrescriptionResponseDTO created = prescriptionService.createPrescription(requestDTO, authenticatedUserId, isAdmin);
         return new ResponseEntity<>(ApiResponseDTO.<PrescriptionResponseDTO>builder()
                 .status(HttpStatus.CREATED.value())
                 .message("Prescription créée avec succès")
@@ -80,7 +96,11 @@ public class PrescriptionController {
     public ResponseEntity<ApiResponseDTO<PrescriptionResponseDTO>> updatePrescription(
             @PathVariable Long id,
             @Valid @RequestBody PrescriptionRequestDTO requestDTO) {
-        PrescriptionResponseDTO updated = prescriptionService.updatePrescription(id, requestDTO);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        PrescriptionResponseDTO updated = prescriptionService.updatePrescription(id, requestDTO, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<PrescriptionResponseDTO>builder()
                 .status(HttpStatus.OK.value())
                 .message("Prescription mise à jour avec succès")
@@ -90,7 +110,11 @@ public class PrescriptionController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<Void>> deletePrescription(@PathVariable Long id) {
-        prescriptionService.deletePrescription(id);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        prescriptionService.deletePrescription(id, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<Void>builder()
                 .status(HttpStatus.OK.value())
                 .message("Prescription supprimée avec succès")

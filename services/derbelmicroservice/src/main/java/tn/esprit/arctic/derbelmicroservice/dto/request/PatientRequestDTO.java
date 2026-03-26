@@ -33,4 +33,6 @@ public class PatientRequestDTO {
 
     @Size(max = 20, message = "Le téléphone ne doit pas dépasser 20 caractères")
     private String phone;
+
+    private Long doctorId;
 }

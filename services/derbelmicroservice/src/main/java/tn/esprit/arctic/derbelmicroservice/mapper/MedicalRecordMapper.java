@@ -56,7 +56,6 @@ public class MedicalRecordMapper {
                 .severity(dto.getSeverity())
                 .status(dto.getStatus())
                 .patient(patient)
-                .doctorId(dto.getDoctorId())
                 .build();
     }
 
@@ -66,6 +65,5 @@ public class MedicalRecordMapper {
         record.setDate(dto.getDate());
         record.setSeverity(dto.getSeverity());
         record.setStatus(dto.getStatus());
-        record.setDoctorId(dto.getDoctorId());
     }
 }

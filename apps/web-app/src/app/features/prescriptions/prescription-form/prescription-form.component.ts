@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
 import { PrescriptionService } from '../../../core/services/prescription.service';
-import { PrescriptionRequest } from '../../../models/prescription.model';
+import { PrescriptionMedication, PrescriptionRequest } from '../../../models/prescription.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { getParamFromRouteTree } from '../../../shared/utils/route-params';
 
@@ -21,14 +20,9 @@ export class PrescriptionFormComponent implements OnInit {
   saving = false;
 
   readonly form = this.fb.group({
-    medicationName: ['', [Validators.required, Validators.maxLength(100)]],
-    dosage: ['', [Validators.required, Validators.maxLength(50)]],
-    frequency: ['', [Validators.required, Validators.maxLength(50)]],
-    startDate: ['', [Validators.required]],
-    endDate: [''],
-    instructions: ['', [Validators.maxLength(500)]],
-    quantity: [1, [Validators.required, Validators.min(1)]],
-    status: ['ACTIVE', [Validators.required]]
+    medications: this.fb.array<FormGroup>([
+      this.createMedicationGroup()
+    ]),
   });
 
   constructor(
@@ -36,9 +30,36 @@ export class PrescriptionFormComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly prescriptionService: PrescriptionService,
-    private readonly auth: AuthService,
     private readonly notification: NotificationService
   ) {}
+
+  get medicationsArray(): FormArray<FormGroup> {
+    return this.form.controls.medications;
+  }
+
+  addMedication(): void {
+    this.medicationsArray.push(this.createMedicationGroup());
+  }
+
+  removeMedication(index: number): void {
+    if (this.medicationsArray.length <= 1) {
+      return;
+    }
+    this.medicationsArray.removeAt(index);
+  }
+
+  private createMedicationGroup(initial?: Partial<PrescriptionMedication>): FormGroup {
+    return this.fb.group({
+      medicationName: [initial?.medicationName ?? '', [Validators.required, Validators.maxLength(100)]],
+      dosage: [initial?.dosage ?? '', [Validators.required, Validators.maxLength(50)]],
+      frequency: [initial?.frequency ?? '', [Validators.required, Validators.maxLength(50)]],
+      quantity: [initial?.quantity ?? 1, [Validators.required, Validators.min(1)]],
+      startDate: [initial?.startDate ?? '', [Validators.required]],
+      endDate: [initial?.endDate ?? ''],
+      status: [initial?.status ?? 'ACTIVE', [Validators.required]],
+      instructions: [initial?.instructions ?? '', [Validators.maxLength(500)]]
+    });
+  }
 
   ngOnInit(): void {
     const pid = getParamFromRouteTree(this.route, 'patientId');
@@ -67,16 +88,18 @@ export class PrescriptionFormComponent implements OnInit {
     this.loading = true;
     this.prescriptionService.getPrescriptionById(id).subscribe({
       next: (p) => {
-        this.form.patchValue({
-          medicationName: p.medicationName,
-          dosage: p.dosage,
-          frequency: p.frequency,
-          startDate: p.startDate.substring(0, 10),
-          endDate: p.endDate ? p.endDate.substring(0, 10) : '',
-          instructions: p.instructions ?? '',
-          quantity: p.quantity,
-          status: p.status
-        });
+        this.medicationsArray.clear();
+        const meds = p.medications?.length ? p.medications : [{} as PrescriptionMedication];
+        meds.forEach(m => this.medicationsArray.push(this.createMedicationGroup({
+          medicationName: m.medicationName ?? '',
+          dosage: m.dosage ?? '',
+          frequency: m.frequency ?? '',
+          quantity: m.quantity ?? 1,
+          startDate: m.startDate ? m.startDate.substring(0, 10) : '',
+          endDate: m.endDate ? m.endDate.substring(0, 10) : '',
+          status: m.status ?? 'ACTIVE',
+          instructions: m.instructions ?? ''
+        })));
         this.loading = false;
       },
       error: () => {
@@ -93,25 +116,31 @@ export class PrescriptionFormComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const doctorId = this.auth.getCurrentUser()?.userId;
-    if (!doctorId) {
-      this.notification.error('Impossible de déterminer le médecin (session).');
+
+    const v = this.form.getRawValue();
+    const medicationsRaw = (v.medications ?? []) as Array<Record<string, unknown>>;
+    const medications: PrescriptionMedication[] = medicationsRaw
+      .map(m => ({
+        medicationName: String(m['medicationName'] ?? '').trim(),
+        dosage: String(m['dosage'] ?? '').trim(),
+        frequency: String(m['frequency'] ?? '').trim(),
+        quantity: Number(m['quantity'] ?? 1),
+        startDate: String(m['startDate'] ?? ''),
+        endDate: m['endDate'] ? String(m['endDate']) : null,
+        status: String(m['status'] ?? 'ACTIVE').trim().toUpperCase() as 'ACTIVE' | 'INACTIVE',
+        instructions: String(m['instructions'] ?? '').trim() || null
+      }))
+      .filter(m => m.medicationName.length > 0);
+
+    if (!medications.length) {
+      this.notification.error('Ajoute au moins un médicament.');
       return;
     }
 
-    const v = this.form.getRawValue();
     const body: PrescriptionRequest = {
-      medicationName: v.medicationName!.trim(),
-      dosage: v.dosage!.trim(),
-      frequency: v.frequency!.trim(),
-      startDate: v.startDate!,
-      endDate: v.endDate ? v.endDate : null,
-      instructions: v.instructions?.trim() || null,
-      quantity: v.quantity ?? 1,
-      status: v.status!.trim(),
+      medications,
       medicalRecordId: this.recordId,
-      patientId: this.patientId,
-      doctorId
+      patientId: this.patientId
     };
 
     this.saving = true;

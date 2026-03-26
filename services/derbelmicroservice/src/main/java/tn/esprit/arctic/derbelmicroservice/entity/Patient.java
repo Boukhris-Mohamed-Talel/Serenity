@@ -2,6 +2,7 @@ package tn.esprit.arctic.derbelmicroservice.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -48,6 +49,10 @@ public class Patient {
 
     @Size(max = 20)
     private String phone;
+
+    @NotNull
+    @Column(name = "doctor_id")
+    private Long doctorId;
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

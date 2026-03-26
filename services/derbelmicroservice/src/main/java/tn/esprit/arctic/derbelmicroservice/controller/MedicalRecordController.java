@@ -13,6 +13,7 @@ import tn.esprit.arctic.derbelmicroservice.dto.request.MedicalRecordRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.ApiResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.MedicalRecordResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PageResponseDTO;
+import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IMedicalRecordService;
 
 import java.util.List;
@@ -30,13 +31,16 @@ public class MedicalRecordController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
 
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<MedicalRecordResponseDTO> resultPage = medicalRecordService.getAllRecords(pageable);
+        Page<MedicalRecordResponseDTO> resultPage = medicalRecordService.getAllRecords(pageable, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<PageResponseDTO<MedicalRecordResponseDTO>>builder()
                 .status(HttpStatus.OK.value())
                 .message("Liste des dossiers médicaux récupérée avec succès")
@@ -46,7 +50,11 @@ public class MedicalRecordController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<MedicalRecordResponseDTO>> getRecordById(@PathVariable Long id) {
-        MedicalRecordResponseDTO record = medicalRecordService.getRecordById(id);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        MedicalRecordResponseDTO record = medicalRecordService.getRecordById(id, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<MedicalRecordResponseDTO>builder()
                 .status(HttpStatus.OK.value())
                 .message("Dossier médical récupéré avec succès")
@@ -57,7 +65,11 @@ public class MedicalRecordController {
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<ApiResponseDTO<List<MedicalRecordResponseDTO>>> getRecordsByPatientId(
             @PathVariable Long patientId) {
-        List<MedicalRecordResponseDTO> records = medicalRecordService.getRecordsByPatientId(patientId);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<MedicalRecordResponseDTO> records = medicalRecordService.getRecordsByPatientId(patientId, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<List<MedicalRecordResponseDTO>>builder()
                 .status(HttpStatus.OK.value())
                 .message("Dossiers médicaux du patient récupérés avec succès")
@@ -68,7 +80,11 @@ public class MedicalRecordController {
     @PostMapping
     public ResponseEntity<ApiResponseDTO<MedicalRecordResponseDTO>> createRecord(
             @Valid @RequestBody MedicalRecordRequestDTO requestDTO) {
-        MedicalRecordResponseDTO created = medicalRecordService.createRecord(requestDTO);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        MedicalRecordResponseDTO created = medicalRecordService.createRecord(requestDTO, authenticatedUserId, isAdmin);
         return new ResponseEntity<>(ApiResponseDTO.<MedicalRecordResponseDTO>builder()
                 .status(HttpStatus.CREATED.value())
                 .message("Dossier médical créé avec succès")
@@ -80,7 +96,11 @@ public class MedicalRecordController {
     public ResponseEntity<ApiResponseDTO<MedicalRecordResponseDTO>> updateRecord(
             @PathVariable Long id,
             @Valid @RequestBody MedicalRecordRequestDTO requestDTO) {
-        MedicalRecordResponseDTO updated = medicalRecordService.updateRecord(id, requestDTO);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        MedicalRecordResponseDTO updated = medicalRecordService.updateRecord(id, requestDTO, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<MedicalRecordResponseDTO>builder()
                 .status(HttpStatus.OK.value())
                 .message("Dossier médical mis à jour avec succès")
@@ -90,7 +110,11 @@ public class MedicalRecordController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteRecord(@PathVariable Long id) {
-        medicalRecordService.deleteRecord(id);
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        medicalRecordService.deleteRecord(id, authenticatedUserId, isAdmin);
         return ResponseEntity.ok(ApiResponseDTO.<Void>builder()
                 .status(HttpStatus.OK.value())
                 .message("Dossier médical supprimé avec succès")

@@ -9,15 +9,15 @@ import java.util.List;
 
 public interface IPrescriptionService {
 
-    Page<PrescriptionResponseDTO> getAllPrescriptions(Pageable pageable);
+    Page<PrescriptionResponseDTO> getAllPrescriptions(Pageable pageable, Long doctorId, boolean isAdmin);
 
-    PrescriptionResponseDTO getPrescriptionById(Long id);
+    PrescriptionResponseDTO getPrescriptionById(Long id, Long doctorId, boolean isAdmin);
 
-    List<PrescriptionResponseDTO> getPrescriptionsByRecordId(Long recordId);
+    List<PrescriptionResponseDTO> getPrescriptionsByRecordId(Long recordId, Long doctorId, boolean isAdmin);
 
-    PrescriptionResponseDTO createPrescription(PrescriptionRequestDTO requestDTO);
+    PrescriptionResponseDTO createPrescription(PrescriptionRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
-    PrescriptionResponseDTO updatePrescription(Long id, PrescriptionRequestDTO requestDTO);
+    PrescriptionResponseDTO updatePrescription(Long id, PrescriptionRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
-    void deletePrescription(Long id);
+    void deletePrescription(Long id, Long doctorId, boolean isAdmin);
 }

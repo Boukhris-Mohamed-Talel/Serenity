@@ -44,31 +44,28 @@
 
       <div class="rx-body">
         <div class="rx-main">
-          <div class="rx-name">{{ p.medicationName }}</div>
-          <span
-            class="badge-pill"
-            [ngClass]="{
-              'badge-active':    p.status === 'ACTIVE',
-              'badge-completed': p.status === 'COMPLETED'
-            }">
-            {{ p.status }}
-          </span>
+          <div class="rx-name">Medications ({{ p.medications.length }})</div>
         </div>
-        <div class="rx-meta">
-          <span class="meta-item">
-            <span class="meta-label">Dosage</span>
-            <span class="meta-value">{{ p.dosage }}</span>
-          </span>
-          <span class="meta-sep" aria-hidden="true">·</span>
-          <span class="meta-item">
-            <span class="meta-label">Frequency</span>
-            <span class="meta-value">{{ p.frequency }}</span>
-          </span>
-          <span class="meta-sep" aria-hidden="true">·</span>
-          <span class="meta-item">
-            <span class="meta-label">Start</span>
-            <span class="meta-value">{{ p.startDate }}</span>
-          </span>
+        <div class="rx-med-list">
+          <div class="rx-med-item" *ngFor="let m of p.medications">
+            <div class="rx-med-head">
+              <strong>{{ m.medicationName }}</strong>
+              <span class="badge-pill" [ngClass]="{ 'badge-active': m.status === 'ACTIVE', 'badge-completed': m.status === 'INACTIVE' }">
+                {{ m.status }}
+              </span>
+            </div>
+            <div class="rx-meta">
+              <span class="meta-item"><span class="meta-label">Dosage</span><span class="meta-value">{{ m.dosage }}</span></span>
+              <span class="meta-sep" aria-hidden="true">·</span>
+              <span class="meta-item"><span class="meta-label">Frequency</span><span class="meta-value">{{ m.frequency }}</span></span>
+              <span class="meta-sep" aria-hidden="true">·</span>
+              <span class="meta-item"><span class="meta-label">Qty</span><span class="meta-value">{{ m.quantity }}</span></span>
+              <span class="meta-sep" aria-hidden="true">·</span>
+              <span class="meta-item"><span class="meta-label">Start</span><span class="meta-value">{{ m.startDate }}</span></span>
+              <span class="meta-sep" aria-hidden="true">·</span>
+              <span class="meta-item"><span class="meta-label">End</span><span class="meta-value">{{ m.endDate || '—' }}</span></span>
+            </div>
+          </div>
         </div>
       </div>
 

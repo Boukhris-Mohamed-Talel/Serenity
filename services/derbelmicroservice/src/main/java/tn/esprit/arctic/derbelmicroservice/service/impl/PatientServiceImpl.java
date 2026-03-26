@@ -23,29 +23,38 @@ public class PatientServiceImpl implements IPatientService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PatientResponseDTO> getAllPatients(Pageable pageable) {
-        return patientRepository.findAll(pageable)
+    public Page<PatientResponseDTO> getAllPatientsByDoctor(Long doctorId, Pageable pageable, boolean isAdmin) {
+        if (isAdmin && doctorId == null) {
+            return patientRepository.findAll(pageable)
+                    .map(patientMapper::toResponseDTO);
+        }
+        return patientRepository.findByDoctorId(doctorId, pageable)
                 .map(patientMapper::toResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PatientResponseDTO getPatientById(Long id) {
-        Patient patient = patientRepository.findById(id)
+    public PatientResponseDTO getPatientById(Long id, Long doctorId, boolean isAdmin) {
+        Patient patient = (isAdmin
+                ? patientRepository.findById(id)
+                : patientRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
         return patientMapper.toResponseDTO(patient);
     }
 
     @Override
-    public PatientResponseDTO createPatient(PatientRequestDTO requestDTO) {
+    public PatientResponseDTO createPatient(PatientRequestDTO requestDTO, Long doctorId) {
         Patient patient = patientMapper.toEntity(requestDTO);
+        patient.setDoctorId(doctorId);
         Patient saved = patientRepository.save(patient);
         return patientMapper.toResponseDTO(saved);
     }
 
     @Override
-    public PatientResponseDTO updatePatient(Long id, PatientRequestDTO requestDTO) {
-        Patient patient = patientRepository.findById(id)
+    public PatientResponseDTO updatePatient(Long id, PatientRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
+        Patient patient = (isAdmin
+                ? patientRepository.findById(id)
+                : patientRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
         patientMapper.updateEntityFromDTO(requestDTO, patient);
         Patient updated = patientRepository.save(patient);
@@ -53,8 +62,10 @@ public class PatientServiceImpl implements IPatientService {
     }
 
     @Override
-    public void deletePatient(Long id) {
-        Patient patient = patientRepository.findById(id)
+    public void deletePatient(Long id, Long doctorId, boolean isAdmin) {
+        Patient patient = (isAdmin
+                ? patientRepository.findById(id)
+                : patientRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
         patientRepository.delete(patient);
     }

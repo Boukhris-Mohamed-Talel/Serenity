@@ -21,12 +21,18 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.authService.getToken();
+    const currentUser = this.authService.getCurrentUser();
+    const doctorId = currentUser?.userId;
 
     if (token) {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`
+      };
+      if (doctorId != null) {
+        headers['X-Doctor-Id'] = String(doctorId);
+      }
       request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+        setHeaders: headers
       });
     }
 

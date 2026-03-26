@@ -19,9 +19,19 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
     @Query("SELECT m FROM MedicalRecord m")
     Page<MedicalRecord> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"patient"})
+    @Query("SELECT m FROM MedicalRecord m WHERE m.doctorId = :doctorId")
+    Page<MedicalRecord> findAllByDoctorId(@Param("doctorId") Long doctorId, Pageable pageable);
+
     @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient WHERE m.id = :id")
     Optional<MedicalRecord> findByIdWithPatient(@Param("id") Long id);
 
+    @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient WHERE m.id = :id AND m.doctorId = :doctorId")
+    Optional<MedicalRecord> findByIdWithPatientAndDoctorId(@Param("id") Long id, @Param("doctorId") Long doctorId);
+
     @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient p WHERE p.id = :patientId")
     List<MedicalRecord> findByPatientId(@Param("patientId") Long patientId);
+
+    @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient p WHERE p.id = :patientId AND m.doctorId = :doctorId")
+    List<MedicalRecord> findByPatientIdAndDoctorId(@Param("patientId") Long patientId, @Param("doctorId") Long doctorId);
 }

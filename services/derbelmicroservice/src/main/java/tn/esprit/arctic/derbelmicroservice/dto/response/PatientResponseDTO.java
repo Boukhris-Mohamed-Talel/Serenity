@@ -19,6 +19,7 @@ public class PatientResponseDTO {
     private String bloodType;
     private String allergies;
     private String phone;
+    private Long doctorId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -17,38 +17,57 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
-      <label class="field full">
-        <span>Medication *</span>
-        <input type="text" formControlName="medicationName" maxlength="100" />
-      </label>
-      <label class="field">
-        <span>Dosage *</span>
-        <input type="text" formControlName="dosage" maxlength="50" />
-      </label>
-      <label class="field">
-        <span>Frequency *</span>
-        <input type="text" formControlName="frequency" maxlength="50" />
-      </label>
-      <label class="field">
-        <span>Quantity *</span>
-        <input type="number" formControlName="quantity" min="1" />
-      </label>
-      <label class="field">
-        <span>Start date *</span>
-        <input type="date" formControlName="startDate" />
-      </label>
-      <label class="field">
-        <span>End date</span>
-        <input type="date" formControlName="endDate" />
-      </label>
-      <label class="field">
-        <span>Status *</span>
-        <input type="text" formControlName="status" placeholder="ACTIVE or COMPLETED" />
-      </label>
-      <label class="field full">
-        <span>Instructions</span>
-        <textarea formControlName="instructions" rows="3" maxlength="500"></textarea>
-      </label>
+      <div class="field full">
+        <div class="medication-header">
+          <span>Medications</span>
+          <button type="button" class="btn btn-secondary" (click)="addMedication()">+ Add medication</button>
+        </div>
+        <div formArrayName="medications">
+          <div class="medication-block" *ngFor="let med of medicationsArray.controls; let i = index" [formGroupName]="i">
+            <div class="medication-block-title">
+              <strong>Medication {{ i + 1 }}</strong>
+              <button type="button" class="btn btn-secondary" (click)="removeMedication(i)" [disabled]="medicationsArray.length === 1">Remove</button>
+            </div>
+            <div class="form-grid">
+              <label class="field full">
+                <span>Medication name *</span>
+                <input type="text" formControlName="medicationName" maxlength="100" />
+              </label>
+              <label class="field">
+                <span>Dosage *</span>
+                <input type="text" formControlName="dosage" maxlength="50" />
+              </label>
+              <label class="field">
+                <span>Frequency *</span>
+                <input type="text" formControlName="frequency" maxlength="50" />
+              </label>
+              <label class="field">
+                <span>Quantity *</span>
+                <input type="number" formControlName="quantity" min="1" />
+              </label>
+              <label class="field">
+                <span>Start date *</span>
+                <input type="date" formControlName="startDate" />
+              </label>
+              <label class="field">
+                <span>End date</span>
+                <input type="date" formControlName="endDate" />
+              </label>
+              <label class="field">
+                <span>Status *</span>
+                <select formControlName="status">
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </label>
+              <label class="field full">
+                <span>Instructions</span>
+                <textarea formControlName="instructions" rows="3" maxlength="500"></textarea>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="form-actions">
