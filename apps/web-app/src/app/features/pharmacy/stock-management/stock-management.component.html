@@ -5,7 +5,13 @@
         <h1>Stock Management</h1>
         <p>Search medicines and manage quantity, availability, and archive state.</p>
       </div>
-      <a routerLink="/pharmacy/stock/new" class="btn btn-primary">Add New Medicine</a>
+      <div class="header-actions">
+        <a routerLink="/pharmacy" class="btn btn-ghost btn-compact">Back to Workspace</a>
+        <a routerLink="/pharmacy/stock/new" class="btn btn-primary btn-compact">
+          <span class="btn-icon" aria-hidden="true">+</span>
+          <span>Add New Medicine</span>
+        </a>
+      </div>
     </header>
 
     <p class="success" *ngIf="successMessage">{{ successMessage }}</p>

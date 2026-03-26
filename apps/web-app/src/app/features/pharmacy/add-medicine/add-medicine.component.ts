@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 
@@ -23,11 +23,15 @@ export class AddMedicineComponent {
     private readonly router: Router
   ) {
     this.form = this.fb.group({
-      medicineName: ['', [Validators.required, Validators.minLength(2)]],
-      quantity: [0, [Validators.required, Validators.min(0)]],
-      imageUrl: [''],
-      description: ['']
+      medicineName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+      quantity: [0, [Validators.required, Validators.min(0), Validators.max(9999), Validators.pattern(/^\d+$/)]],
+      imageUrl: ['', [Validators.maxLength(500), this.imageUrlValidator]],
+      description: ['', [Validators.maxLength(500)]]
     });
+  }
+
+  getControl(name: string): AbstractControl | null {
+    return this.form.get(name);
   }
 
   onImageSelected(event: Event): void {
@@ -88,5 +92,19 @@ export class AddMedicineComponent {
         this.errorMessage = err.error?.message || 'Failed to add medicine';
       }
     });
+  }
+
+  private imageUrlValidator(control: AbstractControl): ValidationErrors | null {
+    const rawValue = String(control.value ?? '').trim();
+    if (!rawValue) {
+      return null;
+    }
+    if (rawValue.startsWith('data:image/')) {
+      return null;
+    }
+    if (/^https?:\/\/\S+$/i.test(rawValue)) {
+      return null;
+    }
+    return { invalidUrl: true };
   }
 }

@@ -14,12 +14,23 @@
       <div class="fields-grid">
         <label class="field">
           <span class="field-title">Medicine Name</span>
-          <input formControlName="medicineName" type="text" placeholder="e.g. Paracetamol 500mg" />
+          <input formControlName="medicineName" type="text" maxlength="80" placeholder="e.g. Paracetamol 500mg" />
+          <span class="field-error" *ngIf="getControl('medicineName')?.touched && getControl('medicineName')?.invalid">
+            <ng-container *ngIf="getControl('medicineName')?.errors?.['required']">Medicine name is required.</ng-container>
+            <ng-container *ngIf="getControl('medicineName')?.errors?.['minlength']">Minimum 2 characters required.</ng-container>
+            <ng-container *ngIf="getControl('medicineName')?.errors?.['maxlength']">Maximum 80 characters allowed.</ng-container>
+          </span>
         </label>
 
         <label class="field">
           <span class="field-title">Stock Quantity</span>
-          <input formControlName="quantity" type="number" min="0" />
+          <input formControlName="quantity" type="number" min="0" max="9999" step="1" inputmode="numeric" />
+          <span class="field-error" *ngIf="getControl('quantity')?.touched && getControl('quantity')?.invalid">
+            <ng-container *ngIf="getControl('quantity')?.errors?.['required']">Stock quantity is required.</ng-container>
+            <ng-container *ngIf="getControl('quantity')?.errors?.['min']">Quantity cannot be negative.</ng-container>
+            <ng-container *ngIf="getControl('quantity')?.errors?.['max']">Maximum quantity is 9999.</ng-container>
+            <ng-container *ngIf="getControl('quantity')?.errors?.['pattern']">Quantity must be a whole number.</ng-container>
+          </span>
         </label>
       </div>
 
@@ -43,7 +54,11 @@
 
           <label class="field secondary">
             <span class="field-title">Or Image URL</span>
-            <input formControlName="imageUrl" type="text" placeholder="https://..." />
+            <input formControlName="imageUrl" type="text" maxlength="500" placeholder="https://..." />
+            <span class="field-error" *ngIf="getControl('imageUrl')?.touched && getControl('imageUrl')?.invalid">
+              <ng-container *ngIf="getControl('imageUrl')?.errors?.['invalidUrl']">Use a valid URL (`http/https`) or upload an image.</ng-container>
+              <ng-container *ngIf="getControl('imageUrl')?.errors?.['maxlength']">Maximum 500 characters allowed.</ng-container>
+            </span>
           </label>
         </div>
 
@@ -55,7 +70,10 @@
 
       <label class="field">
         <span class="field-title">Description</span>
-        <textarea formControlName="description" rows="4" placeholder="Optional details"></textarea>
+        <textarea formControlName="description" rows="4" maxlength="500" placeholder="Optional details"></textarea>
+        <span class="field-error" *ngIf="getControl('description')?.touched && getControl('description')?.errors?.['maxlength']">
+          Maximum 500 characters allowed.
+        </span>
       </label>
 
       <div class="actions">

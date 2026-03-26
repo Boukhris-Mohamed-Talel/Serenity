@@ -138,6 +138,12 @@ export class DoctorPrescriptionComponent implements OnInit {
     this.showPatientMatches = false;
   }
 
+  onPatientMatchMouseDown(event: MouseEvent, patient: DoctorPatientSuggestionItem): void {
+    // Handle selection before input blur closes the dropdown.
+    event.preventDefault();
+    this.selectPatient(patient);
+  }
+
   hidePatientMatches(): void {
     setTimeout(() => {
       this.showPatientMatches = false;

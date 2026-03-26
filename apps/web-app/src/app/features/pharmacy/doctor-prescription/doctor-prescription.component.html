@@ -38,7 +38,7 @@
               type="button"
               class="patient-item"
               *ngFor="let patient of patientMatches"
-              (click)="selectPatient(patient)">
+              (mousedown)="onPatientMatchMouseDown($event, patient)">
               <img
                 *ngIf="patientAvatarUrl(patient)"
                 [src]="patientAvatarUrl(patient)"

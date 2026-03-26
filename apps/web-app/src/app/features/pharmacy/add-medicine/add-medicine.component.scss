@@ -56,6 +56,13 @@
   color: #1e3340;
 }
 
+.field-error {
+  margin: 0;
+  color: #b52424;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 textarea,
 input[type='text'],
 input[type='number'],
@@ -131,6 +138,13 @@ input[type='file']:focus {
   outline: none;
   border-color: #2f8f9b;
   box-shadow: 0 0 0 3px rgba(47, 143, 155, 0.16);
+}
+
+textarea.ng-touched.ng-invalid,
+input[type='text'].ng-touched.ng-invalid,
+input[type='number'].ng-touched.ng-invalid {
+  border-color: #d76565;
+  box-shadow: 0 0 0 3px rgba(178, 51, 51, 0.12);
 }
 
 .hint {

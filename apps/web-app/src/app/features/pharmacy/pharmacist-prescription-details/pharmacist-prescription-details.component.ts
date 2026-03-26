@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
   PrescriptionResponse,
+  StockItemResponse,
   PrescriptionStatus,
   PrescriptionStatusUpdateRequest
 } from '../../../shared/models/pharmacy.model';
@@ -16,6 +17,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
   loading = true;
   errorMessage = '';
   prescription: PrescriptionResponse | null = null;
+  private stockByMedicine = new Map<string, number>();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -24,6 +26,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loadStockSnapshot();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
       this.router.navigate(['/pharmacy/inbox']);
@@ -88,7 +91,56 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     ];
   }
 
+  stockMessageForLine(line: { medicationName: string; quantity: number }): string {
+    const available = this.stockQuantityFor(line.medicationName);
+    if (available == null) {
+      return `In stock: not found | Prescribed: ${line.quantity}`;
+    }
+    return `In stock: ${available} | Prescribed: ${line.quantity}`;
+  }
+
   goBack(): void {
     this.router.navigate(['/pharmacy/inbox']);
+  }
+
+  private loadStockSnapshot(): void {
+    this.pharmacyService.listStock(undefined, false).subscribe({
+      next: (items) => {
+        this.stockByMedicine = this.buildStockLookup(items);
+      },
+      error: () => {
+        this.stockByMedicine.clear();
+      }
+    });
+  }
+
+  private buildStockLookup(items: StockItemResponse[]): Map<string, number> {
+    const lookup = new Map<string, number>();
+    for (const item of items) {
+      if (item.archived) {
+        continue;
+      }
+
+      const key = this.normalizeMedicineName(item.medicineName);
+      if (!key) {
+        continue;
+      }
+
+      const quantity = Number.isFinite(item.quantity) ? Math.max(0, item.quantity) : 0;
+      lookup.set(key, (lookup.get(key) ?? 0) + quantity);
+    }
+    return lookup;
+  }
+
+  private stockQuantityFor(medicationName?: string): number | null {
+    const key = this.normalizeMedicineName(medicationName);
+    if (!key || !this.stockByMedicine.has(key)) {
+      return null;
+    }
+    return this.stockByMedicine.get(key) ?? null;
+  }
+
+  private normalizeMedicineName(value?: string): string {
+    return (value ?? '').trim().toLowerCase();
   }
 }

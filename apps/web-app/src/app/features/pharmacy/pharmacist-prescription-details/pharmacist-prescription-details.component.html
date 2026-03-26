@@ -45,11 +45,14 @@
       <div class="line-items">
         <h3>Medicines</h3>
         <ul>
-          <li *ngFor="let line of medicineLines()">
-            <span class="med-name">{{ line.medicationName }}</span>
-            <span class="meta">Dosage: {{ line.dosage }}</span>
-            <span class="meta">Qty: {{ line.quantity }}</span>
-            <span class="meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</span>
+          <li *ngFor="let line of medicineLines()" class="medicine-line">
+            <div class="line-main">
+              <span class="med-name">{{ line.medicationName }}</span>
+              <span class="meta">Dosage: {{ line.dosage }}</span>
+              <span class="meta">Qty: {{ line.quantity }}</span>
+              <span class="meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</span>
+            </div>
+            <div class="stock-note">Stock comparison: {{ stockMessageForLine(line) }}</div>
           </li>
         </ul>
       </div>
