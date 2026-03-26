@@ -196,4 +196,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.delete(user);
     }
+
+    public List<UserDTO> searchUsers(String query) {
+        return userRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query)
+                .stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .toList();
+    }
 }

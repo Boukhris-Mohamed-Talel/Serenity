@@ -27,4 +27,6 @@ public interface UserService {
     void activateUser(Long id);
 
     void deleteUser(Long id);
+
+    List<UserDTO> searchUsers(String query);
 }

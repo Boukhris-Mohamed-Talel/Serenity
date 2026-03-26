@@ -1,6 +1,7 @@
 package com.example.healthcare.controller;
 
 import com.example.healthcare.dto.ProfileUpdateDTO;
+import com.example.healthcare.dto.UserDTO;
 import com.example.healthcare.dto.UserRequestDTO;
 import com.example.healthcare.dto.UserResponseDTO;
 import com.example.healthcare.service.UserService;
@@ -80,5 +81,10 @@ public class UserController {
         String email = authentication.getName();
         UserResponseDTO updatedUser = userService.updateUserRole(email, role);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/search")
+    public List<UserDTO> searchUsers(@RequestParam String q) {
+        return userService.searchUsers(q);
     }
 }

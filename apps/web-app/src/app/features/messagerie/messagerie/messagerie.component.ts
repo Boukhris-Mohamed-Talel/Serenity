@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { MessagerieService } from '../../../core/services/messagerie.service';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-messagerie',
@@ -23,7 +26,7 @@ export class MessagerieComponent implements OnInit {
   editText = '';
 
   // Barre de recherche et conversations
-  searchTerm: string = '';
+
   conversations: any[] = [
     { id: 1, name: 'John Doe', lastMessage: 'Last message preview...' },
     { id: 2, name: 'Jane Smith', lastMessage: 'Another message...' }
@@ -31,6 +34,22 @@ export class MessagerieComponent implements OnInit {
   filteredConversations: any[] = [];
   activeConversationId: number | null = null;
   activeConversationName: string = '';
+
+  searchTerm: string = '';
+filteredUsers: any[] = [];
+private searchSubject = new Subject<string>();
+
+constructor(private messagerieService: MessagerieService) {
+  this.searchSubject.pipe(
+    debounceTime(300),
+    distinctUntilChanged(),
+    switchMap(term => this.messagerieService.searchUsers(term))
+  ).subscribe(users => this.filteredUsers = users);
+}
+
+onSearch() {
+  this.searchSubject.next(this.searchTerm);
+}
 
   ngOnInit() {
     this.filteredConversations = [...this.conversations];
