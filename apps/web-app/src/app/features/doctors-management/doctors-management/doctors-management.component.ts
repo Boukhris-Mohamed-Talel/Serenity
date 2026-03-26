@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { DoctorService } from '../../../core/services/doctor.service';
 import { DoctorVerificationService } from '../../../core/services/doctor-verification.service';
 import { WebSocketService } from '../../../core/services/web-socket.service';
@@ -9,6 +10,7 @@ import { DoctorResponse } from '../../../shared/models/doctor.model';
 import { DoctorVerification } from '../../../shared/models/doctor-verification.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-doctors-management',
@@ -16,7 +18,18 @@ import { takeUntil } from 'rxjs/operators';
   imports: [CommonModule, HttpClientModule],
   providers: [DoctorService],
   templateUrl: './doctors-management.component.html',
-  styleUrl: './doctors-management.component.scss'
+  styleUrl: './doctors-management.component.scss',
+  animations: [
+    trigger('toastAnimation', [
+      transition(':enter', [
+        style({ transform: 'translateX(400px)', opacity: 0 }),
+        animate('300ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ transform: 'translateX(400px)', opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class DoctorsManagementComponent implements OnInit, OnDestroy {
   doctors: DoctorResponse[] = [];
@@ -44,7 +57,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     private readonly doctorVerificationService: DoctorVerificationService,
     private readonly httpClient: HttpClient,
     private readonly sanitizer: DomSanitizer,
-    private readonly webSocketService: WebSocketService
+    private readonly webSocketService: WebSocketService,
+    private readonly ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +85,21 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error receiving new doctor:', err);
+        }
+      });
+
+    // Listen for new doctor verifications from WebSocket
+    this.webSocketService.newVerification$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (newVerification: DoctorVerification) => {
+          console.log('New doctor verification received from WebSocket:', newVerification);
+          this.ngZone.run(() => {  
+            this.showToast('A new doctor verification has been added', 'success');
+          });
+        },
+        error: (err) => {
+          console.error('Error receiving new verification:', err);
         }
       });
   }
