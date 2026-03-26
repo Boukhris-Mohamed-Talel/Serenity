@@ -1,16 +1,17 @@
 package serenity.doctors_service.service;
 
+import serenity.doctors_service.dto.ConversationDTO;
 import serenity.doctors_service.entity.Conversation;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface IConversationService {
-    Conversation createConversation(Long user1Id, Long user2Id);
+    ConversationDTO createConversation(Long user1Id, Long user2Id);
 
-    List<Conversation> getUserConversations(Long userId);
+    List<ConversationDTO> getUserConversations(Long userId);
 
-    Optional<Conversation> getConversationById(Long id);
+    Optional<ConversationDTO> getConversationById(Long id);
 
     void deleteConversation(Long id);
 }

@@ -1,5 +1,9 @@
 package serenity.doctors_service.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import serenity.doctors_service.dto.ConversationDTO;
+import serenity.doctors_service.dto.MessageDTO;
 import serenity.doctors_service.entity.Message;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.service.IMessageService;
@@ -14,41 +18,51 @@ public class MessageController {
     private final IMessageService messageService;
     private final IConversationService conversationService;
 
-    public MessageController(IMessageService messageService,
-                             IConversationService conversationService) {
+    public MessageController(IMessageService messageService, IConversationService conversationService) {
         this.messageService = messageService;
         this.conversationService = conversationService;
     }
 
     @PostMapping
-    public Message sendMessage(@RequestParam Long conversationId,
-                               @RequestParam Long senderId,
-                               @RequestParam String content) {
-        Conversation conversation = conversationService.getConversationById(conversationId)
+    public ResponseEntity<MessageDTO> sendMessage(
+            @RequestParam Long conversationId,
+            @RequestParam Long senderId,
+            @RequestParam String content) {
+        ConversationDTO conversationDTO = conversationService.getConversationById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found"));
-        return messageService.sendMessage(conversation, senderId, content);
+        Conversation conversation = new Conversation();
+        conversation.setId(conversationDTO.getId()); // juste l'id nécessaire ici
+        MessageDTO message = messageService.sendMessage(conversation, senderId, content);
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
     @GetMapping("/conversation/{conversationId}")
-    public List<Message> getMessages(@PathVariable Long conversationId) {
-        Conversation conversation = conversationService.getConversationById(conversationId)
+    public ResponseEntity<List<MessageDTO>> getMessages(@PathVariable Long conversationId) {
+        ConversationDTO conversationDTO = conversationService.getConversationById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found"));
-        return messageService.getMessages(conversation);
+        Conversation conversation = new Conversation();
+        conversation.setId(conversationDTO.getId());
+        List<MessageDTO> messages = messageService.getMessages(conversation);
+        return ResponseEntity.ok(messages);
     }
 
-    @PutMapping("/{id}")
-    public Message editMessage(@PathVariable Long id,
-                               @RequestParam String newContent) {
-        return messageService.editMessage(id, newContent);
+    @PutMapping("/{messageId}")
+    public ResponseEntity<MessageDTO> editMessage(
+            @PathVariable Long messageId,
+            @RequestParam String content) {
+        MessageDTO updated = messageService.editMessage(messageId, content);
+        return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteMessage(@PathVariable Long id) {
-        messageService.deleteMessage(id);
+    @DeleteMapping("/{messageId}")
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long messageId) {
+        messageService.deleteMessage(messageId);
+        return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/read")
-    public Message markAsRead(@PathVariable Long id) {
-        return messageService.markAsRead(id);
+    @PutMapping("/{messageId}/read")
+    public ResponseEntity<MessageDTO> markAsRead(@PathVariable Long messageId) {
+        MessageDTO updated = messageService.markAsRead(messageId);
+        return ResponseEntity.ok(updated);
     }
 }

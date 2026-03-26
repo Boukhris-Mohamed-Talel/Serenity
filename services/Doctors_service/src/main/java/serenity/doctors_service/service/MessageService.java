@@ -1,48 +1,59 @@
 package serenity.doctors_service.service;
 
 import org.springframework.stereotype.Service;
+import serenity.doctors_service.dto.MessageDTO;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.entity.Message;
+import serenity.doctors_service.mapper.ConversationMapper;
 import serenity.doctors_service.repository.MessageRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService implements IMessageService {
 
     private final MessageRepository messageRepository;
+    private final ConversationMapper conversationMapper;
 
-    public MessageService(MessageRepository messageRepository) {
+    public MessageService(MessageRepository messageRepository, ConversationMapper conversationMapper) {
         this.messageRepository = messageRepository;
+        this.conversationMapper = conversationMapper;
     }
 
     @Override
-    public Message sendMessage(Conversation conversation, Long senderId, String content) {
+    public MessageDTO sendMessage(Conversation conversation, Long senderId, String content) {
         Message message = new Message();
         message.setConversation(conversation);
         message.setSenderId(senderId);
         message.setContent(content);
         message.setRead(false);
-        return messageRepository.save(message);
+        Message saved = messageRepository.save(message);
+        return conversationMapper.toMessageDTO(saved);
     }
 
     @Override
-    public List<Message> getMessages(Conversation conversation) {
-        return messageRepository.findByConversationOrderByCreatedAtAsc(conversation);
+    public List<MessageDTO> getMessages(Conversation conversation) {
+        List<Message> messages = messageRepository.findByConversationOrderByCreatedAtAsc(conversation);
+        return messages.stream()
+                .map(conversationMapper::toMessageDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Optional<Message> getMessageById(Long id) {
-        return messageRepository.findById(id);
+    public Optional<MessageDTO> getMessageById(Long id) {
+        return messageRepository.findById(id)
+                .map(conversationMapper::toMessageDTO);
     }
 
     @Override
-    public Message editMessage(Long messageId, String newContent) {
+    public MessageDTO editMessage(Long messageId, String newContent) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
         message.setContent(newContent);
-        return messageRepository.save(message);
+        Message updated = messageRepository.save(message);
+        return conversationMapper.toMessageDTO(updated);
     }
 
     @Override
@@ -51,10 +62,11 @@ public class MessageService implements IMessageService {
     }
 
     @Override
-    public Message markAsRead(Long messageId) {
+    public MessageDTO markAsRead(Long messageId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
         message.setRead(true);
-        return messageRepository.save(message);
+        Message updated = messageRepository.save(message);
+        return conversationMapper.toMessageDTO(updated);
     }
 }
