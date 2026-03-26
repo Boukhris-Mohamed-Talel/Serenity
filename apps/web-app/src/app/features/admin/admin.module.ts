@@ -12,6 +12,10 @@ const routes: Routes = [
   {
     path: 'insurance',
     loadChildren: () => import('../insurance/insurance.module').then(m => m.InsuranceModule)
+  },
+  {
+    path: 'marketplace',
+    loadChildren: () => import('../marketplace-admin/marketplace-admin.module').then(m => m.MarketplaceAdminModule)
   }
 ];
 

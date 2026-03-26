@@ -75,6 +75,61 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
+        @Override
+        @Transactional(readOnly = true)
+        public List<OrderResponseDTO> getAllOrders() {
+                return marketplaceOrderRepository.findAllByOrderByCreatedAtDesc()
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public OrderResponseDTO getOrderById(Long orderId) {
+                MarketplaceOrder order = findOrderById(orderId);
+                return toResponse(order);
+        }
+
+        @Override
+        @Transactional
+        public OrderResponseDTO updateOrderStatus(Long orderId, OrderStatusUpdateRequestDTO request) {
+                MarketplaceOrder order = findOrderById(orderId);
+                validateStatusTransition(order.getStatus(), request.getStatus());
+                order.setStatus(request.getStatus());
+                return toResponse(marketplaceOrderRepository.save(order));
+        }
+
+        @Override
+        @Transactional
+        public void cancelOrder(Long orderId) {
+                MarketplaceOrder order = findOrderById(orderId);
+                if (order.getStatus() == OrderStatus.CANCELLED) {
+                        return;
+                }
+                order.setStatus(OrderStatus.CANCELLED);
+                marketplaceOrderRepository.save(order);
+        }
+
+        private MarketplaceOrder findOrderById(Long orderId) {
+                return marketplaceOrderRepository.findById(orderId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id=" + orderId));
+        }
+
+        private void validateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+                if (currentStatus == newStatus) {
+                        return;
+                }
+
+                if (currentStatus == OrderStatus.CANCELLED) {
+                        throw new IllegalArgumentException("Cancelled orders cannot be changed");
+                }
+
+                if (currentStatus == OrderStatus.PAID && newStatus == OrderStatus.CREATED) {
+                        throw new IllegalArgumentException("Cannot move PAID orders back to CREATED");
+                }
+        }
+
     private OrderResponseDTO toResponse(MarketplaceOrder order) {
         List<OrderItemResponseDTO> items = order.getItems().stream()
                 .map(item -> OrderItemResponseDTO.builder()

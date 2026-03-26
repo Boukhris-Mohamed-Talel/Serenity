@@ -13,6 +13,8 @@ export class CheckoutComponent {
   loading = false;
   error = '';
   successOrder: MarketplaceOrder | null = null;
+  discountAmount = 0;
+  appliedCoupon: string | null = null;
 
   readonly checkoutForm = this.fb.group({
     shippingAddress: ['', [Validators.required, Validators.maxLength(500)]],
@@ -29,8 +31,31 @@ export class CheckoutComponent {
     return this.marketplaceService.getCartTotal();
   }
 
+  get subtotal(): number {
+    return this.cartTotal;
+  }
+
+  get finalTotal(): number {
+    return Math.max(0, this.subtotal - this.discountAmount);
+  }
+
+  get isCartEmpty(): boolean {
+    return this.marketplaceService.getCartSnapshot().length === 0;
+  }
+
+  onDiscountApplied(event: { code: string; discount: number }): void {
+    this.appliedCoupon = event.code;
+    this.discountAmount = event.discount;
+  }
+
   submit(): void {
     this.error = '';
+
+    if (this.isCartEmpty) {
+      this.error = 'Your cart is empty. Add an item before continuing to payment.';
+      return;
+    }
+
     if (this.checkoutForm.invalid) {
       this.checkoutForm.markAllAsTouched();
       return;
@@ -45,6 +70,24 @@ export class CheckoutComponent {
     }
 
     this.loading = true;
+
+    // If coupon applied, track the usage
+    if (this.appliedCoupon) {
+      this.marketplaceService.applyCoupon(this.appliedCoupon).subscribe({
+        next: () => {
+          this.proceedWithCheckout(shippingAddress, customerNote);
+        },
+        error: () => {
+          // Continue anyway even if coupon application fails
+          this.proceedWithCheckout(shippingAddress, customerNote);
+        }
+      });
+    } else {
+      this.proceedWithCheckout(shippingAddress, customerNote);
+    }
+  }
+
+  private proceedWithCheckout(shippingAddress: string, customerNote?: string): void {
     this.marketplaceService.checkout(shippingAddress, customerNote).subscribe({
       next: order => {
         this.successOrder = order;
@@ -59,5 +102,13 @@ export class CheckoutComponent {
 
   goToOrders(): void {
     this.router.navigate(['/marketplace/orders']);
+  }
+
+  goToMarketplace(): void {
+    this.router.navigate(['/marketplace']);
+  }
+
+  goToWishlist(): void {
+    this.router.navigate(['/marketplace/wishlist']);
   }
 }

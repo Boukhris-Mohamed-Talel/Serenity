@@ -53,6 +53,12 @@ public class MarketplaceOrder {
     @Builder.Default
     private List<MarketplaceOrderItem> items = new ArrayList<>();
 
+    @Column(length = 50)
+    private String appliedCouponCode;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal discountAmount;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 

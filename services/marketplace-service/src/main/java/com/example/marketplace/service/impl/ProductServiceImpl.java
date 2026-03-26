@@ -43,6 +43,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ProductResponseDTO> getAllProductsForAdmin() {
+        return productRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ProductResponseDTO getProductById(Long id) {
         Product product = findProductById(id);
         return toResponse(product);

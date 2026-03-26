@@ -1,0 +1,40 @@
+<section class="container admin-marketplace-page">
+  <header class="header-row">
+    <h2>Marketplace Products</h2>
+    <div class="header-actions">
+      <a class="btn btn-secondary" routerLink="/admin/marketplace/orders">Manage Orders</a>
+      <button class="btn btn-primary" type="button" (click)="createProduct()">New Product</button>
+    </div>
+  </header>
+
+  <p *ngIf="loading">Loading products...</p>
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <table *ngIf="!loading && products.length > 0" class="admin-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Type</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of products">
+        <td>{{ product.name }}</td>
+        <td>{{ product.category }}</td>
+        <td>{{ product.type }}</td>
+        <td>{{ product.price | currency:'TND ' }}</td>
+        <td>{{ product.active ? 'Active' : 'Inactive' }}</td>
+        <td class="row-actions">
+          <button class="btn btn-secondary" type="button" (click)="editProduct(product.id)">Edit</button>
+          <button class="btn btn-danger" type="button" (click)="deleteProduct(product.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="!loading && products.length === 0">No products yet.</p>
+</section>

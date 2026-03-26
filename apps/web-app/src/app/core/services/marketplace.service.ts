@@ -8,7 +8,10 @@ import {
   MarketplaceOrder,
   MarketplaceProduct,
   MarketplaceProductCategory,
-  MarketplaceProductType
+  MarketplaceProductType,
+  MarketplaceProductUpsertRequest,
+  MarketplaceOrderStatus,
+  OrderStatusUpdateRequest
 } from '../../shared/models/marketplace.model';
 
 @Injectable({
@@ -46,8 +49,41 @@ export class MarketplaceService {
     return this.http.get<MarketplaceProduct>(`${this.API_URL}/products/${id}`);
   }
 
+  getAllProductsForAdmin(): Observable<MarketplaceProduct[]> {
+    return this.http.get<MarketplaceProduct[]>(`${this.API_URL}/products/admin/all`);
+  }
+
+  createProduct(request: MarketplaceProductUpsertRequest): Observable<MarketplaceProduct> {
+    return this.http.post<MarketplaceProduct>(`${this.API_URL}/products`, request);
+  }
+
+  updateProduct(id: number, request: MarketplaceProductUpsertRequest): Observable<MarketplaceProduct> {
+    return this.http.put<MarketplaceProduct>(`${this.API_URL}/products/${id}`, request);
+  }
+
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/products/${id}`);
+  }
+
   getMyOrders(): Observable<MarketplaceOrder[]> {
     return this.http.get<MarketplaceOrder[]>(`${this.API_URL}/orders/me`);
+  }
+
+  getAllOrdersForAdmin(): Observable<MarketplaceOrder[]> {
+    return this.http.get<MarketplaceOrder[]>(`${this.API_URL}/orders`);
+  }
+
+  getOrderByIdForAdmin(orderId: number): Observable<MarketplaceOrder> {
+    return this.http.get<MarketplaceOrder>(`${this.API_URL}/orders/${orderId}`);
+  }
+
+  updateOrderStatus(orderId: number, status: MarketplaceOrderStatus): Observable<MarketplaceOrder> {
+    const request: OrderStatusUpdateRequest = { status };
+    return this.http.patch<MarketplaceOrder>(`${this.API_URL}/orders/${orderId}/status`, request);
+  }
+
+  cancelOrderForAdmin(orderId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/orders/${orderId}`);
   }
 
   checkout(shippingAddress: string, customerNote?: string): Observable<MarketplaceOrder> {
@@ -102,5 +138,61 @@ export class MarketplaceService {
       (sum, item) => sum + (item.product.price * item.quantity),
       0
     );
+  }
+
+  // ===== WISHLIST OPERATIONS =====
+  addToWishlist(productId: number): Observable<any> {
+    return this.http.post(`${this.API_URL}/wishlist/${productId}`, {});
+  }
+
+  removeFromWishlist(productId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/wishlist/${productId}`);
+  }
+
+  getUserWishlist(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/wishlist/me`);
+  }
+
+  isProductInWishlist(productId: number): Observable<boolean> {
+    return this.http.get<boolean>(`${this.API_URL}/wishlist/check/${productId}`);
+  }
+
+  // ===== REVIEWS OPERATIONS =====
+  createOrUpdateReview(productId: number, rating: number, reviewText: string): Observable<any> {
+    const request = { productId, rating, reviewText };
+    return this.http.post(`${this.API_URL}/reviews`, request);
+  }
+
+  getProductReviews(productId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/reviews/product/${productId}`);
+  }
+
+  getAverageRating(productId: number): Observable<number> {
+    return this.http.get<number>(`${this.API_URL}/reviews/product/${productId}/average`);
+  }
+
+  getUserReviews(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/reviews/me`);
+  }
+
+  deleteReview(reviewId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/reviews/${reviewId}`);
+  }
+
+  // ===== COUPON/DISCOUNT OPERATIONS =====
+  validateCoupon(code: string, orderAmount: number): Observable<any> {
+    const params = new HttpParams()
+      .set('code', code)
+      .set('orderAmount', orderAmount.toString());
+    return this.http.get(`${this.API_URL}/coupons/validate`, { params });
+  }
+
+  applyCoupon(code: string): Observable<void> {
+    const params = new HttpParams().set('code', code);
+    return this.http.post<void>(`${this.API_URL}/coupons/apply`, {}, { params });
+  }
+
+  getCoupon(code: string): Observable<any> {
+    return this.http.get(`${this.API_URL}/coupons/${code}`);
   }
 }

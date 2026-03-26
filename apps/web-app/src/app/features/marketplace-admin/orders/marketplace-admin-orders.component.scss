@@ -1,0 +1,46 @@
+.admin-marketplace-page {
+  padding: 1.5rem 0;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.orders {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.order-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem;
+}
+
+.error {
+  color: var(--danger);
+}

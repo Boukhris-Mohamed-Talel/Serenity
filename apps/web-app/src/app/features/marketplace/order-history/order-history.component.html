@@ -1,25 +1,86 @@
 <section class="container history-page">
-  <h2>Order History</h2>
+  <div class="history-hero">
+    <h2>Order Journey</h2>
+    <p>Track your purchases, reopen details, and reorder in one click.</p>
+  </div>
 
   <p *ngIf="loading">Loading orders...</p>
-  <p *ngIf="!loading && orders.length === 0">No orders yet.</p>
 
-  <div class="orders" *ngIf="!loading && orders.length > 0">
-    <article class="order-card" *ngFor="let order of orders">
-      <div class="header">
-        <strong>Order #{{ order.id }}</strong>
-        <span>{{ order.createdAt | date:'medium' }}</span>
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="stats" *ngIf="!loading && orders.length > 0">
+    <article>
+      <span>Total Orders</span>
+      <strong>{{ orders.length }}</strong>
+    </article>
+    <article>
+      <span>Total Spent</span>
+      <strong>{{ totalSpent | currency:'TND ' }}</strong>
+    </article>
+    <article>
+      <span>Latest Order</span>
+      <strong>{{ latestOrderDate | date:'mediumDate' }}</strong>
+    </article>
+  </div>
+
+  <div class="filters" *ngIf="!loading && orders.length > 0">
+    <button
+      type="button"
+      *ngFor="let filter of filters"
+      [class.active]="selectedFilter === filter"
+      (click)="setFilter(filter)">
+      {{ filter }}
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && orders.length === 0">
+    <h3>No orders yet</h3>
+    <p>Start exploring products to create your first order timeline.</p>
+    <button class="btn btn-primary" type="button" routerLink="/marketplace">Explore Products</button>
+  </div>
+
+  <div class="orders" *ngIf="!loading && filteredOrders.length > 0">
+    <article class="order-card" *ngFor="let order of filteredOrders">
+      <div class="header" (click)="toggleOrder(order.id)">
+        <div>
+          <strong>Order #{{ order.id }}</strong>
+          <span>{{ order.createdAt | date:'medium' }}</span>
+        </div>
+        <div class="header-right">
+          <span class="status" [ngClass]="statusTone(order.status)">{{ order.status }}</span>
+          <strong>{{ order.totalAmount | currency:'TND ' }}</strong>
+        </div>
       </div>
 
-      <p>Status: <strong>{{ order.status }}</strong></p>
-      <p>Payment: {{ order.paymentAttempt.status }} ({{ order.paymentAttempt.reference }})</p>
-      <p>Total: <strong>{{ order.totalAmount | currency:'TND ' }}</strong></p>
+      <div class="order-preview" *ngIf="expandedOrderId !== order.id">
+        <span>{{ order.items.length }} items</span>
+        <button type="button" class="btn btn-outline">View details</button>
+      </div>
 
-      <ul>
-        <li *ngFor="let item of order.items">
-          {{ item.productName }} x{{ item.quantity }} - {{ item.lineTotal | currency:'TND ' }}
-        </li>
-      </ul>
+      <div class="order-details" *ngIf="expandedOrderId === order.id">
+        <div class="meta-grid">
+          <p><span>Payment</span><strong>{{ order.paymentAttempt.status }}</strong></p>
+          <p><span>Reference</span><strong>{{ order.paymentAttempt.reference }}</strong></p>
+          <p><span>Shipping</span><strong>{{ order.shippingAddress }}</strong></p>
+        </div>
+
+        <ul>
+          <li *ngFor="let item of order.items">
+            <span>{{ item.productName }}</span>
+            <span>x{{ item.quantity }}</span>
+            <strong>{{ item.lineTotal | currency:'TND ' }}</strong>
+          </li>
+        </ul>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" (click)="buyAgain(order)">Buy Again</button>
+          <button type="button" class="btn btn-outline" (click)="toggleOrder(order.id)">Collapse</button>
+        </div>
+      </div>
     </article>
+  </div>
+
+  <div class="empty-filter" *ngIf="!loading && orders.length > 0 && filteredOrders.length === 0">
+    <p>No orders found for {{ selectedFilter }}.</p>
   </div>
 </section>

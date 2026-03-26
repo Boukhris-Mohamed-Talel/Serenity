@@ -11,6 +11,8 @@ public interface ProductService {
 
     List<ProductResponseDTO> getProducts(String query, ProductCategory category, ProductType type);
 
+    List<ProductResponseDTO> getAllProductsForAdmin();
+
     ProductResponseDTO getProductById(Long id);
 
     ProductResponseDTO createProduct(ProductUpsertRequestDTO request);

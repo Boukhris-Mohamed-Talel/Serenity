@@ -1,0 +1,33 @@
+<section class="container admin-marketplace-page">
+  <header class="header-row">
+    <h2>Marketplace Orders</h2>
+    <a class="btn btn-secondary" routerLink="/admin/marketplace">Back to Products</a>
+  </header>
+
+  <p *ngIf="loading">Loading orders...</p>
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <p *ngIf="!loading && orders.length === 0">No orders yet.</p>
+
+  <div class="orders" *ngIf="!loading && orders.length > 0">
+    <article class="order-card" *ngFor="let order of orders">
+      <div class="order-head">
+        <strong>#{{ order.id }}</strong>
+        <small>{{ order.createdAt | date:'medium' }}</small>
+      </div>
+
+      <p><strong>Customer:</strong> {{ order.customerEmail }}</p>
+      <p><strong>Total:</strong> {{ order.totalAmount | currency:'TND ' }}</p>
+      <p><strong>Status:</strong> {{ order.status }}</p>
+
+      <div class="actions">
+        <select #statusSelect [value]="order.status">
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+        <button class="btn btn-secondary" type="button" (click)="updateStatus(order.id, $any(statusSelect.value))">
+          Update Status
+        </button>
+        <button class="btn btn-danger" type="button" (click)="cancelOrder(order.id)">Cancel</button>
+      </div>
+    </article>
+  </div>
+</section>

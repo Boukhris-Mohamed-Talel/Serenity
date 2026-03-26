@@ -1,4 +1,5 @@
 export type MarketplaceProductType = 'PHYSICAL' | 'DIGITAL';
+export type MarketplaceOrderStatus = 'CREATED' | 'PAID' | 'CANCELLED';
 
 export type MarketplaceProductCategory =
   | 'SELF_CARE'
@@ -17,6 +18,16 @@ export interface MarketplaceProduct {
   price: number;
   active: boolean;
   imageUrl?: string;
+}
+
+export interface MarketplaceProductUpsertRequest {
+  name: string;
+  description: string;
+  category: MarketplaceProductCategory;
+  type: MarketplaceProductType;
+  price: number;
+  imageUrl?: string;
+  active: boolean;
 }
 
 export interface CartItem {
@@ -52,7 +63,7 @@ export interface OrderItem {
 export interface MarketplaceOrder {
   id: number;
   customerEmail: string;
-  status: string;
+  status: MarketplaceOrderStatus;
   totalAmount: number;
   currency: string;
   shippingAddress: string;
@@ -60,6 +71,10 @@ export interface MarketplaceOrder {
   paymentAttempt: PaymentAttempt;
   items: OrderItem[];
   createdAt: string;
+}
+
+export interface OrderStatusUpdateRequest {
+  status: MarketplaceOrderStatus;
 }
 
 export const MARKETPLACE_CATEGORIES: { value: MarketplaceProductCategory; label: string }[] = [

@@ -81,6 +81,14 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  getUserId(): number | null {
+    return this.currentUserSubject.value?.userId ?? null;
+  }
+
+  getUserEmail(): string | null {
+    return this.currentUserSubject.value?.email ?? null;
+  }
+
   private storeAuth(response: AuthResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.accessToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));

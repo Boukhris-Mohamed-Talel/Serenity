@@ -11,6 +11,7 @@ import { CartItem } from '../../../shared/models/marketplace.model';
 })
 export class CartComponent {
   readonly cart$: Observable<CartItem[]> = this.marketplaceService.cart$;
+  emptyCartNotice = '';
 
   constructor(
     private readonly marketplaceService: MarketplaceService,
@@ -34,6 +35,14 @@ export class CartComponent {
   }
 
   checkout(): void {
+    if (this.marketplaceService.getCartSnapshot().length === 0) {
+      this.emptyCartNotice = 'Your cart is empty. Add at least one item before checkout.';
+      return;
+    }
     this.router.navigate(['/marketplace/checkout']);
+  }
+
+  dismissNotice(): void {
+    this.emptyCartNotice = '';
   }
 }

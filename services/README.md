@@ -6,9 +6,11 @@ Backend services. **One folder = one deployable service** (own process, port, co
 
 | Service             | Path                        | Port | Description              |
 |---------------------|-----------------------------|------|--------------------------|
+| **API Gateway**     | `services/API_Gatewya/`     | 8082 | Routes all service requests.  |
 | **user-service**    | `services/user-service/`    | 8081 | Auth, user CRUD, profiles. |
-| **insurance-service** | `services/insurance-service/` | 8082 | Insurance claims, reimbursements. |
-| **marketplace-service** | `services/marketplace-service/` | 8085 | Mental health products, checkout, order history. |
+| **pharmacy-service** | `services/pharmacy-service/` | 8083 | Pharmacy products, prescriptions. |
+| **insurance-service** | `services/insurance-service/` | 8090 | Insurance claims, reimbursements. |
+| **marketplace-service** | `services/marketplace-service/` | 8088 | Mental health products, checkout, order history. |
 
 ## Run order
 

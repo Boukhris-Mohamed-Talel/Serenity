@@ -1,0 +1,100 @@
+<div class="reviews-container">
+  <div class="reviews-header">
+    <h3>Customer Reviews</h3>
+    <div class="rating-summary">
+      <div class="average-rating">
+        <span class="stars">★</span>
+        <span class="rating-value">{{ averageRating.toFixed(1) }}</span>
+        <span class="total-reviews">({{ reviews.length }} reviews)</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Review Form -->
+  <div class="review-form-section">
+    <h5>Write a Review</h5>
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
+      <div class="form-group">
+        <label for="rating">Rating (1-5 stars)</label>
+        <select id="rating" formControlName="rating" class="form-control">
+          <option [value]="1">1 Star - Poor</option>
+          <option [value]="2">2 Stars - Fair</option>
+          <option [value]="3">3 Stars - Good</option>
+          <option [value]="4">4 Stars - Very Good</option>
+          <option [value]="5">5 Stars - Excellent</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="reviewText">Your Review</label>
+        <textarea 
+          id="reviewText" 
+          formControlName="reviewText" 
+          class="form-control"
+          rows="4"
+          placeholder="Share your experience with this product..."
+        ></textarea>
+        <small class="form-text text-muted">
+          {{ reviewForm.get('reviewText')?.value?.length || 0 }}/1000 characters
+        </small>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="!reviewForm.valid || submitting"
+      >
+        {{ submitting ? 'Submitting...' : 'Submit Review' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Reviews List -->
+  <div class="reviews-list">
+    <div *ngIf="loading" class="spinner">
+      Loading reviews...
+    </div>
+
+    <div *ngIf="!loading && reviews.length === 0" class="no-reviews">
+      <p>No reviews yet. Be the first to review!</p>
+    </div>
+
+    <div *ngIf="!loading && reviews.length > 0" class="review-items">
+      <div *ngFor="let review of reviews" class="review-item">
+        <div class="review-header">
+          <div class="reviewer-info">
+            <h6>{{ review.userEmail }}</h6>
+            <p class="review-rating">
+              <span class="stars">
+                <ng-container *ngFor="let star of getRatingArray(review.rating)">
+                  <span>{{ star ? '★' : '☆' }}</span>
+                </ng-container>
+              </span>
+              <span class="rating-text">{{ review.rating }}/5 stars</span>
+            </p>
+          </div>
+          <div class="review-date">
+            {{ review.createdAt | date: 'short' }}
+          </div>
+        </div>
+
+        <div class="review-text">
+          <p>{{ review.reviewText }}</p>
+        </div>
+
+        <div class="review-actions" *ngIf="isUserReview(review.userId)">
+          <button class="btn btn-sm btn-danger" (click)="deleteReview(review.id)">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

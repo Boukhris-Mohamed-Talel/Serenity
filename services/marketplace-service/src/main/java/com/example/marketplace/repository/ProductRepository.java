@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    List<Product> findAllByOrderByCreatedAtDesc();
+
     List<Product> findByActiveTrueOrderByCreatedAtDesc();
 
     List<Product> findByActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(String name);

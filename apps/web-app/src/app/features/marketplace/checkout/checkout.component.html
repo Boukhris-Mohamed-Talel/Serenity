@@ -10,7 +10,16 @@
     <button class="btn btn-primary" type="button" (click)="goToOrders()">View My Orders</button>
   </div>
 
-  <form [formGroup]="checkoutForm" (ngSubmit)="submit()" *ngIf="!successOrder">
+  <div class="empty-cart" *ngIf="!successOrder && isCartEmpty">
+    <h3>Your cart is empty</h3>
+    <p>Pick at least one product to continue checkout.</p>
+    <div class="empty-cart-actions">
+      <button type="button" class="btn btn-primary" (click)="goToMarketplace()">Browse Products</button>
+      <button type="button" class="btn btn-outline" (click)="goToWishlist()">Go to Wishlist</button>
+    </div>
+  </div>
+
+  <form [formGroup]="checkoutForm" (ngSubmit)="submit()" *ngIf="!successOrder && !isCartEmpty">
     <label for="shippingAddress">Shipping Address</label>
     <textarea id="shippingAddress" rows="4" formControlName="shippingAddress"></textarea>
     <small class="error" *ngIf="checkoutForm.controls.shippingAddress.touched && checkoutForm.controls.shippingAddress.invalid">
@@ -20,8 +29,25 @@
     <label for="customerNote">Note (optional)</label>
     <textarea id="customerNote" rows="3" formControlName="customerNote"></textarea>
 
+    <!-- Discount/Coupon Section -->
+    <app-discount 
+      [orderAmount]="subtotal"
+      (discountApplied)="onDiscountApplied($event)"
+    ></app-discount>
+
     <div class="summary">
-      <strong>Total: {{ cartTotal | currency:'TND ' }}</strong>
+      <div class="summary-row">
+        <span>Subtotal:</span>
+        <span>{{ subtotal | currency:'TND ' }}</span>
+      </div>
+      <div class="summary-row" *ngIf="discountAmount > 0">
+        <span>Discount:</span>
+        <span class="discount">-{{ discountAmount | currency:'TND ' }}</span>
+      </div>
+      <div class="summary-row total">
+        <strong>Total:</strong>
+        <strong>{{ finalTotal | currency:'TND ' }}</strong>
+      </div>
       <button class="btn btn-primary" type="submit" [disabled]="loading">
         {{ loading ? 'Processing...' : 'Pay (Secure Mock)' }}
       </button>
