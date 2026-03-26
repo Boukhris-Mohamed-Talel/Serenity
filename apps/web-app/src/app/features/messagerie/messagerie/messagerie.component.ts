@@ -43,7 +43,13 @@ constructor(private messagerieService: MessagerieService) {
   this.searchSubject.pipe(
     debounceTime(300),
     distinctUntilChanged(),
-    switchMap(term => this.messagerieService.searchUsers(term))
+    switchMap(term => {
+      if (!term.trim()) {
+        this.filteredUsers = [];
+        return [];
+      }
+      return this.messagerieService.searchUsers(term);
+    })
   ).subscribe(users => this.filteredUsers = users);
 }
 
