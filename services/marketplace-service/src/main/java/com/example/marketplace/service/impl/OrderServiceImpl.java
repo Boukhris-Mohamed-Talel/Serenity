@@ -1,0 +1,110 @@
+package com.example.marketplace.service.impl;
+
+import com.example.marketplace.dto.*;
+import com.example.marketplace.entity.*;
+import com.example.marketplace.exception.ResourceNotFoundException;
+import com.example.marketplace.repository.MarketplaceOrderRepository;
+import com.example.marketplace.repository.ProductRepository;
+import com.example.marketplace.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+
+    private final ProductRepository productRepository;
+    private final MarketplaceOrderRepository marketplaceOrderRepository;
+
+    @Override
+    @Transactional
+    public OrderResponseDTO checkout(String customerEmail, Long userId, CheckoutRequestDTO request) {
+        MarketplaceOrder order = MarketplaceOrder.builder()
+                .customerEmail(customerEmail)
+                .customerUserId(userId)
+                .shippingAddress(request.getShippingAddress().trim())
+                .customerNote(request.getCustomerNote())
+                .status(OrderStatus.CREATED)
+                .paymentStatus(PaymentStatus.MOCK_AUTHORIZED)
+                .paymentReference("MOCK-" + UUID.randomUUID())
+                .totalAmount(BigDecimal.ZERO)
+                .currency("TND")
+                .build();
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CheckoutItemDTO item : request.getItems()) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id=" + item.getProductId()));
+
+            if (!Boolean.TRUE.equals(product.getActive())) {
+                throw new IllegalArgumentException("Product is not available: " + product.getName());
+            }
+
+            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            total = total.add(lineTotal);
+
+            MarketplaceOrderItem orderItem = MarketplaceOrderItem.builder()
+                    .product(product)
+                    .quantity(item.getQuantity())
+                    .unitPrice(product.getPrice())
+                    .lineTotal(lineTotal)
+                    .build();
+
+            order.addItem(orderItem);
+        }
+
+        order.setTotalAmount(total);
+        order.setStatus(OrderStatus.PAID);
+
+        MarketplaceOrder saved = marketplaceOrderRepository.save(order);
+        return toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponseDTO> getMyOrders(String customerEmail) {
+        return marketplaceOrderRepository.findByCustomerEmailOrderByCreatedAtDesc(customerEmail)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private OrderResponseDTO toResponse(MarketplaceOrder order) {
+        List<OrderItemResponseDTO> items = order.getItems().stream()
+                .map(item -> OrderItemResponseDTO.builder()
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getName())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .lineTotal(item.getLineTotal())
+                        .build())
+                .toList();
+
+        PaymentAttemptDTO payment = PaymentAttemptDTO.builder()
+                .reference(order.getPaymentReference())
+                .status(order.getPaymentStatus())
+                .message(order.getPaymentStatus() == PaymentStatus.MOCK_AUTHORIZED
+                        ? "Mock payment authorized"
+                        : "Mock payment declined")
+                .build();
+
+        return OrderResponseDTO.builder()
+                .id(order.getId())
+                .customerEmail(order.getCustomerEmail())
+                .status(order.getStatus())
+                .totalAmount(order.getTotalAmount())
+                .currency(order.getCurrency())
+                .shippingAddress(order.getShippingAddress())
+                .customerNote(order.getCustomerNote())
+                .paymentAttempt(payment)
+                .items(items)
+                .createdAt(order.getCreatedAt())
+                .build();
+    }
+}

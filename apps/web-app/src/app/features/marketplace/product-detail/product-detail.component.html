@@ -1,0 +1,22 @@
+<section class="container detail-page" *ngIf="!loading && product as p">
+  <button class="btn btn-link" type="button" routerLink="/marketplace">Back to products</button>
+
+  <div class="detail-card">
+    <img [src]="p.imageUrl || 'assets/logo.png'" [alt]="p.name" />
+
+    <div class="info">
+      <h2>{{ p.name }}</h2>
+      <p>{{ p.description }}</p>
+      <div class="chips">
+        <span>{{ p.category }}</span>
+        <span>{{ p.type }}</span>
+      </div>
+      <strong>{{ p.price | currency:'TND ' }}</strong>
+
+      <div class="order-row">
+        <input type="number" min="1" [(ngModel)]="quantity" />
+        <button class="btn btn-primary" type="button" (click)="addToCart()">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</section>

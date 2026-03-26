@@ -1,0 +1,25 @@
+<section class="container history-page">
+  <h2>Order History</h2>
+
+  <p *ngIf="loading">Loading orders...</p>
+  <p *ngIf="!loading && orders.length === 0">No orders yet.</p>
+
+  <div class="orders" *ngIf="!loading && orders.length > 0">
+    <article class="order-card" *ngFor="let order of orders">
+      <div class="header">
+        <strong>Order #{{ order.id }}</strong>
+        <span>{{ order.createdAt | date:'medium' }}</span>
+      </div>
+
+      <p>Status: <strong>{{ order.status }}</strong></p>
+      <p>Payment: {{ order.paymentAttempt.status }} ({{ order.paymentAttempt.reference }})</p>
+      <p>Total: <strong>{{ order.totalAmount | currency:'TND ' }}</strong></p>
+
+      <ul>
+        <li *ngFor="let item of order.items">
+          {{ item.productName }} x{{ item.quantity }} - {{ item.lineTotal | currency:'TND ' }}
+        </li>
+      </ul>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,30 @@
+<section class="container checkout-page">
+  <h2>Checkout</h2>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="success" *ngIf="successOrder as order">
+    <h3>Order placed successfully</h3>
+    <p>Reference: {{ order.paymentAttempt.reference }}</p>
+    <p>Total: {{ order.totalAmount | currency:'TND ' }}</p>
+    <button class="btn btn-primary" type="button" (click)="goToOrders()">View My Orders</button>
+  </div>
+
+  <form [formGroup]="checkoutForm" (ngSubmit)="submit()" *ngIf="!successOrder">
+    <label for="shippingAddress">Shipping Address</label>
+    <textarea id="shippingAddress" rows="4" formControlName="shippingAddress"></textarea>
+    <small class="error" *ngIf="checkoutForm.controls.shippingAddress.touched && checkoutForm.controls.shippingAddress.invalid">
+      Shipping address is required.
+    </small>
+
+    <label for="customerNote">Note (optional)</label>
+    <textarea id="customerNote" rows="3" formControlName="customerNote"></textarea>
+
+    <div class="summary">
+      <strong>Total: {{ cartTotal | currency:'TND ' }}</strong>
+      <button class="btn btn-primary" type="submit" [disabled]="loading">
+        {{ loading ? 'Processing...' : 'Pay (Secure Mock)' }}
+      </button>
+    </div>
+  </form>
+</section>
