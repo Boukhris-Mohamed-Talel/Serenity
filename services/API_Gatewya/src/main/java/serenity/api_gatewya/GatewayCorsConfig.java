@@ -15,17 +15,18 @@ public class GatewayCorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Origine exacte de ton frontend Angular
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-
-        // Méthodes HTTP autorisées
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Tous les headers possibles
-        config.setAllowedHeaders(Arrays.asList("*"));
-
-        // Autoriser l’envoi de cookies
-        config.setAllowCredentials(true);
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:4200",
+                "http://localhost:3000"
+        ));
+        config.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type"
+        ));
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
