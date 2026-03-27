@@ -50,40 +50,40 @@
     </div>
 
     <!-- Chat Area -->
-    <div class="chat-area">
-      <div class="chat-header">
-        <div class="avatar"></div>
-        <div class="chat-name">{{ activeConversationName }}</div>
-      </div>
+<div class="chat-area" *ngIf="activeConversationId">
+  <div class="chat-header">
+    <div class="avatar"></div>
+    <div class="chat-name">{{ activeConversationName }}</div>
+  </div>
 
-     <div class="messages">
-      <div class="message" *ngFor="let msg of messages; let i = index" [ngClass]="msg.type">
-        <div class="bubble">
-          {{ msg.text }}
-        </div>
-        </div>
-      </div>
-
-      <div
-        class="context-menu"
-        *ngIf="menuVisible"
-        [style.top.px]="menuY"
-        [style.left.px]="menuX"
-      >
-        <div class="menu-item" (click)="editMessage()">Modify</div>
-        <div class="menu-item delete" (click)="deleteMessage()">Delete</div>
-      </div>
-
-      <div class="message-input">
-        <input
-          type="text"
-          [(ngModel)]="newMessage"
-          placeholder="Type a message..."
-          (keydown.enter)="sendMessage()"
-        />
-        <button class="send-btn" (click)="sendMessage()">Send</button>
+  <div class="messages">
+    <div class="message" *ngFor="let msg of messages" [ngClass]="msg.type">
+      <div class="bubble">
+        {{ msg.text }}
       </div>
     </div>
+  </div>
+
+  <div
+    class="context-menu"
+    *ngIf="menuVisible"
+    [style.top.px]="menuY"
+    [style.left.px]="menuX"
+  >
+    <div class="menu-item" (click)="editMessage()">Modify</div>
+    <div class="menu-item delete" (click)="deleteMessage()">Delete</div>
+  </div>
+
+  <div class="message-input">
+    <input
+      type="text"
+      [(ngModel)]="newMessage"
+      placeholder="Type a message..."
+      (keydown.enter)="sendMessage()"
+    />
+    <button class="send-btn" (click)="sendMessage()">Send</button>
+  </div>
+</div>
 
   </div>
 </div>

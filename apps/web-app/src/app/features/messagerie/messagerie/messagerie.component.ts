@@ -82,8 +82,8 @@ selectUser(user: any) {
   next: (conversation) => {
     console.log('Conversation started:', conversation);
 
-    this.activeConversationId = conversation.id;
-    this.activeConversationName = `${user.firstName} ${user.lastName}`;
+    /*this.activeConversationId = conversation.id;
+    this.activeConversationName = `${user.firstName} ${user.lastName}`;*/
 
     // Récupérer les messages après création
     this.messagerieService.getConversationMessages(conversation.id).subscribe({

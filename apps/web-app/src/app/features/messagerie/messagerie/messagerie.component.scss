@@ -125,6 +125,11 @@
 .message.received .bubble {
   background-color: #FFF;
   color: black;
+  padding: 8px 12px;
+  border-radius: 15px;
+  max-width: 70%;
+  word-wrap: break-word;
+  border: 1px solid #ccc; /* optionnel : pour mieux délimiter la bulle */
 }
 
 /* Input */
