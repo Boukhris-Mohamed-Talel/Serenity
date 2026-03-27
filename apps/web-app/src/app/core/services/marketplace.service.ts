@@ -11,7 +11,9 @@ import {
   MarketplaceProductType,
   MarketplaceProductUpsertRequest,
   MarketplaceOrderStatus,
-  OrderStatusUpdateRequest
+  OrderStatusUpdateRequest,
+  QuizRecommendationRequest,
+  RecommendationResponse
 } from '../../shared/models/marketplace.model';
 import { DebugSessionService } from '../debug/debug-session.service';
 
@@ -192,6 +194,10 @@ export class MarketplaceService {
 
   getAverageRating(productId: number): Observable<number> {
     return this.http.get<number>(`${this.API_URL}/reviews/product/${productId}/average`);
+  }
+
+  getQuizRecommendations(request: QuizRecommendationRequest): Observable<RecommendationResponse> {
+    return this.http.post<RecommendationResponse>(`${this.API_URL}/recommendations/quiz`, request);
   }
 
   getUserReviews(): Observable<any[]> {

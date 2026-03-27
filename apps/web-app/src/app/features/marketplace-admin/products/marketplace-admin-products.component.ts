@@ -12,6 +12,8 @@ export class MarketplaceAdminProductsComponent implements OnInit {
   loading = false;
   products: MarketplaceProduct[] = [];
   error = '';
+  successMessage = '';
+  deletingProductId: number | null = null;
 
   constructor(
     private readonly marketplaceService: MarketplaceService,
@@ -25,6 +27,7 @@ export class MarketplaceAdminProductsComponent implements OnInit {
   loadProducts(): void {
     this.loading = true;
     this.error = '';
+    this.successMessage = '';
 
     this.marketplaceService.getAllProductsForAdmin().subscribe({
       next: products => {
@@ -47,14 +50,50 @@ export class MarketplaceAdminProductsComponent implements OnInit {
   }
 
   deleteProduct(productId: number): void {
-    if (!confirm('Delete this product?')) {
+    const product = this.products.find(p => p.id === productId);
+    if (!confirm(`Are you sure you want to delete "${product?.name}"? This action cannot be undone.`)) {
       return;
     }
 
+    this.deletingProductId = productId;
     this.marketplaceService.deleteProduct(productId).subscribe({
-      next: () => this.loadProducts(),
+      next: () => {
+        this.products = this.products.filter(p => p.id !== productId);
+        this.deletingProductId = null;
+        this.successMessage = `Product deleted successfully`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
       error: () => {
         this.error = 'Failed to delete product.';
+        this.deletingProductId = null;
+      }
+    });
+  }
+
+  toggleStatus(productId: number): void {
+    const product = this.products.find(p => p.id === productId);
+    if (!product) return;
+
+    const updatedProduct = { ...product, active: !product.active };
+    this.marketplaceService.updateProduct(productId, {
+      name: updatedProduct.name,
+      description: updatedProduct.description,
+      price: updatedProduct.price,
+      category: updatedProduct.category,
+      type: updatedProduct.type,
+      active: updatedProduct.active,
+      imageUrl: updatedProduct.imageUrl
+    }).subscribe({
+      next: (updated) => {
+        const idx = this.products.findIndex(p => p.id === productId);
+        if (idx !== -1) {
+          this.products[idx] = updated;
+        }
+        this.successMessage = `Product ${updated.active ? 'activated' : 'deactivated'}`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.error = 'Failed to update product status.';
       }
     });
   }

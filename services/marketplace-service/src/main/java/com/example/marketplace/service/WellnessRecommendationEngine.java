@@ -24,6 +24,28 @@ public class WellnessRecommendationEngine {
     private final PharmacyServiceClient pharmacyServiceClient;
     private final ProductRepository productRepository;
 
+        public RecommendationResponseDTO getQuizBasedRecommendations(QuizRecommendationRequestDTO request) {
+        int anxietyNeed = toScale(request.getAnxietyLevel());
+        int stressNeed = toScale(request.getStressLevel());
+        int sleepNeed = toScale(request.getSleepNeed());
+        int focusNeed = Math.max(10, 100 - (anxietyNeed + stressNeed) / 2);
+        int sensoryNeed = Math.min(100, Math.round((anxietyNeed * 0.6f) + (stressNeed * 0.4f)));
+
+        List<ProductRecommendationItemDTO> recommendations = productRepository.findByActiveTrueOrderByCreatedAtDesc()
+            .stream()
+            .map(product -> toQuizRecommendation(product, anxietyNeed, stressNeed, sleepNeed, focusNeed, sensoryNeed))
+            .sorted((a, b) -> Integer.compare(b.getConfidence(), a.getConfidence()))
+            .limit(8)
+            .toList();
+
+        return RecommendationResponseDTO.builder()
+            .recommendations(recommendations)
+            .reasoning("Based on your 3-answer wellness scan, these products best fit your current needs.")
+            .totalRecommendations(recommendations.size())
+            .generatedAt(LocalDateTime.now())
+            .build();
+        }
+
     @Transactional(readOnly = true)
     @Cacheable(value = "recommendations", key = "#userId")
     public RecommendationResponseDTO getPersonalizedRecommendations(Long userId, String jwtToken) {
@@ -219,5 +241,138 @@ public class WellnessRecommendationEngine {
         reasoning.append(", we've curated these personalized wellness products for you.");
         
         return reasoning.toString();
+    }
+
+    private ProductRecommendationItemDTO toQuizRecommendation(
+            Product product,
+            int anxietyNeed,
+            int stressNeed,
+            int sleepNeed,
+            int focusNeed,
+            int sensoryNeed
+    ) {
+        int[] productSignal = productSignal(product);
+        int confidence = computeMatchScore(productSignal, anxietyNeed, stressNeed, sleepNeed, focusNeed, sensoryNeed);
+
+        return ProductRecommendationItemDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .category(product.getCategory().name())
+                .reason(buildQuizReason(productSignal, anxietyNeed, stressNeed, sleepNeed, focusNeed, sensoryNeed))
+                .confidence(confidence)
+                .build();
+    }
+
+    private int[] productSignal(Product product) {
+        int anxiety = 55;
+        int stress = 55;
+        int sleep = 45;
+        int focus = 45;
+        int sensory = 35;
+
+        switch (product.getCategory()) {
+            case STRESS_RELIEF -> {
+                anxiety = 76;
+                stress = 92;
+                sleep = 45;
+                focus = 42;
+                sensory = 68;
+            }
+            case SLEEP_SUPPORT -> {
+                anxiety = 64;
+                stress = 58;
+                sleep = 95;
+                focus = 34;
+                sensory = 56;
+            }
+            case MINDFULNESS -> {
+                anxiety = 84;
+                stress = 77;
+                sleep = 66;
+                focus = 58;
+                sensory = 43;
+            }
+            case THERAPY_TOOLS -> {
+                anxiety = 58;
+                stress = 62;
+                sleep = 36;
+                focus = 91;
+                sensory = 80;
+            }
+            case SELF_CARE -> {
+                anxiety = 66;
+                stress = 72;
+                sleep = 60;
+                focus = 53;
+                sensory = 48;
+            }
+            case EDUCATION -> {
+                anxiety = 38;
+                stress = 47;
+                sleep = 32;
+                focus = 72;
+                sensory = 24;
+            }
+        }
+
+        String text = ((product.getName() == null ? "" : product.getName()) + " "
+                + (product.getDescription() == null ? "" : product.getDescription())).toLowerCase(Locale.ROOT);
+
+        if (text.contains("fidget") || text.contains("sensory")) {
+            sensory = Math.min(100, sensory + 20);
+            stress = Math.min(100, stress + 8);
+        }
+        if (text.contains("sleep") || text.contains("insomnia") || text.contains("night")) {
+            sleep = Math.min(100, sleep + 18);
+        }
+        if (text.contains("focus") || text.contains("concentration")) {
+            focus = Math.min(100, focus + 16);
+        }
+        if (text.contains("anxiety") || text.contains("calm") || text.contains("soothing")) {
+            anxiety = Math.min(100, anxiety + 14);
+        }
+
+        return new int[] {anxiety, stress, sleep, focus, sensory};
+    }
+
+    private int computeMatchScore(int[] productSignal, int anxietyNeed, int stressNeed, int sleepNeed, int focusNeed, int sensoryNeed) {
+        int[] userNeed = new int[] {anxietyNeed, stressNeed, sleepNeed, focusNeed, sensoryNeed};
+        long weightedSignal = 0L;
+        long weightedMax = 0L;
+
+        for (int i = 0; i < productSignal.length; i++) {
+            weightedSignal += (long) productSignal[i] * userNeed[i];
+            weightedMax += (long) 100 * userNeed[i];
+        }
+
+        if (weightedMax == 0) {
+            return 50;
+        }
+
+        return (int) Math.round((weightedSignal * 100.0) / weightedMax);
+    }
+
+    private String buildQuizReason(int[] productSignal, int anxietyNeed, int stressNeed, int sleepNeed, int focusNeed, int sensoryNeed) {
+        Map<String, Integer> priorities = new LinkedHashMap<>();
+        priorities.put("anxiety soothing", anxietyNeed * productSignal[0]);
+        priorities.put("stress relief", stressNeed * productSignal[1]);
+        priorities.put("sleep support", sleepNeed * productSignal[2]);
+        priorities.put("focus support", focusNeed * productSignal[3]);
+        priorities.put("sensory calming", sensoryNeed * productSignal[4]);
+
+        List<String> topReasons = priorities.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .limit(2)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        return "Strong fit for " + String.join(" + ", topReasons);
+    }
+
+    private int toScale(Integer answer) {
+        if (answer == null) {
+            return 50;
+        }
+        return Math.max(1, Math.min(5, answer)) * 20;
     }
 }

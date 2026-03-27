@@ -1,7 +1,9 @@
 package com.example.marketplace.controller;
 
 import com.example.marketplace.dto.RecommendationResponseDTO;
+import com.example.marketplace.dto.QuizRecommendationRequestDTO;
 import com.example.marketplace.service.WellnessRecommendationEngine;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +51,18 @@ public class RecommendationController {
 
         } catch (Exception e) {
             log.error("Error fetching recommendations: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/quiz")
+    public ResponseEntity<RecommendationResponseDTO> getQuizRecommendations(
+            @Valid @RequestBody QuizRecommendationRequestDTO request) {
+        try {
+            RecommendationResponseDTO response = recommendationEngine.getQuizBasedRecommendations(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating quiz recommendations: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

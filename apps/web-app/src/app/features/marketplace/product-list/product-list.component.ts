@@ -7,7 +7,8 @@ import {
   MARKETPLACE_TYPES,
   MarketplaceProduct,
   MarketplaceProductCategory,
-  MarketplaceProductType
+  MarketplaceProductType,
+  ProductRecommendationItem
 } from '../../../shared/models/marketplace.model';
 
 @Component({
@@ -22,9 +23,23 @@ export class ProductListComponent implements OnInit, OnDestroy {
   selectedCategory: MarketplaceProductCategory | '' = '';
   selectedType: MarketplaceProductType | '' = '';
   resetAnimating = false;
+  showQuiz = false;
+  quizSubmitting = false;
+  quizError = '';
+  quizReasoning = '';
+  quizRecommendations: ProductRecommendationItem[] = [];
+  recentlyAddedProductId: number | null = null;
+  cartToastVisible = false;
+  cartToastMessage = '';
+
+  anxietyLevel = 3;
+  stressLevel = 3;
+  sleepNeed = 3;
 
   private searchDebounceId: number | null = null;
   private readonly searchDebounceMs = 220;
+  private addFeedbackTimeoutId: number | null = null;
+  private toastTimeoutId: number | null = null;
 
   readonly categories = MARKETPLACE_CATEGORIES;
   readonly types = MARKETPLACE_TYPES;
@@ -43,6 +58,14 @@ export class ProductListComponent implements OnInit, OnDestroy {
     if (this.searchDebounceId !== null) {
       window.clearTimeout(this.searchDebounceId);
       this.searchDebounceId = null;
+    }
+    if (this.addFeedbackTimeoutId !== null) {
+      window.clearTimeout(this.addFeedbackTimeoutId);
+      this.addFeedbackTimeoutId = null;
+    }
+    if (this.toastTimeoutId !== null) {
+      window.clearTimeout(this.toastTimeoutId);
+      this.toastTimeoutId = null;
     }
   }
 
@@ -88,8 +111,61 @@ export class ProductListComponent implements OnInit, OnDestroy {
     }, this.searchDebounceMs);
   }
 
+  toggleQuiz(): void {
+    this.showQuiz = !this.showQuiz;
+    this.quizError = '';
+  }
+
+  submitQuiz(): void {
+    this.quizSubmitting = true;
+    this.quizError = '';
+    this.quizReasoning = '';
+
+    this.marketplaceService.getQuizRecommendations({
+      anxietyLevel: this.anxietyLevel,
+      stressLevel: this.stressLevel,
+      sleepNeed: this.sleepNeed
+    }).subscribe({
+      next: response => {
+        this.quizRecommendations = response.recommendations || [];
+        this.quizReasoning = response.reasoning || '';
+        this.quizSubmitting = false;
+      },
+      error: err => {
+        this.quizError = err?.error?.message || 'Unable to generate recommendations right now.';
+        this.quizSubmitting = false;
+      }
+    });
+  }
+
+  resetQuiz(): void {
+    this.anxietyLevel = 3;
+    this.stressLevel = 3;
+    this.sleepNeed = 3;
+    this.quizReasoning = '';
+    this.quizError = '';
+    this.quizRecommendations = [];
+  }
+
   addToCart(product: MarketplaceProduct): void {
     this.marketplaceService.addToCart(product, 1);
+    this.recentlyAddedProductId = product.id;
+    this.cartToastMessage = `Added ${product.name} to cart`;
+    this.cartToastVisible = true;
+
+    if (this.addFeedbackTimeoutId !== null) {
+      window.clearTimeout(this.addFeedbackTimeoutId);
+    }
+    this.addFeedbackTimeoutId = window.setTimeout(() => {
+      this.recentlyAddedProductId = null;
+    }, 900);
+
+    if (this.toastTimeoutId !== null) {
+      window.clearTimeout(this.toastTimeoutId);
+    }
+    this.toastTimeoutId = window.setTimeout(() => {
+      this.cartToastVisible = false;
+    }, 2200);
   }
 
   openDetails(productId: number): void {
@@ -98,5 +174,9 @@ export class ProductListComponent implements OnInit, OnDestroy {
 
   isManager(): boolean {
     return this.authService.hasRole('MARKETPLACE_MANAGER') || this.authService.isAdmin();
+  }
+
+  get cartCount(): number {
+    return this.marketplaceService.getCartSnapshot().reduce((sum, item) => sum + item.quantity, 0);
   }
 }

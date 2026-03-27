@@ -77,6 +77,27 @@ export interface OrderStatusUpdateRequest {
   status: MarketplaceOrderStatus;
 }
 
+export interface QuizRecommendationRequest {
+  anxietyLevel: number;
+  stressLevel: number;
+  sleepNeed: number;
+}
+
+export interface ProductRecommendationItem {
+  productId: number;
+  productName: string;
+  category: string;
+  reason: string;
+  confidence: number;
+}
+
+export interface RecommendationResponse {
+  recommendations: ProductRecommendationItem[];
+  reasoning: string;
+  totalRecommendations: number;
+  generatedAt: string;
+}
+
 export const MARKETPLACE_CATEGORIES: { value: MarketplaceProductCategory; label: string }[] = [
   { value: 'SELF_CARE', label: 'Self Care' },
   { value: 'SLEEP_SUPPORT', label: 'Sleep Support' },
