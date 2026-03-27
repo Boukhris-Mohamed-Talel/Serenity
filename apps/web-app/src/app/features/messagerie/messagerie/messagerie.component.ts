@@ -61,7 +61,9 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   ngOnInit() {
     document.addEventListener('click', () => {
       this.menuVisible = false;
+      this.conversationMenuVisible = false;
     });
+    
 
     this.filteredConversations = [...this.conversations];
     const currentUser = this.authService.getCurrentUser();
@@ -145,9 +147,18 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
     this.messagerieService.startConversation(currentUserId, user.id).subscribe({
       next: (conversation) => {
+        this.activeConversationId = conversation.id;  // 👈
+        this.activeConversationName = `${user.firstName} ${user.lastName}`;  // 👈
+
         this.messagerieService.getConversationMessages(conversation.id).subscribe({
           next: (msgs) => {
-            this.messages = msgs;
+            this.messages = msgs.map(msg => ({  // 👈 formate comme selectConversation
+              text: msg.content || '',
+              type: msg.senderId === this.currentUserId ? 'sent' : 'received',
+              id: msg.id,
+              createdAt: msg.createdAt,
+              senderId: msg.senderId
+            }));
           },
           error: (err) => {
             console.error('Erreur lors du chargement des messages :', err);
@@ -157,8 +168,8 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
         if (!this.conversations.find(c => c.id === conversation.id)) {
           this.conversations.push({
-            id: conversation.id,
-            name: `${user.firstName} ${user.lastName}`,
+            ...conversation,
+            otherUserName: `${user.firstName} ${user.lastName}`,  // 👈 otherUserName pas name
             lastMessage: ''
           });
         }
@@ -277,4 +288,40 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       error: (err) => console.error('Erreur suppression message:', err)
     });
   }
+
+  conversationMenuVisible = false;
+conversationMenuX = 0;
+conversationMenuY = 0;
+selectedConversation: any = null;
+
+openConversationMenu(event: MouseEvent, convo: any) {
+  event.preventDefault();
+  this.conversationMenuVisible = true;
+  this.conversationMenuX = event.clientX;
+  this.conversationMenuY = event.clientY;
+  this.selectedConversation = convo;
+}
+
+deleteConversationClicked() {
+  if (!this.selectedConversation) return;
+
+  const conversationId = this.selectedConversation.id;
+
+  this.messagerieService.deleteConversation(conversationId).subscribe({
+    next: () => {
+      this.conversations = this.conversations.filter(c => c.id !== conversationId);
+      this.filteredConversations = [...this.conversations];
+
+      if (this.activeConversationId === conversationId) {
+        this.activeConversationId = null;
+        this.activeConversationName = '';
+        this.messages = [];
+      }
+
+      this.conversationMenuVisible = false;
+      this.selectedConversation = null;
+    },
+    error: (err) => console.error('Erreur suppression conversation:', err)
+  });
+}
 }

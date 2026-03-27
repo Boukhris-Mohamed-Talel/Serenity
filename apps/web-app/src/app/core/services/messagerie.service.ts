@@ -67,4 +67,13 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  deleteConversation(conversationId: number): Observable<any> {
+    const token = this.authService.getToken();
+
+    return this.http.delete<any>(
+      `http://localhost:8082/api/conversations/${conversationId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }

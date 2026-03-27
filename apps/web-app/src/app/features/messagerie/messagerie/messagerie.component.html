@@ -15,16 +15,9 @@
             (focus)="onFocusSearch()"
             class="search-bar"
           />
-          <button
-            *ngIf="searchActive"
-            class="cancel-btn"
-            (click)="cancelSearch()"
-          >
-            X
-          </button>
+          <button *ngIf="searchActive" class="cancel-btn" (click)="cancelSearch()">X</button>
         </div>
 
-        <!-- Résultats de recherche -->
         <div *ngIf="searchActive && searchTerm.trim() && filteredUsers.length > 0" class="search-results">
           <div *ngFor="let user of filteredUsers" class="search-user" (click)="selectUser(user)">
             {{ user.firstName }} {{ user.lastName }}
@@ -32,13 +25,13 @@
         </div>
       </div>
 
-      <!-- Liste des conversations cachée si recherche active -->
       <div class="conversation-list" *ngIf="!searchActive">
         <div
           class="conversation"
           *ngFor="let convo of filteredConversations"
           [ngClass]="{ active: convo.id === activeConversationId }"
           (click)="selectConversation(convo)"
+          (contextmenu)="openConversationMenu($event, convo)"  
         >
           <div class="avatar"></div>
           <div class="conversation-info">
@@ -49,49 +42,60 @@
       </div>
     </div>
 
+    <!-- 👇 Context menu conversation -->
+    <div
+      class="context-menu"
+      *ngIf="conversationMenuVisible"
+      [style.top.px]="conversationMenuY"
+      [style.left.px]="conversationMenuX"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="menu-item delete" (click)="deleteConversationClicked()">Delete this conversation</div>
+    </div>
+
     <!-- Chat Area -->
-<div class="chat-area" *ngIf="activeConversationId">
-  <div class="chat-header">
-    <div class="avatar"></div>
-    <div class="chat-name">{{ activeConversationName }}</div>
-  </div>
-
-  <div class="messages" #messagesContainer>
-    <div class="message"
-        *ngFor="let msg of messages; let i = index"
-        [ngClass]="msg.type"
-        (contextmenu)="openMenu($event, i)">
-
-      <div class="bubble" *ngIf="editingIndex !== i" (dblclick)="startEdit(i)">
-        {{ msg.text }}
+    <div class="chat-area" *ngIf="activeConversationId">
+      <div class="chat-header">
+        <div class="avatar"></div>
+        <div class="chat-name">{{ activeConversationName }}</div>
       </div>
 
-      <input *ngIf="editingIndex === i"
-           type="text"
-           [(ngModel)]="editText"
-           (keyup.enter)="saveEditMessage(i)"
-           (blur)="cancelEdit()"
-           class="edit-input"
-           autofocus
-      />
+      <div class="messages" #messagesContainer>
+        <div class="message"
+            *ngFor="let msg of messages; let i = index"
+            [ngClass]="msg.type"
+            (contextmenu)="openMenu($event, i)">
+
+          <div class="bubble" *ngIf="editingIndex !== i" (dblclick)="startEdit(i)">
+            {{ msg.text }}
+          </div>
+
+          <input *ngIf="editingIndex === i"
+               type="text"
+               [(ngModel)]="editText"
+               (keyup.enter)="saveEditMessage(i)"
+               (blur)="cancelEdit()"
+               class="edit-input"
+               autofocus
+          />
+        </div>
+      </div>
+
+      <div
+        class="context-menu"
+        *ngIf="menuVisible"
+        [style.top.px]="menuY"
+        [style.left.px]="menuX"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="menu-item delete" (click)="removeMessage()">Delete Message</div>
+      </div>
+
+      <div class="message-input">
+        <input type="text" [(ngModel)]="messageContent" (keyup.enter)="sendMessage()" placeholder="Type a message...">
+        <button class="send-btn" (click)="sendMessage()">Send</button>
+      </div>
     </div>
-  </div>
-
-  <div
-  class="context-menu"
-  *ngIf="menuVisible"
-  [style.top.px]="menuY"
-  [style.left.px]="menuX"
-  (click)="$event.stopPropagation()"
-  >
-    <div class="menu-item delete" (click)="removeMessage()">Delete Message</div>
-  </div>
-
-  <div class="message-input">
-    <input type="text" [(ngModel)]="messageContent" (keyup.enter)="sendMessage()" placeholder="Type a message...">
-    <button class="send-btn" (click)="sendMessage()">Send</button>
-  </div>
-</div>
 
   </div>
 </div>
