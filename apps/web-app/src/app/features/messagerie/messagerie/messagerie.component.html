@@ -77,10 +77,10 @@
   <div class="message-input">
     <input
       type="text"
-      [(ngModel)]="newMessage"
+      [(ngModel)]="messageContent"
+      (keyup.enter)="sendMessage()"
       placeholder="Type a message..."
-      (keydown.enter)="sendMessage()"
-    />
+    >
     <button class="send-btn" (click)="sendMessage()">Send</button>
   </div>
 </div>

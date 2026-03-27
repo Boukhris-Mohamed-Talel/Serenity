@@ -35,6 +35,8 @@ export class MessagerieComponent implements OnInit {
   private searchSubject = new Subject<string>();
 
   searchActive: boolean = false;
+  messageContent: string = '';
+  currentUserId: number | null = null;
 
   constructor(private messagerieService: MessagerieService,
               private authService: AuthService,
@@ -58,13 +60,13 @@ export class MessagerieComponent implements OnInit {
   const currentUser = this.authService.getCurrentUser();
   if (!currentUser?.userId) return;
 
-  const currentUserId = currentUser.userId;
+  this.currentUserId = currentUser.userId;
 
-  this.messagerieService.getUserConversations(currentUserId).subscribe({
+  this.messagerieService.getUserConversations(this.currentUserId).subscribe({
     next: (convos) => {
       console.log('Conversations récupérées du backend:', convos);
 
-      const otherUserIds = convos.map(c => c.user1Id === currentUserId ? c.user2Id : c.user1Id);
+      const otherUserIds = convos.map(c => c.user1Id === this.currentUserId ? c.user2Id : c.user1Id);
       console.log('IDs des autres utilisateurs:', otherUserIds);
 
       this.userService.getUsersNamesById(otherUserIds).subscribe({
@@ -73,7 +75,7 @@ export class MessagerieComponent implements OnInit {
           const usersMap = new Map(users.map(u => [u.id, `${u.firstName} ${u.lastName}`]));
           this.conversations = convos.map(c => ({
             ...c,
-            otherUserName: usersMap.get(c.user1Id === currentUserId ? c.user2Id : c.user1Id)
+            otherUserName: usersMap.get(c.user1Id === this.currentUserId ? c.user2Id : c.user1Id)
           }));
           this.filteredConversations = [...this.conversations];
           console.log('Conversations finales avec noms:', this.conversations);
@@ -175,16 +177,43 @@ selectConversation(convo: any) {
   });
 }
   sendMessage() {
-    if (!this.newMessage.trim()) return;
+  console.log('sendMessage triggered');
 
-    this.messages.push({
-      text: this.newMessage,
-      type: 'sent'
-    });
-
-    this.newMessage = '';
+  if (!this.messageContent.trim()) {
+    console.log('Message vide, envoi annulé');
+    return;
   }
 
+  if (this.activeConversationId === null || this.currentUserId === null) {
+    console.error('Conversation ID ou User ID manquant');
+    return;
+  }
+
+  const conversationId = this.activeConversationId;
+  const senderId = this.currentUserId;
+
+  console.log('Conversation ID:', conversationId);
+  console.log('Sender ID:', senderId);
+  console.log('Content:', this.messageContent);
+
+  this.messagerieService
+    .sendMessages(conversationId, senderId, this.messageContent)
+    .subscribe({
+      next: (res) => {
+        console.log('Message envoyé avec succès:', res);
+
+        this.messages.push({
+          text: this.messageContent,
+          type: 'sent'
+        });
+
+        this.messageContent = '';
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'envoi du message:', err);
+      }
+    });
+}
   openMenu(event: MouseEvent, index: number) {
     event.preventDefault();
     this.menuVisible = true;

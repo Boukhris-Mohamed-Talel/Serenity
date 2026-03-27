@@ -37,4 +37,14 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  sendMessages(conversationId: number, senderId: number, content: string): Observable<any> {
+    const token = this.authService.getToken();
+    const params = `?conversationId=${conversationId}&senderId=${senderId}&content=${encodeURIComponent(content)}`;
+    return this.http.post<any>(
+      `http://localhost:8082/api/messages${params}`,
+      null,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }
