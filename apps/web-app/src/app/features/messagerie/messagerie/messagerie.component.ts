@@ -72,47 +72,76 @@ selectUser(user: any) {
   const currentUser = this.authService.getCurrentUser();
   console.log('Current user:', currentUser);
 
-  if (!currentUser?.userId) {
-    console.warn('Utilisateur non connecté ou userId manquant');
-    return;
-  }
+  if (!currentUser?.userId) return;
 
   const currentUserId: number = currentUser.userId;
   console.log('Current user ID:', currentUserId);
   console.log('Selected user ID:', user.id);
 
   this.messagerieService.startConversation(currentUserId, user.id).subscribe({
-    next: (conversation) => {
-      console.log('Conversation started:', conversation);
+  next: (conversation) => {
+    console.log('Conversation started:', conversation);
 
-      this.activeConversationId = conversation.id;
-      this.activeConversationName = `${user.firstName} ${user.lastName}`;
-      this.messages = conversation.messages || [];
+    this.activeConversationId = conversation.id;
+    this.activeConversationName = `${user.firstName} ${user.lastName}`;
 
-      if (!this.conversations.find(c => c.id === conversation.id)) {
-        this.conversations.push({
-          id: conversation.id,
-          name: `${user.firstName} ${user.lastName}`,
-          lastMessage: conversation.messages?.[conversation.messages.length - 1]?.content || ''
-        });
-        console.log('Conversation added to list:', this.conversations);
+    // Récupérer les messages après création
+    this.messagerieService.getConversationMessages(conversation.id).subscribe({
+      next: (msgs) => {
+        this.messages = msgs;
+        console.log('Messages récupérés pour la conversation :', this.messages);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des messages :', err);
+        this.messages = [];
       }
+    });
 
-      this.filteredConversations = [...this.conversations];
-      this.cancelSearch();
+    if (!this.conversations.find(c => c.id === conversation.id)) {
+      this.conversations.push({
+        id: conversation.id,
+        name: `${user.firstName} ${user.lastName}`,
+        lastMessage: ''
+      });
+    }
+
+    this.filteredConversations = [...this.conversations];
+    this.cancelSearch();
+  },
+  error: (err) => {
+    console.error('Erreur lors du démarrage de la conversation:', err);
+  }
+});
+}
+
+selectConversation(convo: any) {
+  console.log('Conversation sélectionnée :', convo);
+
+  this.activeConversationId = convo.id;
+  this.activeConversationName = convo.name;
+  console.log('ID actif :', this.activeConversationId);
+  console.log('Nom actif :', this.activeConversationName);
+
+  this.messagerieService.getConversationMessages(convo.id).subscribe({
+    next: (msgs) => {
+      console.log('Raw messages API :', msgs); // vérifier ce qui arrive
+
+      this.messages = msgs.map(msg => ({
+        text: msg.content || '', // utiliser content pour text
+        type: msg.senderId === this.authService.getCurrentUser()?.userId ? 'sent' : 'received',
+        id: msg.id,
+        createdAt: msg.createdAt,
+        senderId: msg.senderId
+      }));
+
+      console.log('Messages formatés pour le UI :', this.messages);
     },
     error: (err) => {
-      console.error('Erreur lors du démarrage de la conversation:', err);
+      console.error('Erreur lors du chargement des messages :', err);
+      this.messages = [];
     }
   });
 }
-
-  selectConversation(convo: any) {
-    this.activeConversationId = convo.id;
-    this.activeConversationName = convo.name;
-    // Charger les messages de cette conversation si tu les récupères via API
-  }
-
   sendMessage() {
     if (!this.newMessage.trim()) return;
 
