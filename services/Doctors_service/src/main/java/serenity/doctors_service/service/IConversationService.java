@@ -14,4 +14,6 @@ public interface IConversationService {
     Optional<ConversationDTO> getConversationById(Long id);
 
     void deleteConversation(Long id);
+
+    Conversation createOrGetConversation(Long user1Id, Long user2Id);
 }

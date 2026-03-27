@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import serenity.doctors_service.dto.ConversationDTO;
 import serenity.doctors_service.entity.Conversation;
+import serenity.doctors_service.mapper.ConversationMapper;
 import serenity.doctors_service.service.IConversationService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -14,8 +15,12 @@ public class ConversationController {
 
     private final IConversationService conversationService;
 
-    public ConversationController(IConversationService conversationService) {
+    private ConversationMapper conversationMapper;
+
+    public ConversationController(IConversationService conversationService,
+                                  ConversationMapper conversationMapper) {
         this.conversationService = conversationService;
+        this.conversationMapper = conversationMapper;
     }
 
     @PostMapping
@@ -43,5 +48,14 @@ public class ConversationController {
     public ResponseEntity<Void> deleteConversation(@PathVariable Long id) {
         conversationService.deleteConversation(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/start")
+    public ResponseEntity<ConversationDTO> startConversation(
+            @RequestParam Long user1Id,
+            @RequestParam Long user2Id) {
+
+        Conversation conversation = conversationService.createOrGetConversation(user1Id, user2Id);
+        return ResponseEntity.ok(conversationMapper.toDTO(conversation));
     }
 }

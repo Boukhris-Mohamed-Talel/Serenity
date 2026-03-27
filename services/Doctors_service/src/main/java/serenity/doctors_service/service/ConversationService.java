@@ -48,4 +48,18 @@ public class ConversationService implements IConversationService {
     public void deleteConversation(Long id) {
         conversationRepository.deleteById(id);
     }
+
+    @Override
+    public Conversation createOrGetConversation(Long user1Id, Long user2Id) {
+        Optional<Conversation> existing = conversationRepository
+                .findByUser1IdAndUser2Id(user1Id, user2Id)
+                .or(() -> conversationRepository.findByUser1IdAndUser2Id(user2Id, user1Id));
+
+        if (existing.isPresent()) return existing.get();
+
+        Conversation conversation = new Conversation();
+        conversation.setUser1Id(user1Id);
+        conversation.setUser2Id(user2Id);
+        return conversationRepository.save(conversation);
+    }
 }

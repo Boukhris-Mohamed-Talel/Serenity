@@ -26,7 +26,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/doctor-verifications/**").hasRole("ADMIN")
                         .requestMatchers("/api/messages/**").authenticated()
-                        .requestMatchers("api/conversations/**").authenticated()
+                        .requestMatchers("/api/conversations/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
