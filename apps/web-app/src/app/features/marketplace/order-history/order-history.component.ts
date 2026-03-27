@@ -68,6 +68,18 @@ export class OrderHistoryComponent implements OnInit {
     this.expandedOrderId = this.expandedOrderId === orderId ? null : orderId;
   }
 
+  openOrder(orderId: number, event?: Event): void {
+    event?.stopPropagation();
+    this.expandedOrderId = orderId;
+  }
+
+  collapseOrder(orderId: number, event?: Event): void {
+    event?.stopPropagation();
+    if (this.expandedOrderId === orderId) {
+      this.expandedOrderId = null;
+    }
+  }
+
   statusTone(status: MarketplaceOrderStatus): 'success' | 'pending' | 'cancelled' {
     if (status === 'PAID') {
       return 'success';

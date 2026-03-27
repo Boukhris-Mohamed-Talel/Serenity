@@ -88,6 +88,44 @@
   <router-outlet></router-outlet>
 </main>
 
+<section class="debug-panel" *ngIf="debugSessionService.isEnabled()" [class.open]="debugOpen">
+  <header class="debug-header">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="toggleDebugPanel()">
+      {{ debugOpen ? 'Hide Debug' : 'Show Debug' }}
+    </button>
+    <span class="debug-pill">Session Debug</span>
+  </header>
+
+  <div class="debug-body" *ngIf="debugOpen">
+    <div class="debug-actions">
+      <select [(ngModel)]="debugFilter">
+        <option value="ALL">ALL</option>
+        <option value="NAVIGATION">NAVIGATION</option>
+        <option value="HTTP">HTTP</option>
+        <option value="UI_ACTION">UI_ACTION</option>
+        <option value="STATE">STATE</option>
+        <option value="AUTH">AUTH</option>
+        <option value="ERROR">ERROR</option>
+        <option value="MISSING_ROUTE">MISSING_ROUTE</option>
+      </select>
+      <button type="button" class="btn btn-sm btn-secondary" (click)="clearDebugEvents()">Clear</button>
+      <button type="button" class="btn btn-sm btn-secondary" (click)="copyDebugJson()">Copy JSON</button>
+      <button type="button" class="btn btn-sm btn-secondary" (click)="copyDebugMarkdown()">Copy MD</button>
+    </div>
+
+    <div class="debug-events">
+      <article class="debug-event" *ngFor="let ev of filteredDebugEvents">
+        <div class="debug-event-top">
+          <strong>{{ ev.category }}</strong>
+          <small>{{ ev.timestamp | date:'shortTime' }}</small>
+        </div>
+        <p>{{ ev.action }}</p>
+        <small>{{ ev.route }}</small>
+      </article>
+    </div>
+  </div>
+</section>
+
 <footer class="footer" *ngIf="authService.isLoggedIn()">
   <div class="container footer-inner">
     <div class="footer-brand">

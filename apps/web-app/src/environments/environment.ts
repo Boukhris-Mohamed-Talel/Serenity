@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  debugModeAvailable: true,
   apiUrl: 'http://localhost:8082/api',
   insuranceApiUrl: 'http://localhost:8082/api',
   marketplaceServiceApiUrl: 'http://localhost:8082/api',

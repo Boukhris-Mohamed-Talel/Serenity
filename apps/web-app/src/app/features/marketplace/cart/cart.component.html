@@ -22,8 +22,14 @@
     <div class="cart-table" *ngIf="cart.length > 0">
       <article class="row" *ngFor="let item of cart">
         <div class="product">
-          <strong>{{ item.product.name }}</strong>
-          <small>{{ item.product.type }}</small>
+          <img
+            class="product-thumb"
+            [src]="item.product.imageUrl || 'assets/logo.png'"
+            [alt]="item.product.name" />
+          <div>
+            <strong>{{ item.product.name }}</strong>
+            <small>{{ item.product.type }}</small>
+          </div>
         </div>
 
         <input

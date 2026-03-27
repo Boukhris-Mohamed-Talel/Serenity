@@ -239,6 +239,91 @@
   flex: 1;
 }
 
+.debug-panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(420px, calc(100vw - 2rem));
+  z-index: 1000;
+  border: 1px solid #d4dee9;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.2);
+}
+
+.debug-header {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #ebf1f7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.debug-pill {
+  font-size: 0.72rem;
+  background: #edf4ff;
+  color: #17457a;
+  border: 1px solid #c7dbf8;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.debug-body {
+  padding: 0.65rem;
+}
+
+.debug-actions {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+
+  select {
+    border: 1px solid #c7d3e0;
+    border-radius: 8px;
+    padding: 0.25rem 0.4rem;
+    background: #fff;
+  }
+}
+
+.debug-events {
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid #ebf1f7;
+  padding-top: 0.45rem;
+}
+
+.debug-event {
+  border: 1px solid #e7edf4;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  margin-bottom: 0.45rem;
+  background: #fbfdff;
+
+  p {
+    margin: 0.15rem 0;
+    font-size: 0.8rem;
+    color: #253547;
+  }
+
+  small {
+    color: #5f738a;
+    font-size: 0.7rem;
+  }
+}
+
+.debug-event-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  strong {
+    font-size: 0.74rem;
+    color: #1f4069;
+  }
+}
+
 // Peek character
 .peek-character {
   position: absolute;

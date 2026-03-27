@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
@@ -15,12 +15,16 @@ import {
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss']
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
   products: MarketplaceProduct[] = [];
   loading = false;
   query = '';
   selectedCategory: MarketplaceProductCategory | '' = '';
   selectedType: MarketplaceProductType | '' = '';
+  resetAnimating = false;
+
+  private searchDebounceId: number | null = null;
+  private readonly searchDebounceMs = 220;
 
   readonly categories = MARKETPLACE_CATEGORIES;
   readonly types = MARKETPLACE_TYPES;
@@ -33,6 +37,13 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchDebounceId !== null) {
+      window.clearTimeout(this.searchDebounceId);
+      this.searchDebounceId = null;
+    }
   }
 
   loadProducts(): void {
@@ -57,6 +68,24 @@ export class ProductListComponent implements OnInit {
     this.selectedCategory = '';
     this.selectedType = '';
     this.loadProducts();
+  }
+
+  clearFiltersSmooth(): void {
+    this.resetAnimating = true;
+    this.clearFilters();
+    window.setTimeout(() => {
+      this.resetAnimating = false;
+    }, 320);
+  }
+
+  onQueryInputChange(): void {
+    if (this.searchDebounceId !== null) {
+      window.clearTimeout(this.searchDebounceId);
+    }
+
+    this.searchDebounceId = window.setTimeout(() => {
+      this.loadProducts();
+    }, this.searchDebounceMs);
   }
 
   addToCart(product: MarketplaceProduct): void {

@@ -10,7 +10,6 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { WishlistComponent } from './wishlist/wishlist.component';
 import { ReviewsComponent } from './reviews/reviews.component';
-import { DiscountComponent } from './discount/discount.component';
 
 @NgModule({
   declarations: [
@@ -20,8 +19,7 @@ import { DiscountComponent } from './discount/discount.component';
     CheckoutComponent,
     OrderHistoryComponent,
     WishlistComponent,
-    ReviewsComponent,
-    DiscountComponent
+    ReviewsComponent
   ],
   imports: [
     CommonModule,

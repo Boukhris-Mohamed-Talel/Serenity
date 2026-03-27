@@ -84,7 +84,22 @@
 
 .product {
   display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.product > div {
+  display: flex;
   flex-direction: column;
+}
+
+.product-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #d8e2ee;
+  background: #f9fbfe;
 }
 
 .product small {
@@ -142,6 +157,10 @@
 
   .row {
     grid-template-columns: 1fr;
+  }
+
+  .product {
+    align-items: flex-start;
   }
 
   .price {

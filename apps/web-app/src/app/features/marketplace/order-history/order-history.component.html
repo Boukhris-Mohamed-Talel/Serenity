@@ -54,13 +54,13 @@
 
       <div class="order-preview" *ngIf="expandedOrderId !== order.id">
         <span>{{ order.items.length }} items</span>
-        <button type="button" class="btn btn-outline">View details</button>
+        <button type="button" class="btn btn-outline" (click)="openOrder(order.id, $event)">View details</button>
       </div>
 
       <div class="order-details" *ngIf="expandedOrderId === order.id">
         <div class="meta-grid">
-          <p><span>Payment</span><strong>{{ order.paymentAttempt.status }}</strong></p>
-          <p><span>Reference</span><strong>{{ order.paymentAttempt.reference }}</strong></p>
+          <p><span>Payment</span><strong>{{ order.paymentAttempt?.status || 'N/A' }}</strong></p>
+          <p><span>Reference</span><strong>{{ order.paymentAttempt?.reference || 'N/A' }}</strong></p>
           <p><span>Shipping</span><strong>{{ order.shippingAddress }}</strong></p>
         </div>
 
@@ -74,7 +74,7 @@
 
         <div class="actions">
           <button type="button" class="btn btn-primary" (click)="buyAgain(order)">Buy Again</button>
-          <button type="button" class="btn btn-outline" (click)="toggleOrder(order.id)">Collapse</button>
+          <button type="button" class="btn btn-outline" (click)="collapseOrder(order.id, $event)">Collapse</button>
         </div>
       </div>
     </article>

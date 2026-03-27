@@ -27,7 +27,7 @@ export class ReviewsComponent implements OnInit {
   ) {
     this.reviewForm = this.fb.group({
       rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
-      reviewText: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]]
+      reviewText: ['', [Validators.maxLength(1000)]]
     });
   }
 
@@ -70,19 +70,32 @@ export class ReviewsComponent implements OnInit {
   }
 
   submitReview(): void {
-    if (!this.reviewForm.valid || !this.productId || !this.userId) {
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    if (!this.productId) {
+      this.errorMessage = 'Product details are still loading. Please try again in a moment.';
+      return;
+    }
+
+    if (!this.authService.isLoggedIn()) {
+      this.errorMessage = 'Please sign in to submit a review.';
+      return;
+    }
+
+    if (!this.reviewForm.valid) {
+      this.reviewForm.markAllAsTouched();
+      this.errorMessage = 'Please fix the highlighted fields before submitting.';
       return;
     }
 
     this.submitting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
 
     const { rating, reviewText } = this.reviewForm.value;
     this.marketplaceService.createOrUpdateReview(
       this.productId,
-      rating,
-      reviewText
+      Number(rating),
+      String(reviewText || '').trim()
     ).subscribe({
       next: () => {
         this.successMessage = 'Review submitted successfully!';

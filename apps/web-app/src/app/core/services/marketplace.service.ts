@@ -13,6 +13,7 @@ import {
   MarketplaceOrderStatus,
   OrderStatusUpdateRequest
 } from '../../shared/models/marketplace.model';
+import { DebugSessionService } from '../debug/debug-session.service';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +24,10 @@ export class MarketplaceService {
   private readonly cartSubject = new BehaviorSubject<CartItem[]>([]);
   readonly cart$ = this.cartSubject.asObservable();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly debugSessionService: DebugSessionService
+  ) {}
 
   getProducts(filters?: {
     query?: string;
@@ -96,8 +100,16 @@ export class MarketplaceService {
       customerNote
     };
 
+    this.debugSessionService.log('STATE', 'Checkout initiated', {
+      itemCount: request.items.length,
+      hasCustomerNote: Boolean(customerNote)
+    });
+
     return this.http.post<MarketplaceOrder>(`${this.API_URL}/orders/checkout`, request).pipe(
-      tap(() => this.clearCart())
+      tap(() => {
+        this.debugSessionService.log('STATE', 'Checkout succeeded, cart cleared');
+        this.clearCart();
+      })
     );
   }
 
@@ -112,6 +124,11 @@ export class MarketplaceService {
     }
 
     this.cartSubject.next(current);
+    this.debugSessionService.log('UI_ACTION', 'Cart item added', {
+      productId: product.id,
+      quantity,
+      cartSize: current.length
+    });
   }
 
   updateCartQuantity(productId: number, quantity: number): void {
@@ -119,14 +136,20 @@ export class MarketplaceService {
       .map(item => item.product.id === productId ? { ...item, quantity } : item)
       .filter(item => item.quantity > 0);
     this.cartSubject.next(current);
+    this.debugSessionService.log('UI_ACTION', 'Cart quantity updated', {
+      productId,
+      quantity
+    });
   }
 
   removeFromCart(productId: number): void {
     this.cartSubject.next(this.cartSubject.value.filter(item => item.product.id !== productId));
+    this.debugSessionService.log('UI_ACTION', 'Cart item removed', { productId });
   }
 
   clearCart(): void {
     this.cartSubject.next([]);
+    this.debugSessionService.log('STATE', 'Cart cleared');
   }
 
   getCartSnapshot(): CartItem[] {
@@ -179,20 +202,4 @@ export class MarketplaceService {
     return this.http.delete<void>(`${this.API_URL}/reviews/${reviewId}`);
   }
 
-  // ===== COUPON/DISCOUNT OPERATIONS =====
-  validateCoupon(code: string, orderAmount: number): Observable<any> {
-    const params = new HttpParams()
-      .set('code', code)
-      .set('orderAmount', orderAmount.toString());
-    return this.http.get(`${this.API_URL}/coupons/validate`, { params });
-  }
-
-  applyCoupon(code: string): Observable<void> {
-    const params = new HttpParams().set('code', code);
-    return this.http.post<void>(`${this.API_URL}/coupons/apply`, {}, { params });
-  }
-
-  getCoupon(code: string): Observable<any> {
-    return this.http.get(`${this.API_URL}/coupons/${code}`);
-  }
 }

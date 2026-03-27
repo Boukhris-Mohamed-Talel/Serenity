@@ -44,12 +44,15 @@
         <small class="form-text text-muted">
           {{ reviewForm.get('reviewText')?.value?.length || 0 }}/1000 characters
         </small>
+        <small class="form-text text-danger" *ngIf="reviewForm.get('reviewText')?.touched && reviewForm.get('reviewText')?.hasError('maxlength')">
+          Review text must be 1000 characters or less.
+        </small>
       </div>
 
       <button 
         type="submit" 
         class="btn btn-primary"
-        [disabled]="!reviewForm.valid || submitting"
+        [disabled]="submitting"
       >
         {{ submitting ? 'Submitting...' : 'Submit Review' }}
       </button>

@@ -68,7 +68,7 @@ export interface MarketplaceOrder {
   currency: string;
   shippingAddress: string;
   customerNote?: string;
-  paymentAttempt: PaymentAttempt;
+  paymentAttempt?: PaymentAttempt;
   items: OrderItem[];
   createdAt: string;
 }

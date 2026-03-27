@@ -39,6 +39,37 @@
   gap: 0.5rem;
 }
 
+.btn-reset {
+  border: 1px solid #c2d2e4;
+  background: linear-gradient(180deg, #fefefe 0%, #eef4fb 100%);
+  color: #224161;
+  border-radius: 999px;
+  padding: 0.48rem 0.95rem;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.btn-reset:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 64, 96, 0.16);
+  border-color: #9eb8d3;
+}
+
+.btn-reset.animating {
+  animation: resetPulse 320ms ease;
+}
+
+@keyframes resetPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .hint {
   margin-top: 0.75rem;
   color: var(--primary-dark);

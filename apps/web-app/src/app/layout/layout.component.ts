@@ -1,11 +1,13 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
 import { InsuranceService } from '../core/services/insurance.service';
 import { InsuranceNotification } from '../shared/models/insurance.model';
 import { UserResponse } from '../shared/models/user.model';
+import { DebugEvent } from '../core/debug/debug-event.model';
+import { DebugSessionService } from '../core/debug/debug-session.service';
 
 @Component({
   selector: 'app-layout',
@@ -23,16 +25,25 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private readonly locallyReadNotificationIds = new Set<number>();
   private peekInterval: any;
   private userSub!: Subscription;
+  private routerSub!: Subscription;
+  private debugSub!: Subscription;
   private notificationRefreshInterval: any;
+  debugOpen = false;
+  debugFilter = 'ALL';
+  debugEvents: DebugEvent[] = [];
 
   constructor(
     public readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly insuranceService: InsuranceService,
-    private readonly router: Router
+    private readonly router: Router,
+    public readonly debugSessionService: DebugSessionService
   ) {}
 
   ngOnInit(): void {
+    this.setupRouterDebugTracking();
+    this.setupDebugEventsSubscription();
+
     if (this.authService.isLoggedIn()) {
       this.userService.getCurrentUser().subscribe();
 
@@ -54,6 +65,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
     if (this.userSub) {
       this.userSub.unsubscribe();
+    }
+    if (this.routerSub) {
+      this.routerSub.unsubscribe();
+    }
+    if (this.debugSub) {
+      this.debugSub.unsubscribe();
     }
     if (this.notificationRefreshInterval) {
       clearInterval(this.notificationRefreshInterval);
@@ -86,6 +103,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.debugSessionService.log('AUTH', 'Manual logout from navbar');
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }
@@ -93,6 +111,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
   toggleNotifications(event: MouseEvent): void {
     event.stopPropagation();
     this.notificationsOpen = !this.notificationsOpen;
+    this.debugSessionService.log('UI_ACTION', 'Notification panel toggled', {
+      open: this.notificationsOpen
+    });
     if (this.notificationsOpen) {
       this.loadNotifications();
     }
@@ -100,6 +121,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   onNotificationClick(notification: InsuranceNotification, event: MouseEvent): void {
     event.stopPropagation();
+    this.debugSessionService.log('UI_ACTION', 'Notification clicked', {
+      notificationId: notification.id,
+      claimId: notification.claimId,
+      wasRead: notification.isRead
+    });
     const wasUnread = !notification.isRead;
 
     if (wasUnread) {
@@ -121,6 +147,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   markAllAsRead(event: MouseEvent): void {
     event.stopPropagation();
+    this.debugSessionService.log('UI_ACTION', 'Mark all notifications as read');
     for (const notification of this.notifications) {
       this.locallyReadNotificationIds.add(notification.id);
     }
@@ -139,8 +166,85 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:click')
-  onDocumentClick(): void {
+  onDocumentClick(event: MouseEvent): void {
     this.notificationsOpen = false;
+    const target = event.target as HTMLElement | null;
+    if (target) {
+      this.debugSessionService.log('UI_ACTION', 'Document click', {
+        tag: target.tagName,
+        id: target.id || null,
+        className: target.className || null
+      });
+    }
+  }
+
+  @HostListener('document:keydown.control.shift.d')
+  onDebugShortcut(): void {
+    if (!this.debugSessionService.isEnabled()) {
+      this.debugSessionService.enable();
+    }
+    this.debugOpen = !this.debugOpen;
+  }
+
+  get filteredDebugEvents(): DebugEvent[] {
+    if (this.debugFilter === 'ALL') {
+      return [...this.debugEvents].reverse();
+    }
+    return this.debugEvents
+      .filter(event => event.category === this.debugFilter)
+      .reverse();
+  }
+
+  toggleDebugPanel(): void {
+    if (!this.debugSessionService.isEnabled()) {
+      this.debugSessionService.enable();
+    }
+    this.debugOpen = !this.debugOpen;
+  }
+
+  clearDebugEvents(): void {
+    this.debugSessionService.clear();
+  }
+
+  copyDebugJson(): void {
+    const payload = this.debugSessionService.exportJson();
+    navigator.clipboard.writeText(payload);
+  }
+
+  copyDebugMarkdown(): void {
+    const payload = this.debugSessionService.exportMarkdown();
+    navigator.clipboard.writeText(payload);
+  }
+
+  private setupRouterDebugTracking(): void {
+    this.routerSub = this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.debugSessionService.log('NAVIGATION', 'Navigation start', {
+          url: event.url
+        });
+      } else if (event instanceof NavigationEnd) {
+        this.debugSessionService.log('NAVIGATION', 'Navigation end', {
+          urlAfterRedirects: event.urlAfterRedirects
+        });
+        this.debugSessionService.checkMarketplaceRoute(event.urlAfterRedirects);
+      } else if (event instanceof NavigationCancel) {
+        this.debugSessionService.log('ERROR', 'Navigation canceled', {
+          url: event.url,
+          reason: event.reason
+        }, 'warn');
+      } else if (event instanceof NavigationError) {
+        this.debugSessionService.log('ERROR', 'Navigation error', {
+          url: event.url,
+          message: event.error?.message || String(event.error)
+        }, 'error');
+      }
+    });
+  }
+
+  private setupDebugEventsSubscription(): void {
+    this.debugSub = this.debugSessionService.events$.subscribe(events => {
+      this.debugEvents = events;
+    });
   }
 
   private refreshNotifications(): void {
