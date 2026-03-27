@@ -22,7 +22,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
-                                "/ws-doctor-verification/**"
+                                "/ws-doctor-verification/**",
+                                "/ws-chat-messages"
                         ).permitAll()
                         .requestMatchers("/api/doctor-verifications/**").authenticated()
                         .requestMatchers("/api/messages/**").authenticated()

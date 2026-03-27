@@ -15,16 +15,23 @@ public class RedisConfig {
     @Bean
     public RedisMessageListenerContainer redisContainer(
             RedisConnectionFactory connectionFactory,
-            MessageListenerAdapter listenerAdapter) {
+            MessageListenerAdapter listenerAdapter,
+            MessageListenerAdapter chatListenerAdapter) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listenerAdapter, new PatternTopic("doctor-verifications"));
+        container.addMessageListener(chatListenerAdapter, new PatternTopic("chat-messages"));
         return container;
     }
 
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "receiveMessage");
+    }
+
+    @Bean
+    public MessageListenerAdapter chatListenerAdapter(RedisSubscriber chatSubscriber) {
+        return new MessageListenerAdapter(chatSubscriber, "receiveChatMessage");
     }
 }

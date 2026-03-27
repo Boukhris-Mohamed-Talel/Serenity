@@ -9,7 +9,10 @@ import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.service.IMessageService;
 import serenity.doctors_service.service.IConversationService;
 import org.springframework.web.bind.annotation.*;
+import serenity.doctors_service.service.RedisPublisher;
+
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -17,10 +20,12 @@ public class MessageController {
 
     private final IMessageService messageService;
     private final IConversationService conversationService;
+    private final RedisPublisher redisPublisher;
 
-    public MessageController(IMessageService messageService, IConversationService conversationService) {
+    public MessageController(IMessageService messageService, IConversationService conversationService, RedisPublisher redisPublisher) {
         this.messageService = messageService;
         this.conversationService = conversationService;
+        this.redisPublisher = redisPublisher;
     }
 
     @PostMapping
@@ -28,11 +33,18 @@ public class MessageController {
             @RequestParam Long conversationId,
             @RequestParam Long senderId,
             @RequestParam String content) {
+
         ConversationDTO conversationDTO = conversationService.getConversationById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
         Conversation conversation = new Conversation();
-        conversation.setId(conversationDTO.getId()); // juste l'id nécessaire ici
+        conversation.setId(conversationDTO.getId());
+
         MessageDTO message = messageService.sendMessage(conversation, senderId, content);
+
+        // Publier sur Redis pour WebSocket
+        redisPublisher.publishChatMessage(message);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
@@ -40,8 +52,10 @@ public class MessageController {
     public ResponseEntity<List<MessageDTO>> getMessages(@PathVariable Long conversationId) {
         ConversationDTO conversationDTO = conversationService.getConversationById(conversationId)
                 .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
         Conversation conversation = new Conversation();
         conversation.setId(conversationDTO.getId());
+
         List<MessageDTO> messages = messageService.getMessages(conversation);
         return ResponseEntity.ok(messages);
     }
@@ -50,13 +64,23 @@ public class MessageController {
     public ResponseEntity<MessageDTO> editMessage(
             @PathVariable Long messageId,
             @RequestParam String content) {
+
         MessageDTO updated = messageService.editMessage(messageId, content);
+
+        // Publier modification sur Redis
+        redisPublisher.publishChatMessage(updated);
+
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{messageId}")
     public ResponseEntity<Void> deleteMessage(@PathVariable Long messageId) {
+
         messageService.deleteMessage(messageId);
+
+        // Publier suppression sur Redis (on peut envoyer juste l'ID)
+        redisPublisher.publishChatMessage(Map.of("deletedMessageId", messageId));
+
         return ResponseEntity.noContent().build();
     }
 
