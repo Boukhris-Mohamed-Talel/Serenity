@@ -33,14 +33,17 @@
           </div>
 
           <div
-            class="notif-item"
-            *ngFor="let notif of notifications"
-            [ngClass]="{ unread: !notif.read }"
-            (click)="goToConversation(notif)"
-          >
-            <div class="notif-text">💬 {{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
-            <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
-          </div>
+  class="notif-item"
+  *ngFor="let notif of notifications"
+  [ngClass]="{ unread: !notif.read }"
+  (click)="goToConversation(notif)"
+>
+  <div class="notif-content">
+    <div class="notif-sender">💬 {{ notif.senderName }}</div>  <!-- 👈 -->
+    <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
+  </div>
+  <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
+</div>
         </div>
       </div>
       <!-- 👆 End Bell -->

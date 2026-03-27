@@ -283,3 +283,16 @@
     white-space: nowrap;
   }
 }
+
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.notif-sender {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+}

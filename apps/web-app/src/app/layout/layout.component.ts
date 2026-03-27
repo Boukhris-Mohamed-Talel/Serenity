@@ -48,19 +48,39 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.webSocketService.connect();
 
       this.wsSub = this.webSocketService.newMessage$.subscribe((msg: any) => {
-        const currentUserId = this.authService.getCurrentUser()?.userId;
-        // only notify if message is not sent by current user
-        if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
-          this.notifications.unshift({
-            id: msg.id,
-            text: msg.content,
-            conversationId: msg.conversationId,
-            time: new Date(),
-            read: false
-          });
-          this.unreadCount++;
-        }
-      });
+  const currentUserId = this.authService.getCurrentUser()?.userId;
+  if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
+
+    // 👇 fetch sender name
+    this.userService.getUsersNamesById([msg.senderId]).subscribe({
+      next: (users) => {
+        const sender = users[0];
+        const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown';
+
+        this.notifications.unshift({
+          id: msg.id,
+          text: msg.content,
+          senderName,           // 👈
+          conversationId: msg.conversationId,
+          time: new Date(),
+          read: false
+        });
+        this.unreadCount++;
+      },
+      error: () => {
+        this.notifications.unshift({
+          id: msg.id,
+          text: msg.content,
+          senderName: 'Unknown', // 👈 fallback
+          conversationId: msg.conversationId,
+          time: new Date(),
+          read: false
+        });
+        this.unreadCount++;
+      }
+    });
+  }
+});
     }
   }
 
