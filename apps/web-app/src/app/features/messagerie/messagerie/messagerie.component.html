@@ -56,31 +56,39 @@
     <div class="chat-name">{{ activeConversationName }}</div>
   </div>
 
-  <div class="messages">
-    <div class="message" *ngFor="let msg of messages" [ngClass]="msg.type">
-      <div class="bubble">
+  <div class="messages" #messagesContainer>
+    <div class="message"
+        *ngFor="let msg of messages; let i = index"
+        [ngClass]="msg.type"
+        (contextmenu)="openMenu($event, i)">
+
+      <div class="bubble" *ngIf="editingIndex !== i" (dblclick)="startEdit(i)">
         {{ msg.text }}
       </div>
+
+      <input *ngIf="editingIndex === i"
+           type="text"
+           [(ngModel)]="editText"
+           (keyup.enter)="saveEditMessage(i)"
+           (blur)="cancelEdit()"
+           class="edit-input"
+           autofocus
+      />
     </div>
   </div>
 
   <div
-    class="context-menu"
-    *ngIf="menuVisible"
-    [style.top.px]="menuY"
-    [style.left.px]="menuX"
+  class="context-menu"
+  *ngIf="menuVisible"
+  [style.top.px]="menuY"
+  [style.left.px]="menuX"
+  (click)="$event.stopPropagation()"
   >
-    <div class="menu-item" (click)="editMessage()">Modify</div>
-    <div class="menu-item delete" (click)="deleteMessage()">Delete</div>
+    <div class="menu-item delete" (click)="removeMessage()">Delete Message</div>
   </div>
 
   <div class="message-input">
-    <input
-      type="text"
-      [(ngModel)]="messageContent"
-      (keyup.enter)="sendMessage()"
-      placeholder="Type a message..."
-    >
+    <input type="text" [(ngModel)]="messageContent" (keyup.enter)="sendMessage()" placeholder="Type a message...">
     <button class="send-btn" (click)="sendMessage()">Send</button>
   </div>
 </div>

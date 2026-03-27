@@ -89,11 +89,12 @@
 
 /* Messages */
 .messages {
-  flex: 1;                /* prend tout l’espace restant */
+  flex: 1;
   padding: 1rem;
-  overflow-y: auto;        /* scroll si beaucoup de messages */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
@@ -259,4 +260,13 @@
 .search-user:hover {
   background: #f0f0f0;
   border-radius: 8px;
+}
+
+.edit-input {
+  padding: 8px 12px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+  max-width: 70%;
+  font-size: 0.85rem;
+  outline: none;
 }

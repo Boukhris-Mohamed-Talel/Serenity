@@ -47,4 +47,24 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  editMessage(messageId: number, content: string): Observable<any> {
+    const token = this.authService.getToken();
+    const params = `?content=${encodeURIComponent(content)}`;
+
+    return this.http.put<any>(
+      `http://localhost:8082/api/messages/${messageId}${params}`,
+      null,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
+
+  deleteMessage(messageId: number): Observable<any> {
+    const token = this.authService.getToken();
+
+    return this.http.delete<any>(
+      `http://localhost:8082/api/messages/${messageId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }

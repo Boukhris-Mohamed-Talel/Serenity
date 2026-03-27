@@ -56,6 +56,9 @@ export class MessagerieComponent implements OnInit {
   }
 
   ngOnInit() {
+    document.addEventListener('click', () => {
+      this.menuVisible = false;
+    });
   this.filteredConversations = [...this.conversations];
   const currentUser = this.authService.getCurrentUser();
   if (!currentUser?.userId) return;
@@ -216,15 +219,13 @@ selectConversation(convo: any) {
 }
   openMenu(event: MouseEvent, index: number) {
     event.preventDefault();
+
     this.menuVisible = true;
     this.menuX = event.clientX;
     this.menuY = event.clientY;
     this.selectedIndex = index;
-  }
 
-  deleteMessage() {
-    this.messages.splice(this.selectedIndex, 1);
-    this.menuVisible = false;
+    console.log('Menu ouvert pour message index:', index);
   }
 
   editMessage() {
@@ -237,6 +238,48 @@ selectConversation(convo: any) {
     this.messages[this.editingIndex].text = this.editText;
     this.editingIndex = -1;
   }
+
+  startEdit(index: number) {
+  this.editingIndex = index;
+  this.editText = this.messages[index].text;
+  this.menuVisible = false; // fermer menu si ouvert
+}
+
+saveEditMessage(index: number) {
+  const msg = this.messages[index];
+  if (!this.editText.trim() || msg.text === this.editText) {
+    this.cancelEdit();
+    return;
+  }
+
+  this.messagerieService.editMessage(msg.id, this.editText).subscribe({
+    next: (updated) => {
+      this.messages[index].text = updated.content;
+      this.editingIndex = -1;
+    },
+    error: (err) => {
+      console.error('Erreur modification message:', err);
+      this.editingIndex = -1;
+    }
+  });
+}
+
+cancelEdit() {
+  this.editingIndex = -1;
+}
+
+removeMessage() {
+  if (this.selectedIndex < 0) return;
+  const msg = this.messages[this.selectedIndex];
+
+  this.messagerieService.deleteMessage(msg.id).subscribe({
+    next: () => {
+      this.messages.splice(this.selectedIndex, 1);
+      this.menuVisible = false;
+    },
+    error: (err) => console.error('Erreur suppression message:', err)
+  });
+}
   
 
 }
