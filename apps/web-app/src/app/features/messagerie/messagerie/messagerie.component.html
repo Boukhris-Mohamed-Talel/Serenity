@@ -26,7 +26,7 @@
 
         <!-- Résultats de recherche -->
         <div *ngIf="searchActive && searchTerm.trim() && filteredUsers.length > 0" class="search-results">
-          <div *ngFor="let user of filteredUsers" class="search-user">
+          <div *ngFor="let user of filteredUsers" class="search-user" (click)="selectUser(user)">
             {{ user.firstName }} {{ user.lastName }}
           </div>
         </div>

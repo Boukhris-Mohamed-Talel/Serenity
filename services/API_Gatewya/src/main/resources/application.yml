@@ -24,6 +24,14 @@ spring:
           uri: http://localhost:8083
           predicates:
             - Path=/api/doctor-verifications/**
+        - id: doctor-microservice-conversation
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/conversations/**
+        - id: doctor-microservice-messages
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/messages/**
         - id: websocket-route-doctor
           uri: ws://localhost:8081
           predicates:

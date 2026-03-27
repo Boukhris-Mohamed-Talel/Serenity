@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MessagerieService } from '../../../core/services/messagerie.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-messagerie',
@@ -10,11 +11,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 })
 export class MessagerieComponent implements OnInit {
 
-  messages: any[] = [
-    { text: 'Hello!', type: 'received' },
-    { text: 'Hi 👋', type: 'sent' }
-  ];
-
+  messages: any[] = [];
   newMessage = '';
 
   menuVisible = false;
@@ -25,52 +22,95 @@ export class MessagerieComponent implements OnInit {
   editingIndex = -1;
   editText = '';
 
-  // Barre de recherche et conversations
-
-  conversations: any[] = [
-    { id: 1, name: 'John Doe', lastMessage: 'Last message preview...' },
-    { id: 2, name: 'Jane Smith', lastMessage: 'Another message...' }
-  ];
+  conversations: any[] = [];
   filteredConversations: any[] = [];
   activeConversationId: number | null = null;
   activeConversationName: string = '';
 
   searchTerm: string = '';
-filteredUsers: any[] = [];
-private searchSubject = new Subject<string>();
+  filteredUsers: any[] = [];
+  private searchSubject = new Subject<string>();
 
-constructor(private messagerieService: MessagerieService) {
-  this.searchSubject.pipe(
-    debounceTime(300),
-    distinctUntilChanged(),
-    switchMap(term => {
-      if (!term.trim()) {
-        this.filteredUsers = [];
-        return [];
-      }
-      return this.messagerieService.searchUsers(term);
-    })
-  ).subscribe(users => this.filteredUsers = users);
-}
+  searchActive: boolean = false;
 
-onSearch() {
-  this.searchSubject.next(this.searchTerm);
-}
+  constructor(private messagerieService: MessagerieService,
+              private authService: AuthService
+  ) {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (!term.trim()) {
+          this.filteredUsers = [];
+          return [];
+        }
+        return this.messagerieService.searchUsers(term);
+      })
+    ).subscribe(users => this.filteredUsers = users);
+  }
 
   ngOnInit() {
     this.filteredConversations = [...this.conversations];
   }
 
-  filterConversations() {
-    this.filteredConversations = this.conversations.filter(c =>
-      c.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
+  onSearch() {
+    this.searchSubject.next(this.searchTerm);
   }
+
+  onFocusSearch() {
+    this.searchActive = true;
+  }
+
+  cancelSearch() {
+    this.searchActive = false;
+    this.searchTerm = '';
+    this.filteredUsers = [];
+  }
+
+  
+selectUser(user: any) {
+  const currentUser = this.authService.getCurrentUser();
+  console.log('Current user:', currentUser);
+
+  if (!currentUser?.userId) {
+    console.warn('Utilisateur non connecté ou userId manquant');
+    return;
+  }
+
+  const currentUserId: number = currentUser.userId;
+  console.log('Current user ID:', currentUserId);
+  console.log('Selected user ID:', user.id);
+
+  this.messagerieService.startConversation(currentUserId, user.id).subscribe({
+    next: (conversation) => {
+      console.log('Conversation started:', conversation);
+
+      this.activeConversationId = conversation.id;
+      this.activeConversationName = `${user.firstName} ${user.lastName}`;
+      this.messages = conversation.messages || [];
+
+      if (!this.conversations.find(c => c.id === conversation.id)) {
+        this.conversations.push({
+          id: conversation.id,
+          name: `${user.firstName} ${user.lastName}`,
+          lastMessage: conversation.messages?.[conversation.messages.length - 1]?.content || ''
+        });
+        console.log('Conversation added to list:', this.conversations);
+      }
+
+      this.filteredConversations = [...this.conversations];
+      this.cancelSearch();
+    },
+    error: (err) => {
+      console.error('Erreur lors du démarrage de la conversation:', err);
+    }
+  });
+}
 
   selectConversation(convo: any) {
     this.activeConversationId = convo.id;
     this.activeConversationName = convo.name;
-    // Vous pouvez charger les messages de cette conversation ici
+    // Charger les messages de cette conversation si tu les récupères via API
   }
 
   sendMessage() {
@@ -107,17 +147,4 @@ onSearch() {
     this.messages[this.editingIndex].text = this.editText;
     this.editingIndex = -1;
   }
-
-  searchActive: boolean = false; // nouvel état
-
-  onFocusSearch() {
-    this.searchActive = true;
-  }
-
-  cancelSearch() {
-    this.searchActive = false;
-    this.searchTerm = '';
-    this.filteredUsers = [];
-  }
-
 }
