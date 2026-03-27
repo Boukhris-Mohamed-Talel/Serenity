@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DoctorResponse } from '../../shared/models/doctor.model';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../services/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,9 @@ import { environment } from '../../../environments/environment';
 export class DoctorService {
   private readonly API_URL = `${environment.apiUrl}/doctors`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient,
+              private authService: AuthService
+  ) {}
 
   getDoctors(): Observable<DoctorResponse[]> {
     return this.http.get<DoctorResponse[]>(this.API_URL);
@@ -26,5 +29,13 @@ export class DoctorService {
 
   deleteDoctor(doctorId: number): Observable<any> {
     return this.http.delete(`${this.API_URL}/${doctorId}`);
+  }
+
+  updateDoctor(doctorId: number, doctorDetails: any): Observable<any> {
+    return this.http.put(
+      `${this.API_URL}/${doctorId}`,
+      doctorDetails,
+      { headers: { Authorization: `Bearer ${this.authService.getToken()}` } }
+    );
   }
 }

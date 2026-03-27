@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -48,12 +50,19 @@ public class DoctorController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<Doctor> updateDoctor(
+    public ResponseEntity<?> updateDoctor(
             @PathVariable Long userId,
             @RequestBody Doctor doctorDetails) {
 
         Doctor updatedDoctor = doctorService.updateDoctor(userId, doctorDetails);
-        return ResponseEntity.ok(updatedDoctor);
+
+        // 👇 retourne un DTO simple au lieu de l'entité complète
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", updatedDoctor.getId());
+        response.put("specialty", updatedDoctor.getSpecialty());
+        response.put("profilePictureUrl", updatedDoctor.getProfilePictureUrl());
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
