@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
 import { UserResponse } from '../shared/models/user.model';
+import { WebSocketService } from '../core/services/web-socket.service';
 
 @Component({
   selector: 'app-layout',
@@ -16,14 +17,23 @@ export class LayoutComponent implements OnInit, OnDestroy {
   user: UserResponse | null = null;
   private peekInterval: any;
   private userSub!: Subscription;
+  private wsSub!: Subscription;
+
+  notifications: any[] = [];
+  unreadCount = 0;
+  notifDropdownVisible = false;
 
   constructor(
     public readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly webSocketService: WebSocketService
   ) {}
 
   ngOnInit(): void {
+    document.addEventListener('click', () => {
+      this.notifDropdownVisible = false;
+    });
     if (this.authService.isLoggedIn()) {
       this.userService.getCurrentUser().subscribe();
 
@@ -33,16 +43,49 @@ export class LayoutComponent implements OnInit, OnDestroy {
           this.startPeekAnimation();
         }
       });
+
+      // 👇 WebSocket notifications
+      this.webSocketService.connect();
+
+      this.wsSub = this.webSocketService.newMessage$.subscribe((msg: any) => {
+        const currentUserId = this.authService.getCurrentUser()?.userId;
+        // only notify if message is not sent by current user
+        if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
+          this.notifications.unshift({
+            id: msg.id,
+            text: msg.content,
+            conversationId: msg.conversationId,
+            time: new Date(),
+            read: false
+          });
+          this.unreadCount++;
+        }
+      });
     }
   }
 
   ngOnDestroy(): void {
-    if (this.peekInterval) {
-      clearInterval(this.peekInterval);
+    if (this.peekInterval) clearInterval(this.peekInterval);
+    if (this.userSub) this.userSub.unsubscribe();
+    if (this.wsSub) this.wsSub.unsubscribe();
+  }
+
+  toggleNotifDropdown() {
+    this.notifDropdownVisible = !this.notifDropdownVisible;
+    if (this.notifDropdownVisible) {
+      this.unreadCount = 0;
+      this.notifications = this.notifications.map(n => ({ ...n, read: true }));
     }
-    if (this.userSub) {
-      this.userSub.unsubscribe();
-    }
+  }
+
+  goToConversation(notif: any) {
+    this.notifDropdownVisible = false;
+    this.router.navigate(['/messagerie']);
+  }
+
+  clearNotifications() {
+    this.notifications = [];
+    this.unreadCount = 0;
   }
 
   getDisplayName(): string {
