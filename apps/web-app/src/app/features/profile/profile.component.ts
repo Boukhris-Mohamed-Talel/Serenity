@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DoctorService } from '../../core/services/doctor.service';
@@ -22,6 +23,8 @@ export class ProfileComponent implements OnInit {
   isDoctor = false;
   imagePreview: string | null = null;
   selectedFile: File | null = null;
+  showDeleteModal = false;
+  deleteAccountLoading = false;
 
   languages = [
     { value: 'en', label: 'English' },
@@ -35,7 +38,8 @@ export class ProfileComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly userService: UserService,
     public readonly authService: AuthService,
-    private readonly doctorService: DoctorService
+    private readonly doctorService: DoctorService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
@@ -236,5 +240,40 @@ export class ProfileComponent implements OnInit {
       this.imagePreview = reader.result as string;
     };
     reader.readAsDataURL(file);
+  }
+
+  openDeleteModal(): void {
+    this.showDeleteModal = true;
+    this.errorMessage = '';
+  }
+
+  cancelDelete(): void {
+    this.showDeleteModal = false;
+  }
+
+  confirmDelete(): void {
+    const doctorId = this.authService.getCurrentUser()?.userId;
+    if (doctorId == null) {
+      this.errorMessage = 'Unable to delete account. Please sign in again.';
+      this.showDeleteModal = false;
+      return;
+    }
+
+    this.deleteAccountLoading = true;
+    this.errorMessage = '';
+
+    this.doctorService.deleteDoctor(doctorId).subscribe({
+      next: () => {
+        this.deleteAccountLoading = false;
+        this.showDeleteModal = false;
+        this.authService.logout();
+        void this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        this.deleteAccountLoading = false;
+        this.showDeleteModal = false;
+        this.errorMessage = err.error?.message || 'Failed to delete account';
+      }
+    });
   }
 }

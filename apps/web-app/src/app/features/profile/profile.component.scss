@@ -288,4 +288,65 @@
   border-color: var(--accent);
 }
 
+.profile-delete-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
 
+.btn-delete-profile {
+  background: var(--surface);
+  color: var(--danger);
+  border: 2px solid var(--danger);
+
+  &:hover:not(:disabled) {
+    background: rgba(217, 107, 107, 0.08);
+  }
+}
+
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.delete-modal-dialog {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  padding: 1.5rem 1.5rem 1.25rem;
+}
+
+.delete-modal-message {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.delete-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .delete-modal-actions {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

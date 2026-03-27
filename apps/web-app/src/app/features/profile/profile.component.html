@@ -201,4 +201,33 @@
       </div>
     </form>
   </div>
+
+  <div
+    *ngIf="!loading && authService.getCurrentUser()?.role === 'DOCTOR'"
+    class="profile-delete-footer"
+  >
+    <button type="button" class="btn btn-delete-profile" (click)="openDeleteModal()">
+      Delete Profile
+    </button>
+  </div>
+
+  <div *ngIf="showDeleteModal" class="delete-modal-overlay" (click)="cancelDelete()">
+    <div class="delete-modal-dialog" (click)="$event.stopPropagation()">
+      <p class="delete-modal-message">Are you sure you want to permanently delete your account?</p>
+      <div class="delete-modal-actions">
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmDelete()"
+          [disabled]="deleteAccountLoading"
+        >
+          <span *ngIf="deleteAccountLoading" class="spinner spinner-sm"></span>
+          <span *ngIf="!deleteAccountLoading">Yes, Delete My Account</span>
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelDelete()" [disabled]="deleteAccountLoading">
+          No
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
