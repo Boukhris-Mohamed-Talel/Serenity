@@ -22,9 +22,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
-                                "/ws/**"
+                                "/ws-doctor-verification/**"
                         ).permitAll()
-                        .requestMatchers("/api/doctor-verifications/**").hasRole("ADMIN")
+                        .requestMatchers("/api/doctor-verifications/**").authenticated()
                         .requestMatchers("/api/messages/**").authenticated()
                         .requestMatchers("/api/conversations/**").authenticated()
                         .anyRequest().authenticated()
