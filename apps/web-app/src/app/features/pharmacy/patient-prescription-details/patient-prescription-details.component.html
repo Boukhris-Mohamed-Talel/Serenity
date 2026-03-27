@@ -31,7 +31,10 @@
           <li *ngFor="let line of lines; let i = index; trackBy: trackByLineId">
             <div class="line-title">#{{ i + 1 }} {{ line.medicationName }}</div>
             <div class="line-meta">Dosage: {{ line.dosage }}</div>
+            <div class="line-meta" *ngIf="line.frequency">Frequency: {{ line.frequency }}</div>
             <div class="line-meta">Quantity: {{ line.quantity }}</div>
+            <div class="line-meta" *ngIf="line.startDate">Start: {{ line.startDate | date:'mediumDate' }}</div>
+            <div class="line-meta" *ngIf="line.endDate">End: {{ line.endDate | date:'mediumDate' }}</div>
             <div class="line-meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</div>
           </li>
         </ul>

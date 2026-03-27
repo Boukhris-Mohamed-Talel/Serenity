@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
+  PrescriptionLineResponse,
   PrescriptionResponse,
   StockItemResponse,
   PrescriptionStatus,
@@ -74,7 +75,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     return status === 'PENDING' || status === 'ACCEPTED';
   }
 
-  medicineLines(): Array<{ medicationName: string; dosage: string; quantity: number; instructions?: string }> {
+  medicineLines(): PrescriptionLineResponse[] {
     const row = this.prescription;
     if (!row) return [];
     if (row.medicineLines && row.medicineLines.length > 0) {
@@ -83,6 +84,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
 
     return [
       {
+        id: row.id,
         medicationName: row.medicationName || '-',
         dosage: row.dosage || '-',
         quantity: row.quantity ?? 0,

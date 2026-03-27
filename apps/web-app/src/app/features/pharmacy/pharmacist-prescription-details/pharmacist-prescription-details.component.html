@@ -49,7 +49,10 @@
             <div class="line-main">
               <span class="med-name">{{ line.medicationName }}</span>
               <span class="meta">Dosage: {{ line.dosage }}</span>
+              <span class="meta" *ngIf="line.frequency">Frequency: {{ line.frequency }}</span>
               <span class="meta">Qty: {{ line.quantity }}</span>
+              <span class="meta" *ngIf="line.startDate">Start: {{ line.startDate | date:'mediumDate' }}</span>
+              <span class="meta" *ngIf="line.endDate">End: {{ line.endDate | date:'mediumDate' }}</span>
               <span class="meta" *ngIf="line.instructions">Instructions: {{ line.instructions }}</span>
             </div>
             <div class="stock-note">Stock comparison: {{ stockMessageForLine(line) }}</div>
