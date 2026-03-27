@@ -28,6 +28,7 @@ export class RecordFormComponent implements OnInit {
   });
 
   readonly severities = ['LOW', 'MEDIUM', 'HIGH'] as const;
+  readonly statuses = ['ACTIVE', 'CLOSED'] as const;
 
   constructor(
     private readonly fb: FormBuilder,

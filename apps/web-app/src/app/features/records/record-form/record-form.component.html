@@ -32,7 +32,9 @@
       </label>
       <label class="field">
         <span>Status *</span>
-        <input type="text" formControlName="status" placeholder="ACTIVE or CLOSED" />
+        <select formControlName="status">
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
       </label>
       <label class="field full">
         <span>Notes</span>
