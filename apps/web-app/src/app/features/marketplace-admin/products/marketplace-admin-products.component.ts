@@ -63,9 +63,20 @@ export class MarketplaceAdminProductsComponent implements OnInit {
         this.successMessage = `Product deleted successfully`;
         setTimeout(() => this.successMessage = '', 3000);
       },
-      error: () => {
-        this.error = 'Failed to delete product.';
+      error: (error) => {
+        console.error('Delete product error:', error);
         this.deletingProductId = null;
+        
+        // Provide detailed error message based on status
+        if (error.status === 403) {
+          this.error = 'You do not have permission to delete products. Only administrators can delete products.';
+        } else if (error.status === 404) {
+          this.error = 'Product not found. It may have been deleted already.';
+        } else if (error.status === 0) {
+          this.error = 'Network error. Please check your connection and try again.';
+        } else {
+          this.error = error.error?.message || 'Failed to delete product.';
+        }
       }
     });
   }

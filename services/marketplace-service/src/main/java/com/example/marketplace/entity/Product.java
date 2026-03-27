@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "marketplace_products")
@@ -45,6 +46,16 @@ public class Product {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    // Cascade delete relationships - allows deleting products even if they have orders/reviews/wishlist entries
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<MarketplaceOrderItem> orderItems;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<ProductReview> reviews;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Wishlist> wishlistEntries;
+
     @PrePersist
     void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -53,3 +64,4 @@ public class Product {
         }
     }
 }
+
