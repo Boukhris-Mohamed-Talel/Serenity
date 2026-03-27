@@ -20,4 +20,6 @@ public interface IPrescriptionService {
     PrescriptionResponseDTO updatePrescription(Long id, PrescriptionRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
     void deletePrescription(Long id, Long doctorId, boolean isAdmin);
+
+    List<PrescriptionResponseDTO> searchPrescriptions(String medicationName, String status, Long doctorId, boolean isAdmin);
 }

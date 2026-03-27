@@ -120,4 +120,21 @@ public class PrescriptionController {
                 .message("Prescription supprimée avec succès")
                 .build());
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponseDTO<List<PrescriptionResponseDTO>>> searchPrescriptions(
+            @RequestParam(required = false) String medicationName,
+            @RequestParam(required = false) String status) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<PrescriptionResponseDTO> results = prescriptionService.searchPrescriptions(
+                medicationName, status, authenticatedUserId, isAdmin);
+        return ResponseEntity.ok(ApiResponseDTO.<List<PrescriptionResponseDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Résultats de la recherche")
+                .data(results)
+                .build());
+    }
 }

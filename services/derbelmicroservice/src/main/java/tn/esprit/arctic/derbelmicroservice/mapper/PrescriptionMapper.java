@@ -1,121 +1,94 @@
 package tn.esprit.arctic.derbelmicroservice.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import tn.esprit.arctic.derbelmicroservice.dto.request.PrescriptionMedicationRequestDTO;
+import tn.esprit.arctic.derbelmicroservice.dto.request.PrescriptionItemRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.request.PrescriptionRequestDTO;
-import tn.esprit.arctic.derbelmicroservice.dto.response.PrescriptionMedicationResponseDTO;
+import tn.esprit.arctic.derbelmicroservice.dto.response.MedicineResponseDTO;
+import tn.esprit.arctic.derbelmicroservice.dto.response.PrescriptionItemResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PrescriptionResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.entity.MedicalRecord;
+import tn.esprit.arctic.derbelmicroservice.entity.Medicine;
 import tn.esprit.arctic.derbelmicroservice.entity.Prescription;
-import tn.esprit.arctic.derbelmicroservice.entity.value.PrescriptionMedication;
+import tn.esprit.arctic.derbelmicroservice.entity.PrescriptionItem;
+import tn.esprit.arctic.derbelmicroservice.repository.MedicineRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class PrescriptionMapper {
 
-    public PrescriptionResponseDTO toResponseDTO(Prescription prescription) {
+    private final MedicineRepository medicineRepository;
+    private final MedicineMapper medicineMapper;
+
+    public PrescriptionResponseDTO toResponseDTO(Prescription p) {
         return PrescriptionResponseDTO.builder()
-                .id(prescription.getId())
-                .medications(toMedicationResponses(prescription.getMedications()))
-                .medicalRecordId(prescription.getMedicalRecord().getId())
-                .patientId(prescription.getPatientId())
-                .doctorId(prescription.getDoctorId())
-                .createdAt(prescription.getCreatedAt())
-                .updatedAt(prescription.getUpdatedAt())
+                .id(p.getId())
+                .medicalRecordId(p.getMedicalRecord().getId())
+                .patientId(p.getPatientId())
+                .doctorId(p.getDoctorId())
+                .status(p.getStatus())
+                .items(toItemResponses(p.getItems()))
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
                 .build();
     }
 
     public Prescription toEntity(PrescriptionRequestDTO dto, MedicalRecord medicalRecord) {
         Prescription prescription = Prescription.builder()
-                .medications(toMedicationValues(dto.getMedications()))
                 .medicalRecord(medicalRecord)
                 .patientId(dto.getPatientId())
+                .status(dto.getStatus() != null ? dto.getStatus() : "ACTIVE")
                 .build();
-        applyDerivedColumns(prescription);
+
+        List<PrescriptionItem> items = toItemEntities(dto.getItems(), prescription);
+        prescription.setItems(items);
         return prescription;
     }
 
-    public void updateEntityFromDTO(PrescriptionRequestDTO dto, Prescription prescription) {
-        prescription.setMedications(toMedicationValues(dto.getMedications()));
-        applyDerivedColumns(prescription);
+    public void updateEntity(PrescriptionRequestDTO dto, Prescription prescription) {
+        prescription.setStatus(dto.getStatus() != null ? dto.getStatus() : prescription.getStatus());
+        prescription.getItems().clear();
+        prescription.getItems().addAll(toItemEntities(dto.getItems(), prescription));
     }
 
-    private List<PrescriptionMedication> toMedicationValues(List<PrescriptionMedicationRequestDTO> rawItems) {
-        if (rawItems == null) {
-            throw new IllegalArgumentException("Au moins un médicament est obligatoire");
+    private List<PrescriptionItem> toItemEntities(List<PrescriptionItemRequestDTO> dtos, Prescription prescription) {
+        if (dtos == null || dtos.isEmpty()) {
+            throw new IllegalArgumentException("Au moins un item est obligatoire");
         }
-
-        List<PrescriptionMedication> cleaned = rawItems.stream()
-                .map(this::toMedicationValue)
-                .toList();
-
-        if (cleaned.isEmpty()) {
-            throw new IllegalArgumentException("Au moins un médicament est obligatoire");
-        }
-
-        return new ArrayList<>(cleaned);
+        return dtos.stream().map(dto -> {
+            Medicine medicine = medicineRepository.findById(dto.getMedicineId())
+                    .orElseThrow(() -> new IllegalArgumentException("Médicament introuvable: ID " + dto.getMedicineId()));
+            return PrescriptionItem.builder()
+                    .prescription(prescription)
+                    .medicine(medicine)
+                    .dosage(dto.getDosage().trim())
+                    .frequency(dto.getFrequency().trim())
+                    .quantity(dto.getQuantity())
+                    .startDate(dto.getStartDate())
+                    .endDate(dto.getEndDate())
+                    .instructions(dto.getInstructions() != null ? dto.getInstructions().trim() : null)
+                    .build();
+        }).toList();
     }
 
-    private PrescriptionMedication toMedicationValue(PrescriptionMedicationRequestDTO item) {
-        if (item == null || item.getMedicationName() == null || item.getMedicationName().isBlank()) {
-            throw new IllegalArgumentException("Le nom du médicament est obligatoire");
-        }
-        return PrescriptionMedication.builder()
-                .medicationName(item.getMedicationName().trim())
-                .dosage(item.getDosage() != null ? item.getDosage().trim() : "")
-                .frequency(item.getFrequency() != null ? item.getFrequency().trim() : "")
+    private List<PrescriptionItemResponseDTO> toItemResponses(List<PrescriptionItem> items) {
+        if (items == null) return List.of();
+        return items.stream().map(this::toItemResponse).toList();
+    }
+
+    private PrescriptionItemResponseDTO toItemResponse(PrescriptionItem item) {
+        MedicineResponseDTO medicineDTO = medicineMapper.toResponseDTO(item.getMedicine());
+        return PrescriptionItemResponseDTO.builder()
+                .id(item.getId())
+                .medicine(medicineDTO)
+                .dosage(item.getDosage())
+                .frequency(item.getFrequency())
+                .quantity(item.getQuantity())
                 .startDate(item.getStartDate())
                 .endDate(item.getEndDate())
-                .instructions(item.getInstructions() != null ? item.getInstructions().trim() : null)
-                .quantity(item.getQuantity())
-                .status(item.getStatus() != null ? item.getStatus().trim() : "")
+                .instructions(item.getInstructions())
                 .build();
-    }
-
-    private List<PrescriptionMedicationResponseDTO> toMedicationResponses(List<PrescriptionMedication> items) {
-        if (items == null) {
-            return List.of();
-        }
-        return items.stream()
-                .map(item -> PrescriptionMedicationResponseDTO.builder()
-                        .medicationName(item.getMedicationName())
-                        .dosage(item.getDosage())
-                        .frequency(item.getFrequency())
-                        .startDate(item.getStartDate())
-                        .endDate(item.getEndDate())
-                        .instructions(item.getInstructions())
-                        .quantity(item.getQuantity())
-                        .status(item.getStatus())
-                        .build())
-                .toList();
-    }
-
-    private void applyDerivedColumns(Prescription prescription) {
-        List<PrescriptionMedication> meds = prescription.getMedications();
-        if (meds == null || meds.isEmpty()) {
-            throw new IllegalArgumentException("Au moins un médicament est obligatoire");
-        }
-
-        PrescriptionMedication first = meds.get(0);
-        String namesSummary = meds.stream()
-                .map(PrescriptionMedication::getMedicationName)
-                .map(name -> name == null ? "" : name.trim())
-                .filter(name -> !name.isBlank())
-                .reduce((a, b) -> a + ", " + b)
-                .orElse(first.getMedicationName());
-        if (namesSummary.length() > 255) {
-            namesSummary = namesSummary.substring(0, 255);
-        }
-
-        prescription.setMedicationName(namesSummary);
-        prescription.setDosage(first.getDosage() != null ? first.getDosage() : "");
-        prescription.setFrequency(first.getFrequency() != null ? first.getFrequency() : "");
-        prescription.setStartDate(first.getStartDate());
-        prescription.setEndDate(first.getEndDate());
-        prescription.setInstructions(first.getInstructions());
-        prescription.setQuantity(first.getQuantity());
-        prescription.setStatus(first.getStatus() != null ? first.getStatus() : "ACTIVE");
     }
 }

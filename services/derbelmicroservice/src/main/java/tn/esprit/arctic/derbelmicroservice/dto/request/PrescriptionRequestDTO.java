@@ -5,16 +5,12 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.util.List;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PrescriptionRequestDTO {
-
-    @NotEmpty(message = "Au moins un médicament est obligatoire")
-    private List<@Valid PrescriptionMedicationRequestDTO> medications;
 
     @NotNull(message = "L'ID du dossier médical est obligatoire")
     private Long medicalRecordId;
@@ -23,4 +19,9 @@ public class PrescriptionRequestDTO {
     private Long patientId;
 
     private Long doctorId;
+
+    private String status;
+
+    @NotEmpty(message = "Au moins un item est obligatoire")
+    private List<@Valid PrescriptionItemRequestDTO> items;
 }

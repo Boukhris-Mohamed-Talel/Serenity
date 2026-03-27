@@ -50,6 +50,15 @@ export class PrescriptionService {
     return this.http.delete<ApiResponseDTO<unknown>>(`${this.base}/prescriptions/${id}`).pipe(map(() => undefined));
   }
 
+  searchPrescriptions(medicationName?: string, status?: string): Observable<Prescription[]> {
+    let params = new HttpParams();
+    if (medicationName) params = params.set('medicationName', medicationName);
+    if (status) params = params.set('status', status);
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<Prescription[]>>(`${this.base}/prescriptions/search`, { params })
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

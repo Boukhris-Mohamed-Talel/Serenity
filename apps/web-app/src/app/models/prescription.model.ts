@@ -1,33 +1,41 @@
-/**
- * Aligné sur PrescriptionResponseDTO
- */
+import { Medicine } from './medicine.model';
+
+export interface PrescriptionItem {
+  id: number;
+  medicine: Medicine;
+  dosage: string;
+  frequency: string;
+  quantity: number;
+  startDate: string;
+  endDate: string | null;
+  instructions: string | null;
+}
+
+export interface PrescriptionItemRequest {
+  medicineId: number;
+  dosage: string;
+  frequency: string;
+  quantity: number;
+  startDate: string;
+  endDate?: string | null;
+  instructions?: string | null;
+}
+
 export interface Prescription {
   id: number;
-  medications: PrescriptionMedication[];
   medicalRecordId: number;
   patientId: number;
   doctorId: number;
+  status: string;
+  items: PrescriptionItem[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface PrescriptionMedication {
-  medicationName: string;
-  dosage: string;
-  frequency: string;
-  startDate: string;
-  endDate: string | null;
-  instructions: string | null;
-  quantity: number;
-  status: 'ACTIVE' | 'INACTIVE';
-}
-
-/**
- * Aligné sur PrescriptionRequestDTO
- */
 export interface PrescriptionRequest {
-  medications: PrescriptionMedication[];
   medicalRecordId: number;
   patientId: number;
   doctorId?: number;
+  status?: string;
+  items: PrescriptionItemRequest[];
 }

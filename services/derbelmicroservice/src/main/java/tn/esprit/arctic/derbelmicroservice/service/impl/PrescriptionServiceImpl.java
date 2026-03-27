@@ -30,8 +30,8 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
     @Transactional(readOnly = true)
     public Page<PrescriptionResponseDTO> getAllPrescriptions(Pageable pageable, Long doctorId, boolean isAdmin) {
         return (isAdmin
-                ? prescriptionRepository.findAll(pageable)
-                : prescriptionRepository.findAllByDoctorId(doctorId, pageable))
+                ? prescriptionRepository.findAllWithItems(pageable)
+                : prescriptionRepository.findAllByDoctorIdWithItems(doctorId, pageable))
                 .map(prescriptionMapper::toResponseDTO);
     }
 
@@ -39,8 +39,8 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
     @Transactional(readOnly = true)
     public PrescriptionResponseDTO getPrescriptionById(Long id, Long doctorId, boolean isAdmin) {
         Prescription prescription = (isAdmin
-                ? prescriptionRepository.findByIdWithMedicalRecord(id)
-                : prescriptionRepository.findByIdWithMedicalRecordAndDoctorId(id, doctorId))
+                ? prescriptionRepository.findByIdFull(id)
+                : prescriptionRepository.findByIdFullAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
         return prescriptionMapper.toResponseDTO(prescription);
     }
@@ -63,37 +63,55 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
     public PrescriptionResponseDTO createPrescription(PrescriptionRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
         MedicalRecord record = medicalRecordRepository.findById(requestDTO.getMedicalRecordId())
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", requestDTO.getMedicalRecordId()));
+
         Prescription prescription = prescriptionMapper.toEntity(requestDTO, record);
         prescription.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
+
         Prescription saved = prescriptionRepository.save(prescription);
-        return prescriptionMapper.toResponseDTO(saved);
+        return prescriptionMapper.toResponseDTO(
+                prescriptionRepository.findByIdFull(saved.getId()).orElse(saved));
     }
 
     @Override
     public PrescriptionResponseDTO updatePrescription(Long id, PrescriptionRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
         Prescription prescription = (isAdmin
-                ? prescriptionRepository.findByIdWithMedicalRecord(id)
-                : prescriptionRepository.findByIdWithMedicalRecordAndDoctorId(id, doctorId))
+                ? prescriptionRepository.findByIdFull(id)
+                : prescriptionRepository.findByIdFullAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
+
         if (requestDTO.getMedicalRecordId() != null
                 && !requestDTO.getMedicalRecordId().equals(prescription.getMedicalRecord().getId())) {
             MedicalRecord newRecord = medicalRecordRepository.findById(requestDTO.getMedicalRecordId())
                     .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", requestDTO.getMedicalRecordId()));
             prescription.setMedicalRecord(newRecord);
         }
-        prescriptionMapper.updateEntityFromDTO(requestDTO, prescription);
+
+        prescriptionMapper.updateEntity(requestDTO, prescription);
         prescription.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
+
         Prescription updated = prescriptionRepository.save(prescription);
-        return prescriptionMapper.toResponseDTO(updated);
+        return prescriptionMapper.toResponseDTO(
+                prescriptionRepository.findByIdFull(updated.getId()).orElse(updated));
     }
 
     @Override
     public void deletePrescription(Long id, Long doctorId, boolean isAdmin) {
         Prescription prescription = (isAdmin
                 ? prescriptionRepository.findById(id)
-                : prescriptionRepository.findByIdWithMedicalRecordAndDoctorId(id, doctorId))
+                : prescriptionRepository.findByIdFullAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
         prescriptionRepository.delete(prescription);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PrescriptionResponseDTO> searchPrescriptions(String medicationName, String status, Long doctorId, boolean isAdmin) {
+        return (isAdmin
+                ? prescriptionRepository.search(medicationName, status)
+                : prescriptionRepository.searchByDoctor(doctorId, medicationName, status))
+                .stream()
+                .map(prescriptionMapper::toResponseDTO)
+                .toList();
     }
 
     private Long resolveDoctorId(Long doctorIdFromRequest, Long authenticatedUserId, boolean isAdmin) {

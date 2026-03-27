@@ -9,9 +9,8 @@
 
 .rx-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 1.125rem 1.25rem;
   border-radius: 14px;
   border: 1px solid var(--saas-border-subtle, var(--border));
@@ -121,6 +120,25 @@
 
 .badge-active    { background: #dcf5e4; color: #145c2b; }
 .badge-completed { background: #e9ecef; color: #495057; }
+.badge-cancelled { background: #fdecea; color: #8b2020; }
+
+.rx-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.rx-date {
+  font-size: 0.8rem;
+  color: var(--saas-text-muted, var(--text-light));
+}
+
+.rx-instructions {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  color: var(--saas-text-muted, var(--text-light));
+}
 
 /* ── Actions (right) ───────────────────────────────────── */
 .rx-actions {

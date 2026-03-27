@@ -8,13 +8,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PrescriptionMedicationResponseDTO {
-    private String medicationName;
+public class PrescriptionItemResponseDTO {
+
+    private Long id;
+    private MedicineResponseDTO medicine;
     private String dosage;
     private String frequency;
+    private int quantity;
     private LocalDate startDate;
     private LocalDate endDate;
     private String instructions;
-    private int quantity;
-    private String status;
 }

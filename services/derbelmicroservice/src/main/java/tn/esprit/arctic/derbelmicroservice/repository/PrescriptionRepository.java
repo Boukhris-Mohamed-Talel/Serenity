@@ -15,24 +15,54 @@ import java.util.Optional;
 @Repository
 public interface PrescriptionRepository extends JpaRepository<Prescription, Long> {
 
-    /** Charge medicalRecord pour éviter LazyInitializationException (open-in-view désactivé). */
-    @EntityGraph(attributePaths = {"medicalRecord"})
+    @EntityGraph(attributePaths = {"medicalRecord", "items", "items.medicine"})
     @Query("SELECT p FROM Prescription p")
-    Page<Prescription> findAll(Pageable pageable);
+    Page<Prescription> findAllWithItems(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"medicalRecord"})
+    @EntityGraph(attributePaths = {"medicalRecord", "items", "items.medicine"})
     @Query("SELECT p FROM Prescription p WHERE p.doctorId = :doctorId")
-    Page<Prescription> findAllByDoctorId(@Param("doctorId") Long doctorId, Pageable pageable);
+    Page<Prescription> findAllByDoctorIdWithItems(@Param("doctorId") Long doctorId, Pageable pageable);
 
-    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord WHERE p.id = :id")
-    Optional<Prescription> findByIdWithMedicalRecord(@Param("id") Long id);
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord WHERE p.id = :id")
+    Optional<Prescription> findByIdFull(@Param("id") Long id);
 
-    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord WHERE p.id = :id AND p.doctorId = :doctorId")
-    Optional<Prescription> findByIdWithMedicalRecordAndDoctorId(@Param("id") Long id, @Param("doctorId") Long doctorId);
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord WHERE p.id = :id AND p.doctorId = :doctorId")
+    Optional<Prescription> findByIdFullAndDoctorId(@Param("id") Long id, @Param("doctorId") Long doctorId);
 
-    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId")
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId")
     List<Prescription> findByMedicalRecordId(@Param("recordId") Long medicalRecordId);
 
-    @Query("SELECT DISTINCT p FROM Prescription p JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId AND p.doctorId = :doctorId")
-    List<Prescription> findByMedicalRecordIdAndDoctorId(@Param("recordId") Long recordId, @Param("doctorId") Long doctorId);
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord mr WHERE mr.id = :recordId AND p.doctorId = :doctorId")
+    List<Prescription> findByMedicalRecordIdAndDoctorId(@Param("recordId") Long recordId,
+                                                        @Param("doctorId") Long doctorId);
+
+    long countByStatusIgnoreCase(String status);
+
+    long countByDoctorIdAndStatusIgnoreCase(Long doctorId, String status);
+
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord " +
+           "WHERE (:medicationName IS NULL OR LOWER(i.medicine.name) LIKE LOWER(CONCAT('%',:medicationName,'%'))) " +
+           "AND (:status IS NULL OR LOWER(p.status) = LOWER(:status))")
+    List<Prescription> search(@Param("medicationName") String medicationName,
+                              @Param("status") String status);
+
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i LEFT JOIN FETCH i.medicine " +
+           "JOIN FETCH p.medicalRecord " +
+           "WHERE p.doctorId = :doctorId " +
+           "AND (:medicationName IS NULL OR LOWER(i.medicine.name) LIKE LOWER(CONCAT('%',:medicationName,'%'))) " +
+           "AND (:status IS NULL OR LOWER(p.status) = LOWER(:status))")
+    List<Prescription> searchByDoctor(@Param("doctorId") Long doctorId,
+                                      @Param("medicationName") String medicationName,
+                                      @Param("status") String status);
 }
