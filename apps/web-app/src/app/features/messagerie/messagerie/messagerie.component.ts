@@ -3,6 +3,9 @@ import { MessagerieService } from '../../../core/services/messagerie.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
+import { map } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-messagerie',
@@ -34,7 +37,8 @@ export class MessagerieComponent implements OnInit {
   searchActive: boolean = false;
 
   constructor(private messagerieService: MessagerieService,
-              private authService: AuthService
+              private authService: AuthService,
+              private userService: UserService
   ) {
     this.searchSubject.pipe(
       debounceTime(300),
@@ -50,8 +54,36 @@ export class MessagerieComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.filteredConversations = [...this.conversations];
-  }
+  this.filteredConversations = [...this.conversations];
+  const currentUser = this.authService.getCurrentUser();
+  if (!currentUser?.userId) return;
+
+  const currentUserId = currentUser.userId;
+
+  this.messagerieService.getUserConversations(currentUserId).subscribe({
+    next: (convos) => {
+      console.log('Conversations récupérées du backend:', convos);
+
+      const otherUserIds = convos.map(c => c.user1Id === currentUserId ? c.user2Id : c.user1Id);
+      console.log('IDs des autres utilisateurs:', otherUserIds);
+
+      this.userService.getUsersNamesById(otherUserIds).subscribe({
+        next: (users) => {
+          console.log('Noms des utilisateurs récupérés:', users);
+          const usersMap = new Map(users.map(u => [u.id, `${u.firstName} ${u.lastName}`]));
+          this.conversations = convos.map(c => ({
+            ...c,
+            otherUserName: usersMap.get(c.user1Id === currentUserId ? c.user2Id : c.user1Id)
+          }));
+          this.filteredConversations = [...this.conversations];
+          console.log('Conversations finales avec noms:', this.conversations);
+        },
+        error: (err) => console.error('Erreur récupération noms utilisateurs:', err)
+      });
+    },
+    error: (err) => console.error('Erreur chargement conversations:', err)
+  });
+}
 
   onSearch() {
     this.searchSubject.next(this.searchTerm);
@@ -118,7 +150,7 @@ selectConversation(convo: any) {
   console.log('Conversation sélectionnée :', convo);
 
   this.activeConversationId = convo.id;
-  this.activeConversationName = convo.name;
+  this.activeConversationName = convo.otherUserName;
   console.log('ID actif :', this.activeConversationId);
   console.log('Nom actif :', this.activeConversationName);
 
@@ -176,4 +208,6 @@ selectConversation(convo: any) {
     this.messages[this.editingIndex].text = this.editText;
     this.editingIndex = -1;
   }
+  
+
 }

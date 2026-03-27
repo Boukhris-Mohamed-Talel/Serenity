@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -203,5 +204,11 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
                 .toList();
+    }
+
+    public List<UserDTO> getUsersNamesByIds(List<Long> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .collect(Collectors.toList());
     }
 }

@@ -5,6 +5,7 @@ import { tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ProfileUpdateRequest, UserRequest, UserResponse } from '../../shared/models/user.model';
 import { AuthService } from './auth.service';
+import { UserName } from '../../shared/models/user-name.model';
 
 @Injectable({
   providedIn: 'root'
@@ -63,7 +64,10 @@ export class UserService {
   }
 
   getUserById(id: number): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.API_URL}/${id}`);
+    const token = this.authService.getToken();
+    return this.http.get<UserResponse>(`${this.API_URL}/${id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
   }
 
   updateUser(id: number, request: UserRequest): Observable<UserResponse> {
@@ -81,4 +85,11 @@ export class UserService {
   activateUser(id: number): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/${id}/activate`, {});
   }
+
+  getUsersNamesById(ids: number[]): Observable<UserName[]> {
+    return this.http.get<UserName[]>(`${this.API_URL}/names`, {
+      params: { ids: ids.join(',') }
+    });
+  }
+
 }

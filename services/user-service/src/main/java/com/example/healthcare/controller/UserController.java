@@ -87,4 +87,10 @@ public class UserController {
     public List<UserDTO> searchUsers(@RequestParam String q) {
         return userService.searchUsers(q);
     }
+
+    @GetMapping("/names")
+    public ResponseEntity<List<UserDTO>> getUsersNames(@RequestParam List<Long> ids) {
+        List<UserDTO> names = userService.getUsersNamesByIds(ids);
+        return ResponseEntity.ok(names);
+    }
 }

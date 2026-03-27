@@ -29,4 +29,6 @@ public interface UserService {
     void deleteUser(Long id);
 
     List<UserDTO> searchUsers(String query);
+
+    List<UserDTO> getUsersNamesByIds(List<Long> ids);
 }

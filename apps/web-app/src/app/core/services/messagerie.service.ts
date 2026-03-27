@@ -29,4 +29,12 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  getUserConversations(user_id: number):Observable<any[]> {
+    const token = this.authService.getToken();
+    return this.http.get<any[]>(
+      `http://localhost:8082/api/conversations/user/${user_id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }
