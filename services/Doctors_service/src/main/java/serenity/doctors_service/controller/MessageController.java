@@ -75,11 +75,18 @@ public class MessageController {
 
     @DeleteMapping("/{messageId}")
     public ResponseEntity<Void> deleteMessage(@PathVariable Long messageId) {
+        // 👇 récupère le conversationId AVANT de supprimer
+        MessageDTO msg = messageService.getMessageById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        Long conversationId = msg.getConversationId();
 
         messageService.deleteMessage(messageId);
 
-        // Publier suppression sur Redis (on peut envoyer juste l'ID)
-        redisPublisher.publishChatMessage(Map.of("deletedMessageId", messageId));
+        redisPublisher.publishChatMessage(Map.of(
+                "deletedMessageId", messageId,
+                "conversationId", conversationId  // 👈
+        ));
 
         return ResponseEntity.noContent().build();
     }

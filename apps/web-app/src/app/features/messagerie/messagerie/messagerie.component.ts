@@ -92,19 +92,30 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     this.webSocketService.connect();
 
     this.wsSubscription = this.webSocketService.newMessage$.subscribe((msg: any) => {
-      if (msg.conversationId === this.activeConversationId) {
-        const alreadyExists = this.messages.some(m => m.id === msg.id);
-        if (!alreadyExists) {
-          this.messages.push({
-            id: msg.id,
-            text: msg.content,
-            type: msg.senderId === this.currentUserId ? 'sent' : 'received',
-            createdAt: msg.createdAt,
-            senderId: msg.senderId
-          });
-        }
-      }
-    });
+  if (msg.conversationId !== this.activeConversationId) return;
+
+  // 👇 DELETE
+  if (msg.deletedMessageId) {
+    this.messages = this.messages.filter(m => m.id !== msg.deletedMessageId);
+    return;
+  }
+
+  // 👇 UPDATE
+  const existingIndex = this.messages.findIndex(m => m.id === msg.id);
+  if (existingIndex !== -1) {
+    this.messages[existingIndex].text = msg.content;
+    return;
+  }
+
+  // 👇 ADD
+  this.messages.push({
+    id: msg.id,
+    text: msg.content,
+    type: msg.senderId === this.currentUserId ? 'sent' : 'received',
+    createdAt: msg.createdAt,
+    senderId: msg.senderId
+  });
+});
   }
 
   ngOnDestroy() {
