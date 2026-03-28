@@ -69,4 +69,13 @@ public class PatientServiceImpl implements IPatientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
         patientRepository.delete(patient);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<PatientResponseDTO> searchPatients(String name, Long doctorId, boolean isAdmin) {
+        java.util.List<Patient> results = isAdmin
+                ? patientRepository.searchByName(name)
+                : patientRepository.searchByNameAndDoctorId(name, doctorId);
+        return results.stream().map(patientMapper::toResponseDTO).toList();
+    }
 }

@@ -20,4 +20,6 @@ public interface IMedicalRecordService {
     MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
     void deleteRecord(Long id, Long doctorId, boolean isAdmin);
+
+    List<MedicalRecordResponseDTO> searchRecords(String diagnosis, String status, String severity, Long doctorId, boolean isAdmin);
 }

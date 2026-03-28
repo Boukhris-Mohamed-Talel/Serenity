@@ -48,7 +48,7 @@ public class PrescriptionController {
                 .build());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<PrescriptionResponseDTO>> getPrescriptionById(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();
@@ -92,7 +92,7 @@ public class PrescriptionController {
                 .build(), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<PrescriptionResponseDTO>> updatePrescription(
             @PathVariable Long id,
             @Valid @RequestBody PrescriptionRequestDTO requestDTO) {
@@ -108,7 +108,7 @@ public class PrescriptionController {
                 .build());
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<Void>> deletePrescription(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();

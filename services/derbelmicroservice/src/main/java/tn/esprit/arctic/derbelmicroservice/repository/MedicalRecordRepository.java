@@ -34,4 +34,30 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
 
     @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient p WHERE p.id = :patientId AND m.doctorId = :doctorId")
     List<MedicalRecord> findByPatientIdAndDoctorId(@Param("patientId") Long patientId, @Param("doctorId") Long doctorId);
+
+    @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient " +
+           "WHERE (:diagnosis IS NULL OR LOWER(m.diagnosis) LIKE LOWER(CONCAT('%',:diagnosis,'%'))) " +
+           "AND (:status IS NULL OR LOWER(m.status) = LOWER(:status)) " +
+           "AND (:severity IS NULL OR m.severity = :severity)")
+    List<MedicalRecord> search(@Param("diagnosis") String diagnosis,
+                               @Param("status") String status,
+                               @Param("severity") tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
+
+    @Query("SELECT DISTINCT m FROM MedicalRecord m JOIN FETCH m.patient " +
+           "WHERE m.doctorId = :doctorId " +
+           "AND (:diagnosis IS NULL OR LOWER(m.diagnosis) LIKE LOWER(CONCAT('%',:diagnosis,'%'))) " +
+           "AND (:status IS NULL OR LOWER(m.status) = LOWER(:status)) " +
+           "AND (:severity IS NULL OR m.severity = :severity)")
+    List<MedicalRecord> searchByDoctor(@Param("doctorId") Long doctorId,
+                                       @Param("diagnosis") String diagnosis,
+                                       @Param("status") String status,
+                                       @Param("severity") tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
+
+    long countByStatusIgnoreCase(String status);
+
+    long countByDoctorIdAndStatusIgnoreCase(Long doctorId, String status);
+
+    long countBySeverity(tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
+
+    long countByDoctorIdAndSeverity(Long doctorId, tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
 }

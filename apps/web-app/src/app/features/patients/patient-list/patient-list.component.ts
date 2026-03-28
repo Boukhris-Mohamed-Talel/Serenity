@@ -17,6 +17,12 @@ export class PatientListComponent implements OnInit {
 
   deleteConfirm: { id: number; name: string } | null = null;
 
+  // Search
+  searchName = '';
+  isSearching = false;
+  searchLoading = false;
+  searchResults: Patient[] = [];
+
   constructor(
     private readonly patientService: PatientService,
     private readonly notification: NotificationService
@@ -44,6 +50,31 @@ export class PatientListComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  search(): void {
+    const name = this.searchName.trim();
+    if (!name) {
+      this.clearSearch();
+      return;
+    }
+    this.isSearching = true;
+    this.searchLoading = true;
+    this.patientService.searchPatients(name).subscribe({
+      next: (results) => {
+        this.searchResults = results;
+        this.searchLoading = false;
+      },
+      error: () => {
+        this.searchLoading = false;
+      }
+    });
+  }
+
+  clearSearch(): void {
+    this.searchName = '';
+    this.isSearching = false;
+    this.searchResults = [];
   }
 
   prev(): void {
@@ -76,6 +107,7 @@ export class PatientListComponent implements OnInit {
       next: () => {
         this.notification.success('Patient deleted');
         this.load();
+        if (this.isSearching) this.search();
       },
       error: () => {
         /* toast via interceptor */

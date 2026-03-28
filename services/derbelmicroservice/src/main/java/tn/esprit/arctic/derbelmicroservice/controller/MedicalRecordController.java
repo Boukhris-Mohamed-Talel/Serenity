@@ -48,7 +48,7 @@ public class MedicalRecordController {
                 .build());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<MedicalRecordResponseDTO>> getRecordById(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();
@@ -92,7 +92,7 @@ public class MedicalRecordController {
                 .build(), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<MedicalRecordResponseDTO>> updateRecord(
             @PathVariable Long id,
             @Valid @RequestBody MedicalRecordRequestDTO requestDTO) {
@@ -108,7 +108,7 @@ public class MedicalRecordController {
                 .build());
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteRecord(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();
@@ -118,6 +118,24 @@ public class MedicalRecordController {
         return ResponseEntity.ok(ApiResponseDTO.<Void>builder()
                 .status(HttpStatus.OK.value())
                 .message("Dossier médical supprimé avec succès")
+                .build());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponseDTO<List<MedicalRecordResponseDTO>>> searchRecords(
+            @RequestParam(required = false) String diagnosis,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String severity) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<MedicalRecordResponseDTO> results = medicalRecordService.searchRecords(
+                diagnosis, status, severity, authenticatedUserId, isAdmin);
+        return ResponseEntity.ok(ApiResponseDTO.<List<MedicalRecordResponseDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Résultats de la recherche")
+                .data(results)
                 .build());
     }
 }

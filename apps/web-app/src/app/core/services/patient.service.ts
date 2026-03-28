@@ -44,6 +44,13 @@ export class PatientService {
     return this.http.delete<ApiResponseDTO<unknown>>(`${this.base}/patients/${id}`).pipe(map(() => undefined));
   }
 
+  searchPatients(name: string): Observable<Patient[]> {
+    const params = new HttpParams().set('name', name);
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<Patient[]>>(`${this.base}/patients/search`, { params })
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

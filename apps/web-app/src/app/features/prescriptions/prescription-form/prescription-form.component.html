@@ -24,6 +24,7 @@
           <option value="COMPLETED">COMPLETED</option>
           <option value="CANCELLED">CANCELLED</option>
         </select>
+        <small class="err" *ngIf="form.get('status')?.invalid && form.get('status')?.touched">Status is required</small>
       </label>
 
       <div class="field full">
@@ -35,7 +36,8 @@
           <div class="medication-block" *ngFor="let item of itemsArray.controls; let i = index" [formGroupName]="i">
             <div class="medication-block-title">
               <strong>Item {{ i + 1 }}</strong>
-              <button type="button" class="btn btn-secondary" (click)="removeItem(i)" [disabled]="itemsArray.length === 1">Remove</button>
+              <button type="button" class="btn btn-secondary" (click)="removeItem(i)"
+                [disabled]="itemsArray.length === 1">Remove</button>
             </div>
             <div class="form-grid">
               <label class="field full">
@@ -44,22 +46,32 @@
                   <option value="" disabled>-- Select a medicine --</option>
                   <option *ngFor="let med of medicines" [ngValue]="med.id">{{ med.name }}</option>
                 </select>
+                <small class="err" *ngIf="item.get('medicineId')?.invalid && item.get('medicineId')?.touched">Medicine
+                  is required</small>
               </label>
               <label class="field">
                 <span>Dosage *</span>
                 <input type="text" formControlName="dosage" maxlength="50" />
+                <small class="err" *ngIf="item.get('dosage')?.invalid && item.get('dosage')?.touched">Dosage is required
+                  (max 50)</small>
               </label>
               <label class="field">
                 <span>Frequency *</span>
                 <input type="text" formControlName="frequency" maxlength="50" />
+                <small class="err" *ngIf="item.get('frequency')?.invalid && item.get('frequency')?.touched">Frequency is
+                  required (max 50)</small>
               </label>
               <label class="field">
                 <span>Quantity *</span>
                 <input type="number" formControlName="quantity" min="1" />
+                <small class="err" *ngIf="item.get('quantity')?.invalid && item.get('quantity')?.touched">Quantity is
+                  required (min 1)</small>
               </label>
               <label class="field">
                 <span>Start date *</span>
                 <input type="date" formControlName="startDate" />
+                <small class="err" *ngIf="item.get('startDate')?.invalid && item.get('startDate')?.touched">Start date
+                  is required</small>
               </label>
               <label class="field">
                 <span>End date</span>
@@ -68,6 +80,8 @@
               <label class="field full">
                 <span>Instructions</span>
                 <textarea formControlName="instructions" rows="3" maxlength="500"></textarea>
+                <small class="err" *ngIf="item.get('instructions')?.invalid && item.get('instructions')?.touched">Max
+                  500 characters</small>
               </label>
             </div>
           </div>

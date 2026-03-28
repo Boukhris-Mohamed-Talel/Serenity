@@ -50,6 +50,16 @@ export class MedicalRecordService {
     return this.http.delete<ApiResponseDTO<unknown>>(`${this.base}/records/${id}`).pipe(map(() => undefined));
   }
 
+  searchRecords(diagnosis?: string, status?: string, severity?: string): Observable<MedicalRecord[]> {
+    let params = new HttpParams();
+    if (diagnosis) params = params.set('diagnosis', diagnosis);
+    if (status) params = params.set('status', status);
+    if (severity) params = params.set('severity', severity);
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<MedicalRecord[]>>(`${this.base}/records/search`, { params })
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

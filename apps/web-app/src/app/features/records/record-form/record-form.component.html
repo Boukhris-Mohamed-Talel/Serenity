@@ -23,22 +23,26 @@
       <label class="field">
         <span>Date *</span>
         <input type="date" formControlName="date" />
+        <small class="err" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Date is required</small>
       </label>
       <label class="field">
         <span>Severity *</span>
         <select formControlName="severity">
           <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
         </select>
+        <small class="err" *ngIf="form.get('severity')?.invalid && form.get('severity')?.touched">Severity is required</small>
       </label>
       <label class="field">
         <span>Status *</span>
         <select formControlName="status">
           <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
         </select>
+        <small class="err" *ngIf="form.get('status')?.invalid && form.get('status')?.touched">Status is required</small>
       </label>
       <label class="field full">
         <span>Notes</span>
         <textarea formControlName="notes" rows="4" maxlength="2000"></textarea>
+        <small class="err" *ngIf="form.get('notes')?.invalid && form.get('notes')?.touched">Max 2000 characters</small>
       </label>
     </div>
 

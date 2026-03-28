@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import tn.esprit.arctic.derbelmicroservice.dto.request.PatientRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PatientResponseDTO;
 
+import java.util.List;
+
 public interface IPatientService {
 
     Page<PatientResponseDTO> getAllPatientsByDoctor(Long doctorId, Pageable pageable, boolean isAdmin);
@@ -16,4 +18,6 @@ public interface IPatientService {
     PatientResponseDTO updatePatient(Long id, PatientRequestDTO requestDTO, Long doctorId, boolean isAdmin);
 
     void deletePatient(Long id, Long doctorId, boolean isAdmin);
+
+    List<PatientResponseDTO> searchPatients(String name, Long doctorId, boolean isAdmin);
 }

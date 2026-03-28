@@ -9,55 +9,120 @@
     </div>
   </header>
 
-  <div class="saas-card" *ngIf="loading">
-    <div class="saas-loading">
-      <span class="saas-spinner" aria-hidden="true"></span>
-      <span>Loading patients…</span>
+  <!-- Search bar -->
+  <div class="search-bar">
+    <div class="search-inputs">
+      <input
+        type="text"
+        [(ngModel)]="searchName"
+        placeholder="Search by name..."
+        class="search-input"
+        (keyup.enter)="search()" />
+    </div>
+    <div class="search-actions">
+      <button type="button" class="btn btn-primary" (click)="search()" [disabled]="searchLoading">
+        <span class="material-icons">search</span> Search
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="clearSearch()" *ngIf="isSearching">
+        Clear
+      </button>
     </div>
   </div>
 
-  <div class="saas-card saas-empty" *ngIf="!loading && page?.empty">
-    <div class="saas-empty-icon" aria-hidden="true">👤</div>
-    <h2>No patients yet</h2>
-    <p>Create your first patient to start building medical records.</p>
-    <div class="saas-empty-actions">
-      <a routerLink="new" class="btn btn-primary">Create patient</a>
-    </div>
-  </div>
-
-  <div class="saas-card saas-card--flush" *ngIf="!loading && page && !page.empty">
-    <div class="patient-cards">
-      <article class="patient-card" *ngFor="let p of page!.content">
-        <div class="patient-info">
-          <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
-          <div class="patient-meta">
-            <span class="meta-label">Phone</span>
-            <span class="meta-value">{{ p.phone || '—' }}</span>
-          </div>
-        </div>
-
-        <div class="patient-actions">
-          <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
-          <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
-          <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
-            Delete
-          </button>
-        </div>
-      </article>
-    </div>
-
-    <footer class="saas-pagination" *ngIf="page.totalPages > 1">
-      <span class="saas-page-info">Page {{ page.pageNumber + 1 }} of {{ page.totalPages }} · {{ page.totalElements }} patient(s)</span>
-      <div class="saas-pagination-btns">
-        <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Previous</button>
-        <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Next</button>
+  <!-- Search results -->
+  <ng-container *ngIf="isSearching">
+    <div class="saas-card" *ngIf="searchLoading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Searching…</span>
       </div>
-    </footer>
-  </div>
+    </div>
+
+    <div class="saas-card saas-empty" *ngIf="!searchLoading && !searchResults.length">
+      <div class="saas-empty-icon" aria-hidden="true">🔍</div>
+      <h2>No results found</h2>
+      <p>No patients match "{{ searchName }}". Try a different search.</p>
+    </div>
+
+    <div class="saas-card saas-card--flush" *ngIf="!searchLoading && searchResults.length">
+      <p class="search-count">{{ searchResults.length }} result(s) for "{{ searchName }}"</p>
+      <div class="patient-cards">
+        <article class="patient-card" *ngFor="let p of searchResults">
+          <div class="patient-info">
+            <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
+            <div class="patient-meta">
+              <span class="meta-label">Phone</span>
+              <span class="meta-value">{{ p.phone || '—' }}</span>
+            </div>
+          </div>
+          <div class="patient-actions">
+            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
+            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
+              Delete
+            </button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Normal list (hidden during search) -->
+  <ng-container *ngIf="!isSearching">
+    <div class="saas-card" *ngIf="loading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Loading patients…</span>
+      </div>
+    </div>
+
+    <div class="saas-card saas-empty" *ngIf="!loading && page?.empty">
+      <div class="saas-empty-icon" aria-hidden="true">👤</div>
+      <h2>No patients yet</h2>
+      <p>Create your first patient to start building medical records.</p>
+      <div class="saas-empty-actions">
+        <a routerLink="new" class="btn btn-primary">Create patient</a>
+      </div>
+    </div>
+
+    <div class="saas-card saas-card--flush" *ngIf="!loading && page && !page.empty">
+      <div class="patient-cards">
+        <article class="patient-card" *ngFor="let p of page!.content">
+          <div class="patient-info">
+            <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
+            <div class="patient-meta">
+              <span class="meta-label">Phone</span>
+              <span class="meta-value">{{ p.phone || '—' }}</span>
+            </div>
+          </div>
+
+          <div class="patient-actions">
+            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
+            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
+              Delete
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <footer class="saas-pagination" *ngIf="page.totalPages > 1">
+        <span class="saas-page-info">Page {{ page.pageNumber + 1 }} of {{ page.totalPages }} · {{ page.totalElements }} patient(s)</span>
+        <div class="saas-pagination-btns">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Previous</button>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Next</button>
+        </div>
+      </footer>
+    </div>
+  </ng-container>
 </section>
 
 <app-confirm-dialog

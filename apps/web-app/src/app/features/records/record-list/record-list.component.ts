@@ -17,6 +17,17 @@ export class RecordListComponent implements OnInit {
 
   deleteConfirm: { id: number } | null = null;
 
+  // Search
+  searchDiagnosis = '';
+  searchStatus = '';
+  searchSeverity = '';
+  isSearching = false;
+  searchLoading = false;
+  searchResults: MedicalRecord[] = [];
+
+  readonly statuses = ['', 'ACTIVE', 'CLOSED'] as const;
+  readonly severities = ['', 'LOW', 'MEDIUM', 'HIGH'] as const;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -48,6 +59,39 @@ export class RecordListComponent implements OnInit {
     });
   }
 
+  search(): void {
+    const diag = this.searchDiagnosis.trim();
+    if (!diag && !this.searchStatus && !this.searchSeverity) {
+      this.clearSearch();
+      return;
+    }
+    this.isSearching = true;
+    this.searchLoading = true;
+    this.recordService
+      .searchRecords(
+        diag || undefined,
+        this.searchStatus || undefined,
+        this.searchSeverity || undefined
+      )
+      .subscribe({
+        next: (results) => {
+          this.searchResults = results;
+          this.searchLoading = false;
+        },
+        error: () => {
+          this.searchLoading = false;
+        }
+      });
+  }
+
+  clearSearch(): void {
+    this.searchDiagnosis = '';
+    this.searchStatus = '';
+    this.searchSeverity = '';
+    this.isSearching = false;
+    this.searchResults = [];
+  }
+
   openDeleteRecord(id: number): void {
     this.deleteConfirm = { id };
   }
@@ -64,6 +108,7 @@ export class RecordListComponent implements OnInit {
       next: () => {
         this.notification.success('Record deleted');
         this.load();
+        if (this.isSearching) this.search();
       },
       error: () => {
         /* toast */

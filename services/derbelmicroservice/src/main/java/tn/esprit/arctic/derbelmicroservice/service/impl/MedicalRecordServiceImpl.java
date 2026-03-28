@@ -102,4 +102,22 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
         }
         return authenticatedUserId;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MedicalRecordResponseDTO> searchRecords(String diagnosis, String status, String severity, Long doctorId, boolean isAdmin) {
+        tn.esprit.arctic.derbelmicroservice.entity.enums.Severity sev = null;
+        if (severity != null && !severity.isBlank()) {
+            try {
+                sev = tn.esprit.arctic.derbelmicroservice.entity.enums.Severity.valueOf(severity.toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        String diagParam = (diagnosis != null && !diagnosis.isBlank()) ? diagnosis : null;
+        String statusParam = (status != null && !status.isBlank()) ? status : null;
+
+        List<MedicalRecord> results = isAdmin
+                ? medicalRecordRepository.search(diagParam, statusParam, sev)
+                : medicalRecordRepository.searchByDoctor(doctorId, diagParam, statusParam, sev);
+        return results.stream().map(medicalRecordMapper::toResponseDTO).toList();
+    }
 }

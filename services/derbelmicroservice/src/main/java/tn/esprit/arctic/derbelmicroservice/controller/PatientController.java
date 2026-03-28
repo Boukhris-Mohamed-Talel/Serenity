@@ -16,6 +16,8 @@ import tn.esprit.arctic.derbelmicroservice.dto.response.PatientResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IPatientService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/patients")
 @RequiredArgsConstructor
@@ -48,7 +50,7 @@ public class PatientController {
                 .build());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<PatientResponseDTO>> getPatientById(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();
@@ -75,7 +77,7 @@ public class PatientController {
                 .build(), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<PatientResponseDTO>> updatePatient(
             @PathVariable Long id,
             @Valid @RequestBody PatientRequestDTO requestDTO) {
@@ -91,7 +93,7 @@ public class PatientController {
                 .build());
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponseDTO<Void>> deletePatient(@PathVariable Long id) {
         DerbelAuth.requireDoctorOrAdmin();
         Long authenticatedUserId = DerbelAuth.requireUserId();
@@ -101,6 +103,22 @@ public class PatientController {
         return ResponseEntity.ok(ApiResponseDTO.<Void>builder()
                 .status(HttpStatus.OK.value())
                 .message("Patient supprimé avec succès")
+                .build());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponseDTO<List<PatientResponseDTO>>> searchPatients(
+            @RequestParam(required = false) String name) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<PatientResponseDTO> results = patientService.searchPatients(
+                name, authenticatedUserId, isAdmin);
+        return ResponseEntity.ok(ApiResponseDTO.<List<PatientResponseDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Résultats de la recherche")
+                .data(results)
                 .build());
     }
 }
