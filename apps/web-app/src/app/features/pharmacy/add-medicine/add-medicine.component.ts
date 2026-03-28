@@ -77,6 +77,12 @@ export class AddMedicineComponent {
       return;
     }
 
+    const medicineName = String(this.form.get('medicineName')?.value || '').trim();
+    const quantity = Number(this.form.get('quantity')?.value || 0);
+    if (!window.confirm(`Add "${medicineName}" with quantity ${quantity}?`)) {
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -92,6 +98,14 @@ export class AddMedicineComponent {
         this.errorMessage = err.error?.message || 'Failed to add medicine';
       }
     });
+  }
+
+  cancel(): void {
+    const hasPendingChanges = this.form.dirty || !!this.imagePreviewUrl;
+    if (hasPendingChanges && !window.confirm('Discard your changes and leave this page?')) {
+      return;
+    }
+    this.router.navigate(['/pharmacy/stock']);
   }
 
   private imageUrlValidator(control: AbstractControl): ValidationErrors | null {

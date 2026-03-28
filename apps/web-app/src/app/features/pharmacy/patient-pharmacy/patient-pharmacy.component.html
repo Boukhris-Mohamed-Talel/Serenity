@@ -7,12 +7,6 @@
       </div>
     </header>
 
-    <article class="card map-card">
-      <h3>Pharmacy Map</h3>
-      <p class="map-message">{{ mapMessage }}</p>
-      <app-location-picker [readonly]="true" [markers]="mapMarkers"></app-location-picker>
-    </article>
-
     <article class="card default-card" *ngIf="defaultPharmacy as selected; else noDefault">
       <div class="default-head">
         <h3>Current Default Pharmacy</h3>
@@ -135,5 +129,11 @@
         </article>
       </div>
     </div>
+
+    <article class="card map-card bottom-map" *ngIf="hasSearchedCandidates">
+      <h3>Pharmacy Map</h3>
+      <p class="map-message">{{ mapMessage }}</p>
+      <app-location-picker [readonly]="true" [markers]="mapMarkers"></app-location-picker>
+    </article>
   </section>
 </div>

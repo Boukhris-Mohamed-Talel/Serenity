@@ -21,6 +21,10 @@
   min-height: 260px;
 }
 
+.bottom-map {
+  margin-top: 0.2rem;
+}
+
 .page-columns {
   display: grid;
   grid-template-columns: minmax(320px, 1.45fr) minmax(300px, 1fr);

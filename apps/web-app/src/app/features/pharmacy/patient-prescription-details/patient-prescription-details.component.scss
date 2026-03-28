@@ -43,11 +43,14 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
   gap: 1rem;
+  align-items: start;
 }
 
 .main-column {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
+  align-content: start;
+  grid-auto-rows: max-content;
 }
 
 .card {
@@ -62,9 +65,10 @@
 .overview-card,
 .meds-card,
 .alternatives-card {
-  padding: 1rem;
+  padding: 0.85rem;
   display: grid;
-  gap: 0.85rem;
+  gap: 0.55rem;
+  align-content: start;
 }
 
 .overview-card h2 {
@@ -75,7 +79,7 @@
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem 1rem;
+  gap: 0.45rem 0.9rem;
 }
 
 .label {
@@ -117,24 +121,24 @@ h4 {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.6rem;
+  gap: 0.4rem;
 }
 
 .medicine-list li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.7rem;
+  gap: 0.55rem;
   align-items: start;
   border: 1px solid #d8ebea;
   border-radius: 0.95rem;
-  padding: 0.7rem;
+  padding: 0.55rem 0.65rem;
   background: #fbfefe;
 }
 
 .line-index {
   color: #244e4f;
   font-weight: 700;
-  margin-top: 0.2rem;
+  margin-top: 0.1rem;
 }
 
 .line-body p {
@@ -144,20 +148,23 @@ h4 {
 .line-name {
   color: var(--rx-text);
   font-weight: 700;
-  font-size: 1.07rem;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
 .line-meta,
 .line-instructions {
-  margin-top: 0.15rem !important;
+  margin-top: 0.08rem !important;
   color: #2f5e5e;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
+  line-height: 1.3;
 }
 
 .line-qty {
   color: #224d4d;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
+  margin-top: 0.1rem;
 }
 
 .map-preview {

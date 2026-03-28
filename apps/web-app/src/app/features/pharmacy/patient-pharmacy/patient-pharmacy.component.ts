@@ -147,6 +147,12 @@ export class PatientPharmacyComponent implements OnInit {
   }
 
   setDefault(pharmacyId: number): void {
+    const selectedPharmacy = this.candidateResults.find((candidate) => candidate.id === pharmacyId);
+    const pharmacyName = selectedPharmacy?.name || 'this pharmacy';
+    if (!window.confirm(`Set "${pharmacyName}" as your default pharmacy?`)) {
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -208,7 +214,7 @@ export class PatientPharmacyComponent implements OnInit {
   }
 
   private refreshMapMarkers(): void {
-    if (this.hasSearchedCandidates && this.candidateResults.length > 0) {
+    if (this.hasSearchedCandidates) {
       const markers = this.candidateResults
         .filter((candidate) => this.hasCoordinates(candidate.latitude, candidate.longitude))
         .slice(0, 30)
@@ -219,11 +225,17 @@ export class PatientPharmacyComponent implements OnInit {
           primary: this.isDefault(candidate.id)
         }));
 
+      this.mapMarkers = markers;
+
       if (markers.length > 0) {
-        this.mapMarkers = markers;
         this.mapMessage = `${markers.length} pharmacy location${markers.length > 1 ? 's' : ''} shown on the map.`;
         return;
       }
+
+      this.mapMessage = this.candidateResults.length > 0
+        ? 'Search results have no map coordinates to display.'
+        : 'No pharmacy locations to display for this search yet.';
+      return;
     }
 
     if (this.defaultPharmacy && this.hasCoordinates(this.defaultPharmacy.latitude, this.defaultPharmacy.longitude)) {

@@ -67,6 +67,10 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
       return;
     }
 
+    if (!window.confirm(`Send this prescription to "${option.pharmacyName}"?`)) {
+      return;
+    }
+
     this.assigning = true;
     this.successMessage = '';
     this.alternativesErrorMessage = '';

@@ -1,8 +1,11 @@
 <div class="container">
   <section class="page">
     <header class="page-header">
-      <h1>My Pharmacy</h1>
-      <p>Create or update your pharmacy profile and legal information.</p>
+      <button type="button" class="btn btn-secondary" (click)="backToWorkspace()">Back</button>
+      <div class="header-copy">
+        <h1>My Pharmacy</h1>
+        <p>Create or update your pharmacy profile and legal information.</p>
+      </div>
     </header>
 
     <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
@@ -97,7 +100,7 @@
         <button class="btn btn-primary" type="submit" [disabled]="saving || form.invalid">
           {{ saving ? 'Saving...' : 'Save Pharmacy' }}
         </button>
-        <a class="btn btn-secondary" routerLink="/pharmacy">Cancel</a>
+        <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
       </div>
     </form>
   </section>

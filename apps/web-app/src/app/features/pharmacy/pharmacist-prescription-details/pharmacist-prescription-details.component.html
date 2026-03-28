@@ -8,6 +8,7 @@
       <button type="button" class="btn btn-secondary" (click)="goBack()">Back to Inbox</button>
     </header>
 
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
     <article class="card details-card" *ngIf="!loading && prescription as selected">
