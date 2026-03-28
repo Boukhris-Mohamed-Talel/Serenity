@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.service.IDoctorVerificationService;
+import serenity.doctors_service.service.RedisPublisher;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +25,9 @@ public class DoctorVerificationController {
     @Autowired
     private IDoctorVerificationService service;
     private final String uploadDir = "uploads/";
+
+    @Autowired
+    private RedisPublisher redisPublisher;
 
     // Create verification with files
     @PostMapping("/add_verification")
@@ -88,6 +92,8 @@ public class DoctorVerificationController {
         }
 
         DoctorVerification updated = service.save(verification);
+
+        redisPublisher.publishVerification(updated);
 
         return ResponseEntity.ok(updated);
     }

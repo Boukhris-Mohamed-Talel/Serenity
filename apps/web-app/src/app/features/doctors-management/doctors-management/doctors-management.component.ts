@@ -90,18 +90,35 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
 
     // Listen for new doctor verifications from WebSocket
     this.webSocketService.newVerification$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (newVerification: DoctorVerification) => {
-          console.log('New doctor verification received from WebSocket:', newVerification);
-          this.ngZone.run(() => {  
-            this.showToast('A new doctor verification has been added', 'success');
-          });
-        },
-        error: (err) => {
-          console.error('Error receiving new verification:', err);
+  .pipe(takeUntil(this.destroy$))
+  .subscribe({
+    next: (verification: DoctorVerification) => {
+      console.log('Verification event via WebSocket:', verification);
+
+      this.ngZone.run(() => {
+        const isExisting = this.selectedVerification?.verification_id === verification.verification_id;
+
+        if (isExisting) {
+          // Update the modal if the current verification matches
+          this.selectedVerification = verification;
+          this.showToast('A doctor verification has been updated', 'success');
+        } else {
+          // Otherwise, treat it as a new verification
+          this.showToast('A new doctor verification has been added', 'success');
+        }
+
+        // Update doctor list if needed
+        const doctorIndex = this.doctors.findIndex(d => d.id === verification.doctorId);
+        if (doctorIndex !== -1) {
+          this.doctors[doctorIndex] = {
+            ...this.doctors[doctorIndex],
+            isActive: verification.status === 'VERIFIED' ? true : this.doctors[doctorIndex].isActive
+          };
         }
       });
+    },
+    error: (err) => console.error('Error receiving verification event:', err)
+  });
   }
 
   ngOnDestroy(): void {
