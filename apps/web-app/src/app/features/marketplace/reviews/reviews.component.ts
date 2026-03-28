@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-reviews',
@@ -19,11 +20,14 @@ export class ReviewsComponent implements OnInit {
   reviewForm: FormGroup;
   errorMessage = '';
   successMessage = '';
+  hoverRating = 0;
+  lastActionMessage = '';
 
   constructor(
     private marketplaceService: MarketplaceService,
     private authService: AuthService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private router: Router
   ) {
     this.reviewForm = this.fb.group({
       rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
@@ -70,8 +74,10 @@ export class ReviewsComponent implements OnInit {
   }
 
   submitReview(): void {
+    this.lastActionMessage = 'Submit clicked at ' + new Date().toLocaleTimeString();
     this.errorMessage = '';
     this.successMessage = '';
+    this.userId = this.authService.getUserId();
 
     if (!this.productId) {
       this.errorMessage = 'Product details are still loading. Please try again in a moment.';
@@ -79,7 +85,13 @@ export class ReviewsComponent implements OnInit {
     }
 
     if (!this.authService.isLoggedIn()) {
-      this.errorMessage = 'Please sign in to submit a review.';
+      this.errorMessage = 'Please sign in to submit a review. Redirecting to login...';
+      this.goToLogin();
+      return;
+    }
+
+    if (!this.userId) {
+      this.errorMessage = 'Your session is missing user information. Please sign out and sign in again.';
       return;
     }
 
@@ -105,11 +117,70 @@ export class ReviewsComponent implements OnInit {
         this.submitting = false;
       },
       error: (err) => {
-        this.errorMessage = 'Failed to submit review: ' + (err.error?.message || '');
+        if (err.status === 400) {
+          this.errorMessage = err.error?.message || 'Unable to submit review. Please refresh and try again.';
+        } else if (err.status === 401 || err.status === 403) {
+          this.errorMessage = 'Your session has expired. Please sign in again.';
+        } else {
+          this.errorMessage = 'Failed to submit review. Please try again.';
+        }
         console.error('Error submitting review:', err);
         this.submitting = false;
       }
     });
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/auth/login']);
+  }
+
+  setRating(value: number): void {
+    this.reviewForm.patchValue({ rating: value });
+    this.reviewForm.get('rating')?.markAsTouched();
+  }
+
+  setHoverRating(value: number): void {
+    this.hoverRating = value;
+  }
+
+  clearHoverRating(): void {
+    this.hoverRating = 0;
+  }
+
+  isStarFilled(star: number): boolean {
+    const rating = Number(this.reviewForm.get('rating')?.value || 0);
+    const activeValue = this.hoverRating || rating;
+    return star <= activeValue;
+  }
+
+  currentRatingLabel(): string {
+    const rating = Number(this.reviewForm.get('rating')?.value || 0);
+    switch (rating) {
+      case 1:
+        return 'Poor';
+      case 2:
+        return 'Fair';
+      case 3:
+        return 'Good';
+      case 4:
+        return 'Very Good';
+      case 5:
+        return 'Excellent';
+      default:
+        return 'Select a rating';
+    }
+  }
+
+  reviewTextLength(): number {
+    return String(this.reviewForm.get('reviewText')?.value || '').length;
+  }
+
+  isNearCharacterLimit(): boolean {
+    return this.reviewTextLength() >= 850;
+  }
+
+  isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
   }
 
   deleteReview(reviewId: number): void {

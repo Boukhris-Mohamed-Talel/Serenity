@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/pharmacy_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${COMMERCE_DB_NAME:healthcare_commerce_db}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -20,7 +20,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
   user-db:
-    url: ${USER_DB_URL:jdbc:mysql://localhost:3306/healthcare_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${USER_DB_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${CORE_DB_NAME:healthcare_core_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${USER_DB_USERNAME:root}
     password: ${USER_DB_PASSWORD:}
   user-service:

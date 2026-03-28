@@ -1,6 +1,9 @@
 <div class="reviews-container">
   <div class="reviews-header">
-    <h3>Customer Reviews</h3>
+    <div>
+      <h3>Customer Reviews</h3>
+      <p class="subtitle">Real feedback from people who already tried this product.</p>
+    </div>
     <div class="rating-summary">
       <div class="average-rating">
         <span class="stars">★</span>
@@ -20,16 +23,32 @@
   <!-- Review Form -->
   <div class="review-form-section">
     <h5>Write a Review</h5>
-    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
+    <p class="form-helper">Your review helps other users decide faster.</p>
+
+    <div *ngIf="!isLoggedIn()" class="login-prompt">
+      <span>You need to be signed in to submit a review.</span>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="goToLogin()">Sign In</button>
+    </div>
+
+    <form [formGroup]="reviewForm" class="review-form" novalidate>
       <div class="form-group">
-        <label for="rating">Rating (1-5 stars)</label>
-        <select id="rating" formControlName="rating" class="form-control">
-          <option [value]="1">1 Star - Poor</option>
-          <option [value]="2">2 Stars - Fair</option>
-          <option [value]="3">3 Stars - Good</option>
-          <option [value]="4">4 Stars - Very Good</option>
-          <option [value]="5">5 Stars - Excellent</option>
-        </select>
+        <label>Rating</label>
+        <div class="rating-picker" (mouseleave)="clearHoverRating()">
+          <button
+            type="button"
+            class="star-btn"
+            *ngFor="let star of [1,2,3,4,5]"
+            (mouseenter)="setHoverRating(star)"
+            (focus)="setHoverRating(star)"
+            (blur)="clearHoverRating()"
+            (click)="setRating(star)"
+            [class.active]="isStarFilled(star)"
+            [attr.aria-label]="'Rate ' + star + ' stars'"
+          >
+            ★
+          </button>
+        </div>
+        <small class="form-text text-muted">{{ currentRatingLabel() }} ({{ reviewForm.get('rating')?.value }}/5)</small>
       </div>
 
       <div class="form-group">
@@ -41,8 +60,8 @@
           rows="4"
           placeholder="Share your experience with this product..."
         ></textarea>
-        <small class="form-text text-muted">
-          {{ reviewForm.get('reviewText')?.value?.length || 0 }}/1000 characters
+        <small class="form-text" [class.text-warning]="isNearCharacterLimit()" [class.text-muted]="!isNearCharacterLimit()">
+          {{ reviewTextLength() }}/1000 characters
         </small>
         <small class="form-text text-danger" *ngIf="reviewForm.get('reviewText')?.touched && reviewForm.get('reviewText')?.hasError('maxlength')">
           Review text must be 1000 characters or less.
@@ -50,12 +69,19 @@
       </div>
 
       <button 
-        type="submit" 
-        class="btn btn-primary"
+        type="button" 
+        class="btn btn-primary submit-btn"
         [disabled]="submitting"
+        (click)="submitReview()"
       >
         {{ submitting ? 'Submitting...' : 'Submit Review' }}
       </button>
+      <small class="form-text text-muted submit-hint" *ngIf="lastActionMessage">
+        {{ lastActionMessage }}
+      </small>
+      <small class="form-text text-muted submit-hint" *ngIf="!isLoggedIn()">
+        You can click submit now. We will ask you to sign in before posting.
+      </small>
     </form>
   </div>
 

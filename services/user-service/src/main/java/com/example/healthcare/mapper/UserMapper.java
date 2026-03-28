@@ -17,6 +17,7 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "profile", ignore = true)
+    @Mapping(target = "authProvider", ignore = true)
     User toEntity(UserRequestDTO dto);
 
     @Mapping(target = "role", expression = "java(user.getRole() != null ? user.getRole().name() : null)")
@@ -35,5 +36,6 @@ public interface UserMapper {
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "profile", ignore = true)
     @Mapping(target = "email", ignore = true)
+    @Mapping(target = "authProvider", ignore = true)
     void updateEntityFromDTO(UserRequestDTO dto, @MappingTarget User user);
 }
