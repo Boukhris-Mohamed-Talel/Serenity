@@ -10,6 +10,7 @@ import com.example.pharmacy.repository.PharmacyRepository;
 import com.example.pharmacy.security.CurrentUserService;
 import com.example.pharmacy.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +63,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         boolean isOwnerPharmacist = isPharmacyOwner(workflow, currentUserId);
         boolean isPatient = workflow.getPatientId().equals(currentUserId);
         if (!(isOwnerPharmacist || isPatient)) {
-            throw new IllegalStateException("You cannot access this prescription");
+            throw new AccessDeniedException("You cannot access this prescription");
         }
 
         List<PrescriptionLineResponseDTO> lines =
@@ -202,7 +203,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
         if (!isPharmacyOwner(workflow, pharmacistId)) {
-            throw new IllegalStateException("You can only update prescriptions assigned to your pharmacy");
+            throw new AccessDeniedException("You can only update prescriptions assigned to your pharmacy");
         }
     }
 
@@ -215,7 +216,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", prescriptionId));
 
         if (!workflow.getPatientId().equals(patientId)) {
-            throw new IllegalStateException("You can only manage your own prescriptions");
+            throw new AccessDeniedException("You can only manage your own prescriptions");
         }
 
         return workflow;

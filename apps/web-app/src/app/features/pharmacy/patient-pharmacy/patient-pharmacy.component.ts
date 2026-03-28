@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
+import { PickerMarker } from '../../../shared/components/location-picker/location-picker.component';
 import {
   PatientDefaultPharmacyResponse,
   PharmacyCandidateResponse,
@@ -37,6 +38,8 @@ export class PatientPharmacyComponent implements OnInit {
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
   candidateResults: PharmacyCandidateResponse[] = [];
   prescriptionCards: PrescriptionCardView[] = [];
+  mapMarkers: PickerMarker[] = [];
+  mapMessage = 'Map will show your default pharmacy location.';
 
   ngOnInit(): void {
     this.loadDefaultPharmacy();
@@ -52,12 +55,14 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.getMyDefaultPharmacy().subscribe({
       next: (response) => {
         this.defaultPharmacy = response;
+        this.refreshMapMarkers();
       },
       error: (err) => {
         if (err.status !== 404) {
           this.errorMessage = err.error?.message || 'Failed to load your default pharmacy';
         }
         this.defaultPharmacy = null;
+        this.refreshMapMarkers();
       }
     });
   }
@@ -88,11 +93,13 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.listPatientPharmacies(this.cityFilter, this.governorateFilter).subscribe({
       next: (items) => {
         this.candidateResults = items;
+        this.refreshMapMarkers();
         this.loading = false;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to load pharmacies';
         this.candidateResults = [];
+        this.refreshMapMarkers();
         this.loading = false;
       }
     });
@@ -117,6 +124,7 @@ export class PatientPharmacyComponent implements OnInit {
           .subscribe({
             next: (items) => {
               this.candidateResults = items;
+              this.refreshMapMarkers();
               this.nearestLoading = false;
               if (items.length === 0) {
                 this.errorMessage = 'No nearby pharmacies were found in the selected radius.';
@@ -125,6 +133,7 @@ export class PatientPharmacyComponent implements OnInit {
             error: (err) => {
               this.errorMessage = err.error?.message || 'Failed to fetch nearest pharmacies';
               this.candidateResults = [];
+              this.refreshMapMarkers();
               this.nearestLoading = false;
             }
           });
@@ -145,9 +154,12 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.setMyDefaultPharmacy({ pharmacyId }).subscribe({
       next: (response) => {
         this.defaultPharmacy = response;
+        // Keep map lean and focused after update: show only the selected default pharmacy.
+        this.candidateResults = [];
+        this.hasSearchedCandidates = false;
+        this.refreshMapMarkers();
         this.saving = false;
         this.successMessage = 'Default pharmacy updated successfully.';
-        this.loadPrescriptions();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to set default pharmacy';
@@ -193,5 +205,44 @@ export class PatientPharmacyComponent implements OnInit {
       primaryLine: lines[0],
       extraLinesCount: Math.max(lines.length - 1, 0)
     };
+  }
+
+  private refreshMapMarkers(): void {
+    if (this.hasSearchedCandidates && this.candidateResults.length > 0) {
+      const markers = this.candidateResults
+        .filter((candidate) => this.hasCoordinates(candidate.latitude, candidate.longitude))
+        .slice(0, 30)
+        .map((candidate) => ({
+          latitude: candidate.latitude as number,
+          longitude: candidate.longitude as number,
+          label: candidate.name,
+          primary: this.isDefault(candidate.id)
+        }));
+
+      if (markers.length > 0) {
+        this.mapMarkers = markers;
+        this.mapMessage = `${markers.length} pharmacy location${markers.length > 1 ? 's' : ''} shown on the map.`;
+        return;
+      }
+    }
+
+    if (this.defaultPharmacy && this.hasCoordinates(this.defaultPharmacy.latitude, this.defaultPharmacy.longitude)) {
+      this.mapMarkers = [{
+        latitude: this.defaultPharmacy.latitude as number,
+        longitude: this.defaultPharmacy.longitude as number,
+        label: this.defaultPharmacy.pharmacyName,
+        primary: true
+      }];
+      this.mapMessage = 'Showing your current default pharmacy location.';
+      return;
+    }
+
+    this.mapMarkers = [];
+    this.mapMessage = 'No pharmacy coordinates are available yet.';
+  }
+
+  private hasCoordinates(latitude?: number, longitude?: number): boolean {
+    return typeof latitude === 'number' && Number.isFinite(latitude)
+      && typeof longitude === 'number' && Number.isFinite(longitude);
   }
 }

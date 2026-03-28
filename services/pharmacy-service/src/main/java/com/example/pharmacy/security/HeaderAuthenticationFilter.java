@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,22 +22,26 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserIdentityResolver userIdentityResolver;
 
+    @Value("${app.security.allow-unsafe-header-auth:false}")
+    private boolean allowUnsafeHeaderAuth;
+
     @Override
     protected void doFilterInternal(
         HttpServletRequest request,
         HttpServletResponse response,
         FilterChain filterChain
     ) throws ServletException, IOException {
-        String userId = request.getHeader("userId");
-        String role = request.getHeader("role");
+        String userId = null;
+        String role = null;
 
-        if (isBlankOrNull(userId) || isBlankOrNull(role)) {
-            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-            UserIdentityResolver.ResolvedIdentity identity = userIdentityResolver.resolveFromBearer(authHeader);
-            if (identity != null) {
-                userId = identity.userId();
-                role = identity.role();
-            }
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        UserIdentityResolver.ResolvedIdentity identity = userIdentityResolver.resolveFromBearer(authHeader);
+        if (identity != null) {
+            userId = identity.userId();
+            role = identity.role();
+        } else if (allowUnsafeHeaderAuth) {
+            userId = request.getHeader("userId");
+            role = request.getHeader("role");
         }
 
         if (!isBlankOrNull(userId) && !isBlankOrNull(role)
