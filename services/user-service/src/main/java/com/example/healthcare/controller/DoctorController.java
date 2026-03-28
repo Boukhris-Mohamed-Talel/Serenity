@@ -4,6 +4,7 @@ import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.service.DoctorService;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,14 +50,14 @@ public class DoctorController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping(value="/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateDoctor(
             @PathVariable Long userId,
-            @RequestBody Doctor doctorDetails) {
+            @RequestParam(required = false) String specialty,
+            @RequestParam(required = false) MultipartFile image) throws IOException {
 
-        Doctor updatedDoctor = doctorService.updateDoctor(userId, doctorDetails);
+        Doctor updatedDoctor = doctorService.updateDoctorWithFile(userId, specialty, image);
 
-        // 👇 retourne un DTO simple au lieu de l'entité complète
         Map<String, Object> response = new HashMap<>();
         response.put("id", updatedDoctor.getId());
         response.put("specialty", updatedDoctor.getSpecialty());

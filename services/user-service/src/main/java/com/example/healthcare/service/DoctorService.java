@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class DoctorService implements IDoctorService {
@@ -66,6 +67,8 @@ public class DoctorService implements IDoctorService {
         // Doctor-specific fields
         doctor.setSpecialty(specialty);
         doctor.setProfilePictureUrl("uploads/" + fileName);
+        log("=== WORKING DIR: " + System.getProperty("user.dir"));
+        log("=== SAVING TO: " + Paths.get("uploads/" + fileName).toAbsolutePath());
 
         // Delete the plain User row and save as Doctor (joined table)
         userRepository.delete(existingUser);
@@ -112,6 +115,7 @@ public class DoctorService implements IDoctorService {
             existingDoctor.setPhone(doctorDetails.getPhone());
         }
 
+
         return doctorRepository.save(existingDoctor);
     }
 
@@ -127,5 +131,47 @@ public class DoctorService implements IDoctorService {
 
         existingDoctor.setIsActive(true);
         doctorRepository.save(existingDoctor);
+    }
+
+
+    public Doctor updateDoctorWithFile(Long id, String specialty, MultipartFile image) throws IOException {
+        log("=== updateDoctorWithFile called ===");
+        log("id: " + id);
+        log("specialty: " + specialty);
+        log("image is null: " + (image == null));
+        log("image is empty: " + (image != null && image.isEmpty()));
+        log("image original name: " + (image != null ? image.getOriginalFilename() : "N/A"));
+        log("working dir: " + System.getProperty("user.dir"));
+
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        if (specialty != null) doctor.setSpecialty(specialty);
+
+        if (image != null && !image.isEmpty()) {
+            Files.createDirectories(Paths.get("uploads"));
+            String safeName = image.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+            String filename = UUID.randomUUID() + "-" + safeName;
+            Path filePath = Paths.get("uploads/" + filename);
+            log("saving to: " + filePath.toAbsolutePath());
+            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            log("file saved ✅");
+            doctor.setProfilePictureUrl("uploads/" + filename);
+        } else {
+            log("⚠️ image is null or empty — skipping file save");
+        }
+
+        return doctorRepository.save(doctor);
+    }
+
+    private void log(String message) {
+        try {
+            java.nio.file.Files.writeString(
+                    java.nio.file.Paths.get("debug.log"),
+                    message + "\n",
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.APPEND
+            );
+        } catch (Exception e) {}
     }
 }

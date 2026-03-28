@@ -31,11 +31,11 @@ export class DoctorService {
     return this.http.delete(`${this.API_URL}/${doctorId}`);
   }
 
-  updateDoctor(doctorId: number, doctorDetails: any): Observable<any> {
-    return this.http.put(
-      `${this.API_URL}/${doctorId}`,
-      doctorDetails,
-      { headers: { Authorization: `Bearer ${this.authService.getToken()}` } }
-    );
-  }
+  updateDoctor(doctorId: number, formData: FormData): Observable<any> {
+  return this.http.put(
+    `${this.API_URL}/${doctorId}`,
+    formData,
+    { headers: { Authorization: `Bearer ${this.authService.getToken()}` } }
+  );
+}
 }

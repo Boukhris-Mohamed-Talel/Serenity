@@ -1,6 +1,7 @@
 package com.example.healthcare.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     private String password;
 
     @Column(nullable = false)
@@ -53,6 +55,7 @@ public class User {
     private Role role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private UserProfile profile;
 
     @PrePersist

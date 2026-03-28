@@ -138,75 +138,56 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  onSubmit(): void {
-    if (this.profileForm.invalid) return;
-    if (this.isDoctor && this.doctorForm.invalid) return;
-
-    this.saving = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const formValue = { ...this.profileForm.value };
-    if (formValue.dateOfBirth) {
-      formValue.dateOfBirth = new Date(formValue.dateOfBirth).toISOString();
-    } else {
-      delete formValue.dateOfBirth;
-    }
-
-    console.log('📤 Submitting profile form:', formValue);
-    console.log('🩺 isDoctor:', this.isDoctor);
-    console.log('🩺 doctorForm value:', this.doctorForm.value);
-    console.log('🩺 doctorForm valid:', this.doctorForm.valid);
-
-    this.userService.updateProfile(formValue).subscribe({
-      next: (user) => {
-        console.log('✅ User profile updated:', user);
-        this.user = user;
-
-        if (this.isDoctor) {
-          const doctorId = this.authService.getCurrentUser()?.userId;
-          console.log('🩺 Doctor ID from JWT:', doctorId);
-
-          if (!doctorId) {
-            console.error('❌ No doctorId found in JWT');
-            this.saving = false;
-            this.editMode = false;
-            this.successMessage = 'Profile updated successfully';
-            return;
-          }
-
-          const doctorPayload = this.doctorForm.value;
-          console.log('📤 Sending doctor update payload:', doctorPayload);
-          console.log('📤 To doctorId:', doctorId);
-
-          this.doctorService.updateDoctor(doctorId, doctorPayload).subscribe({
-            next: (res) => {
-              console.log('✅ Doctor info updated:', res);
-              this.saving = false;
-              this.editMode = false;
-              this.successMessage = 'Profile updated successfully';
-            },
-            error: (err) => {
-              console.error('❌ Doctor update failed:', err);
-              console.error('❌ Status:', err.status);
-              console.error('❌ Error body:', err.error);
-              this.saving = false;
-              this.errorMessage = err.error?.message || 'Failed to update doctor info';
-            }
-          });
-        } else {
-          this.saving = false;
-          this.editMode = false;
-          this.successMessage = 'Profile updated successfully';
-        }
-      },
-      error: (err) => {
-        console.error('❌ User profile update failed:', err);
-        this.saving = false;
-        this.errorMessage = err.error?.message || 'Failed to update profile';
-      }
-    });
+ onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    this.selectedFile = input.files[0];
   }
+}
+
+onSubmit(): void {
+  if (this.profileForm.invalid) return;
+  if (this.isDoctor && this.doctorForm.invalid) return;
+
+  this.saving = true;
+  this.errorMessage = '';
+  this.successMessage = '';
+
+  const formData = new FormData();
+
+  Object.entries(this.profileForm.value).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) formData.append(key, value.toString());
+  });
+
+  if (this.isDoctor) {
+  formData.append('specialty', this.doctorForm.get('specialty')?.value || '');
+  
+  // Send the actual file, not the string path
+  if (this.selectedFile) {
+    formData.append('image', this.selectedFile, this.selectedFile.name);
+  }
+}
+
+  const doctorId = this.authService.getCurrentUser()?.userId;
+  if (!doctorId) {
+    this.saving = false;
+    this.errorMessage = 'No doctor ID found';
+    return;
+  }
+
+  this.doctorService.updateDoctor(doctorId, formData).subscribe({
+    next: (res) => {
+      this.saving = false;
+      this.editMode = false;
+      this.successMessage = 'Profile updated successfully';
+      if (this.selectedFile) this.user!.profile!.avatar = this.imagePreview!;
+    },
+    error: (err) => {
+      this.saving = false;
+      this.errorMessage = err.error?.message || 'Failed to update doctor info';
+    }
+  });
+}
 
   getInitials(): string {
     if (!this.user) return '?';
@@ -223,24 +204,16 @@ export class ProfileComponent implements OnInit {
   }
 
   onDoctorImageSelected(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-    this.selectedFile = file;
+  this.selectedFile = file; // ← this gets sent to backend
 
-    const fileName = file.name;
-    const path = `uploads/${fileName}`;
-
-    this.doctorForm.patchValue({
-      profilePictureUrl: path
-    });
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imagePreview = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  }
+  const reader = new FileReader();
+  reader.onload = () => this.imagePreview = reader.result as string;
+  reader.readAsDataURL(file);
+  // ❌ Remove the doctorForm.patchValue call — stop setting profilePictureUrl
+}
 
   openDeleteModal(): void {
     this.showDeleteModal = true;

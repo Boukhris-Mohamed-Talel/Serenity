@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MessagerieService } from '../../../core/services/messagerie.service';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { WebSocketService } from '../../../core/services/web-socket.service';
@@ -37,7 +37,13 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   messageContent: string = '';
   currentUserId: number | null = null;
 
+  conversationMenuVisible = false;
+  conversationMenuX = 0;
+  conversationMenuY = 0;
+  selectedConversation: any = null;
+
   private wsSubscription: Subscription | null = null;
+  private clickListener!: () => void;
 
   constructor(
     private messagerieService: MessagerieService,
@@ -59,68 +65,83 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    document.addEventListener('click', () => {
+    // Store reference so we can remove it in ngOnDestroy
+    this.clickListener = () => {
       this.menuVisible = false;
       this.conversationMenuVisible = false;
-    });
-    
+    };
+    document.addEventListener('click', this.clickListener);
 
-    this.filteredConversations = [...this.conversations];
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.userId) return;
 
     this.currentUserId = currentUser.userId;
 
-    this.messagerieService.getUserConversations(this.currentUserId).subscribe({
-      next: (convos) => {
-        const otherUserIds = convos.map(c => c.user1Id === this.currentUserId ? c.user2Id : c.user1Id);
+    // Use switchMap to avoid nested subscriptions
+    this.messagerieService.getUserConversations(this.currentUserId).pipe(
+      switchMap(convos => {
+        const otherUserIds = convos.map(c =>
+          c.user1Id === this.currentUserId ? c.user2Id : c.user1Id
+        );
+        return this.userService.getUsersNamesById(otherUserIds).pipe(
+          map(users => ({ convos, users }))
+        );
+      })
+    ).subscribe({
+      next: ({ convos, users }) => {
+        console.log('✅ Convos:', convos);
+        console.log('👤 Users:', users);
 
-        this.userService.getUsersNamesById(otherUserIds).subscribe({
-          next: (users) => {
-            const usersMap = new Map(users.map(u => [u.id, `${u.firstName} ${u.lastName}`]));
-            this.conversations = convos.map(c => ({
-              ...c,
-              otherUserName: usersMap.get(c.user1Id === this.currentUserId ? c.user2Id : c.user1Id)
-            }));
-            this.filteredConversations = [...this.conversations];
-          },
-          error: (err) => console.error('Erreur récupération noms utilisateurs:', err)
-        });
+        // Try both 'id' and 'userId' field names to be safe
+        const usersMap = new Map(
+          users.map((u: any) => [u.id ?? u.userId, `${u.firstName} ${u.lastName}`])
+        );
+
+        this.conversations = convos.map((c: any) => ({
+          ...c,
+          otherUserName: usersMap.get(
+            c.user1Id === this.currentUserId ? c.user2Id : c.user1Id
+          ) ?? 'Unknown'
+        }));
+
+        this.filteredConversations = [...this.conversations];
       },
       error: (err) => console.error('Erreur chargement conversations:', err)
     });
 
-    // 👇 WebSocket
+    // WebSocket
     this.webSocketService.connect();
 
     this.wsSubscription = this.webSocketService.newMessage$.subscribe((msg: any) => {
-  if (msg.conversationId !== this.activeConversationId) return;
+      if (msg.conversationId !== this.activeConversationId) return;
 
-  // 👇 DELETE
-  if (msg.deletedMessageId) {
-    this.messages = this.messages.filter(m => m.id !== msg.deletedMessageId);
-    return;
-  }
+      // DELETE
+      if (msg.deletedMessageId) {
+        this.messages = this.messages.filter(m => m.id !== msg.deletedMessageId);
+        return;
+      }
 
-  // 👇 UPDATE
-  const existingIndex = this.messages.findIndex(m => m.id === msg.id);
-  if (existingIndex !== -1) {
-    this.messages[existingIndex].text = msg.content;
-    return;
-  }
+      // UPDATE
+      const existingIndex = this.messages.findIndex(m => m.id === msg.id);
+      if (existingIndex !== -1) {
+        this.messages[existingIndex].text = msg.content;
+        return;
+      }
 
-  // 👇 ADD
-  this.messages.push({
-    id: msg.id,
-    text: msg.content,
-    type: msg.senderId === this.currentUserId ? 'sent' : 'received',
-    createdAt: msg.createdAt,
-    senderId: msg.senderId
-  });
-});
+      // ADD
+      this.messages.push({
+        id: msg.id,
+        text: msg.content,
+        type: msg.senderId === this.currentUserId ? 'sent' : 'received',
+        createdAt: msg.createdAt,
+        senderId: msg.senderId
+      });
+    });
   }
 
   ngOnDestroy() {
+    // Remove the click listener to avoid memory leaks
+    document.removeEventListener('click', this.clickListener);
     this.wsSubscription?.unsubscribe();
     this.webSocketService.disconnect();
   }
@@ -143,16 +164,15 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.userId) return;
 
-    const currentUserId: number = currentUser.userId;
-
-    this.messagerieService.startConversation(currentUserId, user.id).subscribe({
+    this.messagerieService.startConversation(currentUser.userId, user.id).subscribe({
       next: (conversation) => {
-        this.activeConversationId = conversation.id;  // 👈
-        this.activeConversationName = `${user.firstName} ${user.lastName}`;  // 👈
+        this.activeConversationId = conversation.id;
+        this.activeConversationName = `${user.firstName} ${user.lastName}`;
 
+        // Load messages for this conversation
         this.messagerieService.getConversationMessages(conversation.id).subscribe({
           next: (msgs) => {
-            this.messages = msgs.map(msg => ({  // 👈 formate comme selectConversation
+            this.messages = msgs.map((msg: any) => ({
               text: msg.content || '',
               type: msg.senderId === this.currentUserId ? 'sent' : 'received',
               id: msg.id,
@@ -161,23 +181,30 @@ export class MessagerieComponent implements OnInit, OnDestroy {
             }));
           },
           error: (err) => {
-            console.error('Erreur lors du chargement des messages :', err);
+            console.error('Erreur chargement messages:', err);
             this.messages = [];
           }
         });
 
-        if (!this.conversations.find(c => c.id === conversation.id)) {
-          this.conversations.push({
-            ...conversation,
-            otherUserName: `${user.firstName} ${user.lastName}`,  // 👈 otherUserName pas name
-            lastMessage: ''
-          });
+        // ✅ Upsert conversation in list (fixes the "not appearing" bug)
+        const existingIndex = this.conversations.findIndex(c => c.id === conversation.id);
+        const convoEntry = {
+          ...conversation,
+          otherUserName: `${user.firstName} ${user.lastName}`,
+          lastMessage: ''
+        };
+
+        if (existingIndex === -1) {
+          this.conversations.unshift(convoEntry); // New: add at top
+        } else {
+          this.conversations[existingIndex] = convoEntry; // Existing: update in place
         }
 
+        // ✅ Always sync filteredConversations BEFORE cancelSearch
         this.filteredConversations = [...this.conversations];
         this.cancelSearch();
       },
-      error: (err) => console.error('Erreur lors du démarrage de la conversation:', err)
+      error: (err) => console.error('Erreur démarrage conversation:', err)
     });
   }
 
@@ -187,16 +214,16 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
     this.messagerieService.getConversationMessages(convo.id).subscribe({
       next: (msgs) => {
-        this.messages = msgs.map(msg => ({
+        this.messages = msgs.map((msg: any) => ({
           text: msg.content || '',
-          type: msg.senderId === this.authService.getCurrentUser()?.userId ? 'sent' : 'received',
+          type: msg.senderId === this.currentUserId ? 'sent' : 'received',
           id: msg.id,
           createdAt: msg.createdAt,
           senderId: msg.senderId
         }));
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des messages :', err);
+        console.error('Erreur chargement messages:', err);
         this.messages = [];
       }
     });
@@ -212,6 +239,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
     this.messagerieService.sendMessages(conversationId, senderId, content).subscribe({
       next: (res) => {
+        // Guard against WebSocket duplicate
         const alreadyExists = this.messages.some(m => m.id === res.id);
         if (!alreadyExists) {
           this.messages.push({
@@ -224,27 +252,17 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         }
         this.messageContent = '';
       },
-      error: (err) => console.error('Erreur lors de l\'envoi du message:', err)
+      error: (err) => console.error('Erreur envoi message:', err)
     });
   }
 
   openMenu(event: MouseEvent, index: number) {
     event.preventDefault();
+    event.stopPropagation(); // Prevent immediate close from document click
     this.menuVisible = true;
     this.menuX = event.clientX;
     this.menuY = event.clientY;
     this.selectedIndex = index;
-  }
-
-  editMessage() {
-    this.editingIndex = this.selectedIndex;
-    this.editText = this.messages[this.selectedIndex].text;
-    this.menuVisible = false;
-  }
-
-  saveEdit() {
-    this.messages[this.editingIndex].text = this.editText;
-    this.editingIndex = -1;
   }
 
   startEdit(index: number) {
@@ -289,39 +307,35 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     });
   }
 
-  conversationMenuVisible = false;
-conversationMenuX = 0;
-conversationMenuY = 0;
-selectedConversation: any = null;
+  openConversationMenu(event: MouseEvent, convo: any) {
+    event.preventDefault();
+    event.stopPropagation(); // Prevent immediate close from document click
+    this.conversationMenuVisible = true;
+    this.conversationMenuX = event.clientX;
+    this.conversationMenuY = event.clientY;
+    this.selectedConversation = convo;
+  }
 
-openConversationMenu(event: MouseEvent, convo: any) {
-  event.preventDefault();
-  this.conversationMenuVisible = true;
-  this.conversationMenuX = event.clientX;
-  this.conversationMenuY = event.clientY;
-  this.selectedConversation = convo;
-}
+  deleteConversationClicked() {
+    if (!this.selectedConversation) return;
 
-deleteConversationClicked() {
-  if (!this.selectedConversation) return;
+    const conversationId = this.selectedConversation.id;
 
-  const conversationId = this.selectedConversation.id;
+    this.messagerieService.deleteConversation(conversationId).subscribe({
+      next: () => {
+        this.conversations = this.conversations.filter(c => c.id !== conversationId);
+        this.filteredConversations = [...this.conversations];
 
-  this.messagerieService.deleteConversation(conversationId).subscribe({
-    next: () => {
-      this.conversations = this.conversations.filter(c => c.id !== conversationId);
-      this.filteredConversations = [...this.conversations];
+        if (this.activeConversationId === conversationId) {
+          this.activeConversationId = null;
+          this.activeConversationName = '';
+          this.messages = [];
+        }
 
-      if (this.activeConversationId === conversationId) {
-        this.activeConversationId = null;
-        this.activeConversationName = '';
-        this.messages = [];
-      }
-
-      this.conversationMenuVisible = false;
-      this.selectedConversation = null;
-    },
-    error: (err) => console.error('Erreur suppression conversation:', err)
-  });
-}
+        this.conversationMenuVisible = false;
+        this.selectedConversation = null;
+      },
+      error: (err) => console.error('Erreur suppression conversation:', err)
+    });
+  }
 }
