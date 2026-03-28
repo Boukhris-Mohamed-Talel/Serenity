@@ -223,6 +223,311 @@
   color: var(--text-light);
 }
 
+.notif-bell-wrap {
+  position: relative;
+}
+
+.notif-bell {
+  position: relative;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.notif-bell-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+
+  &:hover {
+    color: var(--text);
+    border-color: #fca5a5;
+    background: #fff1f2;
+  }
+
+  .material-icons {
+    font-size: 20px;
+  }
+}
+
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-panel {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: 360px;
+  max-height: 420px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
+  overflow: hidden;
+  z-index: 120;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  font-weight: 700;
+
+  button {
+    border: none;
+    background: none;
+    color: #ef4444;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+}
+
+.notif-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.notif-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-message {
+  margin: 0;
+  font-size: 12px;
+  color: #374151;
+}
+
+.notif-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.mood-badge.crisis {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.notif-empty {
+  padding: 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.crisis-toast {
+  position: fixed;
+  top: 80px;
+  right: 16px;
+  z-index: 130;
+}
+
+.notification-menu {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 0.2rem;
+
+  &:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+  }
+}
+
+.bell {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -8px;
+  width: min(380px, 92vw);
+  max-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+  z-index: 120;
+}
+
+.navbar-actions .user-greeting {
+  margin-left: 0.35rem;
+}
+
+.notification-header {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mark-all-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notification-state {
+  padding: 1rem;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.notification-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  text-align: left;
+  padding: 0.72rem 0.85rem;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.unread {
+    background: rgba(59, 164, 160, 0.08);
+  }
+}
+
+.notification-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.notification-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.notification-message {
+  margin: 0.22rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.notification-date {
+  margin-top: 0.3rem;
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
 .user-greeting {
   font-size: 0.875rem;
   font-weight: 600;
@@ -237,6 +542,17 @@
 .main-content {
   padding: 2rem 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Monitoring mood list (doctor sidebar) needs a flex chain from main → host → inner layout. */
+.main-content > app-mood-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 // Peek character

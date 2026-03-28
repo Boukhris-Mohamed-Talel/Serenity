@@ -21,8 +21,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.authService.getToken();
+    const shouldAttachToken = this.shouldAttachToken(request.url);
 
-    if (token) {
+    if (token && shouldAttachToken) {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -33,11 +34,30 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
-          this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          // Only force logout if the error is from auth endpoints
+          // For other services (e.g., monitoring), let the service handle the error gracefully
+          const isAuthError = request.url.includes('/auth/') || 
+                            request.url.includes('/login') || 
+                            request.url.includes('/register');
+          
+          if (isAuthError) {
+            this.authService.logout();
+            this.router.navigate(['/auth/login']);
+          }
         }
         return throwError(() => error);
       })
     );
+  }
+
+  private shouldAttachToken(url: string): boolean {
+    // Keep auth headers on Serenity APIs only; skip third-party URLs (quotes/proxies) to avoid CORS preflight failures.
+    if (!/^https?:\/\//i.test(url)) {
+      return true;
+    }
+
+    return url.startsWith('http://localhost:8082') ||
+      url.startsWith('http://localhost:8085') ||
+      url.includes('/api/');
   }
 }

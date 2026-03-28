@@ -71,10 +71,25 @@ export class AuthService {
 
     const normalize = (value: string) => value.replace(/^ROLE_/i, '').trim().toUpperCase();
     return normalize(userRole) === normalize(role);
+    const user = this.currentUserSubject.value;
+    const actualRole = this.normalizeRole(user?.role);
+    const requiredRole = this.normalizeRole(role);
+    if (!actualRole || !requiredRole) {
+      return false;
+    }
+    return actualRole === requiredRole;
   }
 
   isAdmin(): boolean {
     return this.hasRole('ADMIN');
+  }
+
+  isPatient(): boolean {
+    return this.hasRole('PATIENT');
+  }
+
+  isDoctor(): boolean {
+    return this.hasRole('DOCTOR');
   }
 
   getCurrentUser(): AuthResponse | null {
@@ -90,5 +105,10 @@ export class AuthService {
   private getStoredUser(): AuthResponse | null {
     const stored = localStorage.getItem(this.USER_KEY);
     return stored ? JSON.parse(stored) : null;
+  }
+
+  private normalizeRole(role: string | null | undefined): string {
+    const value = role?.trim().toUpperCase() ?? '';
+    return value.startsWith('ROLE_') ? value.substring(5) : value;
   }
 }

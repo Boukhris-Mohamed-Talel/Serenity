@@ -2,9 +2,11 @@ import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
+import { CrisisAlertService } from '../core/services/crisis-alert.service';
 import { UserService } from '../core/services/user.service';
 import { InsuranceService } from '../core/services/insurance.service';
 import { InsuranceNotification } from '../shared/models/insurance.model';
+import { CrisisAlertPayload } from '../shared/models/mood.model';
 import { UserResponse } from '../shared/models/user.model';
 
 @Component({
@@ -21,12 +23,17 @@ export class LayoutComponent implements OnInit, OnDestroy {
   notificationsOpen = false;
   notificationsLoading = false;
   private readonly locallyReadNotificationIds = new Set<number>();
+  alerts: CrisisAlertPayload[] = [];
+  notificationPanelOpen = false;
   private peekInterval: any;
   private userSub!: Subscription;
+  private alertsSub!: Subscription;
+  private authSub!: Subscription;
   private notificationRefreshInterval: any;
 
   constructor(
     public readonly authService: AuthService,
+    private readonly crisisAlertService: CrisisAlertService,
     private readonly userService: UserService,
     private readonly insuranceService: InsuranceService,
     private readonly router: Router
@@ -43,9 +50,22 @@ export class LayoutComponent implements OnInit, OnDestroy {
         }
       });
 
+
       this.refreshNotifications();
       this.notificationRefreshInterval = setInterval(() => this.refreshNotifications(), 20000);
+
+      this.alertsSub = this.crisisAlertService.alerts$.subscribe(alerts => {
+        this.alerts = alerts;
+      });
     }
+
+    this.authSub = this.authService.currentUser$.subscribe((authUser) => {
+      if (authUser && this.authService.isDoctor() && authUser.userId) {
+        this.crisisAlertService.connect(authUser.userId);
+        return;
+      }
+      this.crisisAlertService.disconnect();
+    });
   }
 
   ngOnDestroy(): void {
@@ -55,6 +75,46 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.userSub) {
       this.userSub.unsubscribe();
     }
+    if (this.notificationRefreshInterval) {
+      clearInterval(this.notificationRefreshInterval);
+    }
+    if (this.alertsSub) {
+      this.alertsSub.unsubscribe();
+    }
+    if (this.authSub) {
+      this.authSub.unsubscribe();
+    }
+    if (this.authService.isDoctor()) {
+      this.crisisAlertService.disconnect();
+    }
+  }
+
+  get unreadCount(): number {
+    return this.alerts.length;
+  }
+
+  get showAlertPanel(): boolean {
+    return this.notificationPanelOpen;
+  }
+
+  set showAlertPanel(value: boolean) {
+    this.notificationPanelOpen = value;
+  }
+
+  toggleAlertPanel(): void {
+    this.toggleNotificationPanel();
+  }
+
+  toggleNotificationPanel(): void {
+    if (!this.authService.isDoctor()) {
+      return;
+    }
+    this.notificationPanelOpen = !this.notificationPanelOpen;
+  }
+
+  clearAllAlerts(): void {
+    this.crisisAlertService.clearAlerts();
+    this.notificationPanelOpen = false;
     if (this.notificationRefreshInterval) {
       clearInterval(this.notificationRefreshInterval);
     }
@@ -87,6 +147,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.notificationPanelOpen = false;
     this.router.navigate(['/auth/login']);
   }
 
