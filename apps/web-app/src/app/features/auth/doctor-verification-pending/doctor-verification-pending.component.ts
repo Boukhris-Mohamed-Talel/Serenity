@@ -32,6 +32,12 @@ export class DoctorVerificationPendingComponent implements OnInit, OnDestroy {
   cvPreviewUrl: SafeUrl | null = null;
   diplomaPreviewUrl: SafeUrl | null = null;
 
+  // New file selection
+  cvFile: File | null = null;
+  diplomaFile: File | null = null;
+  newCvPreview: string | null = null;
+  newDiplomaPreview: string | null = null;
+
   readonly pendingMessage =
     'Your verification is pending approval by the admin. You can update your details below while you wait.';
 
@@ -120,35 +126,123 @@ export class DoctorVerificationPendingComponent implements OnInit, OnDestroy {
     this.objectUrls.forEach((u) => URL.revokeObjectURL(u));
   }
 
-  onSubmit(): void {
-    if (this.form.invalid || !this.verification) {
-      this.form.markAllAsTouched();
+  // --- File selection handlers ---
+
+  onCvSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.handleFile(input.files[0], 'cv');
+    }
+    input.value = ''; // reset so re-selecting the same file triggers change
+  }
+
+  onDiplomaSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.handleFile(input.files[0], 'diploma');
+    }
+    input.value = '';
+  }
+
+  private handleFile(file: File, kind: 'cv' | 'diploma'): void {
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      this.errorMessage = `${kind === 'cv' ? 'CV' : 'Diploma'} must be an image (PNG, JPG).`;
       return;
     }
-
-    this.saving = true;
-    this.successMessage = '';
+    if (file.size > 5 * 1024 * 1024) {
+      this.errorMessage = `${kind === 'cv' ? 'CV' : 'Diploma'} file must be less than 5 MB.`;
+      return;
+    }
     this.errorMessage = '';
 
-    const { licenseNumber, nationalId } = this.form.getRawValue();
-    const payload: DoctorVerification = {
-      ...this.verification,
-      licenseNumber: String(licenseNumber).trim(),
-      nationalId: String(nationalId).replace(/\s/g, '')
-    };
+    if (kind === 'cv') {
+      this.cvFile = file;
+    } else {
+      this.diplomaFile = file;
+    }
 
-    this.doctorVerificationService.updateVerification(this.verification.verification_id, payload).subscribe({
+    // Generate local preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (kind === 'cv') {
+        this.newCvPreview = e.target?.result as string;
+      } else {
+        this.newDiplomaPreview = e.target?.result as string;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeCv(): void {
+    this.cvFile = null;
+    this.newCvPreview = null;
+  }
+
+  removeDiploma(): void {
+    this.diplomaFile = null;
+    this.newDiplomaPreview = null;
+  }
+
+  getFileName(file: File | null): string {
+    return file ? file.name : '';
+  }
+
+  getFileSize(file: File | null): string {
+    if (!file) return '';
+    const mb = (file.size / (1024 * 1024)).toFixed(2);
+    return `${mb} MB`;
+  }
+
+  // --- Submit ---
+
+  onSubmit(): void {
+  if (this.form.invalid || !this.verification) {
+    this.form.markAllAsTouched();
+    return;
+  }
+
+  this.saving = true;
+  this.successMessage = '';
+  this.errorMessage = '';
+
+  const { licenseNumber, nationalId } = this.form.getRawValue();
+
+  const formData = new FormData();
+  formData.append('licenseNumber', licenseNumber.trim());
+  formData.append('nationalId', String(nationalId).replace(/\s/g, ''));
+
+  if (this.cvFile) {
+    formData.append('cv', this.cvFile, this.cvFile.name);
+  }
+
+  if (this.diplomaFile) {
+    formData.append('diploma', this.diplomaFile, this.diplomaFile.name);
+  }
+
+  this.doctorVerificationService.updateVerification(this.verification.verification_id, formData)
+    .subscribe({
       next: (res) => {
         this.saving = false;
         this.verification = res;
         this.successMessage = 'Your verification was updated successfully.';
+
+        this.cvFile = null;
+        this.diplomaFile = null;
+        this.newCvPreview = null;
+        this.newDiplomaPreview = null;
+
+        this.cvPreviewUrl = null;
+        this.diplomaPreviewUrl = null;
+        this.loadDocPreview('cv', res.cv);
+        this.loadDocPreview('diploma', res.diploma);
       },
       error: (err) => {
         this.saving = false;
         this.errorMessage = err.error?.message || 'Failed to update verification. Please try again.';
       }
     });
-  }
+}
 
   private loadDocPreview(kind: 'cv' | 'diploma', path: string | undefined): void {
     if (!path) {

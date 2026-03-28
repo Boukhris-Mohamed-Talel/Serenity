@@ -10,6 +10,10 @@ import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.service.IDoctorVerificationService;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +23,7 @@ public class DoctorVerificationController {
 
     @Autowired
     private IDoctorVerificationService service;
+    private final String uploadDir = "uploads/";
 
     // Create verification with files
     @PostMapping("/add_verification")
@@ -43,10 +48,47 @@ public class DoctorVerificationController {
     @PutMapping("/update_verification/{id}")
     public ResponseEntity<DoctorVerification> update(
             @PathVariable Long id,
-            @RequestBody DoctorVerification verification
-    ) {
-        verification.setVerification_id(id);
+            @RequestParam(value = "cv", required = false) MultipartFile cv,
+            @RequestParam(value = "diploma", required = false) MultipartFile diploma,
+            @RequestParam("licenseNumber") String licenseNumber,
+            @RequestParam("nationalId") String nationalId,
+            @RequestHeader("X-User-Id") String userIdHeader
+    ) throws IOException {
+
+        Long doctorId = Long.parseLong(userIdHeader);
+
+        // Load existing verification from DB
+        List<DoctorVerification> list = service.findById(id);
+        if (list.isEmpty()) {
+            throw new RuntimeException("Verification not found");
+        }
+        DoctorVerification verification = list.get(0);
+
+
+        // Update fields
+        verification.setLicenseNumber(licenseNumber);
+        verification.setNationalId(nationalId);
+
+        // Handle file uploads
+        Path uploadPath = Paths.get(uploadDir);
+        Files.createDirectories(uploadPath);
+
+        if (cv != null) {
+            String cvFileName = System.currentTimeMillis() + "_" + cv.getOriginalFilename();
+            Path cvPath = uploadPath.resolve(cvFileName);
+            Files.copy(cv.getInputStream(), cvPath, StandardCopyOption.REPLACE_EXISTING);
+            verification.setCV(cvPath.toString());
+        }
+
+        if (diploma != null) {
+            String diplomaFileName = System.currentTimeMillis() + "_" + diploma.getOriginalFilename();
+            Path diplomaPath = uploadPath.resolve(diplomaFileName);
+            Files.copy(diploma.getInputStream(), diplomaPath, StandardCopyOption.REPLACE_EXISTING);
+            verification.setDiploma(diplomaPath.toString());
+        }
+
         DoctorVerification updated = service.save(verification);
+
         return ResponseEntity.ok(updated);
     }
 

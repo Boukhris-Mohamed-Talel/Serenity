@@ -43,16 +43,39 @@ export class DoctorVerificationService {
     return this.http.delete(`${this.API_URL}/${verificationId}`);
   }
 
-  updateVerification(id: number, verification: DoctorVerification): Observable<DoctorVerification> {
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
+  updateVerification(id: number, formData: FormData): Observable<DoctorVerification> {
+  const token = this.authService.getToken();
+  const headers = new HttpHeaders({
+    Authorization: `Bearer ${token}`
+  });
+
+  return this.http.put<DoctorVerification>(
+    `${this.API_URL}/update_verification/${id}`,
+    formData,
+    { headers }
+  );
+}
+
+  updateVerificationWithFiles(
+    id: number,
+    licenseNumber: string,
+    nationalId: string,
+    cvFile?: File | null,
+    diplomaFile?: File | null
+  ): Observable<DoctorVerification> {
+    const formData = new FormData();
+    formData.append('licenseNumber', licenseNumber);
+    formData.append('nationalId', nationalId);
+    if (cvFile) {
+      formData.append('cv', cvFile);
+    }
+    if (diplomaFile) {
+      formData.append('diploma', diplomaFile);
+    }
 
     return this.http.put<DoctorVerification>(
       `${this.API_URL}/update_verification/${id}`,
-      verification,
-      { headers }
+      formData
     );
   }
 }

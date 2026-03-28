@@ -76,24 +76,77 @@
 
         <div class="form-section documents-section">
           <h2>Documents on file</h2>
-          <p class="section-hint">These are the files we received. Updates to license and ID above are sent when you click Submit Update.</p>
+          <p class="section-hint">You can replace your CV or diploma by selecting a new image from your computer.</p>
           <div class="doc-grid">
+
+            <!-- CV -->
             <div class="doc-box">
               <span class="doc-label">CV</span>
-              <div class="doc-preview" *ngIf="cvPreviewUrl as cvUrl">
-                <img [src]="cvUrl" alt="CV preview" />
+
+              <!-- New file selected: show local preview -->
+              <div *ngIf="newCvPreview" class="doc-preview new-file-preview">
+                <img [src]="newCvPreview" alt="New CV preview" />
+                <div class="new-file-info">
+                  <span class="file-name">{{ getFileName(cvFile) }}</span>
+                  <span class="file-size">{{ getFileSize(cvFile) }}</span>
+                </div>
+                <button type="button" class="btn-remove" (click)="removeCv()" title="Remove selected file">
+                  <span class="material-icons">close</span>
+                </button>
               </div>
-              <p *ngIf="!cvPreviewUrl && verification.cv" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
-              <p *ngIf="!verification.cv" class="doc-missing">No CV path on record.</p>
+
+              <!-- No new file: show server preview -->
+              <div *ngIf="!newCvPreview && cvPreviewUrl" class="doc-preview">
+                <img [src]="cvPreviewUrl" alt="CV preview" />
+              </div>
+
+              <p *ngIf="!newCvPreview && !cvPreviewUrl && verification.cv" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
+              <p *ngIf="!verification.cv && !newCvPreview" class="doc-missing">No CV path on record.</p>
+
+              <!-- Change button -->
+              <div class="doc-actions" *ngIf="!newCvPreview">
+                <button type="button" class="btn-change-doc" (click)="cvInput.click()">
+                  <span class="material-icons">cloud_upload</span>
+                  Change CV
+                </button>
+              </div>
+              <input #cvInput type="file" accept=".png,.jpg,.jpeg" (change)="onCvSelected($event)" style="display: none" />
             </div>
+
+            <!-- Diploma -->
             <div class="doc-box">
               <span class="doc-label">Diploma</span>
-              <div class="doc-preview" *ngIf="diplomaPreviewUrl as dipUrl">
-                <img [src]="dipUrl" alt="Diploma preview" />
+
+              <!-- New file selected: show local preview -->
+              <div *ngIf="newDiplomaPreview" class="doc-preview new-file-preview">
+                <img [src]="newDiplomaPreview" alt="New Diploma preview" />
+                <div class="new-file-info">
+                  <span class="file-name">{{ getFileName(diplomaFile) }}</span>
+                  <span class="file-size">{{ getFileSize(diplomaFile) }}</span>
+                </div>
+                <button type="button" class="btn-remove" (click)="removeDiploma()" title="Remove selected file">
+                  <span class="material-icons">close</span>
+                </button>
               </div>
-              <p *ngIf="!diplomaPreviewUrl && verification.diploma" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
-              <p *ngIf="!verification.diploma" class="doc-missing">No diploma path on record.</p>
+
+              <!-- No new file: show server preview -->
+              <div *ngIf="!newDiplomaPreview && diplomaPreviewUrl" class="doc-preview">
+                <img [src]="diplomaPreviewUrl" alt="Diploma preview" />
+              </div>
+
+              <p *ngIf="!newDiplomaPreview && !diplomaPreviewUrl && verification.diploma" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
+              <p *ngIf="!verification.diploma && !newDiplomaPreview" class="doc-missing">No diploma path on record.</p>
+
+              <!-- Change button -->
+              <div class="doc-actions" *ngIf="!newDiplomaPreview">
+                <button type="button" class="btn-change-doc" (click)="diplomaInput.click()">
+                  <span class="material-icons">cloud_upload</span>
+                  Change Diploma
+                </button>
+              </div>
+              <input #diplomaInput type="file" accept=".png,.jpg,.jpeg" (change)="onDiplomaSelected($event)" style="display: none" />
             </div>
+
           </div>
         </div>
 
