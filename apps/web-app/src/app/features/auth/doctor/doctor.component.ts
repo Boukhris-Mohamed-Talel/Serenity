@@ -95,6 +95,9 @@ export class DoctorComponent {
     this.AuthService.addDoctor(this.userId, speciality, this.imageFile).subscribe({
       next: () => {
         this.successMessage = 'Profile updated successfully!'
+        const incrementedId = this.userId + 1;
+        localStorage.setItem('userId', incrementedId.toString());
+        this.userId = incrementedId;
         setTimeout(() => {
           this.router.navigate(['/auth/doctor-verification'])
         }, 3000)

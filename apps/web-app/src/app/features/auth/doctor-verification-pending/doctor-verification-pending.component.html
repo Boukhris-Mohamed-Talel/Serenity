@@ -1,0 +1,109 @@
+<div class="pending-page">
+  <header class="pending-topbar">
+    <a class="pending-brand" routerLink="/">
+      <img src="assets/logo.png" alt="Serenity" class="pending-brand-logo" />
+      <span>Serenity</span>
+    </a>
+  </header>
+
+  <div class="pending-container">
+    <div class="pending-card card">
+      <div class="pending-header">
+        <div class="pending-icon">
+          <span class="material-icons">hourglass_empty</span>
+        </div>
+        <h1>Verification pending</h1>
+        <p class="pending-lead">{{ pendingMessage }}</p>
+        <p *ngIf="verification?.status" class="status-row">
+          Status:
+          <span class="badge" [class.badge-pending]="verification?.status === 'PENDING'" [class.badge-rejected]="verification?.status === 'REJECTED'" [class.badge-verified]="verification?.status === 'VERIFIED'">
+            {{ verification?.status }}
+          </span>
+        </p>
+      </div>
+
+      <div *ngIf="errorMessage && !loadingVerification" class="alert alert-error">
+        <span class="material-icons">error</span>
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="successMessage" class="alert alert-success">
+        <span class="material-icons">check_circle</span>
+        {{ successMessage }}
+      </div>
+
+      <div *ngIf="loadingVerification" class="loading-state">
+        <span class="spinner"></span>
+        <p>Loading your verification…</p>
+      </div>
+
+      <form *ngIf="!loadingVerification && verification" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-section">
+          <h2>Your submission</h2>
+          <p class="section-hint">Update your license or national ID if you need to correct them.</p>
+
+          <div class="form-group">
+            <label for="pending-licenseNumber">License number <span class="required">*</span></label>
+            <input id="pending-licenseNumber" type="text" formControlName="licenseNumber" autocomplete="off" />
+            <div class="error-message" *ngIf="form.get('licenseNumber')?.touched && form.get('licenseNumber')?.hasError('required')">
+              License number is required
+            </div>
+            <div class="error-message" *ngIf="form.get('licenseNumber')?.touched && form.get('licenseNumber')?.hasError('minlength')">
+              At least 5 characters
+            </div>
+            <div class="error-message" *ngIf="form.get('licenseNumber')?.touched && form.get('licenseNumber')?.hasError('pattern')">
+              Only letters, numbers, and spaces
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="pending-nationalId">National ID <span class="required">*</span></label>
+            <input id="pending-nationalId" type="text" formControlName="nationalId" autocomplete="off" />
+            <div class="error-message" *ngIf="form.get('nationalId')?.touched && form.get('nationalId')?.hasError('required')">
+              National ID is required
+            </div>
+            <div class="error-message" *ngIf="form.get('nationalId')?.touched && form.get('nationalId')?.hasError('minlength')">
+              National ID must be 8 characters
+            </div>
+            <div class="error-message" *ngIf="form.get('nationalId')?.touched && form.get('nationalId')?.hasError('maxlength')">
+              National ID must be 8 characters
+            </div>
+            <div class="error-message" *ngIf="form.get('nationalId')?.touched && form.get('nationalId')?.hasError('pattern')">
+              Digits only (spaces allowed while typing)
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section documents-section">
+          <h2>Documents on file</h2>
+          <p class="section-hint">These are the files we received. Updates to license and ID above are sent when you click Submit Update.</p>
+          <div class="doc-grid">
+            <div class="doc-box">
+              <span class="doc-label">CV</span>
+              <div class="doc-preview" *ngIf="cvPreviewUrl as cvUrl">
+                <img [src]="cvUrl" alt="CV preview" />
+              </div>
+              <p *ngIf="!cvPreviewUrl && verification.cv" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
+              <p *ngIf="!verification.cv" class="doc-missing">No CV path on record.</p>
+            </div>
+            <div class="doc-box">
+              <span class="doc-label">Diploma</span>
+              <div class="doc-preview" *ngIf="diplomaPreviewUrl as dipUrl">
+                <img [src]="dipUrl" alt="Diploma preview" />
+              </div>
+              <p *ngIf="!diplomaPreviewUrl && verification.diploma" class="doc-fallback">Preview unavailable. Your file is still on record.</p>
+              <p *ngIf="!verification.diploma" class="doc-missing">No diploma path on record.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+            <span *ngIf="saving" class="spinner spinner-sm"></span>
+            <span *ngIf="!saving">Submit Update</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

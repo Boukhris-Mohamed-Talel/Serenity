@@ -217,15 +217,9 @@ export class DoctorVerificationComponent implements OnInit {
       this.loading = false;
       this.successMessage = 'Verification submitted successfully! We will review your documents.';
       setTimeout(() => {
-        this.initForm();
-        this.cvFile = null;
-        this.diplomaFile = null;
-        this.cvPreview = null;
-        this.diplomaPreview = null;
-        this.currentStep = 1;
         this.successMessage = '';
-        this.router.navigate(['/']);
-      }, 2000);
+        void this.router.navigate(['/auth/doctor-verification/pending']);
+      }, 1200);
     },
     error: (err) => {
       console.error('Error from backend:', err);

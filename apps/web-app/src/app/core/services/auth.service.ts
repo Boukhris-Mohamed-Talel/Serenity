@@ -76,6 +76,17 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /** Updates stored auth user with activation flag from `UserService` / profile API (`isActive` → `is_active`). */
+  mergeProfileActivation(isActive: boolean): void {
+    const cur = this.getCurrentUser();
+    if (!cur) {
+      return;
+    }
+    const next: AuthResponse = { ...cur, is_active: isActive ? 1 : 0 };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(next));
+    this.currentUserSubject.next(next);
+  }
+
   private storeAuth(response: AuthResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.accessToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));
