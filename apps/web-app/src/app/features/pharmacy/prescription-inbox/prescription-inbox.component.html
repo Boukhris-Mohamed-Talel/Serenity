@@ -28,7 +28,10 @@
           <tr
             *ngFor="let row of prescriptions"
             class="clickable"
-            (click)="openPrescription(row)">
+            tabindex="0"
+            (click)="openPrescription(row)"
+            (keydown.enter)="openPrescription(row)"
+            (keydown.space)="$event.preventDefault(); openPrescription(row)">
             <td>{{ row.patientName }}</td>
             <td>{{ row.doctorName }}</td>
             <td>

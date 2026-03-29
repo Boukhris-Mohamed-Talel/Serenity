@@ -64,13 +64,6 @@ export class AuthService {
   }
 
   hasRole(role: string): boolean {
-    const userRole = this.currentUserSubject.value?.role;
-    if (!userRole || !role) {
-      return false;
-    }
-
-    const normalize = (value: string) => value.replace(/^ROLE_/i, '').trim().toUpperCase();
-    return normalize(userRole) === normalize(role);
     const user = this.currentUserSubject.value;
     const actualRole = this.normalizeRole(user?.role);
     const requiredRole = this.normalizeRole(role);

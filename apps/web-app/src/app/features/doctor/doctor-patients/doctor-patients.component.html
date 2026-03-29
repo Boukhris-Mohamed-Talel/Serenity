@@ -25,7 +25,7 @@
 
   <div *ngIf="!loading && !emptyState" class="patient-grid">
     <div *ngFor="let patient of patients" class="patient-card">
-      <div class="avatar-circle">{{ patient.firstName?.charAt(0) }}{{ patient.lastName?.charAt(0) }}</div>
+      <div class="avatar-circle">{{ (patient.firstName || '').charAt(0) }}{{ (patient.lastName || '').charAt(0) }}</div>
       <div class="info">
         <div class="name">{{ patient.fullName || (patient.firstName + ' ' + patient.lastName) }}</div>
         <div class="email">{{ patient.email }}</div>

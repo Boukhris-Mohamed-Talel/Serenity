@@ -125,7 +125,11 @@
   </section>
 </div>
 
-<div class="image-modal-backdrop" *ngIf="selectedImageItem" (click)="closeImageModal()">
+<div
+  class="image-modal-backdrop"
+  *ngIf="selectedImageItem"
+  (click)="closeImageModal()"
+  (keydown.escape)="closeImageModal()">
   <section class="image-modal card" (click)="$event.stopPropagation()">
     <header class="modal-head">
       <h3>{{ selectedImageItem.medicineName }}</h3>

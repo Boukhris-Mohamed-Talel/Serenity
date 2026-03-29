@@ -64,7 +64,11 @@
             class="patient-item"
             *ngFor="let patient of filteredPatients"
             [class.active]="selectedPatient?.id === patient.id"
-            (click)="selectPatient(patient)">
+            role="button"
+            tabindex="0"
+            (click)="selectPatient(patient)"
+            (keydown.enter)="selectPatient(patient)"
+            (keydown.space)="$event.preventDefault(); selectPatient(patient)">
             <div class="patient-avatar">
               <img
                 *ngIf="patient.avatarUrl"

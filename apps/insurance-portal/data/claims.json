@@ -135,5 +135,56 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F9e456568-3147-4987-a13a-22d5b8fa4297_37ead2b2-e7f4-44ac-9027-02ffa528a417.jpg"
     ]
+  },
+  {
+    "ref": "45a995fa-0174-4a19-92ac-8539e79438f2",
+    "patientName": "1",
+    "description": "this is a big order",
+    "amount": 1250,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-03-26T10:19:17.789Z",
+    "processedAt": "2026-03-26T10:19:27.681Z",
+    "rejectReason": "this is a scammer",
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F25829db6-54db-4944-ab38-30d3c368a854_arch_glob.png"
+    ]
+  },
+  {
+    "ref": "39efcfb1-eb36-42ae-b899-b4b6dd3d82df",
+    "patientName": "1",
+    "description": "test merge",
+    "amount": 84.97,
+    "insuranceCompany": "Insurance 4",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 10.2,
+    "receivedAt": "2026-03-29T10:57:04.340Z",
+    "processedAt": "2026-03-29T10:57:21.057Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F1%2F0042d2df-b4f6-4cae-8b1d-cfda855dcaa9_Gemini_Generated_Image_7ggkk57ggkk57ggk.png"
+    ]
+  },
+  {
+    "ref": "3dc50fa3-47b8-4787-bf54-07933dfd3cb1",
+    "patientName": "3",
+    "description": "i bought meds",
+    "amount": 125,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 1,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-03-29T11:14:54.049Z",
+    "processedAt": "2026-03-29T11:15:11.439Z",
+    "rejectReason": "sorry too many requests",
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F31cb8176-89b2-4e93-8428-e22604d92ad0_283791dd-03e0-436b-80d5-a6c28194496b.jpg"
+    ]
   }
 ]
