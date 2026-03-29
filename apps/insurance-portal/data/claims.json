@@ -186,5 +186,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F31cb8176-89b2-4e93-8428-e22604d92ad0_283791dd-03e0-436b-80d5-a6c28194496b.jpg"
     ]
+  },
+  {
+    "ref": "70b5fe25-1772-418f-a34c-41903f510eda",
+    "patientName": "162",
+    "description": "gyufgyttfyjt",
+    "amount": 11111,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 1,
+    "status": "APPROVED",
+    "reimbursementAmount": 1111.1,
+    "receivedAt": "2026-03-29T22:31:36.876Z",
+    "processedAt": "2026-03-29T22:35:24.609Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F162%2F90cc0390-d958-4df8-a0a5-8f9a5668dec7_461715472_849274157403977_230643184334225292_n.jpg"
+    ]
   }
 ]

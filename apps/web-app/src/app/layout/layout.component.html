@@ -6,8 +6,6 @@
     </a>
 
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-      <a routerLink="/profile" routerLinkActive="active">Profile</a>
       <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
@@ -124,17 +122,17 @@
           </div>
 
           <div
-  class="notif-item"
-  *ngFor="let notif of notifications"
-  [ngClass]="{ unread: !notif.read }"
-  (click)="goToConversation(notif)"
->
-  <div class="notif-content">
-    <div class="notif-sender">💬 {{ notif.senderName }}</div>  <!-- 👈 -->
-    <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
-  </div>
-  <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
-</div>
+            class="notif-item"
+            *ngFor="let notif of messageNotifications"
+            [ngClass]="{ unread: !notif.read }"
+            (click)="goToConversation(notif)"
+          >
+            <div class="notif-content">
+              <div class="notif-sender">💬 {{ notif.senderName }}</div>
+              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
+            </div>
+            <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
+          </div>
         </div>
       </div>
       <!-- 👆 End Bell -->

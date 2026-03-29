@@ -6,6 +6,7 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
+
 const routes: Routes = [
   {
     path: 'auth',
@@ -44,7 +45,7 @@ const routes: Routes = [
       {
         path: 'messagerie',
         loadChildren: () => import('./features/messagerie/messagerie.module').then(m => m.MessagerieModule)
-      }
+      },
       {
         path: 'insurance',
         loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)

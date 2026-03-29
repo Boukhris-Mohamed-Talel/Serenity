@@ -29,9 +29,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private peekInterval: any;
   private userSub!: Subscription;
   private wsSub!: Subscription;
-
-  notifications: any[] = [];
-  unreadCount = 0;
+  
+  // Message notifications from WebSocket
+  messageNotifications: any[] = [];
+  unreadMessageCount = 0;
   notifDropdownVisible = false;
   private alertsSub!: Subscription;
   private authSub!: Subscription;
@@ -42,9 +43,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private readonly crisisAlertService: CrisisAlertService,
     private readonly userService: UserService,
     private readonly router: Router,
-    private readonly webSocketService: WebSocketService
-    private readonly insuranceService: InsuranceService,
-    private readonly router: Router
+    private readonly webSocketService: WebSocketService,
+    private readonly insuranceService: InsuranceService
   ) {}
 
   ngOnInit(): void {
@@ -65,40 +65,36 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.webSocketService.connect();
 
       this.wsSub = this.webSocketService.newMessage$.subscribe((msg: any) => {
-  const currentUserId = this.authService.getCurrentUser()?.userId;
-  if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
+        const currentUserId = this.authService.getCurrentUser()?.userId;
+        if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
+          // 👇 fetch sender name
+          this.userService.getUsersNamesById([msg.senderId]).subscribe({
+            next: (users) => {
+              const sender = users[0];
+              const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown';
 
-    // 👇 fetch sender name
-    this.userService.getUsersNamesById([msg.senderId]).subscribe({
-      next: (users) => {
-        const sender = users[0];
-        const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown';
-
-        this.notifications.unshift({
-          id: msg.id,
-          text: msg.content,
-          senderName,           // 👈
-          conversationId: msg.conversationId,
-          time: new Date(),
-          read: false
-        });
-        this.unreadCount++;
-      },
-      error: () => {
-        this.notifications.unshift({
-          id: msg.id,
-          text: msg.content,
-          senderName: 'Unknown', // 👈 fallback
-          conversationId: msg.conversationId,
-          time: new Date(),
-          read: false
-        });
-        this.unreadCount++;
-      }
-    });
-  }
-});
-    }
+              this.messageNotifications.unshift({
+                id: msg.id,
+                text: msg.content,
+                senderName,           // 👈
+                conversationId: msg.conversationId,
+                time: new Date(),
+                read: false
+              });
+              this.unreadMessageCount++;
+            },
+            error: () => {
+              this.messageNotifications.unshift({
+                id: msg.id,
+                text: msg.content,
+                senderName: 'Unknown', // 👈 fallback
+                conversationId: msg.conversationId,
+                time: new Date(),
+                read: false
+              });
+              this.unreadMessageCount++;
+            }
+          });
         }
       });
 
@@ -129,8 +125,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
   toggleNotifDropdown() {
     this.notifDropdownVisible = !this.notifDropdownVisible;
     if (this.notifDropdownVisible) {
-      this.unreadCount = 0;
-      this.notifications = this.notifications.map(n => ({ ...n, read: true }));
+      this.unreadMessageCount = 0;
+      this.messageNotifications = this.messageNotifications.map(n => ({ ...n, read: true }));
     }
   }
 
@@ -140,8 +136,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   clearNotifications() {
-    this.notifications = [];
-    this.unreadCount = 0;
+    this.messageNotifications = [];
+    this.unreadMessageCount = 0;
     if (this.peekInterval) {
       clearInterval(this.peekInterval);
     }
@@ -163,7 +159,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   get unreadCount(): number {
-    return this.alerts.length;
+    return this.alerts.length + this.unreadMessageCount;
   }
 
   get showAlertPanel(): boolean {

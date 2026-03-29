@@ -147,12 +147,10 @@ export class ProfileComponent implements OnInit {
     }
   }
 
- onFileSelected(event: Event) {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files.length > 0) {
-    this.selectedFile = input.files[0];
-  }
-}
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
     }
   }
 
@@ -170,77 +168,76 @@ export class ProfileComponent implements OnInit {
   }
 
 onSubmit(): void {
-  if (this.profileForm.invalid) return;
-  if (this.isDoctor && this.doctorForm.invalid) return;
+    if (this.profileForm.invalid) return;
+    if (this.isDoctor && this.doctorForm.invalid) return;
 
-  this.saving = true;
-  this.errorMessage = '';
-  this.successMessage = '';
+    this.saving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-  const formData = new FormData();
-
-  // Add profile fields (exclude avatar since we handle images separately)
-  const fieldsToExclude = ['avatar', 'profilePictureUrl'];
-  Object.entries(this.profileForm.value).forEach(([key, value]) => {
-    if (!fieldsToExclude.includes(key) && value !== null && value !== undefined) {
-      formData.append(key, value.toString());
-    }
-  });
-
-  if (this.isDoctor) {
-    formData.append('specialty', this.doctorForm.get('specialty')?.value || '');
-    
-    // Send the actual file, not the string path
-    if (this.selectedFile) {
-      formData.append('image', this.selectedFile, this.selectedFile.name);
-    }
-  }
-
-  const doctorId = this.authService.getCurrentUser()?.userId;
-  if (!doctorId) {
-    this.saving = false;
-    this.errorMessage = 'No doctor ID found';
-    return;
-  }
-
-  this.doctorService.updateDoctor(doctorId, formData).subscribe({
-    next: (res) => {
-      this.saving = false;
-      this.editMode = false;
-      this.successMessage = 'Profile updated successfully';
-      if (this.selectedFile) this.user!.profile!.avatar = this.imagePreview!;
-    },
-    error: (err) => {
-      this.saving = false;
-      this.errorMessage = err.error?.message || 'Failed to update doctor info';
-    }
-  });
-}
-    const formValue = { ...this.profileForm.value };
-    if (formValue.dateOfBirth) {
-      formValue.dateOfBirth = new Date(formValue.dateOfBirth).toISOString();
-    } else {
-      delete formValue.dateOfBirth;
-    }
-
-    const request$ = this.selectedAvatarFile
-      ? this.userService.uploadAvatar(this.selectedAvatarFile)
-      : this.userService.updateProfile(formValue);
-
-    request$
-      .pipe(finalize(() => (this.saving = false)))
-      .subscribe({
-        next: (user) => {
-          this.user = user;
-          this.editMode = false;
-          this.selectedAvatarFile = null;
-          this.avatarPreviewUrl = null;
-          this.successMessage = 'Profile updated successfully';
-        },
-        error: (err) => {
-          this.errorMessage = err.error?.message || 'Failed to update profile';
+    if (this.isDoctor) {
+      // Doctor update path with FormData
+      const formData = new FormData();
+      const fieldsToExclude = ['avatar', 'profilePictureUrl'];
+      Object.entries(this.profileForm.value).forEach(([key, value]: [string, any]) => {
+        if (!fieldsToExclude.includes(key) && value !== null && value !== undefined) {
+          formData.append(key, value.toString());
         }
       });
+
+      formData.append('specialty', this.doctorForm?.get('specialty')?.value || '');
+
+      if (this.selectedFile) {
+        formData.append('image', this.selectedFile, this.selectedFile.name);
+      }
+
+      const doctorId = this.authService.getCurrentUser()?.userId;
+      if (!doctorId) {
+        this.saving = false;
+        this.errorMessage = 'No doctor ID found';
+        return;
+      }
+
+      this.doctorService.updateDoctor(doctorId, formData).subscribe({
+        next: (res: any) => {
+          this.saving = false;
+          this.editMode = false;
+          this.successMessage = 'Profile updated successfully';
+          if (this.selectedFile) this.user!.profile!.avatar = this.imagePreview!;
+        },
+        error: (err: any) => {
+          this.saving = false;
+          this.errorMessage = err.error?.message || 'Failed to update doctor info';
+        }
+      });
+    } else {
+      // Regular user update path
+      const formValue = { ...this.profileForm.value };
+      if (formValue.dateOfBirth) {
+        formValue.dateOfBirth = new Date(formValue.dateOfBirth).toISOString();
+      } else {
+        delete formValue.dateOfBirth;
+      }
+
+      const request$ = this.selectedAvatarFile
+        ? this.userService.uploadAvatar(this.selectedAvatarFile)
+        : this.userService.updateProfile(formValue);
+
+      request$
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: (user: any) => {
+            this.user = user;
+            this.editMode = false;
+            this.selectedAvatarFile = null;
+            this.avatarPreviewUrl = null;
+            this.successMessage = 'Profile updated successfully';
+          },
+          error: (err: any) => {
+            this.errorMessage = err.error?.message || 'Failed to update profile';
+          }
+        });
+    }
   }
 
   getInitials(): string {
@@ -257,17 +254,16 @@ onSubmit(): void {
     });
   }
 
-  onDoctorImageSelected(event: any) {
-  const file = event.target.files[0];
-  if (!file) return;
+  onDoctorImageSelected(event: any): void {
+    const file = event.target?.files?.[0];
+    if (!file) return;
 
-  this.selectedFile = file; // ← this gets sent to backend
+    this.selectedFile = file; // ← this gets sent to backend
 
-  const reader = new FileReader();
-  reader.onload = () => this.imagePreview = reader.result as string;
-  reader.readAsDataURL(file);
-  // ❌ Remove the doctorForm.patchValue call — stop setting profilePictureUrl
-}
+    const reader = new FileReader();
+    reader.onload = () => (this.imagePreview = reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   openDeleteModal(): void {
     this.showDeleteModal = true;
