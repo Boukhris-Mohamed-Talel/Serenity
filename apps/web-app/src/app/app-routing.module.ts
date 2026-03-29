@@ -30,6 +30,10 @@ const routes: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       {
+        path: 'pharmacy',
+        loadChildren: () => import('./features/pharmacy/pharmacy.module').then(m => m.PharmacyModule)
+      },
+      {
         path: 'profile',
         loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
       },
@@ -40,6 +44,12 @@ const routes: Routes = [
       {
         path: 'insurance',
         loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
+      },
+      {
+        path: 'monitoring',
+        canActivate: [RoleGuard],
+        data: { roles: ['PATIENT', 'DOCTOR'] },
+        loadChildren: () => import('./features/monitoring/monitoring.module').then(m => m.MonitoringModule)
       }
     ]
   },

@@ -1,0 +1,30 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/pharmacy_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+  derbel-db:
+    url: ${DERBEL_DB_URL:jdbc:mysql://localhost:3306/medical_records_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DERBEL_DB_USERNAME:root}
+    password: ${DERBEL_DB_PASSWORD:}
+  user-service:
+    base-url: ${USER_SERVICE_BASE_URL:http://localhost:8081}
+    me-url: ${USER_SERVICE_ME_URL:http://localhost:8081/api/users/me}
+    admin-email: ${USER_SERVICE_ADMIN_EMAIL:}
+    admin-password: ${USER_SERVICE_ADMIN_PASSWORD:}

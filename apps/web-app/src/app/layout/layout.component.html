@@ -12,6 +12,15 @@
       <a routerLink="/profile" routerLinkActive="active">
         Profile
       </a>
+      <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">
+        Pharmacy Workspace
+      </a>
+      <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">
+        Pharmacy
+      </a>
+      <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">
+        Monitoring
+      </a>
       <a routerLink="/insurance" routerLinkActive="active">
         Insurance Claims
       </a>
@@ -62,6 +71,35 @@
     </div>
 
     <div class="navbar-actions" *ngIf="authService.isLoggedIn()">
+      <div class="notif-bell-wrap" *ngIf="authService.isDoctor()">
+        <button class="notif-bell-btn" (click)="toggleAlertPanel()" aria-label="Crisis alerts">
+          <span class="material-icons">notifications</span>
+          <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+        </button>
+
+        <div class="notif-panel" *ngIf="notificationPanelOpen">
+          <div class="notif-header">
+            <span>Crisis Alerts</span>
+            <button (click)="clearAllAlerts()" *ngIf="alerts.length > 0">Clear all</button>
+          </div>
+
+          <div class="notif-list" *ngIf="alerts.length > 0; else emptyAlertsTpl">
+            <div class="notif-item" *ngFor="let alert of alerts">
+              <span class="notif-icon">🚨</span>
+              <div class="notif-body">
+                <p class="notif-message">{{ alert.message }}</p>
+                <span class="notif-time">{{ alert.timestamp | date: 'MMM d, y, h:mm a' }}</span>
+              </div>
+              <span class="mood-badge crisis">{{ alert.moodLevel }}/10</span>
+            </div>
+          </div>
+
+          <ng-template #emptyAlertsTpl>
+            <div class="notif-empty">No alerts in this session</div>
+          </ng-template>
+        </div>
+      </div>
+
       <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>
@@ -86,6 +124,9 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/monitoring" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
+      <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
+      <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

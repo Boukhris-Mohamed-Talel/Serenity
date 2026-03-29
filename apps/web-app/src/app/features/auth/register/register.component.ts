@@ -73,6 +73,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   signInWithGoogle(): void {
+    if (!environment.googleClientId) {
+      this.errorMessage = 'Google Sign-In is not configured for this environment.';
+      return;
+    }
     if (!this.googleReady) {
       this.errorMessage = 'Google Sign-In is still loading. Please try again in a moment.';
       return;
@@ -90,6 +94,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   signInWithFacebook(): void {
+    if (!environment.facebookAppId || environment.facebookAppId === 'YOUR_FACEBOOK_APP_ID') {
+      this.errorMessage = 'Facebook Login is not configured for this environment.';
+      return;
+    }
     if (!this.facebookReady) {
       this.errorMessage = 'Facebook Login is still loading. Please try again in a moment.';
       return;
@@ -121,6 +129,9 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   private initGoogleSignIn(): void {
+    if (!environment.googleClientId) {
+      return;
+    }
     const checkGoogle = setInterval(() => {
       if (google !== undefined && google.accounts) {
         clearInterval(checkGoogle);
@@ -160,6 +171,9 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   private initFacebookSdk(): void {
+    if (!environment.facebookAppId || environment.facebookAppId === 'YOUR_FACEBOOK_APP_ID') {
+      return;
+    }
     const checkFB = setInterval(() => {
       if (FB !== undefined) {
         clearInterval(checkFB);

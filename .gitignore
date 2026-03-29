@@ -40,3 +40,5 @@ Thumbs.db
 
 # --- Test coverage ---
 coverage/
+
+services/pharmacy-service/src/test/

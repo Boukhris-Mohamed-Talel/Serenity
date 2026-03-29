@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -80,14 +81,15 @@ public class JwtGatewayFilter implements WebFilter {
                     .getBody();
 
             ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate();
-            Object uid = claims.get("userId");
-            if (uid != null) {
-                String userIdStr = String.valueOf(((Number) uid).longValue());
-                requestBuilder.header("X-User-Id", userIdStr);
-                requestBuilder.header("userId", userIdStr);
+
+            String userId = extractUserId(claims);
+            if (StringUtils.hasText(userId)) {
+                requestBuilder.header("X-User-Id", userId);
+                requestBuilder.header("userId", userId);
             }
-            String role = claims.get("role", String.class);
-            if (role != null) {
+
+            String role = extractRole(claims);
+            if (StringUtils.hasText(role)) {
                 requestBuilder.header("role", role);
             }
 
@@ -97,5 +99,30 @@ public class JwtGatewayFilter implements WebFilter {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private String extractUserId(Claims claims) {
+        Object uid = claims.get("userId");
+        if (uid instanceof Number number) {
+            return String.valueOf(number.longValue());
+        }
+        if (uid instanceof String str && StringUtils.hasText(str)) {
+            return str;
+        }
+        return null;
+    }
+
+    private String extractRole(Claims claims) {
+        String role = claims.get("role", String.class);
+        if (StringUtils.hasText(role)) {
+            return role.startsWith("ROLE_") ? role.substring(5) : role;
+        }
+
+        String roles = claims.get("roles", String.class);
+        if (StringUtils.hasText(roles)) {
+            String first = roles.contains(",") ? roles.split(",")[0].trim() : roles.trim();
+            return first.startsWith("ROLE_") ? first.substring(5) : first;
+        }
+        return null;
     }
 }
