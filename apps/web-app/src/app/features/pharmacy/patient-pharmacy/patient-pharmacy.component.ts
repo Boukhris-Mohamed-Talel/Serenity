@@ -268,76 +268,114 @@ export class PatientPharmacyComponent implements OnInit {
           this.nearestLoading = false;
           return;
         }
-
-        this.pharmacyService.suggestNearestPharmacies(latitude, longitude, fallbackRadiusKm).subscribe({
-          next: (fallbackItems) => {
-            if (fallbackItems.length > 0) {
-              this.candidateResults = fallbackItems;
-              this.refreshMapMarkers();
-              this.nearestLoading = false;
-              this.successMessage = `No pharmacies found within ${primaryRadiusKm} km. Showing nearest matches within ${fallbackRadiusKm} km.`;
-              return;
-            }
-
-            // Final fallback: show nearest known pharmacies from full list, sorted by distance.
-            this.pharmacyService.listPatientPharmacies().subscribe({
-              next: (allPharmacies) => {
-                const nearestKnown = allPharmacies
-                  .map((pharmacy) => ({
-                    ...pharmacy,
-                    distanceKm: this.hasCoordinates(pharmacy.latitude, pharmacy.longitude)
-                      ? this.roundDistance(
-                          this.calculateDistanceKm(
-                            latitude,
-                            longitude,
-                            pharmacy.latitude as number,
-                            pharmacy.longitude as number
-                          )
-                        )
-                      : undefined
-                  }))
-                  .sort((a, b) => {
-                    const aDistance = a.distanceKm ?? Number.MAX_SAFE_INTEGER;
-                    const bDistance = b.distanceKm ?? Number.MAX_SAFE_INTEGER;
-                    return aDistance - bDistance;
-                  })
-                  .slice(0, 20);
-
-                this.candidateResults = nearestKnown;
-                this.refreshMapMarkers();
-                this.nearestLoading = false;
-
-                if (nearestKnown.length > 0) {
-                  this.successMessage = `No pharmacies found within ${fallbackRadiusKm} km. Showing closest available pharmacies.`;
-                  return;
-                }
-
-                this.errorMessage = '';
-                this.successMessage = 'No nearby pharmacies found for your location. Try searching by city or governorate.';
-              },
-              error: (listError) => {
-                this.errorMessage = listError.error?.message || 'Unable to load pharmacies right now.';
-                this.candidateResults = [];
-                this.refreshMapMarkers();
-                this.nearestLoading = false;
-              }
-            });
-          },
-          error: (err) => {
-            this.errorMessage = err.error?.message || 'Unable to use your location right now. You can still search by city or governorate.';
-            this.candidateResults = [];
-            this.refreshMapMarkers();
-            this.nearestLoading = false;
-          }
-        });
+        this.tryWiderNearestThenFullList(latitude, longitude, primaryRadiusKm, fallbackRadiusKm);
       },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Unable to use your location right now. You can still search by city or governorate.';
-        this.candidateResults = [];
-        this.refreshMapMarkers();
-        this.nearestLoading = false;
-      }
+      error: (err) => this.handleSuggestNearestError(err)
     });
+  }
+
+  private tryWiderNearestThenFullList(
+    latitude: number,
+    longitude: number,
+    primaryRadiusKm: number,
+    fallbackRadiusKm: number
+  ): void {
+    this.pharmacyService.suggestNearestPharmacies(latitude, longitude, fallbackRadiusKm).subscribe({
+      next: (fallbackItems) => {
+        if (fallbackItems.length > 0) {
+          this.candidateResults = fallbackItems;
+          this.refreshMapMarkers();
+          this.nearestLoading = false;
+          this.successMessage = `No pharmacies found within ${primaryRadiusKm} km. Showing nearest matches within ${fallbackRadiusKm} km.`;
+          return;
+        }
+        this.loadNearestFromFullPatientPharmacyList(latitude, longitude, fallbackRadiusKm);
+      },
+      error: (err) => this.handleSuggestNearestError(err)
+    });
+  }
+
+  /** Final fallback: nearest known pharmacies from full list, sorted by distance. */
+  private loadNearestFromFullPatientPharmacyList(
+    latitude: number,
+    longitude: number,
+    fallbackRadiusKm: number
+  ): void {
+    this.pharmacyService.listPatientPharmacies().subscribe({
+      next: (allPharmacies) =>
+        this.applySortedNearestKnownPharmacies(allPharmacies, latitude, longitude, fallbackRadiusKm),
+      error: (listError) => this.handleListPatientPharmaciesError(listError)
+    });
+  }
+
+  private applySortedNearestKnownPharmacies(
+    allPharmacies: PharmacyCandidateResponse[],
+    latitude: number,
+    longitude: number,
+    fallbackRadiusKm: number
+  ): void {
+    const nearestKnown = this.rankPharmaciesByDistance(allPharmacies, latitude, longitude);
+
+    this.candidateResults = nearestKnown;
+    this.refreshMapMarkers();
+    this.nearestLoading = false;
+
+    if (nearestKnown.length > 0) {
+      this.successMessage = `No pharmacies found within ${fallbackRadiusKm} km. Showing closest available pharmacies.`;
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = 'No nearby pharmacies found for your location. Try searching by city or governorate.';
+  }
+
+  private rankPharmaciesByDistance(
+    allPharmacies: PharmacyCandidateResponse[],
+    latitude: number,
+    longitude: number
+  ): PharmacyCandidateResponse[] {
+    return allPharmacies
+      .map((pharmacy) => this.withDistanceKm(pharmacy, latitude, longitude))
+      .sort((a, b) => {
+        const aDistance = a.distanceKm ?? Number.MAX_SAFE_INTEGER;
+        const bDistance = b.distanceKm ?? Number.MAX_SAFE_INTEGER;
+        return aDistance - bDistance;
+      })
+      .slice(0, 20);
+  }
+
+  private withDistanceKm(
+    pharmacy: PharmacyCandidateResponse,
+    latitude: number,
+    longitude: number
+  ): PharmacyCandidateResponse {
+    if (!this.hasCoordinates(pharmacy.latitude, pharmacy.longitude)) {
+      return { ...pharmacy, distanceKm: undefined };
+    }
+    const distanceKm = this.roundDistance(
+      this.calculateDistanceKm(
+        latitude,
+        longitude,
+        pharmacy.latitude as number,
+        pharmacy.longitude as number
+      )
+    );
+    return { ...pharmacy, distanceKm };
+  }
+
+  private handleSuggestNearestError(err: { error?: { message?: string } }): void {
+    this.errorMessage = err.error?.message
+      || 'Unable to use your location right now. You can still search by city or governorate.';
+    this.candidateResults = [];
+    this.refreshMapMarkers();
+    this.nearestLoading = false;
+  }
+
+  private handleListPatientPharmaciesError(listError: { error?: { message?: string } }): void {
+    this.errorMessage = listError.error?.message || 'Unable to load pharmacies right now.';
+    this.candidateResults = [];
+    this.refreshMapMarkers();
+    this.nearestLoading = false;
   }
 
   private calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
