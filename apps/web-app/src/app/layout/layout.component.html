@@ -15,9 +15,6 @@
       <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">
         Pharmacy Workspace
       </a>
-      <a routerLink="/pharmacy/doctor" routerLinkActive="active" *ngIf="authService.hasRole('DOCTOR')">
-        Pharmacy
-      </a>
       <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">
         Pharmacy
       </a>
@@ -129,7 +126,6 @@
       <a routerLink="/profile">Profile</a>
       <a routerLink="/monitoring" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
-      <a routerLink="/pharmacy/doctor" *ngIf="authService.hasRole('DOCTOR')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
     </div>
     <div class="footer-divider"></div>

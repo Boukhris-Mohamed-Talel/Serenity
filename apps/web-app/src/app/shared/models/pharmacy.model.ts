@@ -69,25 +69,6 @@ export interface PharmacyCandidateResponse {
   distanceKm?: number;
 }
 
-export interface PrescriptionCreateRequest {
-  pharmacyId?: number;
-  patientId: number;
-  patientName: string;
-  doctorName: string;
-  medicationName?: string;
-  dosage?: string;
-  quantity?: number;
-  instructions?: string;
-  medicineLines?: PrescriptionLineCreateRequest[];
-}
-
-export interface PrescriptionLineCreateRequest {
-  medicationName: string;
-  dosage: string;
-  quantity: number;
-  instructions?: string;
-}
-
 export interface PrescriptionStatusUpdateRequest {
   status: PrescriptionStatus;
   rejectionReason?: string;
@@ -160,36 +141,11 @@ export interface PrescriptionLineResponse {
   id: number;
   medicationName: string;
   dosage: string;
+  frequency?: string;
   quantity: number;
+  startDate?: string;
+  endDate?: string;
   instructions?: string;
-}
-
-export type DoctorSuggestionStockStatus = 'IN_STOCK' | 'OUT_OF_STOCK' | 'UNRESOLVED';
-
-export interface DoctorMedicineSuggestionItem {
-  medicineName: string;
-  stockStatus: DoctorSuggestionStockStatus;
-  availableQuantity?: number;
-  guidanceMessage?: string;
-}
-
-export interface DoctorMedicineSuggestionResponse {
-  patientId: number;
-  hasDefaultPharmacy: boolean;
-  pharmacyId?: number;
-  pharmacyName?: string;
-  guidanceMessage?: string;
-  suggestions: DoctorMedicineSuggestionItem[];
-}
-
-export interface DoctorPatientSuggestionItem {
-  patientId: number;
-  displayName: string;
-  profilePictureUrl?: string;
-}
-
-export interface DoctorPatientSuggestionResponse {
-  suggestions: DoctorPatientSuggestionItem[];
 }
 
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';

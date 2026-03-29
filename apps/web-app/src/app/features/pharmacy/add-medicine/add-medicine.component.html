@@ -80,7 +80,7 @@
         <button type="submit" class="btn btn-primary" [disabled]="saving || uploadingImage">
           {{ saving ? 'Saving...' : 'Add Medicine' }}
         </button>
-        <a routerLink="/pharmacy/stock" class="btn">Cancel</a>
+        <button type="button" class="btn" (click)="cancel()">Cancel</button>
       </div>
     </form>
   </section>

@@ -1,6 +1,5 @@
 package com.example.pharmacy.controller;
 
-import com.example.pharmacy.dto.PrescriptionCreateRequestDTO;
 import com.example.pharmacy.dto.PrescriptionAlternativeResponseDTO;
 import com.example.pharmacy.dto.PrescriptionPharmacyReassignRequestDTO;
 import com.example.pharmacy.dto.PrescriptionResponseDTO;
@@ -21,12 +20,6 @@ public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<PrescriptionResponseDTO> createPrescription(@Valid @RequestBody PrescriptionCreateRequestDTO request) {
-        return ResponseEntity.ok(prescriptionService.createPrescription(request));
-    }
-
     @GetMapping("/inbox")
     @PreAuthorize("hasRole('PHARMACIST')")
     public ResponseEntity<List<PrescriptionResponseDTO>> getMyInbox() {
@@ -40,7 +33,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','PHARMACIST')")
+    @PreAuthorize("hasAnyRole('PATIENT','PHARMACIST')")
     public ResponseEntity<PrescriptionResponseDTO> getPrescription(@PathVariable Long id) {
         return ResponseEntity.ok(prescriptionService.getPrescription(id));
     }

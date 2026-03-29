@@ -44,8 +44,16 @@ export class StockManagementComponent implements OnInit {
   increment(item: StockItemResponse): void {
     const incrementBy = this.incrementValue[item.id] || 1;
     if (incrementBy < 1) {
+      this.errorMessage = 'Quantity increment must be at least 1.';
       return;
     }
+
+    if (!window.confirm(`Add ${incrementBy} units to "${item.medicineName}"?`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
 
     this.pharmacyService.incrementStockItem(item.id, { incrementBy }).subscribe({
       next: (updated) => {
@@ -60,6 +68,13 @@ export class StockManagementComponent implements OnInit {
   }
 
   markOutOfStock(item: StockItemResponse): void {
+    if (!window.confirm(`Mark "${item.medicineName}" as out of stock?`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
     this.pharmacyService.markOutOfStock(item.id).subscribe({
       next: (updated) => {
         this.successMessage = `${updated.medicineName} marked as out of stock`;
@@ -72,6 +87,13 @@ export class StockManagementComponent implements OnInit {
   }
 
   archive(item: StockItemResponse): void {
+    if (!window.confirm(`Archive "${item.medicineName}"?`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
     this.pharmacyService.archiveStockItem(item.id).subscribe({
       next: () => {
         this.successMessage = `${item.medicineName} archived`;
@@ -88,6 +110,13 @@ export class StockManagementComponent implements OnInit {
   }
 
   restore(item: StockItemResponse): void {
+    if (!window.confirm(`Restore "${item.medicineName}" from archive?`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
     this.pharmacyService.restoreStockItem(item.id).subscribe({
       next: (updated) => {
         this.successMessage = `${updated.medicineName} restored`;

@@ -6,6 +6,13 @@ export interface PickerLocation {
   longitude: number;
 }
 
+export interface PickerMarker {
+  latitude: number;
+  longitude: number;
+  label?: string;
+  primary?: boolean;
+}
+
 @Component({
   selector: 'app-location-picker',
   templateUrl: './location-picker.component.html',
@@ -16,6 +23,8 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
 
   @Input() latitude: number | null = null;
   @Input() longitude: number | null = null;
+  @Input() readonly = false;
+  @Input() markers: PickerMarker[] = [];
 
   @Output() locationSelected = new EventEmitter<PickerLocation>();
 
@@ -23,13 +32,14 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
 
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
+  private markerLayer: L.LayerGroup | null = null;
   private readonly defaultCenter: L.LatLngTuple = [30.0444, 31.2357];
   private readonly defaultZoom = 12;
   private readonly selectedZoom = 16;
 
   ngAfterViewInit(): void {
     this.initializeMap();
-    this.syncFromInputs();
+    this.syncMapView();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -37,8 +47,8 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
       return;
     }
 
-    if (changes['latitude'] || changes['longitude']) {
-      this.syncFromInputs();
+    if (changes['markers'] || changes['latitude'] || changes['longitude'] || changes['readonly']) {
+      this.syncMapView();
     }
   }
 
@@ -70,12 +80,20 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
+    this.markerLayer = L.layerGroup().addTo(this.map);
+
     this.map.on('click', (event: L.LeafletMouseEvent) => {
+      if (this.readonly || this.hasDisplayMarkers()) {
+        return;
+      }
       this.setMarker(event.latlng.lat, event.latlng.lng, true);
     });
 
-    this.marker = L.marker(this.defaultCenter, { draggable: true, icon: markerIcon });
+    this.marker = L.marker(this.defaultCenter, { draggable: !this.readonly, icon: markerIcon });
     this.marker.on('dragend', () => {
+      if (this.readonly || this.hasDisplayMarkers()) {
+        return;
+      }
       const latLng = this.marker?.getLatLng();
       if (!latLng) {
         return;
@@ -84,12 +102,83 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
     });
   }
 
+  private syncMapView(): void {
+    if (!this.map) {
+      return;
+    }
+
+    if (this.marker) {
+      if (this.readonly || this.hasDisplayMarkers()) {
+        this.marker.dragging?.disable();
+      } else {
+        this.marker.dragging?.enable();
+      }
+    }
+
+    if (this.hasDisplayMarkers()) {
+      this.renderDisplayMarkers();
+      return;
+    }
+
+    this.clearDisplayMarkers();
+    this.syncFromInputs();
+  }
+
   private syncFromInputs(): void {
     if (this.latitude == null || this.longitude == null) {
       return;
     }
 
     this.setMarker(this.latitude, this.longitude, false);
+  }
+
+  private renderDisplayMarkers(): void {
+    if (!this.map || !this.markerLayer) {
+      return;
+    }
+
+    this.markerLayer.clearLayers();
+
+    if (this.marker && this.map.hasLayer(this.marker)) {
+      this.map.removeLayer(this.marker);
+    }
+
+    const validMarkers = this.markers.filter((marker) => this.isValidCoordinate(marker.latitude, marker.longitude));
+    if (validMarkers.length === 0) {
+      return;
+    }
+
+    const bounds = L.latLngBounds([]);
+    validMarkers.forEach((item) => {
+      const mapMarker = L.marker([item.latitude, item.longitude], {
+        icon: this.resolveDisplayMarkerIcon(!!item.primary)
+      });
+
+      if (item.label) {
+        mapMarker.bindTooltip(item.label, { direction: 'top', offset: [0, -12] });
+      }
+
+      mapMarker.addTo(this.markerLayer as L.LayerGroup);
+      bounds.extend([item.latitude, item.longitude]);
+    });
+
+    if (validMarkers.length === 1) {
+      this.map.setView([validMarkers[0].latitude, validMarkers[0].longitude], 14);
+      return;
+    }
+
+    this.map.fitBounds(bounds.pad(0.22), { maxZoom: 13 });
+  }
+
+  private clearDisplayMarkers(): void {
+    this.markerLayer?.clearLayers();
+
+    const shouldShowSelectionMarker = this.selectedLocation != null
+      || this.isValidCoordinate(this.latitude ?? NaN, this.longitude ?? NaN);
+
+    if (shouldShowSelectionMarker && this.marker && this.map && !this.map.hasLayer(this.marker)) {
+      this.marker.addTo(this.map);
+    }
   }
 
   private setMarker(lat: number, lng: number, emit: boolean, moveMap = true): void {
@@ -132,5 +221,28 @@ export class LocationPickerComponent implements AfterViewInit, OnChanges, OnDest
       latitude: normalizedLatitude,
       longitude: normalizedLongitude
     };
+  }
+
+  private hasDisplayMarkers(): boolean {
+    return Array.isArray(this.markers) && this.markers.length > 0;
+  }
+
+  private isValidCoordinate(latitude: number, longitude: number): boolean {
+    return Number.isFinite(latitude)
+      && Number.isFinite(longitude)
+      && latitude >= -90
+      && latitude <= 90
+      && longitude >= -180
+      && longitude <= 180;
+  }
+
+  private resolveDisplayMarkerIcon(primary: boolean): L.DivIcon {
+    const className = primary ? 'pharmacy-pin pharmacy-pin-primary' : 'pharmacy-pin';
+    return L.divIcon({
+      className,
+      html: '<span></span>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
   }
 }
