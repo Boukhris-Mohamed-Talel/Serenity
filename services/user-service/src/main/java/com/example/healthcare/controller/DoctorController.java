@@ -1,15 +1,18 @@
 package com.example.healthcare.controller;
 
+import com.example.healthcare.dto.DoctorUpdateRequest;
 import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.service.DoctorService;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,20 +53,36 @@ public class DoctorController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping(value="/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateDoctor(
-            @PathVariable Long userId,
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Doctor> updateDoctor(
+            @PathVariable Long id,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date dateOfBirth,
+            @RequestParam(required = false) String avatarUrl,
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) String preferredLanguage,
+            @RequestParam(required = false) Boolean isAnonymous,
             @RequestParam(required = false) String specialty,
-            @RequestParam(required = false) MultipartFile image) throws IOException {
+            @RequestParam(required = false) MultipartFile image
+    ) throws IOException {
 
-        Doctor updatedDoctor = doctorService.updateDoctorWithFile(userId, specialty, image);
+        DoctorUpdateRequest request = DoctorUpdateRequest.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .phone(phone)
+                .dateOfBirth(dateOfBirth)
+                .avatarUrl(avatarUrl)
+                .bio(bio)
+                .preferredLanguage(preferredLanguage)
+                .isAnonymous(isAnonymous)
+                .specialty(specialty)
+                .image(image)
+                .build();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", updatedDoctor.getId());
-        response.put("specialty", updatedDoctor.getSpecialty());
-        response.put("profilePictureUrl", updatedDoctor.getProfilePictureUrl());
-
-        return ResponseEntity.ok(response);
+        Doctor updated = doctorService.updateDoctorFull(id, request);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")

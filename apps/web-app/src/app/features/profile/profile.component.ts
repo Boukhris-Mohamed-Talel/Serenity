@@ -155,18 +155,22 @@ onSubmit(): void {
 
   const formData = new FormData();
 
+  // Add profile fields (exclude avatar since we handle images separately)
+  const fieldsToExclude = ['avatar', 'profilePictureUrl'];
   Object.entries(this.profileForm.value).forEach(([key, value]) => {
-    if (value !== null && value !== undefined) formData.append(key, value.toString());
+    if (!fieldsToExclude.includes(key) && value !== null && value !== undefined) {
+      formData.append(key, value.toString());
+    }
   });
 
   if (this.isDoctor) {
-  formData.append('specialty', this.doctorForm.get('specialty')?.value || '');
-  
-  // Send the actual file, not the string path
-  if (this.selectedFile) {
-    formData.append('image', this.selectedFile, this.selectedFile.name);
+    formData.append('specialty', this.doctorForm.get('specialty')?.value || '');
+    
+    // Send the actual file, not the string path
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile, this.selectedFile.name);
+    }
   }
-}
 
   const doctorId = this.authService.getCurrentUser()?.userId;
   if (!doctorId) {

@@ -1,8 +1,10 @@
 package com.example.healthcare.service;
 
+import com.example.healthcare.dto.DoctorUpdateRequest;
 import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
+import com.example.healthcare.entity.UserProfile;
 import com.example.healthcare.repository.DoctorRepository;
 import com.example.healthcare.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -134,31 +136,42 @@ public class DoctorService implements IDoctorService {
     }
 
 
-    public Doctor updateDoctorWithFile(Long id, String specialty, MultipartFile image) throws IOException {
-        log("=== updateDoctorWithFile called ===");
-        log("id: " + id);
-        log("specialty: " + specialty);
-        log("image is null: " + (image == null));
-        log("image is empty: " + (image != null && image.isEmpty()));
-        log("image original name: " + (image != null ? image.getOriginalFilename() : "N/A"));
-        log("working dir: " + System.getProperty("user.dir"));
+    public Doctor updateDoctorFull(Long id, DoctorUpdateRequest request) throws IOException {
 
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        if (specialty != null) doctor.setSpecialty(specialty);
+        // --- Update User fields ---
+        if (request.getFirstName() != null)   doctor.setFirstName(request.getFirstName());
+        if (request.getLastName() != null)    doctor.setLastName(request.getLastName());
+        if (request.getPhone() != null)       doctor.setPhone(request.getPhone());
+        if (request.getDateOfBirth() != null) doctor.setDateOfBirth(request.getDateOfBirth());
 
+        // --- Update UserProfile fields ---
+        UserProfile profile = doctor.getProfile();
+        if (profile == null) {
+            profile = UserProfile.builder()
+                    .user(doctor)
+                    .build();
+        }
+        if (request.getAvatarUrl() != null)        profile.setAvatar(request.getAvatarUrl());
+        if (request.getBio() != null)              profile.setBio(request.getBio());
+        if (request.getPreferredLanguage() != null) profile.setPreferredLanguage(request.getPreferredLanguage());
+        if (request.getIsAnonymous() != null)      profile.setIsAnonymous(request.getIsAnonymous());
+        doctor.setProfile(profile);
+
+        // --- Update Doctor fields ---
+        if (request.getSpecialty() != null) doctor.setSpecialty(request.getSpecialty());
+
+        // --- Handle profile picture file upload ---
+        MultipartFile image = request.getImage();
         if (image != null && !image.isEmpty()) {
             Files.createDirectories(Paths.get("uploads"));
             String safeName = image.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
             String filename = UUID.randomUUID() + "-" + safeName;
             Path filePath = Paths.get("uploads/" + filename);
-            log("saving to: " + filePath.toAbsolutePath());
             Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            log("file saved ✅");
             doctor.setProfilePictureUrl("uploads/" + filename);
-        } else {
-            log("⚠️ image is null or empty — skipping file save");
         }
 
         return doctorRepository.save(doctor);
