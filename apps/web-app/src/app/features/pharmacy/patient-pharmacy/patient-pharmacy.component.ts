@@ -119,24 +119,10 @@ export class PatientPharmacyComponent implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        this.pharmacyService
-          .suggestNearestPharmacies(position.coords.latitude, position.coords.longitude)
-          .subscribe({
-            next: (items) => {
-              this.candidateResults = items;
-              this.refreshMapMarkers();
-              this.nearestLoading = false;
-              if (items.length === 0) {
-                this.errorMessage = 'No nearby pharmacies were found in the selected radius.';
-              }
-            },
-            error: (err) => {
-              this.errorMessage = err.error?.message || 'Failed to fetch nearest pharmacies';
-              this.candidateResults = [];
-              this.refreshMapMarkers();
-              this.nearestLoading = false;
-            }
-          });
+        this.loadNearestPharmaciesWithFallback(
+          position.coords.latitude,
+          position.coords.longitude
+        );
       },
       () => {
         this.nearestLoading = false;
@@ -192,6 +178,18 @@ export class PatientPharmacyComponent implements OnInit {
 
   trackByPrescriptionId(_: number, item: PrescriptionCardView): number {
     return item.raw.id;
+  }
+
+  formatDistanceKm(distanceKm?: number): string {
+    if (typeof distanceKm !== 'number' || !Number.isFinite(distanceKm)) {
+      return '';
+    }
+
+    const compactDistance = distanceKm >= 10
+      ? Math.round(distanceKm)
+      : Math.round(distanceKm * 10) / 10;
+
+    return `${compactDistance} km`;
   }
 
   private toPrescriptionCard(item: PrescriptionResponse): PrescriptionCardView {
@@ -256,5 +254,111 @@ export class PatientPharmacyComponent implements OnInit {
   private hasCoordinates(latitude?: number, longitude?: number): boolean {
     return typeof latitude === 'number' && Number.isFinite(latitude)
       && typeof longitude === 'number' && Number.isFinite(longitude);
+  }
+
+  private loadNearestPharmaciesWithFallback(latitude: number, longitude: number): void {
+    const primaryRadiusKm = 20;
+    const fallbackRadiusKm = 35;
+
+    this.pharmacyService.suggestNearestPharmacies(latitude, longitude, primaryRadiusKm).subscribe({
+      next: (items) => {
+        if (items.length > 0) {
+          this.candidateResults = items;
+          this.refreshMapMarkers();
+          this.nearestLoading = false;
+          return;
+        }
+
+        this.pharmacyService.suggestNearestPharmacies(latitude, longitude, fallbackRadiusKm).subscribe({
+          next: (fallbackItems) => {
+            if (fallbackItems.length > 0) {
+              this.candidateResults = fallbackItems;
+              this.refreshMapMarkers();
+              this.nearestLoading = false;
+              this.successMessage = `No pharmacies found within ${primaryRadiusKm} km. Showing nearest matches within ${fallbackRadiusKm} km.`;
+              return;
+            }
+
+            // Final fallback: show nearest known pharmacies from full list, sorted by distance.
+            this.pharmacyService.listPatientPharmacies().subscribe({
+              next: (allPharmacies) => {
+                const nearestKnown = allPharmacies
+                  .map((pharmacy) => ({
+                    ...pharmacy,
+                    distanceKm: this.hasCoordinates(pharmacy.latitude, pharmacy.longitude)
+                      ? this.roundDistance(
+                          this.calculateDistanceKm(
+                            latitude,
+                            longitude,
+                            pharmacy.latitude as number,
+                            pharmacy.longitude as number
+                          )
+                        )
+                      : undefined
+                  }))
+                  .sort((a, b) => {
+                    const aDistance = a.distanceKm ?? Number.MAX_SAFE_INTEGER;
+                    const bDistance = b.distanceKm ?? Number.MAX_SAFE_INTEGER;
+                    return aDistance - bDistance;
+                  })
+                  .slice(0, 20);
+
+                this.candidateResults = nearestKnown;
+                this.refreshMapMarkers();
+                this.nearestLoading = false;
+
+                if (nearestKnown.length > 0) {
+                  this.successMessage = `No pharmacies found within ${fallbackRadiusKm} km. Showing closest available pharmacies.`;
+                  return;
+                }
+
+                this.errorMessage = '';
+                this.successMessage = 'No nearby pharmacies found for your location. Try searching by city or governorate.';
+              },
+              error: (listError) => {
+                this.errorMessage = listError.error?.message || 'Unable to load pharmacies right now.';
+                this.candidateResults = [];
+                this.refreshMapMarkers();
+                this.nearestLoading = false;
+              }
+            });
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Unable to use your location right now. You can still search by city or governorate.';
+            this.candidateResults = [];
+            this.refreshMapMarkers();
+            this.nearestLoading = false;
+          }
+        });
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Unable to use your location right now. You can still search by city or governorate.';
+        this.candidateResults = [];
+        this.refreshMapMarkers();
+        this.nearestLoading = false;
+      }
+    });
+  }
+
+  private calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const earthRadiusKm = 6371;
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLon = this.toRadians(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadiusKm * c;
+  }
+
+  private roundDistance(distanceKm: number): number {
+    return Math.round(distanceKm * 100) / 100;
+  }
+
+  private toRadians(value: number): number {
+    return value * (Math.PI / 180);
   }
 }
