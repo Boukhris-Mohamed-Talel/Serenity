@@ -6,6 +6,10 @@
     </a>
 
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
+      <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         Dashboard
       </a>
@@ -101,6 +105,40 @@
       </div>
 
       <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
+
+      <!-- 👇 Notification Bell -->
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="toggleNotifDropdown(); $event.stopPropagation()">
+          🔔
+          <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+        </button>
+
+        <div class="notif-dropdown" *ngIf="notifDropdownVisible" (click)="$event.stopPropagation()">
+          <div class="notif-header">
+            <span>Notifications</span>
+            <button class="clear-btn" (click)="clearNotifications()" *ngIf="notifications.length > 0">Clear all</button>
+          </div>
+
+          <div class="notif-empty" *ngIf="notifications.length === 0">
+            No new notifications
+          </div>
+
+          <div
+  class="notif-item"
+  *ngFor="let notif of notifications"
+  [ngClass]="{ unread: !notif.read }"
+  (click)="goToConversation(notif)"
+>
+  <div class="notif-content">
+    <div class="notif-sender">💬 {{ notif.senderName }}</div>  <!-- 👈 -->
+    <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
+  </div>
+  <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
+</div>
+        </div>
+      </div>
+      <!-- 👆 End Bell -->
+
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>
 

@@ -51,4 +51,6 @@ export interface AuthResponse {
   userId: number;
   email: string;
   role: string;
+  /** Synced from profile (`/users/me`) for pending-doctor polling; `1` means active. */
+  is_active?: number;
 }

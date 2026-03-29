@@ -1,6 +1,7 @@
 package com.example.healthcare.controller;
 
 import com.example.healthcare.dto.ProfileUpdateDTO;
+import com.example.healthcare.dto.UserDTO;
 import com.example.healthcare.dto.UserRequestDTO;
 import com.example.healthcare.dto.UserResponseDTO;
 import com.example.healthcare.service.UserService;
@@ -77,6 +78,28 @@ public class UserController {
     public ResponseEntity<Void> activateUser(@PathVariable Long id) {
         userService.activateUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/update-role")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDTO> updateUserRole(
+            Authentication authentication,
+            @RequestParam String role) {
+
+        String email = authentication.getName();
+        UserResponseDTO updatedUser = userService.updateUserRole(email, role);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/search")
+    public List<UserDTO> searchUsers(@RequestParam String q) {
+        return userService.searchUsers(q);
+    }
+
+    @GetMapping("/names")
+    public ResponseEntity<List<UserDTO>> getUsersNames(@RequestParam List<Long> ids) {
+        List<UserDTO> names = userService.getUsersNamesByIds(ids);
+        return ResponseEntity.ok(names);
     }
 
     @GetMapping("/doctors")

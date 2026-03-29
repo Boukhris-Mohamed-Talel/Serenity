@@ -9,6 +9,8 @@ public interface UserService {
 
     AuthResponseDTO registerUser(UserRequestDTO request);
 
+    UserResponseDTO updateUserRole(String email, String role);
+
     AuthResponseDTO login(LoginRequestDTO request);
 
     List<UserResponseDTO> getAllUsers();
@@ -28,6 +30,10 @@ public interface UserService {
     void activateUser(Long id);
 
     void deleteUser(Long id);
+
+    List<UserDTO> searchUsers(String query);
+
+    List<UserDTO> getUsersNamesByIds(List<Long> ids);
 
     List<UserResponseDTO> getDoctors();
 }

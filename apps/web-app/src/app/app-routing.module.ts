@@ -42,6 +42,10 @@ const routes: Routes = [
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
       },
       {
+        path: 'messagerie',
+        loadChildren: () => import('./features/messagerie/messagerie.module').then(m => m.MessagerieModule)
+      }
+      {
         path: 'insurance',
         loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
       },

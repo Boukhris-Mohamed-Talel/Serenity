@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,7 +79,7 @@ public class UserServiceImpl implements UserService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        String token = jwtTokenProvider.generateToken(authentication);
+        String token = jwtTokenProvider.generateToken(authentication,user.getId());
 
         return AuthResponseDTO.builder()
                 .accessToken(token)
@@ -90,15 +91,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponseDTO updateUserRole(String email, String role) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        user.setRole(Role.valueOf(role.toUpperCase()));
+        userRepository.save(user);
+
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-            String token = jwtTokenProvider.generateToken(authentication);
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(InvalidCredentialsException::new);
+
+            String token = jwtTokenProvider.generateToken(authentication, user.getId());
 
             return AuthResponseDTO.builder()
                     .accessToken(token)
@@ -241,6 +253,20 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.delete(user);
+    }
+
+    public List<UserDTO> searchUsers(String query) {
+        return userRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query)
+                .stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .toList();
+    }
+
+    public List<UserDTO> getUsersNamesByIds(List<Long> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .collect(Collectors.toList());
     }
 
     @Override

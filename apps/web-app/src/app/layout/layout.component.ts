@@ -8,6 +8,7 @@ import { InsuranceService } from '../core/services/insurance.service';
 import { InsuranceNotification } from '../shared/models/insurance.model';
 import { CrisisAlertPayload } from '../shared/models/mood.model';
 import { UserResponse } from '../shared/models/user.model';
+import { WebSocketService } from '../core/services/web-socket.service';
 
 @Component({
   selector: 'app-layout',
@@ -27,6 +28,11 @@ export class LayoutComponent implements OnInit, OnDestroy {
   notificationPanelOpen = false;
   private peekInterval: any;
   private userSub!: Subscription;
+  private wsSub!: Subscription;
+
+  notifications: any[] = [];
+  unreadCount = 0;
+  notifDropdownVisible = false;
   private alertsSub!: Subscription;
   private authSub!: Subscription;
   private notificationRefreshInterval: any;
@@ -35,11 +41,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
     public readonly authService: AuthService,
     private readonly crisisAlertService: CrisisAlertService,
     private readonly userService: UserService,
+    private readonly router: Router,
+    private readonly webSocketService: WebSocketService
     private readonly insuranceService: InsuranceService,
     private readonly router: Router
   ) {}
 
   ngOnInit(): void {
+    document.addEventListener('click', () => {
+      this.notifDropdownVisible = false;
+    });
     if (this.authService.isLoggedIn()) {
       this.userService.getCurrentUser().subscribe();
 
@@ -47,6 +58,47 @@ export class LayoutComponent implements OnInit, OnDestroy {
         this.user = user;
         if (user && !this.peekInterval) {
           this.startPeekAnimation();
+        }
+      });
+
+      // 👇 WebSocket notifications
+      this.webSocketService.connect();
+
+      this.wsSub = this.webSocketService.newMessage$.subscribe((msg: any) => {
+  const currentUserId = this.authService.getCurrentUser()?.userId;
+  if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
+
+    // 👇 fetch sender name
+    this.userService.getUsersNamesById([msg.senderId]).subscribe({
+      next: (users) => {
+        const sender = users[0];
+        const senderName = sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown';
+
+        this.notifications.unshift({
+          id: msg.id,
+          text: msg.content,
+          senderName,           // 👈
+          conversationId: msg.conversationId,
+          time: new Date(),
+          read: false
+        });
+        this.unreadCount++;
+      },
+      error: () => {
+        this.notifications.unshift({
+          id: msg.id,
+          text: msg.content,
+          senderName: 'Unknown', // 👈 fallback
+          conversationId: msg.conversationId,
+          time: new Date(),
+          read: false
+        });
+        this.unreadCount++;
+      }
+    });
+  }
+});
+    }
         }
       });
 
@@ -69,6 +121,27 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.peekInterval) clearInterval(this.peekInterval);
+    if (this.userSub) this.userSub.unsubscribe();
+    if (this.wsSub) this.wsSub.unsubscribe();
+  }
+
+  toggleNotifDropdown() {
+    this.notifDropdownVisible = !this.notifDropdownVisible;
+    if (this.notifDropdownVisible) {
+      this.unreadCount = 0;
+      this.notifications = this.notifications.map(n => ({ ...n, read: true }));
+    }
+  }
+
+  goToConversation(notif: any) {
+    this.notifDropdownVisible = false;
+    this.router.navigate(['/messagerie']);
+  }
+
+  clearNotifications() {
+    this.notifications = [];
+    this.unreadCount = 0;
     if (this.peekInterval) {
       clearInterval(this.peekInterval);
     }

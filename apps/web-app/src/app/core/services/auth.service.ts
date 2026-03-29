@@ -89,6 +89,17 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /** Updates stored auth user with activation flag from `UserService` / profile API (`isActive` → `is_active`). */
+  mergeProfileActivation(isActive: boolean): void {
+    const cur = this.getCurrentUser();
+    if (!cur) {
+      return;
+    }
+    const next: AuthResponse = { ...cur, is_active: isActive ? 1 : 0 };
+    localStorage.setItem(this.USER_KEY, JSON.stringify(next));
+    this.currentUserSubject.next(next);
+  }
+
   private storeAuth(response: AuthResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.accessToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));
@@ -99,6 +110,52 @@ export class AuthService {
     const stored = localStorage.getItem(this.USER_KEY);
     return stored ? JSON.parse(stored) : null;
   }
+
+  updateUserRole(role: string) {
+    const token = this.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    return this.http
+      .put<AuthResponse>(
+        `${environment.apiUrl}/users/update-role?role=${role.toUpperCase()}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      .pipe(
+        tap((updatedUser) => {
+        
+          localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
+          this.currentUserSubject.next(updatedUser);
+        })
+      );
+  }
+
+  addDoctor(userId: number, speciality: string, image: File) {
+    const formData = new FormData()
+
+    formData.append('speciality', speciality)
+    formData.append('image', image)
+
+    return this.http.post(`${environment.apiUrl}/doctors/${userId}`, formData)
+  }
+
+  addDoctorVerification( cv: File, diploma: File, licenseNumber: string, nationalId: string) {
+    const formData = new FormData()
+    
+    const token = this.getToken()
+    formData.append('cv', cv)
+    formData.append('diploma', diploma)
+    formData.append('licenseNumber', licenseNumber)
+    formData.append('nationalId', nationalId)
+
+    return this.http.post(
+      `${environment.apiUrl}/doctor-verifications/add_verification`,
+      formData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+  }
+
 
   private normalizeRole(role: string | null | undefined): string {
     const value = role?.trim().toUpperCase() ?? '';

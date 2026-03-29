@@ -27,7 +27,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly ngZone: NgZone
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
@@ -63,8 +63,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       delete formValue.dateOfBirth;
     }
 
+    const token = this.authService.getToken();
+    console.log('JWT Token being sent:', token);
     this.authService.register(formValue).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: (res) => {
+        localStorage.setItem('userId', res.userId.toString());
+        sessionStorage.setItem('passedRegister', 'true');
+        this.router.navigate(['/auth/select-role']);
+      },      
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
