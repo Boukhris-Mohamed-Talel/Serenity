@@ -2,13 +2,10 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { PatientListComponent } from './patient-list/patient-list.component';
-import { PatientFormComponent } from './patient-form/patient-form.component';
 import { PatientDetailComponent } from './patient-detail/patient-detail.component';
 
 const routes: Routes = [
   { path: '', component: PatientListComponent },
-  { path: 'new', component: PatientFormComponent },
-  { path: ':id/edit', component: PatientFormComponent },
   {
     path: ':patientId/records',
     loadChildren: () => import('../records/records.module').then((m) => m.RecordsModule)
@@ -17,7 +14,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [PatientListComponent, PatientFormComponent, PatientDetailComponent],
+  declarations: [PatientListComponent, PatientDetailComponent],
   imports: [SharedModule, RouterModule.forChild(routes)]
 })
 export class PatientsModule {}

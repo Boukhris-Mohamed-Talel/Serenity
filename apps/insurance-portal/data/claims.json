@@ -220,5 +220,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F5%2Fdd39c41a-ba92-4616-ab92-51c823c3ba49_carte+etudiant.jpg"
     ]
+  },
+  {
+    "ref": "14b14dd7-a8e2-4a3b-9a56-67a4ead42e87",
+    "patientName": "8",
+    "description": "azddazazdazd",
+    "amount": 100,
+    "insuranceCompany": "Insurance 1",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 12,
+    "receivedAt": "2026-03-30T17:14:54.471Z",
+    "processedAt": "2026-03-30T17:15:16.538Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F8%2F3bb06eec-aba7-4c18-9dfd-f0840f6fdbc1_carte+etudiant.jpg"
+    ]
   }
 ]

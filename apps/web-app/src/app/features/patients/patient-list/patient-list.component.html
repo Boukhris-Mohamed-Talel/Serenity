@@ -2,10 +2,7 @@
   <header class="saas-page-header">
     <div class="saas-page-title">
       <h1>Patients</h1>
-      <p class="saas-lead">Manage patients and navigate to medical records and prescriptions.</p>
-    </div>
-    <div class="saas-toolbar">
-      <a routerLink="new" class="btn btn-primary btn-lg">+ New patient</a>
+      <p class="saas-lead">Choose a patient to view and manage their medical records and prescriptions.</p>
     </div>
   </header>
 
@@ -57,14 +54,7 @@
           </div>
           <div class="patient-actions">
             <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
-            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
             <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
-              Delete
-            </button>
           </div>
         </article>
       </div>
@@ -80,18 +70,15 @@
       </div>
     </div>
 
-    <div class="saas-card saas-empty" *ngIf="!loading && page?.empty">
+    <div class="saas-card saas-empty" *ngIf="!loading && !patients.length">
       <div class="saas-empty-icon" aria-hidden="true">👤</div>
       <h2>No patients yet</h2>
-      <p>Create your first patient to start building medical records.</p>
-      <div class="saas-empty-actions">
-        <a routerLink="new" class="btn btn-primary">Create patient</a>
-      </div>
+      <p>No patients are currently registered in the database.</p>
     </div>
 
-    <div class="saas-card saas-card--flush" *ngIf="!loading && page && !page.empty">
+    <div class="saas-card saas-card--flush" *ngIf="!loading && patients.length">
       <div class="patient-cards">
-        <article class="patient-card" *ngFor="let p of page!.content">
+        <article class="patient-card" *ngFor="let p of patients">
           <div class="patient-info">
             <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
             <div class="patient-meta">
@@ -102,36 +89,11 @@
 
           <div class="patient-actions">
             <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
-            <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
             <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              (click)="openDeletePatient(p.id, p.firstName + ' ' + p.lastName)">
-              Delete
-            </button>
           </div>
         </article>
       </div>
-
-      <footer class="saas-pagination" *ngIf="page.totalPages > 1">
-        <span class="saas-page-info">Page {{ page.pageNumber + 1 }} of {{ page.totalPages }} · {{ page.totalElements }} patient(s)</span>
-        <div class="saas-pagination-btns">
-          <button type="button" class="btn btn-secondary btn-sm" (click)="prev()" [disabled]="page.first">Previous</button>
-          <button type="button" class="btn btn-secondary btn-sm" (click)="next()" [disabled]="page.last">Next</button>
-        </div>
-      </footer>
     </div>
   </ng-container>
 </section>
 
-<app-confirm-dialog
-  [open]="!!deleteConfirm"
-  title="Delete this patient?"
-  [message]="deleteConfirm ? 'This action is permanent. ' + deleteConfirm.name + ' will be removed.' : ''"
-  confirmLabel="Delete"
-  cancelLabel="Cancel"
-  [danger]="true"
-  (confirm)="confirmDeletePatient()"
-  (cancel)="closeDeleteConfirm()">
-</app-confirm-dialog>

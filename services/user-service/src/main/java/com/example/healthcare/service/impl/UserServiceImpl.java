@@ -275,4 +275,11 @@ public class UserServiceImpl implements UserService {
         List<User> doctors = userRepository.findByRole(Role.DOCTOR);
         return userMapper.toResponseDTOList(doctors);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> getPatients() {
+        List<User> patients = userRepository.findByRole(Role.PATIENT);
+        return userMapper.toResponseDTOList(patients);
+    }
 }

@@ -106,4 +106,10 @@ public class UserController {
     public ResponseEntity<List<UserResponseDTO>> getDoctors() {
         return ResponseEntity.ok(userService.getDoctors());
     }
+
+    @GetMapping("/patients")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public ResponseEntity<List<UserResponseDTO>> getPatients() {
+        return ResponseEntity.ok(userService.getPatients());
+    }
 }

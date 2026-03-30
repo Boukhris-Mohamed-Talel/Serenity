@@ -8,11 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.arctic.derbelmicroservice.dto.request.MedicalRecordRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.MedicalRecordResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.entity.MedicalRecord;
-import tn.esprit.arctic.derbelmicroservice.entity.Patient;
 import tn.esprit.arctic.derbelmicroservice.exception.ResourceNotFoundException;
 import tn.esprit.arctic.derbelmicroservice.mapper.MedicalRecordMapper;
 import tn.esprit.arctic.derbelmicroservice.repository.MedicalRecordRepository;
-import tn.esprit.arctic.derbelmicroservice.repository.PatientRepository;
 import tn.esprit.arctic.derbelmicroservice.service.IMedicalRecordService;
 
 import java.util.List;
@@ -23,7 +21,6 @@ import java.util.List;
 public class MedicalRecordServiceImpl implements IMedicalRecordService {
 
     private final MedicalRecordRepository medicalRecordRepository;
-    private final PatientRepository patientRepository;
     private final MedicalRecordMapper medicalRecordMapper;
 
     @Override
@@ -39,8 +36,8 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
     @Transactional(readOnly = true)
     public MedicalRecordResponseDTO getRecordById(Long id, Long doctorId, boolean isAdmin) {
         MedicalRecord record = (isAdmin
-                ? medicalRecordRepository.findByIdWithPatient(id)
-                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
+                ? medicalRecordRepository.findById(id)
+                : medicalRecordRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
         return medicalRecordMapper.toResponseDTO(record);
     }
@@ -48,9 +45,6 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
     @Override
     @Transactional(readOnly = true)
     public List<MedicalRecordResponseDTO> getRecordsByPatientId(Long patientId, Long doctorId, boolean isAdmin) {
-        if (!patientRepository.existsById(patientId)) {
-            throw new ResourceNotFoundException("Patient", "id", patientId);
-        }
         return (isAdmin
                 ? medicalRecordRepository.findByPatientId(patientId)
                 : medicalRecordRepository.findByPatientIdAndDoctorId(patientId, doctorId))
@@ -61,37 +55,33 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
 
     @Override
     public MedicalRecordResponseDTO createRecord(MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
-        Patient patient = patientRepository.findById(requestDTO.getPatientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", requestDTO.getPatientId()));
-        MedicalRecord record = medicalRecordMapper.toEntity(requestDTO, patient);
+        MedicalRecord record = medicalRecordMapper.toEntity(requestDTO);
         record.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
         MedicalRecord saved = medicalRecordRepository.save(record);
-        return medicalRecordMapper.toResponseDTO(saved, patient);
+        return medicalRecordMapper.toResponseDTO(saved);
     }
 
     @Override
     public MedicalRecordResponseDTO updateRecord(Long id, MedicalRecordRequestDTO requestDTO, Long doctorId, boolean isAdmin) {
         MedicalRecord record = (isAdmin
-                ? medicalRecordRepository.findByIdWithPatient(id)
-                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
+                ? medicalRecordRepository.findById(id)
+                : medicalRecordRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
-        Patient patientForResponse = record.getPatient();
-        if (requestDTO.getPatientId() != null && !requestDTO.getPatientId().equals(patientForResponse.getId())) {
-            patientForResponse = patientRepository.findById(requestDTO.getPatientId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", requestDTO.getPatientId()));
-            record.setPatient(patientForResponse);
-        }
+        
         medicalRecordMapper.updateEntityFromDTO(requestDTO, record);
+        if (requestDTO.getPatientId() != null) {
+            record.setPatientId(requestDTO.getPatientId());
+        }
         record.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
         MedicalRecord updated = medicalRecordRepository.save(record);
-        return medicalRecordMapper.toResponseDTO(updated, patientForResponse);
+        return medicalRecordMapper.toResponseDTO(updated);
     }
 
     @Override
     public void deleteRecord(Long id, Long doctorId, boolean isAdmin) {
         MedicalRecord record = (isAdmin
-                ? medicalRecordRepository.findByIdWithPatient(id)
-                : medicalRecordRepository.findByIdWithPatientAndDoctorId(id, doctorId))
+                ? medicalRecordRepository.findById(id)
+                : medicalRecordRepository.findByIdAndDoctorId(id, doctorId))
                 .orElseThrow(() -> new ResourceNotFoundException("MedicalRecord", "id", id));
         medicalRecordRepository.delete(record);
     }
@@ -121,3 +111,4 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
         return results.stream().map(medicalRecordMapper::toResponseDTO).toList();
     }
 }
+

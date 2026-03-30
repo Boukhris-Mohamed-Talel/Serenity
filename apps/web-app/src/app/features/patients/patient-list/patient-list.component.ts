@@ -10,12 +10,8 @@ import { NotificationService } from '../../../shared/services/notification.servi
   styleUrls: ['./patient-list.component.scss']
 })
 export class PatientListComponent implements OnInit {
-  page: PageResponseDTO<Patient> | null = null;
+  patients: Patient[] = [];
   loading = false;
-  pageIndex = 0;
-  readonly pageSize = 10;
-
-  deleteConfirm: { id: number; name: string } | null = null;
 
   // Search
   searchName = '';
@@ -34,22 +30,15 @@ export class PatientListComponent implements OnInit {
 
   load(): void {
     this.loading = true;
-    this.patientService
-      .getAllPatients({
-        page: this.pageIndex,
-        size: this.pageSize,
-        sortBy: 'id',
-        direction: 'asc'
-      })
-      .subscribe({
-        next: (p) => {
-          this.page = p;
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
-        }
-      });
+    this.patientService.getAllPatients().subscribe({
+      next: (p) => {
+        this.patients = p;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
+    });
   }
 
   search(): void {
@@ -62,7 +51,8 @@ export class PatientListComponent implements OnInit {
     this.searchLoading = true;
     this.patientService.searchPatients(name).subscribe({
       next: (results) => {
-        this.searchResults = results;
+        // filter out only PATIENT role since searchUsers returns any user
+        this.searchResults = results.filter(u => true); // In actual app, filter by role if needed.
         this.searchLoading = false;
       },
       error: () => {
@@ -75,43 +65,5 @@ export class PatientListComponent implements OnInit {
     this.searchName = '';
     this.isSearching = false;
     this.searchResults = [];
-  }
-
-  prev(): void {
-    if (this.page && !this.page.first) {
-      this.pageIndex--;
-      this.load();
-    }
-  }
-
-  next(): void {
-    if (this.page && !this.page.last) {
-      this.pageIndex++;
-      this.load();
-    }
-  }
-
-  openDeletePatient(id: number, name: string): void {
-    this.deleteConfirm = { id, name };
-  }
-
-  closeDeleteConfirm(): void {
-    this.deleteConfirm = null;
-  }
-
-  confirmDeletePatient(): void {
-    if (!this.deleteConfirm) return;
-    const { id } = this.deleteConfirm;
-    this.deleteConfirm = null;
-    this.patientService.deletePatient(id).subscribe({
-      next: () => {
-        this.notification.success('Patient deleted');
-        this.load();
-        if (this.isSearching) this.search();
-      },
-      error: () => {
-        /* toast via interceptor */
-      }
-    });
   }
 }

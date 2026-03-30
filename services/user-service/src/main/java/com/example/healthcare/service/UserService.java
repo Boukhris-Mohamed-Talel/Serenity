@@ -36,4 +36,6 @@ public interface UserService {
     List<UserDTO> getUsersNamesByIds(List<Long> ids);
 
     List<UserResponseDTO> getDoctors();
+
+    List<UserResponseDTO> getPatients();
 }

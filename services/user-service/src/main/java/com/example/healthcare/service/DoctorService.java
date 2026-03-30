@@ -1,18 +1,17 @@
 package com.example.healthcare.service;
 
+import com.example.healthcare.dto.DoctorResponseDTO;
 import com.example.healthcare.dto.DoctorUpdateRequest;
+import com.example.healthcare.dto.UserResponseDTO;
 import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
 import com.example.healthcare.entity.UserProfile;
+import com.example.healthcare.mapper.DoctorMapper;
 import com.example.healthcare.repository.DoctorRepository;
 import com.example.healthcare.repository.UserRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Transient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -23,6 +22,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class DoctorService implements IDoctorService {
@@ -36,9 +36,14 @@ public class DoctorService implements IDoctorService {
     @Autowired
     private RedisPublisher redisPublisher;
 
+    @Autowired
+    private DoctorMapper doctorMapper;
+
+    @Autowired
+    private UserService userService;
 
     @Override
-    public Doctor createDoctorForExistingUser(Long userId, String specialty, MultipartFile image) throws IOException {
+    public DoctorResponseDTO createDoctorForExistingUser(Long userId, String specialty, MultipartFile image) throws IOException {
 
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -47,13 +52,11 @@ public class DoctorService implements IDoctorService {
             throw new RuntimeException("User with id " + userId + " does not have the DOCTOR role");
         }
 
-        // Save the uploaded image
         String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
         Path filePath = Paths.get("uploads/", fileName);
         Files.createDirectories(filePath.getParent());
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Build Doctor by copying all User fields (since Doctor now extends User)
         Doctor doctor = new Doctor();
         doctor.setId(existingUser.getId());
         doctor.setEmail(existingUser.getEmail());
@@ -65,60 +68,55 @@ public class DoctorService implements IDoctorService {
         doctor.setRole(existingUser.getRole());
         doctor.setAuthProvider(existingUser.getAuthProvider());
         doctor.setIsActive(false);
-
-        // Doctor-specific fields
         doctor.setSpecialty(specialty);
         doctor.setProfilePictureUrl("uploads/" + fileName);
+
+        UserProfile profile = UserProfile.builder()
+                .user(doctor)
+                .preferredLanguage("en")
+                .isAnonymous(false)
+                .build();
+        doctor.setProfile(profile);
+
+
         log("=== WORKING DIR: " + System.getProperty("user.dir"));
         log("=== SAVING TO: " + Paths.get("uploads/" + fileName).toAbsolutePath());
 
-        // Delete the plain User row and save as Doctor (joined table)
         userRepository.delete(existingUser);
         Doctor savedDoctor = doctorRepository.save(doctor);
+        UserResponseDTO updatedUser = userService.uploadAvatar(doctor.getEmail(), image);
 
-        redisPublisher.publishDoctorEvent(savedDoctor);
+        redisPublisher.publishDoctorEvent(doctorMapper.toDTO(savedDoctor));
 
-        return savedDoctor;
+        return doctorMapper.toDTO(savedDoctor);
     }
 
     @Override
-    public List<Doctor> getAllDoctors() {
-        return doctorRepository.findAll();
+    public List<DoctorResponseDTO> getAllDoctors() {
+        return doctorRepository.findAll()
+                .stream()
+                .map(doctorMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Optional<Doctor> getDoctorById(Long id) {
-        return doctorRepository.findById(id);
+    public Optional<DoctorResponseDTO> getDoctorById(Long id) {
+        return doctorRepository.findById(id)
+                .map(doctorMapper::toDTO);
     }
 
     @Override
-    public Doctor updateDoctor(Long id, Doctor doctorDetails) {
+    public DoctorResponseDTO updateDoctor(Long id, Doctor doctorDetails) {
         Doctor existingDoctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
 
-        if (doctorDetails.getSpecialty() != null) {
-            existingDoctor.setSpecialty(doctorDetails.getSpecialty());
-        }
+        if (doctorDetails.getSpecialty() != null) existingDoctor.setSpecialty(doctorDetails.getSpecialty());
+        if (doctorDetails.getProfilePictureUrl() != null) existingDoctor.setProfilePictureUrl(doctorDetails.getProfilePictureUrl());
+        if (doctorDetails.getFirstName() != null) existingDoctor.setFirstName(doctorDetails.getFirstName());
+        if (doctorDetails.getLastName() != null) existingDoctor.setLastName(doctorDetails.getLastName());
+        if (doctorDetails.getPhone() != null) existingDoctor.setPhone(doctorDetails.getPhone());
 
-        if (doctorDetails.getProfilePictureUrl() != null) {
-            existingDoctor.setProfilePictureUrl(doctorDetails.getProfilePictureUrl());
-        }
-
-        // Optionally allow updating base User fields too
-        if (doctorDetails.getFirstName() != null) {
-            existingDoctor.setFirstName(doctorDetails.getFirstName());
-        }
-
-        if (doctorDetails.getLastName() != null) {
-            existingDoctor.setLastName(doctorDetails.getLastName());
-        }
-
-        if (doctorDetails.getPhone() != null) {
-            existingDoctor.setPhone(doctorDetails.getPhone());
-        }
-
-
-        return doctorRepository.save(existingDoctor);
+        return doctorMapper.toDTO(doctorRepository.save(existingDoctor));
     }
 
     @Override
@@ -127,43 +125,38 @@ public class DoctorService implements IDoctorService {
     }
 
     @Override
-    public void Verify(Long id){
+    public void Verify(Long id) {
         Doctor existingDoctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
-
         existingDoctor.setIsActive(true);
         doctorRepository.save(existingDoctor);
     }
 
-
-    public Doctor updateDoctorFull(Long id, DoctorUpdateRequest request) throws IOException {
+    @Override
+    public DoctorResponseDTO updateDoctorFull(Long id, DoctorUpdateRequest request) throws IOException {
 
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        // --- Update User fields ---
-        if (request.getFirstName() != null)   doctor.setFirstName(request.getFirstName());
-        if (request.getLastName() != null)    doctor.setLastName(request.getLastName());
-        if (request.getPhone() != null)       doctor.setPhone(request.getPhone());
-        if (request.getDateOfBirth() != null) doctor.setDateOfBirth(request.getDateOfBirth());
+        if (request.getFirstName() != null)    doctor.setFirstName(request.getFirstName());
+        if (request.getLastName() != null)     doctor.setLastName(request.getLastName());
+        if (request.getPhone() != null)        doctor.setPhone(request.getPhone());
+        if (request.getDateOfBirth() != null)  doctor.setDateOfBirth(request.getDateOfBirth());
 
-        // --- Update UserProfile fields ---
         UserProfile profile = doctor.getProfile();
         if (profile == null) {
             profile = UserProfile.builder()
                     .user(doctor)
                     .build();
         }
-        if (request.getAvatarUrl() != null)        profile.setAvatar(request.getAvatarUrl());
-        if (request.getBio() != null)              profile.setBio(request.getBio());
-        if (request.getPreferredLanguage() != null) profile.setPreferredLanguage(request.getPreferredLanguage());
-        if (request.getIsAnonymous() != null)      profile.setIsAnonymous(request.getIsAnonymous());
+        if (request.getAvatarUrl() != null)         profile.setAvatar(request.getAvatarUrl());
+        if (request.getBio() != null)               profile.setBio(request.getBio());
+        if (request.getPreferredLanguage() != null)  profile.setPreferredLanguage(request.getPreferredLanguage());
+        if (request.getIsAnonymous() != null)        profile.setIsAnonymous(request.getIsAnonymous());
         doctor.setProfile(profile);
 
-        // --- Update Doctor fields ---
         if (request.getSpecialty() != null) doctor.setSpecialty(request.getSpecialty());
 
-        // --- Handle profile picture file upload ---
         MultipartFile image = request.getImage();
         if (image != null && !image.isEmpty()) {
             Files.createDirectories(Paths.get("uploads"));
@@ -172,9 +165,11 @@ public class DoctorService implements IDoctorService {
             Path filePath = Paths.get("uploads/" + filename);
             Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             doctor.setProfilePictureUrl("uploads/" + filename);
+            UserResponseDTO updatedUser = userService.uploadAvatar(doctor.getEmail(), image);
         }
 
-        return doctorRepository.save(doctor);
+        Doctor saved = doctorRepository.save(doctor);
+        return doctorMapper.toDTO(saved);
     }
 
     private void log(String message) {

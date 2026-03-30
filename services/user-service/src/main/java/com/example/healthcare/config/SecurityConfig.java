@@ -55,10 +55,9 @@ public class SecurityConfig {
                                 "/ws/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        // Static uploads are fetched by the browser as <img> without Authorization header
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/users/names").permitAll()
+                        .requestMatchers(HttpMethod.GET,"api/users/names").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

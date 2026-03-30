@@ -19,7 +19,7 @@
     <div class="profile-sidebar card">
       <div class="avatar-section">
         <div class="avatar" *ngIf="!user?.profile?.avatar">{{ getInitials() }}</div>
-        <img *ngIf="user?.profile?.avatar" [src]="getAvatarSrc(user?.profile?.avatar)" alt="Avatar" class="avatar-img" />
+        <img *ngIf="user?.profile?.avatar" [src]="user?.profile?.avatar" alt="Avatar" class="avatar-img" />
         <h2>{{ user?.firstName }} {{ user?.lastName }}</h2>
         <p class="email">{{ user?.email }}</p>
         <span class="badge badge-primary role-badge">{{ user?.role }}</span>
@@ -71,7 +71,8 @@
           </div>
           <div class="detail-item">
             <p class="detail-label">Date of Birth</p>
-            <p class="detail-value">{{ user?.dateOfBirth ? (user?.dateOfBirth | date:'mediumDate':'UTC') : 'Not set' }}</p>
+            <p class="detail-value">{{ user?.dateOfBirth ? (user?.dateOfBirth | date:'mediumDate':'UTC') : 'Not set' }}
+            </p>
           </div>
           <div class="detail-item">
             <p class="detail-label">Role</p>
@@ -111,14 +112,22 @@
           <div class="form-group">
             <label for="firstName">First Name</label>
             <input id="firstName" type="text" formControlName="firstName" />
-            <div class="error-message" *ngIf="profileForm.get('firstName')?.touched && profileForm.get('firstName')?.hasError('required')">First name is required</div>
-            <div class="error-message" *ngIf="profileForm.get('firstName')?.touched && profileForm.get('firstName')?.hasError('minlength')">Minimum 2 characters</div>
+            <div class="error-message"
+              *ngIf="profileForm.get('firstName')?.touched && profileForm.get('firstName')?.hasError('required')">First
+              name is required</div>
+            <div class="error-message"
+              *ngIf="profileForm.get('firstName')?.touched && profileForm.get('firstName')?.hasError('minlength')">
+              Minimum 2 characters</div>
           </div>
           <div class="form-group">
             <label for="lastName">Last Name</label>
             <input id="lastName" type="text" formControlName="lastName" />
-            <div class="error-message" *ngIf="profileForm.get('lastName')?.touched && profileForm.get('lastName')?.hasError('required')">Last name is required</div>
-            <div class="error-message" *ngIf="profileForm.get('lastName')?.touched && profileForm.get('lastName')?.hasError('minlength')">Minimum 2 characters</div>
+            <div class="error-message"
+              *ngIf="profileForm.get('lastName')?.touched && profileForm.get('lastName')?.hasError('required')">Last
+              name is required</div>
+            <div class="error-message"
+              *ngIf="profileForm.get('lastName')?.touched && profileForm.get('lastName')?.hasError('minlength')">Minimum
+              2 characters</div>
           </div>
         </div>
         <div class="form-row">
@@ -135,7 +144,7 @@
 
       <div class="form-section">
         <h4>Profile Settings</h4>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isDoctor">
           <label for="avatarFile">Avatar</label>
           <div class="avatar-upload-row">
             <div class="avatar-preview">
@@ -143,19 +152,12 @@
               <img *ngIf="avatarPreviewUrl" [src]="avatarPreviewUrl" alt="Avatar preview" class="avatar-img" />
             </div>
             <div class="avatar-upload-controls">
-              <input
-                id="avatarFile"
-                class="avatar-file-input"
-                type="file"
-                accept="image/*"
+              <input id="avatarFile" class="avatar-file-input" type="file" accept="image/*"
                 (change)="onAvatarSelected($event)" />
 
               <div class="avatar-upload-actions">
                 <label class="avatar-upload-btn" for="avatarFile">Choose photo</label>
-                <button
-                  type="button"
-                  class="avatar-clear-btn"
-                  *ngIf="selectedAvatarFile"
+                <button type="button" class="avatar-clear-btn" *ngIf="selectedAvatarFile"
                   (click)="selectedAvatarFile = null; avatarPreviewUrl = user?.profile?.avatar || null">
                   Remove
                 </button>
@@ -176,7 +178,9 @@
           <label for="bio">Bio</label>
           <textarea id="bio" formControlName="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
           <div class="char-count">{{ profileForm.get('bio')?.value?.length || 0 }} / 1000</div>
-          <div class="error-message" *ngIf="profileForm.get('bio')?.touched && profileForm.get('bio')?.hasError('maxlength')">Bio must be less than 1000 characters</div>
+          <div class="error-message"
+            *ngIf="profileForm.get('bio')?.touched && profileForm.get('bio')?.hasError('maxlength')">Bio must be less
+            than 1000 characters</div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -200,33 +204,30 @@
 
       <!-- 👇 Doctor Section -->
       <div class="form-section" *ngIf="isDoctor" [formGroup]="doctorForm">
-  <h4>Doctor Information</h4>
-  <div class="form-row">
-    <div class="form-group">
-      <label for="specialty">Speciality</label>
-      <input id="specialty" type="text" formControlName="specialty" placeholder="e.g. Cardiology" />
-      <div class="error-message" *ngIf="doctorForm.get('specialty')?.touched && doctorForm.get('specialty')?.hasError('required')">
-        Speciality is required
+        <h4>Doctor Information</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="specialty">Speciality</label>
+            <input id="specialty" type="text" formControlName="specialty" placeholder="e.g. Cardiology" />
+            <div class="error-message"
+              *ngIf="doctorForm.get('specialty')?.touched && doctorForm.get('specialty')?.hasError('required')">
+              Speciality is required
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="profilePictureUrl">Profile Picture URL</label>
+            <input id="profilePictureUrl" type="file" accept="image/*" (change)="onDoctorImageSelected($event)" />
+          </div>
+        </div>
+        <div class="doctor-pic-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Profile picture preview" />
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label for="profilePictureUrl">Profile Picture URL</label>
-      <input
-        id="profilePictureUrl"
-        type="file"
-        accept="image/*"
-        (change)="onDoctorImageSelected($event)"
-      />
-    </div>
-  </div>
-  <div class="doctor-pic-preview" *ngIf="imagePreview">
-    <img [src]="imagePreview" alt="Profile picture preview" />
-  </div>
-</div>
       <!-- 👆 End Doctor Section -->
 
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary" [disabled]="profileForm.invalid || (isDoctor && doctorForm.invalid) || saving">
+        <button type="submit" class="btn btn-primary"
+          [disabled]="profileForm.invalid || (isDoctor && doctorForm.invalid) || saving">
           <span *ngIf="saving" class="spinner spinner-sm"></span>
           <span *ngIf="!saving">Save Changes</span>
         </button>
@@ -235,31 +236,17 @@
     </form>
   </div>
 
-  <div
-    *ngIf="!loading && authService.getCurrentUser()?.role === 'DOCTOR'"
-    class="profile-delete-footer"
-  >
+  <div *ngIf="!loading && authService.getCurrentUser()?.role === 'DOCTOR'" class="profile-delete-footer">
     <button type="button" class="btn btn-delete-profile" (click)="openDeleteModal()">
       Delete Profile
     </button>
   </div>
 
-  <div
-    *ngIf="showDeleteModal"
-    class="delete-modal-overlay"
-    (click)="cancelDelete()"
-    (keydown.enter)="cancelDelete()"
-    (keydown.space)="cancelDelete()"
-  >
-    <div class="delete-modal-dialog" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+  <div *ngIf="showDeleteModal" class="delete-modal-overlay" (click)="cancelDelete()">
+    <div class="delete-modal-dialog" (click)="$event.stopPropagation()">
       <p class="delete-modal-message">Are you sure you want to permanently delete your account?</p>
       <div class="delete-modal-actions">
-        <button
-          type="button"
-          class="btn btn-danger"
-          (click)="confirmDelete()"
-          [disabled]="deleteAccountLoading"
-        >
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="deleteAccountLoading">
           <span *ngIf="deleteAccountLoading" class="spinner spinner-sm"></span>
           <span *ngIf="!deleteAccountLoading">Yes, Delete My Account</span>
         </button>

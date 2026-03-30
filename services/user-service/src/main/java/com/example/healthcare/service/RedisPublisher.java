@@ -1,5 +1,6 @@
 package com.example.healthcare.service;
 
+import com.example.healthcare.dto.DoctorResponseDTO;
 import com.example.healthcare.entity.Doctor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +14,9 @@ import org.springframework.stereotype.Service;
 public class RedisPublisher {
 
     @Autowired
-    private RedisTemplate<String,Object> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
-    public void publishDoctorEvent(Doctor doctor) {
+    public void publishDoctorEvent(DoctorResponseDTO doctor) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             // Optionnel : formater les dates correctement

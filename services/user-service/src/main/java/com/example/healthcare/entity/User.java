@@ -55,7 +55,7 @@ public class User {
     private Role role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
+    /*@JsonIgnore*/
     private UserProfile profile;
 
     @PrePersist

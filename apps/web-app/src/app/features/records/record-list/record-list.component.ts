@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
 import { MedicalRecord } from '../../../models/medical-record.model';
+import { PatientService } from '../../../core/services/patient.service';
+import { Patient } from '../../../models/patient.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { getParamFromRouteTree } from '../../../shared/utils/route-params';
 
@@ -12,6 +14,7 @@ import { getParamFromRouteTree } from '../../../shared/utils/route-params';
 })
 export class RecordListComponent implements OnInit {
   patientId: number | null = null;
+  patient: Patient | null = null;
   records: MedicalRecord[] = [];
   loading = false;
 
@@ -32,6 +35,7 @@ export class RecordListComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly recordService: MedicalRecordService,
+    private readonly patientService: PatientService,
     private readonly notification: NotificationService
   ) {}
 
@@ -42,6 +46,9 @@ export class RecordListComponent implements OnInit {
       return;
     }
     this.patientId = +pid;
+    this.patientService.getPatientById(this.patientId).subscribe({
+      next: (p) => { this.patient = p; }
+    });
     this.load();
   }
 

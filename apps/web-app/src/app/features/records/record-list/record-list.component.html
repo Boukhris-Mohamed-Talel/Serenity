@@ -1,7 +1,8 @@
 <section class="saas-page">
   <header class="saas-page-header">
     <div class="saas-page-title">
-      <h1>Medical records</h1>
+      <h1 *ngIf="patient">Records for {{ patient.firstName }} {{ patient.lastName }}</h1>
+      <h1 *ngIf="!patient">Medical records</h1>
       <p class="saas-lead">Track diagnoses, severity and status for this patient.</p>
     </div>
     <div class="saas-toolbar" *ngIf="patientId">

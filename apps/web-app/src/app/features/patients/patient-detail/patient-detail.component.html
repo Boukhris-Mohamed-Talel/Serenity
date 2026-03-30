@@ -3,7 +3,6 @@
     <h1>Patient details</h1>
     <div class="head-actions">
       <a routerLink="/patients" class="btn btn-secondary">Back to list</a>
-      <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'edit']" class="btn btn-secondary">Edit</a>
       <a *ngIf="patient" [routerLink]="['/patients', patient.id, 'records']" class="btn btn-primary">Records</a>
     </div>
   </div>
