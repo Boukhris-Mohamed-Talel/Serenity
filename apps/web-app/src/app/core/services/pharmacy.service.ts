@@ -3,8 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  DoctorMedicineSuggestionResponse,
-  DoctorPatientSuggestionResponse,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
   PrescriptionAlternativeResponse,
@@ -12,7 +10,6 @@ import {
   PharmacyCandidateResponse,
   PharmacyResponse,
   PharmacyUpsertRequest,
-  PrescriptionCreateRequest,
   PrescriptionResponse,
   PrescriptionStatusUpdateRequest,
   StockItemCreateRequest,
@@ -35,24 +32,6 @@ export class PharmacyService {
 
   upsertMyPharmacy(payload: PharmacyUpsertRequest): Observable<PharmacyResponse> {
     return this.http.post<PharmacyResponse>(`${this.API_URL}/me`, payload);
-  }
-
-  createPrescription(payload: PrescriptionCreateRequest): Observable<PrescriptionResponse> {
-    return this.http.post<PrescriptionResponse>(`${this.API_URL}/prescriptions`, payload);
-  }
-
-  suggestDoctorMedicines(patientId: number, query: string): Observable<DoctorMedicineSuggestionResponse> {
-    const encodedQuery = encodeURIComponent(query.trim());
-    return this.http.get<DoctorMedicineSuggestionResponse>(
-      `${this.API_URL}/doctor/medicine-suggestions?patientId=${patientId}&query=${encodedQuery}`
-    );
-  }
-
-  suggestDoctorPatients(query: string): Observable<DoctorPatientSuggestionResponse> {
-    const encodedQuery = encodeURIComponent(query.trim());
-    return this.http.get<DoctorPatientSuggestionResponse>(
-      `${this.API_URL}/doctor/patient-suggestions?query=${encodedQuery}`
-    );
   }
 
   getInbox(): Observable<PrescriptionResponse[]> {

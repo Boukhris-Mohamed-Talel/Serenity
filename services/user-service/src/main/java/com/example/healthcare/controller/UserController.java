@@ -1,15 +1,18 @@
 package com.example.healthcare.controller;
 
 import com.example.healthcare.dto.ProfileUpdateDTO;
+import com.example.healthcare.dto.UserDTO;
 import com.example.healthcare.dto.UserRequestDTO;
 import com.example.healthcare.dto.UserResponseDTO;
 import com.example.healthcare.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,6 +32,12 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> updateProfile(Authentication authentication,
                                                           @Valid @RequestBody ProfileUpdateDTO request) {
         return ResponseEntity.ok(userService.updateProfile(authentication.getName(), request));
+    }
+
+    @PostMapping("/me/avatar")
+    public ResponseEntity<UserResponseDTO> uploadAvatar(Authentication authentication,
+                                                        @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.uploadAvatar(authentication.getName(), file));
     }
 
     @GetMapping
@@ -69,5 +78,38 @@ public class UserController {
     public ResponseEntity<Void> activateUser(@PathVariable Long id) {
         userService.activateUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/update-role")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDTO> updateUserRole(
+            Authentication authentication,
+            @RequestParam String role) {
+
+        String email = authentication.getName();
+        UserResponseDTO updatedUser = userService.updateUserRole(email, role);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/search")
+    public List<UserDTO> searchUsers(@RequestParam String q) {
+        return userService.searchUsers(q);
+    }
+
+    @GetMapping("/names")
+    public ResponseEntity<List<UserDTO>> getUsersNames(@RequestParam List<Long> ids) {
+        List<UserDTO> names = userService.getUsersNamesByIds(ids);
+        return ResponseEntity.ok(names);
+    }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<UserResponseDTO>> getDoctors() {
+        return ResponseEntity.ok(userService.getDoctors());
+    }
+
+    @GetMapping("/patients")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
+    public ResponseEntity<List<UserResponseDTO>> getPatients() {
+        return ResponseEntity.ok(userService.getPatients());
     }
 }

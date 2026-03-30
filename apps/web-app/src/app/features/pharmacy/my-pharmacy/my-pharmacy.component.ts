@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import { PharmacyUpsertRequest } from '../../../shared/models/pharmacy.model';
 import { PickerLocation } from '../../../shared/components/location-picker/location-picker.component';
@@ -19,7 +20,8 @@ export class MyPharmacyComponent implements OnInit {
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly pharmacyService: PharmacyService
+    private readonly pharmacyService: PharmacyService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
@@ -65,6 +67,10 @@ export class MyPharmacyComponent implements OnInit {
       return;
     }
 
+    if (!window.confirm('Save pharmacy profile changes?')) {
+      return;
+    }
+
     this.saving = true;
     this.successMessage = '';
     this.errorMessage = '';
@@ -80,12 +86,24 @@ export class MyPharmacyComponent implements OnInit {
       next: () => {
         this.successMessage = 'Pharmacy profile saved successfully.';
         this.saving = false;
+        this.router.navigate(['/pharmacy']);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to save pharmacy profile';
         this.saving = false;
       }
     });
+  }
+
+  backToWorkspace(): void {
+    this.cancel();
+  }
+
+  cancel(): void {
+    if (this.form.dirty && !window.confirm('Discard unsaved pharmacy changes?')) {
+      return;
+    }
+    this.router.navigate(['/pharmacy']);
   }
 
   onLocationSelected(location: PickerLocation): void {

@@ -1,0 +1,99 @@
+<section class="saas-page">
+  <header class="saas-page-header">
+    <div class="saas-page-title">
+      <h1>Patients</h1>
+      <p class="saas-lead">Choose a patient to view and manage their medical records and prescriptions.</p>
+    </div>
+  </header>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <div class="search-inputs">
+      <input
+        type="text"
+        [(ngModel)]="searchName"
+        placeholder="Search by name..."
+        class="search-input"
+        (keyup.enter)="search()" />
+    </div>
+    <div class="search-actions">
+      <button type="button" class="btn btn-primary" (click)="search()" [disabled]="searchLoading">
+        <span class="material-icons">search</span> Search
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="clearSearch()" *ngIf="isSearching">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Search results -->
+  <ng-container *ngIf="isSearching">
+    <div class="saas-card" *ngIf="searchLoading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Searching…</span>
+      </div>
+    </div>
+
+    <div class="saas-card saas-empty" *ngIf="!searchLoading && !searchResults.length">
+      <div class="saas-empty-icon" aria-hidden="true">🔍</div>
+      <h2>No results found</h2>
+      <p>No patients match "{{ searchName }}". Try a different search.</p>
+    </div>
+
+    <div class="saas-card saas-card--flush" *ngIf="!searchLoading && searchResults.length">
+      <p class="search-count">{{ searchResults.length }} result(s) for "{{ searchName }}"</p>
+      <div class="patient-cards">
+        <article class="patient-card" *ngFor="let p of searchResults">
+          <div class="patient-info">
+            <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
+            <div class="patient-meta">
+              <span class="meta-label">Phone</span>
+              <span class="meta-value">{{ p.phone || '—' }}</span>
+            </div>
+          </div>
+          <div class="patient-actions">
+            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
+            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Normal list (hidden during search) -->
+  <ng-container *ngIf="!isSearching">
+    <div class="saas-card" *ngIf="loading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Loading patients…</span>
+      </div>
+    </div>
+
+    <div class="saas-card saas-empty" *ngIf="!loading && !patients.length">
+      <div class="saas-empty-icon" aria-hidden="true">👤</div>
+      <h2>No patients yet</h2>
+      <p>No patients are currently registered in the database.</p>
+    </div>
+
+    <div class="saas-card saas-card--flush" *ngIf="!loading && patients.length">
+      <div class="patient-cards">
+        <article class="patient-card" *ngFor="let p of patients">
+          <div class="patient-info">
+            <div class="patient-name">{{ p.firstName }} {{ p.lastName }}</div>
+            <div class="patient-meta">
+              <span class="meta-label">Phone</span>
+              <span class="meta-value">{{ p.phone || '—' }}</span>
+            </div>
+          </div>
+
+          <div class="patient-actions">
+            <a [routerLink]="[p.id]" class="btn btn-secondary btn-sm">Details</a>
+            <a [routerLink]="[p.id, 'records']" class="btn btn-primary btn-sm">Records</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </ng-container>
+</section>
+

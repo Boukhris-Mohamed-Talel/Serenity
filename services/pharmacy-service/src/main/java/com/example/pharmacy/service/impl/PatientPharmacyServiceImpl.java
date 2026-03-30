@@ -4,10 +4,10 @@ import com.example.pharmacy.dto.PatientDefaultPharmacyResponseDTO;
 import com.example.pharmacy.dto.PharmacyCandidateResponseDTO;
 import com.example.pharmacy.entity.PatientPharmacyPreference;
 import com.example.pharmacy.entity.Pharmacy;
-import com.example.pharmacy.entity.PrescriptionOrder;
+import com.example.pharmacy.entity.PharmacyPrescription;
 import com.example.pharmacy.entity.PrescriptionStatus;
 import com.example.pharmacy.exception.ResourceNotFoundException;
-import com.example.pharmacy.repository.PrescriptionOrderRepository;
+import com.example.pharmacy.repository.PharmacyPrescriptionRepository;
 import com.example.pharmacy.repository.PatientPharmacyPreferenceRepository;
 import com.example.pharmacy.repository.PharmacyRepository;
 import com.example.pharmacy.security.CurrentUserService;
@@ -26,7 +26,7 @@ public class PatientPharmacyServiceImpl implements PatientPharmacyService {
 
     private final PatientPharmacyPreferenceRepository preferenceRepository;
     private final PharmacyRepository pharmacyRepository;
-    private final PrescriptionOrderRepository prescriptionOrderRepository;
+    private final PharmacyPrescriptionRepository pharmacyPrescriptionRepository;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -56,15 +56,15 @@ public class PatientPharmacyServiceImpl implements PatientPharmacyService {
     }
 
     private void assignPendingUnassignedPrescriptions(Long patientId, Pharmacy pharmacy) {
-        List<PrescriptionOrder> pendingOrders = prescriptionOrderRepository
-            .findByPatientIdAndPharmacyIsNullAndStatusOrderByCreatedAtDesc(patientId, PrescriptionStatus.PENDING);
+        List<PharmacyPrescription> pendingWorkflows = pharmacyPrescriptionRepository
+            .findByPatientIdAndAssignedPharmacyIsNullAndStatusOrderByCreatedAtDesc(patientId, PrescriptionStatus.PENDING);
 
-        if (pendingOrders.isEmpty()) {
+        if (pendingWorkflows.isEmpty()) {
             return;
         }
 
-        pendingOrders.forEach(order -> order.setPharmacy(pharmacy));
-        prescriptionOrderRepository.saveAll(pendingOrders);
+        pendingWorkflows.forEach(workflow -> workflow.setAssignedPharmacy(pharmacy));
+        pharmacyPrescriptionRepository.saveAll(pendingWorkflows);
     }
 
     @Override

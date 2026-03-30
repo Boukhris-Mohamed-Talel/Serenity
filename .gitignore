@@ -41,5 +41,4 @@ Thumbs.db
 # --- Test coverage ---
 coverage/
 
-# --- Local-only tests (per request) ---
 services/pharmacy-service/src/test/

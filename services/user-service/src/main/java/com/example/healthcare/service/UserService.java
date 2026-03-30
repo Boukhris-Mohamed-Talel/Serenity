@@ -1,12 +1,15 @@
 package com.example.healthcare.service;
 
 import com.example.healthcare.dto.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface UserService {
 
     AuthResponseDTO registerUser(UserRequestDTO request);
+
+    UserResponseDTO updateUserRole(String email, String role);
 
     AuthResponseDTO login(LoginRequestDTO request);
 
@@ -18,6 +21,8 @@ public interface UserService {
 
     UserResponseDTO updateProfile(String email, ProfileUpdateDTO request);
 
+    UserResponseDTO uploadAvatar(String email, MultipartFile file);
+
     UserResponseDTO updateUser(Long id, UserRequestDTO request);
 
     void deactivateUser(Long id);
@@ -25,4 +30,12 @@ public interface UserService {
     void activateUser(Long id);
 
     void deleteUser(Long id);
+
+    List<UserDTO> searchUsers(String query);
+
+    List<UserDTO> getUsersNamesByIds(List<Long> ids);
+
+    List<UserResponseDTO> getDoctors();
+
+    List<UserResponseDTO> getPatients();
 }

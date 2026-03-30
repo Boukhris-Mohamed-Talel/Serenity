@@ -15,6 +15,7 @@ import {
 export class PrescriptionInboxComponent implements OnInit {
   loading = true;
   errorMessage = '';
+  successMessage = '';
   prescriptions: PrescriptionResponse[] = [];
 
   constructor(
@@ -28,6 +29,7 @@ export class PrescriptionInboxComponent implements OnInit {
 
   loadInbox(): void {
     this.loading = true;
+    this.errorMessage = '';
     this.pharmacyService.getInbox().subscribe({
       next: (rows) => {
         this.prescriptions = rows;
@@ -41,18 +43,29 @@ export class PrescriptionInboxComponent implements OnInit {
   }
 
   updateStatus(row: PrescriptionResponse, status: PrescriptionStatus): void {
+    const actionLabel = this.statusActionLabel(status);
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this prescription?`)) {
+      return;
+    }
+
     let rejectionReason = '';
     if (status === 'REJECTED') {
       rejectionReason = prompt('Please provide rejection reason') || '';
-      if (!rejectionReason.trim()) return;
+      if (!rejectionReason.trim()) {
+        this.errorMessage = 'Rejection reason is required.';
+        return;
+      }
     }
 
     const payload: PrescriptionStatusUpdateRequest = { status, rejectionReason };
+    this.errorMessage = '';
+    this.successMessage = '';
 
     this.pharmacyService.updatePrescriptionStatus(row.id, payload).subscribe({
       next: (updated) => {
         const idx = this.prescriptions.findIndex(p => p.id === updated.id);
         if (idx !== -1) this.prescriptions[idx] = updated;
+        this.successMessage = `Prescription updated to ${updated.status}.`;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to update prescription status';
@@ -62,6 +75,10 @@ export class PrescriptionInboxComponent implements OnInit {
 
   canProcess(status: PrescriptionStatus): boolean {
     return status === 'PENDING' || status === 'ACCEPTED';
+  }
+
+  backToWorkspace(): void {
+    this.router.navigate(['/pharmacy']);
   }
 
   openPrescription(row: PrescriptionResponse): void {
@@ -101,5 +118,22 @@ export class PrescriptionInboxComponent implements OnInit {
   extraLinesCount(row: PrescriptionResponse): number {
     const lines = this.medicineLines(row);
     return lines.length > 1 ? lines.length - 1 : 0;
+  }
+
+  private statusActionLabel(status: PrescriptionStatus): string {
+    switch (status) {
+      case 'ACCEPTED':
+        return 'accept';
+      case 'REJECTED':
+        return 'reject';
+      case 'READY_FOR_PICKUP':
+        return 'mark as ready for pickup';
+      case 'COLLECTED':
+        return 'mark as collected';
+      case 'EXPIRED':
+        return 'mark as expired';
+      default:
+        return `set to ${status.toLowerCase().replace(/_/g, ' ')}`;
+    }
   }
 }

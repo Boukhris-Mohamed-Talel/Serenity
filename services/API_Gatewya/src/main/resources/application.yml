@@ -17,7 +17,7 @@ spring:
           predicates:
             - Path=/api/users/**
         - id: pharmacy-service
-          uri: http://localhost:8083
+          uri: http://localhost:8093
           predicates:
             - Path=/api/pharmacy/**
         - id: insurance-service
@@ -28,10 +28,39 @@ spring:
           uri: http://localhost:8090
           predicates:
             - Path=/api/files/**
-        - id: marketplace-service
-          uri: http://localhost:8088
+        - id : doctor-service
+          uri: http://localhost:8081
           predicates:
-            - Path=/api/marketplace/**
+            - Path=/api/doctors/**
+        - id : image-uploads
+          uri: http://localhost:8081
+          predicates:
+            - Path=/uploads/**
+        - id: doctor-microservice
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/doctor-verifications/**
+        - id: doctor-microservice-conversation
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/conversations/**
+        - id: doctor-microservice-messages
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/messages/**
+        - id: websocket-route-doctor
+          uri: ws://localhost:8081
+          predicates:
+            - Path=/ws/**
+        - id: websocket-route-doctor-verification
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws-doctor-verification/**
+        - id: derbel-service
+          uri: http://localhost:8099
+          predicates:
+            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
+
       globalcors:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
@@ -46,13 +75,19 @@ spring:
               - PATCH
               - DELETE
               - OPTIONS
-            allowed-headers: "*"
+            allowed-headers:
+              - Authorization
+              - Content-Type
+              - Accept
             allow-credentials: true
 
 server:
   port: 8082
 
+
 app:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
     expiration-ms: ${JWT_EXPIRATION:86400000}
+
+debug: false

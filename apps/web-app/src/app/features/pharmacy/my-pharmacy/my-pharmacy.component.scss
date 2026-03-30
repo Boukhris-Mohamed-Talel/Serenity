@@ -3,6 +3,22 @@
   gap: 1rem;
 }
 
+.page-header {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: start;
+  margin-bottom: 0;
+}
+
+.header-copy h1 {
+  margin: 0;
+}
+
+.header-copy p {
+  margin: 0.25rem 0 0;
+  color: #5d7d7a;
+}
+
 .form {
   display: grid;
   gap: 1rem;

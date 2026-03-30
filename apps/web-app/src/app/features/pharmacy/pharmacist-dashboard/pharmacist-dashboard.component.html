@@ -80,7 +80,11 @@
           <article
             class="prescription-row"
             *ngFor="let item of filteredPrescriptions"
-            (click)="openPrescription(item)">
+            role="button"
+            tabindex="0"
+            (click)="openPrescription(item)"
+            (keydown.enter)="openPrescription(item)"
+            (keydown.space)="$event.preventDefault(); openPrescription(item)">
             <div class="row-main">
               <p class="title">{{ medicineSummary(item) }}</p>
               <p class="meta">{{ item.patientName }} - {{ item.doctorName }}</p>

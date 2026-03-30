@@ -23,9 +23,15 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  public-base-url: ${USER_PUBLIC_BASE_URL:http://localhost:8081}
   insurance:
     api-url: ${INSURANCE_API_URL:http://localhost:3000/api}
   jwt:
@@ -37,3 +43,4 @@ app:
     facebook:
       app-id: ${FACEBOOK_APP_ID:}
       app-secret: ${FACEBOOK_APP_SECRET:}
+
