@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from './layout/layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { StatisticsComponent } from './features/statistics/statistics.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
@@ -30,6 +31,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: '', component: DashboardComponent },
+      { path: 'statistics', component: StatisticsComponent },
       {
         path: 'pharmacy',
         loadChildren: () => import('./features/pharmacy/pharmacy.module').then(m => m.PharmacyModule)
@@ -55,6 +57,10 @@ const routes: Routes = [
         canActivate: [RoleGuard],
         data: { roles: ['PATIENT', 'DOCTOR'] },
         loadChildren: () => import('./features/monitoring/monitoring.module').then(m => m.MonitoringModule)
+      },
+      {
+        path: 'patients',
+        loadChildren: () => import('./features/patients/patients.module').then(m => m.PatientsModule)
       }
     ]
   },

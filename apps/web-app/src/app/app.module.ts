@@ -9,13 +9,15 @@ import { SharedModule } from './shared/shared.module';
 import { LayoutComponent } from './layout/layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { StatisticsComponent } from './features/statistics/statistics.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LayoutComponent,
     AdminLayoutComponent,
-    DashboardComponent
+    DashboardComponent,
+    StatisticsComponent
   ],
   imports: [
     BrowserModule,

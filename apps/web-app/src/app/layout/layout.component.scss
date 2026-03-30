@@ -42,17 +42,21 @@
 
 .navbar-links {
   display: flex;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.15rem;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 
   a {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
     border-radius: var(--radius);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-light);
     text-decoration: none;
     transition: all 0.2s ease;
+    white-space: nowrap;
 
     &:hover {
       background: var(--bg);

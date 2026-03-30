@@ -203,5 +203,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F162%2F90cc0390-d958-4df8-a0a5-8f9a5668dec7_461715472_849274157403977_230643184334225292_n.jpg"
     ]
+  },
+  {
+    "ref": "9dbe5088-7b4c-4156-8ca1-5d1acd36f5f1",
+    "patientName": "5",
+    "description": "i bought meds give me money back",
+    "amount": 124,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 31,
+    "receivedAt": "2026-03-30T14:27:25.487Z",
+    "processedAt": "2026-03-30T14:27:43.685Z",
+    "rejectReason": null,
+    "adjustmentReason": "GOOD HERE'S YOUR FUCKING MONEY BACK",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F5%2Fdd39c41a-ba92-4616-ab92-51c823c3ba49_carte+etudiant.jpg"
+    ]
   }
 ]
