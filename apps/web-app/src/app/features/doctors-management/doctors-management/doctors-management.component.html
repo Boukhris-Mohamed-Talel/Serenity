@@ -75,8 +75,18 @@
 </div>
 
 <!-- Verification Details Modal -->
-<div class="modal-overlay" *ngIf="showVerificationModal" (click)="closeVerificationModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
+<div
+  class="modal-overlay"
+  *ngIf="showVerificationModal"
+  (click)="closeVerificationModal()"
+  (keydown.enter)="closeVerificationModal()"
+  (keydown.space)="closeVerificationModal()"
+>
+  <div
+    class="modal"
+    (click)="$event.stopPropagation()"
+    (keydown)="$event.stopPropagation()"
+  >
     <div class="modal-header">
       <h2>Doctor Verification Details</h2>
       <button class="modal-close" (click)="closeVerificationModal()" title="Close modal">
@@ -220,8 +230,18 @@
 </div>
 
 <!-- Image Viewer Modal -->
-<div class="image-modal-overlay" *ngIf="showImageModal" (click)="closeImageModal()">
-  <div class="image-modal" (click)="$event.stopPropagation()">
+<div
+  class="image-modal-overlay"
+  *ngIf="showImageModal"
+  (click)="closeImageModal()"
+  (keydown.enter)="closeImageModal()"
+  (keydown.space)="closeImageModal()"
+>
+  <div
+    class="image-modal"
+    (click)="$event.stopPropagation()"
+    (keydown)="$event.stopPropagation()"
+  >
     <div class="image-modal-header">
       <h3>{{ selectedImageTitle }}</h3>
       <button class="modal-close" (click)="closeImageModal()" title="Close image viewer">

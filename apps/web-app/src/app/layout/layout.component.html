@@ -111,7 +111,7 @@
           <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
         </button>
 
-        <div class="notif-dropdown" *ngIf="notifDropdownVisible" (click)="$event.stopPropagation()">
+        <div class="notif-dropdown" *ngIf="notifDropdownVisible" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="notif-header">
             <span>Notifications</span>
             <button class="clear-btn" (click)="clearNotifications()" *ngIf="notifications.length > 0">Clear all</button>

@@ -251,7 +251,7 @@
     (keydown.enter)="cancelDelete()"
     (keydown.space)="cancelDelete()"
   >
-    <div class="delete-modal-dialog" (click)="$event.stopPropagation()">
+    <div class="delete-modal-dialog" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <p class="delete-modal-message">Are you sure you want to permanently delete your account?</p>
       <div class="delete-modal-actions">
         <button

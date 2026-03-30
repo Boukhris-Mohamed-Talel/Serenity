@@ -58,6 +58,7 @@
       [style.top.px]="conversationMenuY"
       [style.left.px]="conversationMenuX"
       (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
     >
       <div
         class="menu-item delete"
@@ -106,8 +107,16 @@
         [style.top.px]="menuY"
         [style.left.px]="menuX"
         (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
       >
-        <div class="menu-item delete" (click)="removeMessage()">Delete Message</div>
+        <div
+          class="menu-item delete"
+          (click)="removeMessage()"
+          (keydown.enter)="removeMessage()"
+          (keydown.space)="removeMessage()"
+        >
+          Delete Message
+        </div>
       </div>
 
       <div class="message-input">
