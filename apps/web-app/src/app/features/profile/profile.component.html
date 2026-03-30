@@ -244,7 +244,13 @@
     </button>
   </div>
 
-  <div *ngIf="showDeleteModal" class="delete-modal-overlay" (click)="cancelDelete()">
+  <div
+    *ngIf="showDeleteModal"
+    class="delete-modal-overlay"
+    (click)="cancelDelete()"
+    (keydown.enter)="cancelDelete()"
+    (keydown.space)="cancelDelete()"
+  >
     <div class="delete-modal-dialog" (click)="$event.stopPropagation()">
       <p class="delete-modal-message">Are you sure you want to permanently delete your account?</p>
       <div class="delete-modal-actions">

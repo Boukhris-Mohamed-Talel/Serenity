@@ -30,6 +30,8 @@
           *ngFor="let role of roles"
           [class.selected]="selectedRole === role.id"
           (click)="selectRole(role.id)"
+          (keydown.enter)="selectRole(role.id)"
+          (keydown.space)="selectRole(role.id)"
         >
 
           <div class="role-icon">

@@ -19,7 +19,13 @@
         </div>
 
         <div *ngIf="searchActive && searchTerm.trim() && filteredUsers.length > 0" class="search-results">
-          <div *ngFor="let user of filteredUsers" class="search-user" (click)="selectUser(user)">
+          <div
+            *ngFor="let user of filteredUsers"
+            class="search-user"
+            (click)="selectUser(user)"
+            (keydown.enter)="selectUser(user)"
+            (keydown.space)="selectUser(user)"
+          >
             {{ user.firstName }} {{ user.lastName }}
           </div>
         </div>
@@ -32,6 +38,8 @@
           *ngFor="let convo of filteredConversations"
           [ngClass]="{ active: convo.id === activeConversationId }"
           (click)="selectConversation(convo)"
+          (keydown.enter)="selectConversation(convo)"
+          (keydown.space)="selectConversation(convo)"
           (contextmenu)="openConversationMenu($event, convo)"
         >
           <div class="avatar"></div>
@@ -51,7 +59,14 @@
       [style.left.px]="conversationMenuX"
       (click)="$event.stopPropagation()"
     >
-      <div class="menu-item delete" (click)="deleteConversationClicked()">Delete this conversation</div>
+      <div
+        class="menu-item delete"
+        (click)="deleteConversationClicked()"
+        (keydown.enter)="deleteConversationClicked()"
+        (keydown.space)="deleteConversationClicked()"
+      >
+        Delete this conversation
+      </div>
     </div>
 
     <!-- Chat Area -->

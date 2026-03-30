@@ -152,6 +152,8 @@
                 (dragleave)="onCvDragLeave()"
                 (drop)="onCvDropped($event)"
                 (click)="cvInput.click()"
+                (keydown.enter)="cvInput.click()"
+                (keydown.space)="cvInput.click()"
               >
                 <div *ngIf="!cvFile" class="drop-content">
                   <span class="material-icons">cloud_upload</span>
@@ -212,6 +214,8 @@
                 (dragleave)="onDiplomaDragLeave()"
                 (drop)="onDiplomaDropped($event)"
                 (click)="diplomaInput.click()"
+                (keydown.enter)="diplomaInput.click()"
+                (keydown.space)="diplomaInput.click()"
               >
                 <div *ngIf="!diplomaFile" class="drop-content">
                   <span class="material-icons">cloud_upload</span>

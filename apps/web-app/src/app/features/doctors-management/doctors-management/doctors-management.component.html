@@ -150,7 +150,12 @@
           <div class="documents-grid">
             <div class="document-item" *ngIf="selectedVerification.cv">
               <label>CV</label>
-              <div class="image-preview" (click)="openImageModal(selectedVerification.cv, 'CV')">
+              <div
+                class="image-preview"
+                (click)="openImageModal(selectedVerification.cv, 'CV')"
+                (keydown.enter)="openImageModal(selectedVerification.cv, 'CV')"
+                (keydown.space)="openImageModal(selectedVerification.cv, 'CV')"
+              >
                 <img [src]="getDocumentImageUrl(selectedVerification.cv)" alt="CV" class="doc-image" />
                 <div class="overlay">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path></svg>
@@ -167,7 +172,12 @@
 
             <div class="document-item" *ngIf="selectedVerification.diploma">
               <label>Diploma</label>
-              <div class="image-preview" (click)="openImageModal(selectedVerification.diploma, 'Diploma')">
+              <div
+                class="image-preview"
+                (click)="openImageModal(selectedVerification.diploma, 'Diploma')"
+                (keydown.enter)="openImageModal(selectedVerification.diploma, 'Diploma')"
+                (keydown.space)="openImageModal(selectedVerification.diploma, 'Diploma')"
+              >
                 <img [src]="getDocumentImageUrl(selectedVerification.diploma)" alt="Diploma" class="doc-image" />
                 <div class="overlay">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><path d="M21 15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path></svg>

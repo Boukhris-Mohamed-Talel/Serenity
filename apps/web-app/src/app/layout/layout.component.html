@@ -126,6 +126,8 @@
             *ngFor="let notif of messageNotifications"
             [ngClass]="{ unread: !notif.read }"
             (click)="goToConversation(notif)"
+            (keydown.enter)="goToConversation(notif)"
+            (keydown.space)="goToConversation(notif)"
           >
             <div class="notif-content">
               <div class="notif-sender">💬 {{ notif.senderName }}</div>
