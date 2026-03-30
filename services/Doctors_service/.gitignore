@@ -1,4 +1,6 @@
 HELP.md
+### Local secrets (never commit) ###
+src/main/resources/application-local.properties
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
