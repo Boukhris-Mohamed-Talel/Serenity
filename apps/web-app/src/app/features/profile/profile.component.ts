@@ -6,6 +6,7 @@ import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DoctorService } from '../../core/services/doctor.service';
 import { UserResponse } from '../../shared/models/user.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -29,6 +30,7 @@ export class ProfileComponent implements OnInit {
 
   selectedAvatarFile: File | null = null;
   avatarPreviewUrl: string | null = null;
+  avatarCacheBuster = Date.now();
   languages = [
     { value: 'en', label: 'English' },
     { value: 'fr', label: 'Français' },
@@ -117,7 +119,7 @@ export class ProfileComponent implements OnInit {
     this.errorMessage = '';
     if (this.editMode) {
       this.selectedAvatarFile = null;
-      this.avatarPreviewUrl = this.user?.profile?.avatar || null;
+      this.avatarPreviewUrl = this.getAvatarSrc(this.user?.profile?.avatar) || null;
     }
   }
 
@@ -163,8 +165,30 @@ export class ProfileComponent implements OnInit {
       // keep form control in sync; backend will overwrite with uploaded URL
       this.profileForm.patchValue({ avatar: '' });
     } else {
-      this.avatarPreviewUrl = this.user?.profile?.avatar || null;
+      this.avatarPreviewUrl = this.getAvatarSrc(this.user?.profile?.avatar) || null;
     }
+  }
+
+  getAvatarSrc(avatar: string | null | undefined): string | null {
+    if (!avatar) return null;
+
+    const value = avatar.trim();
+    if (!value) return null;
+
+    // Already absolute (http(s), blob, data URLs)
+    if (/^(https?:)?\/\//i.test(value) || value.startsWith('blob:') || value.startsWith('data:')) {
+      return this.appendCacheBuster(value);
+    }
+
+    // Backend commonly returns relative paths like: "uploads/..." or "/uploads/..."
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    const path = value.startsWith('/') ? value : `/${value}`;
+    return this.appendCacheBuster(`${base}${path}`);
+  }
+
+  private appendCacheBuster(url: string): string {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}v=${this.avatarCacheBuster}`;
   }
 
 onSubmit(): void {
@@ -203,7 +227,8 @@ onSubmit(): void {
           this.saving = false;
           this.editMode = false;
           this.successMessage = 'Profile updated successfully';
-          if (this.selectedFile) this.user!.profile!.avatar = this.imagePreview!;
+          // Reload profile so avatar/url updates reflect backend response.
+          this.loadProfile();
         },
         error: (err: any) => {
           this.saving = false;
@@ -231,6 +256,8 @@ onSubmit(): void {
             this.editMode = false;
             this.selectedAvatarFile = null;
             this.avatarPreviewUrl = null;
+            // Force <img> refresh even if URL string stays the same.
+            this.avatarCacheBuster = Date.now();
             this.successMessage = 'Profile updated successfully';
           },
           error: (err: any) => {

@@ -19,7 +19,7 @@
     <div class="profile-sidebar card">
       <div class="avatar-section">
         <div class="avatar" *ngIf="!user?.profile?.avatar">{{ getInitials() }}</div>
-        <img *ngIf="user?.profile?.avatar" [src]="user?.profile?.avatar" alt="Avatar" class="avatar-img" />
+        <img *ngIf="user?.profile?.avatar" [src]="getAvatarSrc(user?.profile?.avatar)" alt="Avatar" class="avatar-img" />
         <h2>{{ user?.firstName }} {{ user?.lastName }}</h2>
         <p class="email">{{ user?.email }}</p>
         <span class="badge badge-primary role-badge">{{ user?.role }}</span>
