@@ -14,7 +14,7 @@ export class UserFormComponent implements OnInit {
   loading = true;
   saving = false;
   errorMessage = '';
-  availableRoles = ['PATIENT', 'DOCTOR', 'PHARMACIST', 'ADMIN'];
+  availableRoles = ['PATIENT', 'DOCTOR', 'PHARMACIST', 'MARKETPLACE_MANAGER', 'ADMIN'];
 
   constructor(
     private readonly fb: FormBuilder,
