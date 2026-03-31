@@ -3,9 +3,11 @@ import { RouterModule, Routes } from '@angular/router';
 import { ClaimListComponent } from './claim-list/claim-list.component';
 import { ClaimFormComponent } from './claim-form/claim-form.component';
 import { ClaimDetailComponent } from './claim-detail/claim-detail.component';
+import { InsuranceStatisticsComponent } from './insurance-statistics/insurance-statistics.component';
 
 const routes: Routes = [
   { path: '', component: ClaimListComponent },
+  { path: 'statistics', component: InsuranceStatisticsComponent },
   { path: 'new', component: ClaimFormComponent },
   { path: ':id', component: ClaimDetailComponent }
 ];

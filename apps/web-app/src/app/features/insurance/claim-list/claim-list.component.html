@@ -1,8 +1,27 @@
 <div class="container claim-list-page" [class.user-mode]="!isAdmin" [class.admin-mode]="isAdmin">
   <div class="page-header">
-    <h1>{{ isAdmin ? 'All Insurance Claims' : 'My Insurance Claims' }}</h1>
+    <div class="page-title-group">
+      <h1>{{ isAdmin ? 'Insurance Workbench' : 'My Insurance Claims' }}</h1>
+      <p *ngIf="isAdmin" class="page-subtitle">Browse all claims or switch to analytics.</p>
+    </div>
     <a *ngIf="!isAdmin" routerLink="new" class="btn btn-primary">Submit New Claim</a>
   </div>
+
+  <!-- Admin-only sub navigation between Claims and Statistics -->
+  <nav *ngIf="isAdmin" class="sub-tabs">
+    <a
+      routerLink="/admin/insurance"
+      routerLinkActive="active"
+    >
+      Claims
+    </a>
+    <a
+      routerLink="/admin/insurance/statistics"
+      routerLinkActive="active"
+    >
+      Statistics
+    </a>
+  </nav>
 
   <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
 

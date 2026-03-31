@@ -271,5 +271,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fb4f7c7e3-b269-4ce4-9403-fbd01dfdf490_Gemini_Generated_Image_rya6r4rya6r4rya6.png"
     ]
+  },
+  {
+    "ref": "c414fc95-51bb-4b7c-94d5-113594c9c420",
+    "patientName": "3",
+    "description": "testing admin access",
+    "amount": 99.97,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 12,
+    "receivedAt": "2026-03-31T07:42:01.291Z",
+    "processedAt": "2026-03-31T07:42:31.579Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F62d1dc4e-23d9-4a0c-8238-ea3f11b4d03b_poster4.png"
+    ]
   }
 ]
