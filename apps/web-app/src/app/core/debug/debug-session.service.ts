@@ -18,15 +18,6 @@ export class DebugSessionService {
   private readonly enabledSubject = new BehaviorSubject<boolean>(false);
   readonly enabled$ = this.enabledSubject.asObservable();
 
-  private readonly knownMarketplaceRoutes: RegExp[] = [
-    /^\/marketplace$/,
-    /^\/marketplace\/product\/\d+$/,
-    /^\/marketplace\/cart$/,
-    /^\/marketplace\/checkout$/,
-    /^\/marketplace\/orders$/,
-    /^\/marketplace\/wishlist$/
-  ];
-
   constructor() {
     this.bootstrapMode();
     this.bootstrapEvents();
@@ -93,17 +84,6 @@ export class DebugSessionService {
       lines.push(`- [${event.timestamp}] ${event.severity.toUpperCase()} ${event.category}: ${event.action}`);
     }
     return lines.join('\n');
-  }
-
-  checkMarketplaceRoute(path: string): void {
-    if (!this.isEnabled() || !path.startsWith('/marketplace')) {
-      return;
-    }
-
-    const isKnown = this.knownMarketplaceRoutes.some(r => r.test(path));
-    if (!isKnown) {
-      this.log('MISSING_ROUTE', 'Unknown marketplace route visited', { path }, 'warn');
-    }
   }
 
   private bootstrapMode(): void {

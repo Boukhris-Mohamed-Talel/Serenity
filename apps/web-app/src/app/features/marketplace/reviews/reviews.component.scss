@@ -87,6 +87,35 @@
         margin-top: 0.25rem;
         font-size: 0.85rem;
       }
+
+      .star-picker {
+        display: inline-flex;
+        gap: 0.25rem;
+      }
+
+      .star-btn {
+        border: none;
+        background: transparent;
+        padding: 0;
+        width: 34px;
+        height: 34px;
+        font-size: 1.7rem;
+        line-height: 1;
+        color: #c4d0dc;
+        cursor: pointer;
+        transition: color 140ms ease, transform 140ms ease;
+      }
+
+      .star-btn.filled {
+        color: #f7b500;
+      }
+
+      .star-btn:hover,
+      .star-btn:focus-visible {
+        color: #f7b500;
+        transform: scale(1.08);
+        outline: none;
+      }
     }
 
     .btn {

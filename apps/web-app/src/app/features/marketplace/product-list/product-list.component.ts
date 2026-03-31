@@ -28,9 +28,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
   quizError = '';
   quizReasoning = '';
   quizRecommendations: ProductRecommendationItem[] = [];
-  recentlyAddedProductId: number | null = null;
-  cartToastVisible = false;
-  cartToastMessage = '';
 
   anxietyLevel = 3;
   stressLevel = 3;
@@ -38,8 +35,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
 
   private searchDebounceId: number | null = null;
   private readonly searchDebounceMs = 220;
-  private addFeedbackTimeoutId: number | null = null;
-  private toastTimeoutId: number | null = null;
 
   readonly categories = MARKETPLACE_CATEGORIES;
   readonly types = MARKETPLACE_TYPES;
@@ -58,14 +53,6 @@ export class ProductListComponent implements OnInit, OnDestroy {
     if (this.searchDebounceId !== null) {
       window.clearTimeout(this.searchDebounceId);
       this.searchDebounceId = null;
-    }
-    if (this.addFeedbackTimeoutId !== null) {
-      window.clearTimeout(this.addFeedbackTimeoutId);
-      this.addFeedbackTimeoutId = null;
-    }
-    if (this.toastTimeoutId !== null) {
-      window.clearTimeout(this.toastTimeoutId);
-      this.toastTimeoutId = null;
     }
   }
 
@@ -147,36 +134,28 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.quizRecommendations = [];
   }
 
-  addToCart(product: MarketplaceProduct): void {
-    this.marketplaceService.addToCart(product, 1);
-    this.recentlyAddedProductId = product.id;
-    this.cartToastMessage = `Added ${product.name} to cart`;
-    this.cartToastVisible = true;
-
-    if (this.addFeedbackTimeoutId !== null) {
-      window.clearTimeout(this.addFeedbackTimeoutId);
-    }
-    this.addFeedbackTimeoutId = window.setTimeout(() => {
-      this.recentlyAddedProductId = null;
-    }, 900);
-
-    if (this.toastTimeoutId !== null) {
-      window.clearTimeout(this.toastTimeoutId);
-    }
-    this.toastTimeoutId = window.setTimeout(() => {
-      this.cartToastVisible = false;
-    }, 2200);
-  }
-
   openDetails(productId: number): void {
     this.router.navigate(['/marketplace/product', productId]);
+  }
+
+  addToCart(product: MarketplaceProduct): void {
+    this.marketplaceService.addToCart(product, 1);
+    this.router.navigate(['/marketplace/cart']);
   }
 
   isManager(): boolean {
     return this.authService.hasRole('MARKETPLACE_MANAGER') || this.authService.isAdmin();
   }
 
-  get cartCount(): number {
-    return this.marketplaceService.getCartSnapshot().reduce((sum, item) => sum + item.quantity, 0);
+  isDigital(product: MarketplaceProduct): boolean {
+    return product.type === 'DIGITAL';
+  }
+
+  canUseCart(product: MarketplaceProduct): boolean {
+    return this.marketplaceService.isCartEligible(product);
+  }
+
+  get hasResults(): boolean {
+    return this.products.length > 0;
   }
 }

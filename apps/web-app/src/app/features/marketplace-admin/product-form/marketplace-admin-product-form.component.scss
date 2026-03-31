@@ -30,6 +30,29 @@ select {
   justify-content: flex-end;
 }
 
+.preview-fields {
+  margin-top: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: #f8fbff;
+}
+
+.preview-fields h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 .error {
   color: var(--danger);
 }

@@ -68,6 +68,10 @@ public class ProductServiceImpl implements ProductService {
                 .price(request.getPrice())
                 .active(request.getActive())
                 .imageUrl(request.getImageUrl())
+            .previewable(request.getPreviewable())
+            .previewType(request.getPreviewType())
+            .previewUrl(request.getPreviewUrl())
+            .contentUrl(request.getContentUrl())
                 .build();
 
         return toResponse(productRepository.save(product));
@@ -84,6 +88,10 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(request.getPrice());
         product.setActive(request.getActive());
         product.setImageUrl(request.getImageUrl());
+        product.setPreviewable(request.getPreviewable());
+        product.setPreviewType(request.getPreviewType());
+        product.setPreviewUrl(request.getPreviewUrl());
+        product.setContentUrl(request.getContentUrl());
         return toResponse(productRepository.save(product));
     }
 
@@ -109,6 +117,10 @@ public class ProductServiceImpl implements ProductService {
                 .price(product.getPrice())
                 .active(product.getActive())
                 .imageUrl(product.getImageUrl())
+                .previewable(product.getPreviewable())
+                .previewType(product.getPreviewType())
+                .previewUrl(product.getPreviewUrl())
+                .contentUrl(product.getContentUrl())
                 .build();
     }
 }

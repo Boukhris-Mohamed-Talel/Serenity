@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "marketplace_coupons")
+@Table(name = "article_coupons")
 @Getter
 @Setter
 @Builder

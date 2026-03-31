@@ -64,7 +64,6 @@ export class MarketplaceAdminProductsComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Delete product error:', error);
         this.deletingProductId = null;
         
         // Provide detailed error message based on status
@@ -93,7 +92,11 @@ export class MarketplaceAdminProductsComponent implements OnInit {
       category: updatedProduct.category,
       type: updatedProduct.type,
       active: updatedProduct.active,
-      imageUrl: updatedProduct.imageUrl
+      imageUrl: updatedProduct.imageUrl,
+      previewable: updatedProduct.previewable,
+      previewType: updatedProduct.previewType,
+      previewUrl: updatedProduct.previewUrl,
+      contentUrl: updatedProduct.contentUrl
     }).subscribe({
       next: (updated) => {
         const idx = this.products.findIndex(p => p.id === productId);

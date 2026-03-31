@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/marketplace/wishlist")
+@RequestMapping({"/api/articles/wishlist", "/api/marketplace/wishlist"})
 @RequiredArgsConstructor
 public class WishlistController {
 

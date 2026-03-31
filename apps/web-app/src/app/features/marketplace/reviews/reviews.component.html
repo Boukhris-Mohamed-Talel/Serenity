@@ -22,14 +22,20 @@
     <h5>Write a Review</h5>
     <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
       <div class="form-group">
-        <label for="rating">Rating (1-5 stars)</label>
-        <select id="rating" formControlName="rating" class="form-control">
-          <option [value]="1">1 Star - Poor</option>
-          <option [value]="2">2 Stars - Fair</option>
-          <option [value]="3">3 Stars - Good</option>
-          <option [value]="4">4 Stars - Very Good</option>
-          <option [value]="5">5 Stars - Excellent</option>
-        </select>
+        <label for="rating">Rating</label>
+        <div class="star-picker" (mouseleave)="clearHoverRating()">
+          <button
+            type="button"
+            class="star-btn"
+            *ngFor="let star of [1,2,3,4,5]"
+            [class.filled]="isStarFilled(star)"
+            [attr.aria-label]="'Rate ' + star + ' stars'"
+            (click)="setRating(star)"
+            (mouseenter)="setHoverRating(star)">
+            ★
+          </button>
+        </div>
+        <small class="form-text text-muted">Click a star to set your rating ({{ reviewForm.get('rating')?.value }}/5)</small>
       </div>
 
       <div class="form-group">

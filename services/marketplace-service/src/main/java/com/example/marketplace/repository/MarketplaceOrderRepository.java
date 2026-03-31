@@ -13,4 +13,6 @@ public interface MarketplaceOrderRepository extends JpaRepository<MarketplaceOrd
     List<MarketplaceOrder> findAllByOrderByCreatedAtDesc();
 
     List<MarketplaceOrder> findByStatusOrderByCreatedAtDesc(OrderStatus status);
+
+    List<MarketplaceOrder> findByCustomerUserIdAndStatusOrderByCreatedAtDesc(Long customerUserId, OrderStatus status);
 }

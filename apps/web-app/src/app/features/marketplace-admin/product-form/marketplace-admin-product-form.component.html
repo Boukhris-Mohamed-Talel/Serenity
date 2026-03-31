@@ -20,7 +20,7 @@
       </div>
       <div>
         <label>Type</label>
-        <select formControlName="type">
+        <select formControlName="type" (change)="onTypeChanged()">
           <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
         </select>
       </div>
@@ -42,6 +42,32 @@
 
     <label>Image URL</label>
     <input type="text" formControlName="imageUrl" />
+
+    <section class="preview-fields" *ngIf="isDigitalSelected">
+      <h3>Digital Content Settings</h3>
+
+      <label class="checkbox-row">
+        <input type="checkbox" formControlName="previewable" />
+        This digital item has a preview mode
+      </label>
+
+      <div class="grid-two" *ngIf="form.controls.previewable.value">
+        <div>
+          <label>Preview Type</label>
+          <select formControlName="previewType">
+            <option value="">Select preview type</option>
+            <option *ngFor="let previewType of previewTypes" [value]="previewType">{{ previewType }}</option>
+          </select>
+        </div>
+        <div>
+          <label>Preview URL</label>
+          <input type="text" formControlName="previewUrl" placeholder="https://..." />
+        </div>
+      </div>
+
+      <label>Full Content URL (optional)</label>
+      <input type="text" formControlName="contentUrl" placeholder="https://..." />
+    </section>
 
     <div class="actions">
       <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>

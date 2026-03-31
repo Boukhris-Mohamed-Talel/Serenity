@@ -15,21 +15,18 @@ import {
   QuizRecommendationRequest,
   RecommendationResponse
 } from '../../shared/models/marketplace.model';
-import { DebugSessionService } from '../debug/debug-session.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MarketplaceService {
 
-  private readonly API_URL = `${environment.marketplaceServiceApiUrl}/marketplace`;
+  private static readonly UNLOCKED_ARTICLES_KEY = 'unlocked_article_ids';
+  private readonly API_URL = `${environment.marketplaceServiceApiUrl}/api/articles`;
   private readonly cartSubject = new BehaviorSubject<CartItem[]>([]);
   readonly cart$ = this.cartSubject.asObservable();
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly debugSessionService: DebugSessionService
-  ) {}
+  constructor(private readonly http: HttpClient) {}
 
   getProducts(filters?: {
     query?: string;
@@ -83,6 +80,48 @@ export class MarketplaceService {
     return this.http.get<MarketplaceOrder>(`${this.API_URL}/orders/${orderId}`);
   }
 
+  unlockArticle(product: MarketplaceProduct): Observable<MarketplaceOrder> {
+    const request: CheckoutRequest = {
+      items: [{ productId: product.id, quantity: 1 }],
+      shippingAddress: 'Digital delivery',
+      customerNote: `Unlock article: ${product.name}`
+    };
+
+    return this.http.post<MarketplaceOrder>(`${this.API_URL}/orders/checkout`, request);
+  }
+
+  isArticleUnlocked(productId: number): boolean {
+    return this.getUnlockedArticleIds().includes(productId);
+  }
+
+  markArticleUnlocked(productId: number): void {
+    const current = new Set(this.getUnlockedArticleIds());
+    current.add(productId);
+    localStorage.setItem(
+      MarketplaceService.UNLOCKED_ARTICLES_KEY,
+      JSON.stringify(Array.from(current))
+    );
+  }
+
+  getUnlockedArticleIds(): number[] {
+    const raw = localStorage.getItem(MarketplaceService.UNLOCKED_ARTICLES_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id));
+    } catch {
+      return [];
+    }
+  }
+
   updateOrderStatus(orderId: number, status: MarketplaceOrderStatus): Observable<MarketplaceOrder> {
     const request: OrderStatusUpdateRequest = { status };
     return this.http.patch<MarketplaceOrder>(`${this.API_URL}/orders/${orderId}/status`, request);
@@ -102,20 +141,18 @@ export class MarketplaceService {
       customerNote
     };
 
-    this.debugSessionService.log('STATE', 'Checkout initiated', {
-      itemCount: request.items.length,
-      hasCustomerNote: Boolean(customerNote)
-    });
-
     return this.http.post<MarketplaceOrder>(`${this.API_URL}/orders/checkout`, request).pipe(
       tap(() => {
-        this.debugSessionService.log('STATE', 'Checkout succeeded, cart cleared');
         this.clearCart();
       })
     );
   }
 
   addToCart(product: MarketplaceProduct, quantity = 1): void {
+    if (!this.isCartEligible(product)) {
+      return;
+    }
+
     const current = [...this.cartSubject.value];
     const existing = current.find(item => item.product.id === product.id);
 
@@ -126,11 +163,10 @@ export class MarketplaceService {
     }
 
     this.cartSubject.next(current);
-    this.debugSessionService.log('UI_ACTION', 'Cart item added', {
-      productId: product.id,
-      quantity,
-      cartSize: current.length
-    });
+  }
+
+  isCartEligible(product: MarketplaceProduct): boolean {
+    return product.type === 'PHYSICAL' || !product.previewable;
   }
 
   updateCartQuantity(productId: number, quantity: number): void {
@@ -138,20 +174,14 @@ export class MarketplaceService {
       .map(item => item.product.id === productId ? { ...item, quantity } : item)
       .filter(item => item.quantity > 0);
     this.cartSubject.next(current);
-    this.debugSessionService.log('UI_ACTION', 'Cart quantity updated', {
-      productId,
-      quantity
-    });
   }
 
   removeFromCart(productId: number): void {
     this.cartSubject.next(this.cartSubject.value.filter(item => item.product.id !== productId));
-    this.debugSessionService.log('UI_ACTION', 'Cart item removed', { productId });
   }
 
   clearCart(): void {
     this.cartSubject.next([]);
-    this.debugSessionService.log('STATE', 'Cart cleared');
   }
 
   getCartSnapshot(): CartItem[] {

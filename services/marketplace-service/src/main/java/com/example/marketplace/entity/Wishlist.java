@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "marketplace_wishlist", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id"}))
+@Table(name = "article_wishlist", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id"}))
 @Getter
 @Setter
 @Builder

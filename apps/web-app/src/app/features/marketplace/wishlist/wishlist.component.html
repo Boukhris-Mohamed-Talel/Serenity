@@ -35,8 +35,11 @@
           <button class="btn btn-sm btn-primary" (click)="viewProduct(item.productId)">
             View Details
           </button>
-          <button class="btn btn-sm btn-success" (click)="addToCart(item.productId)">
+          <button class="btn btn-sm btn-success" *ngIf="canAddToCart(item)" (click)="addToCart(item.productId)">
             Add to Cart
+          </button>
+          <button class="btn btn-sm btn-success" *ngIf="!canAddToCart(item)" (click)="viewProduct(item.productId)">
+            Open Preview
           </button>
           <button class="btn btn-sm btn-danger" (click)="removeFromWishlist(item.productId)">
             Remove

@@ -23,14 +23,15 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
     const shouldAttachToken = this.shouldAttachToken(request.url);
     const currentUser = this.authService.getCurrentUser();
-    const doctorId = currentUser?.userId;
+    const userId = currentUser?.userId;
 
     if (token && shouldAttachToken) {
       const headers: Record<string, string> = {
         Authorization: `Bearer ${token}`
       };
-      if (doctorId != null) {
-        headers['X-Doctor-Id'] = String(doctorId);
+      if (userId != null) {
+        headers['X-Doctor-Id'] = String(userId);
+        headers['userId'] = String(userId);
       }
       request = request.clone({
         setHeaders: headers

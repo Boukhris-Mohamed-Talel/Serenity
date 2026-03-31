@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -24,6 +25,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponseDTO checkout(String customerEmail, Long userId, CheckoutRequestDTO request) {
+                Optional<OrderResponseDTO> existingUnlock = findExistingUnlockOrder(userId, request);
+                if (existingUnlock.isPresent()) {
+                        return existingUnlock.get();
+                }
+
         MarketplaceOrder order = MarketplaceOrder.builder()
                 .customerEmail(customerEmail)
                 .customerUserId(userId)
@@ -65,6 +71,29 @@ public class OrderServiceImpl implements OrderService {
         MarketplaceOrder saved = marketplaceOrderRepository.save(order);
         return toResponse(saved);
     }
+
+        private Optional<OrderResponseDTO> findExistingUnlockOrder(Long userId, CheckoutRequestDTO request) {
+                if (userId == null || request.getItems() == null || request.getItems().size() != 1) {
+                        return Optional.empty();
+                }
+
+                CheckoutItemDTO checkoutItem = request.getItems().get(0);
+                if (checkoutItem == null || checkoutItem.getProductId() == null) {
+                        return Optional.empty();
+                }
+
+                Long productId = checkoutItem.getProductId();
+                Product product = productRepository.findById(productId).orElse(null);
+                if (product == null || product.getType() != ProductType.DIGITAL || !Boolean.TRUE.equals(product.getPreviewable())) {
+                        return Optional.empty();
+                }
+
+                return marketplaceOrderRepository.findByCustomerUserIdAndStatusOrderByCreatedAtDesc(userId, OrderStatus.PAID)
+                                .stream()
+                                .filter(order -> order.getItems().stream().anyMatch(i -> i.getProduct().getId().equals(productId)))
+                                .findFirst()
+                                .map(this::toResponse);
+        }
 
     @Override
     @Transactional(readOnly = true)

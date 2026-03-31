@@ -1,7 +1,7 @@
 <section class="marketplace-page container">
   <header class="hero">
-    <h1>Mental Health Marketplace</h1>
-    <p>Supportive, evidence-aware products for emotional wellbeing and healthy routines.</p>
+    <h1>Articles Discovery</h1>
+    <p>Explore calm, supportive digital content through short previews before choosing to unlock.</p>
   </header>
 
   <div class="toolbar">
@@ -25,8 +25,8 @@
     </div>
 
     <div class="actions">
-      <a class="btn btn-secondary" routerLink="/marketplace/cart">Cart ({{ cartCount }})</a>
-      <a class="btn btn-secondary" routerLink="/marketplace/orders">Orders</a>
+      <a class="btn btn-secondary" routerLink="/marketplace/cart">Cart</a>
+      <a class="btn btn-secondary" routerLink="/marketplace/orders">My Unlocks</a>
       <button class="btn btn-secondary" type="button" (click)="toggleQuiz()">
         {{ showQuiz ? 'Hide Scan' : 'Find My Match' }}
       </button>
@@ -100,14 +100,17 @@
 
   <p class="hint" *ngIf="isManager()">Manager mode enabled: catalog management APIs are active.</p>
 
-  <div class="cart-toast" *ngIf="cartToastVisible">
-    {{ cartToastMessage }}
-  </div>
-
   <p *ngIf="loading">Loading products...</p>
 
-  <div class="grid" *ngIf="!loading">
-    <article class="product-card" *ngFor="let product of products">
+  <div class="grid" *ngIf="!loading && hasResults">
+    <article
+      class="product-card"
+      *ngFor="let product of products"
+      tabindex="0"
+      role="button"
+      (click)="openDetails(product.id)"
+      (keydown.enter)="openDetails(product.id)"
+      (keydown.space)="$event.preventDefault(); openDetails(product.id)">
       <img [src]="product.imageUrl || 'assets/logo.png'" [alt]="product.name" />
       <div class="content">
         <h3>{{ product.name }}</h3>
@@ -117,17 +120,15 @@
           <span>{{ product.type }}</span>
         </div>
         <strong class="price">{{ product.price | currency:'TND ' }}</strong>
-        <div class="row-actions">
-          <button class="btn btn-secondary" type="button" (click)="openDetails(product.id)">Details</button>
-          <button
-            class="btn btn-primary"
-            type="button"
-            [class.added]="recentlyAddedProductId === product.id"
-            (click)="addToCart(product)">
-            {{ recentlyAddedProductId === product.id ? 'Added' : 'Add' }}
-          </button>
-        </div>
+        <p class="supportive-note" *ngIf="isDigital(product)">Start with a gentle preview. Unlock only when you feel ready.</p>
+        <span class="card-hint">Tap to open details and preview options</span>
       </div>
     </article>
   </div>
+
+  <section class="empty-state" *ngIf="!loading && !hasResults">
+    <h3>No articles match these filters yet</h3>
+    <p>Try broadening your search terms or clearing one filter to keep exploring calmly.</p>
+    <button class="btn btn-secondary" type="button" (click)="clearFiltersSmooth()">Clear filters</button>
+  </section>
 </section>

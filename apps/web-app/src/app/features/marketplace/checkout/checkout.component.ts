@@ -3,7 +3,6 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MarketplaceOrder } from '../../../shared/models/marketplace.model';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
-import { DebugSessionService } from '../../../core/debug/debug-session.service';
 
 @Component({
   selector: 'app-checkout',
@@ -23,8 +22,7 @@ export class CheckoutComponent {
   constructor(
     private readonly fb: FormBuilder,
     private readonly marketplaceService: MarketplaceService,
-    private readonly router: Router,
-    private readonly debugSessionService: DebugSessionService
+    private readonly router: Router
   ) {}
 
   get cartTotal(): number {
@@ -36,13 +34,6 @@ export class CheckoutComponent {
   }
 
   onPayClicked(): void {
-    this.debugSessionService.log('UI_ACTION', 'Checkout pay button clicked', {
-      isCartEmpty: this.isCartEmpty,
-      loading: this.loading,
-      formValid: this.checkoutForm.valid,
-      shippingLength: String(this.shippingAddressControl.value || '').length,
-      customerNoteLength: String(this.customerNoteControl.value || '').length
-    });
     this.submit();
   }
 
@@ -51,19 +42,12 @@ export class CheckoutComponent {
 
     if (this.isCartEmpty) {
       this.error = 'Your cart is empty. Add an item before continuing to payment.';
-      this.debugSessionService.log('STATE', 'Checkout blocked: empty cart', {}, 'warn');
       return;
     }
 
     if (this.checkoutForm.invalid) {
       this.checkoutForm.markAllAsTouched();
       this.error = 'Please provide a valid shipping address before payment.';
-      this.debugSessionService.log('STATE', 'Checkout blocked: invalid form', {
-        shippingRequired: this.shippingAddressControl.hasError('required'),
-        shippingPattern: this.shippingAddressControl.hasError('pattern'),
-        shippingMaxLength: this.shippingAddressControl.hasError('maxlength'),
-        customerNoteMaxLength: this.customerNoteControl.hasError('maxlength')
-      }, 'warn');
       return;
     }
 
@@ -72,15 +56,10 @@ export class CheckoutComponent {
 
     if (this.marketplaceService.getCartSnapshot().length === 0) {
       this.error = 'Your cart is empty.';
-      this.debugSessionService.log('STATE', 'Checkout blocked: empty snapshot', {}, 'warn');
       return;
     }
 
     this.loading = true;
-    this.debugSessionService.log('STATE', 'Checkout submit accepted', {
-      cartSize: this.marketplaceService.getCartSnapshot().length
-    });
-
     this.proceedWithCheckout(shippingAddress, customerNote);
   }
 
@@ -89,10 +68,6 @@ export class CheckoutComponent {
       next: order => {
         this.successOrder = order;
         this.loading = false;
-        this.debugSessionService.log('STATE', 'Checkout success response received', {
-          orderId: order.id,
-          totalAmount: order.totalAmount
-        });
       },
       error: err => {
         this.error =
@@ -100,10 +75,6 @@ export class CheckoutComponent {
           err?.error?.error ||
           'Checkout failed. Please verify your shipping address and try again.';
         this.loading = false;
-        this.debugSessionService.log('ERROR', 'Checkout request failed', {
-          status: err?.status,
-          message: this.error
-        }, 'error');
       }
     });
   }

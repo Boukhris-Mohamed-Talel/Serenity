@@ -5,6 +5,7 @@ import { MarketplaceService } from '../../../core/services/marketplace.service';
 import {
   MARKETPLACE_CATEGORIES,
   MARKETPLACE_TYPES,
+  PreviewContentType,
   MarketplaceProduct,
   MarketplaceProductUpsertRequest
 } from '../../../shared/models/marketplace.model';
@@ -17,6 +18,7 @@ import {
 export class MarketplaceAdminProductFormComponent implements OnInit {
   readonly categories = MARKETPLACE_CATEGORIES;
   readonly types = MARKETPLACE_TYPES;
+  readonly previewTypes: PreviewContentType[] = ['VIDEO', 'BOOK', 'AUDIO'];
 
   saving = false;
   loading = false;
@@ -30,6 +32,10 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     type: ['', Validators.required],
     price: [null as number | null, [Validators.required, Validators.min(0.10)]],
     imageUrl: [''],
+    previewable: [false, Validators.required],
+    previewType: ['' as PreviewContentType | ''],
+    previewUrl: [''],
+    contentUrl: [''],
     active: [true, Validators.required]
   });
 
@@ -71,6 +77,8 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
 
     this.saving = true;
     const raw = this.form.getRawValue();
+    const isDigital = raw.type === 'DIGITAL';
+    const previewable = isDigital && Boolean(raw.previewable);
     const payload: MarketplaceProductUpsertRequest = {
       name: raw.name ?? '',
       description: raw.description ?? '',
@@ -78,6 +86,10 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
       type: (raw.type ?? 'PHYSICAL') as MarketplaceProductUpsertRequest['type'],
       price: Number(raw.price) || 0,
       imageUrl: raw.imageUrl ?? undefined,
+      previewable,
+      previewType: previewable && raw.previewType ? raw.previewType : undefined,
+      previewUrl: previewable ? (raw.previewUrl ?? undefined) : undefined,
+      contentUrl: isDigital ? (raw.contentUrl ?? undefined) : undefined,
       active: raw.active ?? true
     };
 
@@ -91,7 +103,6 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
         this.router.navigate(['/admin/marketplace']);
       },
       error: (err) => {
-        console.error('Product save error:', err);
         this.error = err.error?.message || 'Failed to save product.';
         this.saving = false;
       }
@@ -102,6 +113,21 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     this.router.navigate(['/admin/marketplace']);
   }
 
+  get isDigitalSelected(): boolean {
+    return this.form.controls.type.value === 'DIGITAL';
+  }
+
+  onTypeChanged(): void {
+    if (!this.isDigitalSelected) {
+      this.form.patchValue({
+        previewable: false,
+        previewType: '',
+        previewUrl: '',
+        contentUrl: ''
+      });
+    }
+  }
+
   private patchProduct(product: MarketplaceProduct): void {
     this.form.patchValue({
       name: product.name,
@@ -110,6 +136,10 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
       type: product.type,
       price: product.price,
       imageUrl: product.imageUrl ?? '',
+      previewable: product.previewable,
+      previewType: product.previewType ?? '',
+      previewUrl: product.previewUrl ?? '',
+      contentUrl: product.contentUrl ?? '',
       active: product.active
     });
   }

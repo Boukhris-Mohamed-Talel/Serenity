@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/marketplace/coupons")
+@RequestMapping({"/api/articles/coupons", "/api/marketplace/coupons"})
 @RequiredArgsConstructor
 public class CouponController {
 

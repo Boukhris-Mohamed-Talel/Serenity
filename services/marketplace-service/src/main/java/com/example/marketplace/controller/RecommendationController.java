@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/marketplace/recommendations")
+@RequestMapping({"/api/articles/recommendations", "/api/marketplace/recommendations"})
 @RequiredArgsConstructor
 @Slf4j
 public class RecommendationController {

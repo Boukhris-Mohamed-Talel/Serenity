@@ -19,6 +19,7 @@ export class ReviewsComponent implements OnInit {
   reviewForm: FormGroup;
   errorMessage = '';
   successMessage = '';
+  hoverRating = 0;
 
   constructor(
     private marketplaceService: MarketplaceService,
@@ -49,8 +50,7 @@ export class ReviewsComponent implements OnInit {
         this.reviews = reviews;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading reviews:', err);
+      error: () => {
         this.loading = false;
       }
     });
@@ -63,9 +63,7 @@ export class ReviewsComponent implements OnInit {
       next: (rating) => {
         this.averageRating = Math.round(rating * 10) / 10;
       },
-      error: (err) => {
-        console.error('Error loading average rating:', err);
-      }
+      error: () => {}
     });
   }
 
@@ -106,7 +104,6 @@ export class ReviewsComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage = 'Failed to submit review: ' + (err.error?.message || '');
-        console.error('Error submitting review:', err);
         this.submitting = false;
       }
     });
@@ -123,10 +120,28 @@ export class ReviewsComponent implements OnInit {
         },
         error: (err) => {
           this.errorMessage = 'Failed to delete review';
-          console.error('Error deleting review:', err);
         }
       });
     }
+  }
+
+  setRating(rating: number): void {
+    this.reviewForm.patchValue({ rating });
+    this.reviewForm.get('rating')?.markAsTouched();
+  }
+
+  setHoverRating(rating: number): void {
+    this.hoverRating = rating;
+  }
+
+  clearHoverRating(): void {
+    this.hoverRating = 0;
+  }
+
+  isStarFilled(star: number): boolean {
+    const selected = Number(this.reviewForm.get('rating')?.value || 0);
+    const activeRating = this.hoverRating || selected;
+    return star <= activeRating;
   }
 
   getRatingArray(rating: number): number[] {

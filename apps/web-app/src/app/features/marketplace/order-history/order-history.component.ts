@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import { MarketplaceOrder, MarketplaceOrderStatus } from '../../../shared/models/marketplace.model';
 
@@ -90,20 +88,7 @@ export class OrderHistoryComponent implements OnInit {
     return 'pending';
   }
 
-  buyAgain(order: MarketplaceOrder): void {
-    const productFetches = order.items.map(item =>
-      this.marketplaceService.getProductById(item.productId).pipe(
-        map(product => ({ product, quantity: item.quantity })),
-        catchError(() => of(null))
-      )
-    );
-
-    forkJoin(productFetches).subscribe(results => {
-      results
-        .filter((result): result is { product: any; quantity: number } => result !== null)
-        .forEach(result => this.marketplaceService.addToCart(result.product, result.quantity));
-
-      this.router.navigate(['/marketplace/cart']);
-    });
+  openArticle(productId: number): void {
+    this.router.navigate(['/marketplace/product', productId]);
   }
 }

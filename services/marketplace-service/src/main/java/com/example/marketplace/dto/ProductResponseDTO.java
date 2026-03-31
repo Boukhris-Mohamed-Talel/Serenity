@@ -1,6 +1,7 @@
 package com.example.marketplace.dto;
 
 import com.example.marketplace.entity.ProductCategory;
+import com.example.marketplace.entity.PreviewContentType;
 import com.example.marketplace.entity.ProductType;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,4 +19,8 @@ public class ProductResponseDTO {
     private BigDecimal price;
     private Boolean active;
     private String imageUrl;
+    private Boolean previewable;
+    private PreviewContentType previewType;
+    private String previewUrl;
+    private String contentUrl;
 }

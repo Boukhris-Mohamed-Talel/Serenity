@@ -89,6 +89,10 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  getUserId(): number | null {
+    return this.currentUserSubject.value?.userId ?? null;
+  }
+
   /** Updates stored auth user with activation flag from `UserService` / profile API (`isActive` → `is_active`). */
   mergeProfileActivation(isActive: boolean): void {
     const cur = this.getCurrentUser();

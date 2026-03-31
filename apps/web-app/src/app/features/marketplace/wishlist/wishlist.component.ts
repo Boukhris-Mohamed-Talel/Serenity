@@ -4,13 +4,23 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { MarketplaceProduct } from '../../../shared/models/marketplace.model';
 
+interface WishlistItemView {
+  productId: number;
+  productName: string;
+  productPrice: number;
+  productImageUrl?: string;
+  productType?: 'PHYSICAL' | 'DIGITAL';
+  productPreviewable?: boolean;
+  addedAt: string;
+}
+
 @Component({
   selector: 'app-wishlist',
   templateUrl: './wishlist.component.html',
   styleUrls: ['./wishlist.component.scss']
 })
 export class WishlistComponent implements OnInit {
-  wishlistItems: any[] = [];
+  wishlistItems: WishlistItemView[] = [];
   loading = false;
   errorMessage = '';
   userId: number | null = null;
@@ -38,9 +48,8 @@ export class WishlistComponent implements OnInit {
         this.wishlistItems = items;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Failed to load wishlist';
-        console.error('Error loading wishlist:', err);
         this.loading = false;
       }
     });
@@ -53,9 +62,8 @@ export class WishlistComponent implements OnInit {
       next: () => {
         this.wishlistItems = this.wishlistItems.filter(item => item.productId !== productId);
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = 'Failed to remove item from wishlist';
-        console.error('Error removing from wishlist:', err);
       }
     });
   }
@@ -72,14 +80,29 @@ export class WishlistComponent implements OnInit {
         name: item.productName,
         description: 'Saved wishlist item',
         category: 'SELF_CARE',
-        type: 'PHYSICAL',
+        type: item.productType ?? 'PHYSICAL',
         price: item.productPrice,
         active: true,
-        imageUrl: item.productImageUrl
+        imageUrl: item.productImageUrl,
+        previewable: Boolean(item.productPreviewable),
+        previewType: undefined,
+        previewUrl: undefined,
+        contentUrl: undefined
       };
+
+      if (!this.marketplaceService.isCartEligible(product)) {
+        this.viewProduct(productId);
+        return;
+      }
+
       this.marketplaceService.addToCart(product);
       this.router.navigate(['/marketplace/cart']);
     }
+  }
+
+  canAddToCart(item: WishlistItemView): boolean {
+    const type = item.productType ?? 'PHYSICAL';
+    return type === 'PHYSICAL' || !item.productPreviewable;
   }
 
   goToMarketplace(): void {

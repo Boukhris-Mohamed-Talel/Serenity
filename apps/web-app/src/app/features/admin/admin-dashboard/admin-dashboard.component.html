@@ -70,65 +70,6 @@
       </div>
     </div>
 
-    <!-- Marketplace Stats Section -->
-    <div class="section-header" style="margin-top: 2.5rem;">
-      <h2>Marketplace Orders</h2>
-      <a class="link-manage" routerLink="/admin/marketplace/orders">Manage Orders →</a>
-    </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon orange">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ totalOrders }}</span>
-          <span class="stat-label">Total Orders</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon green">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ paidOrders }}</span>
-          <span class="stat-label">Paid Orders</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon yellow">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="12 1 12 23"></polyline>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ totalRevenue | currency:'TND ' }}</span>
-          <span class="stat-label">Total Revenue</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon red">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ pendingOrders }}</span>
-          <span class="stat-label">Pending Orders</span>
-        </div>
-      </div>
-    </div>
-
     <!-- Insurance Stats Section -->
     <div class="section-header" style="margin-top: 2.5rem;">
       <h2>Insurance Claims</h2>

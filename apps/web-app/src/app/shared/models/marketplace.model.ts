@@ -1,4 +1,5 @@
 export type MarketplaceProductType = 'PHYSICAL' | 'DIGITAL';
+export type PreviewContentType = 'VIDEO' | 'BOOK' | 'AUDIO';
 export type MarketplaceOrderStatus = 'CREATED' | 'PAID' | 'CANCELLED';
 
 export type MarketplaceProductCategory =
@@ -18,6 +19,10 @@ export interface MarketplaceProduct {
   price: number;
   active: boolean;
   imageUrl?: string;
+  previewable: boolean;
+  previewType?: PreviewContentType;
+  previewUrl?: string;
+  contentUrl?: string;
 }
 
 export interface MarketplaceProductUpsertRequest {
@@ -27,6 +32,10 @@ export interface MarketplaceProductUpsertRequest {
   type: MarketplaceProductType;
   price: number;
   imageUrl?: string;
+  previewable: boolean;
+  previewType?: PreviewContentType;
+  previewUrl?: string;
+  contentUrl?: string;
   active: boolean;
 }
 

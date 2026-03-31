@@ -68,6 +68,8 @@ public class WishlistServiceImpl implements WishlistService {
                 .productName(wishlist.getProduct().getName())
                 .productPrice(wishlist.getProduct().getPrice())
                 .productImageUrl(wishlist.getProduct().getImageUrl())
+            .productType(wishlist.getProduct().getType())
+            .productPreviewable(wishlist.getProduct().getPreviewable())
                 .addedAt(wishlist.getAddedAt())
                 .build();
     }

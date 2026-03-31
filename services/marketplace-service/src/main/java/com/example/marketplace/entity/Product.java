@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "marketplace_products")
+@Table(name = "article_products")
 @Getter
 @Setter
 @Builder
@@ -43,6 +43,19 @@ public class Product {
     @Column(length = 500)
     private String imageUrl;
 
+    @Column
+    private Boolean previewable;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private PreviewContentType previewType;
+
+    @Column(length = 1000)
+    private String previewUrl;
+
+    @Column(length = 1000)
+    private String contentUrl;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -61,6 +74,9 @@ public class Product {
         this.createdAt = LocalDateTime.now();
         if (this.active == null) {
             this.active = true;
+        }
+        if (this.previewable == null) {
+            this.previewable = false;
         }
     }
 }

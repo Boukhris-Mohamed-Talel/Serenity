@@ -1,6 +1,7 @@
 package com.example.marketplace.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.marketplace.entity.ProductType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,5 +18,7 @@ public class WishlistItemDTO {
     private String productName;
     private BigDecimal productPrice;
     private String productImageUrl;
+    private ProductType productType;
+    private Boolean productPreviewable;
     private LocalDateTime addedAt;
 }
