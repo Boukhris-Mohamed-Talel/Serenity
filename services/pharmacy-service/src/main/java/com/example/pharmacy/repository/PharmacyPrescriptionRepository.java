@@ -16,4 +16,6 @@ public interface PharmacyPrescriptionRepository extends JpaRepository<PharmacyPr
         Long patientId,
         PrescriptionStatus status
     );
+
+    List<PharmacyPrescription> findByAssignedPharmacyId(Long pharmacyId);
 }
