@@ -42,7 +42,12 @@
 
   <div class="orders" *ngIf="!loading && filteredOrders.length > 0">
     <article class="order-card" *ngFor="let order of filteredOrders">
-      <div class="header" (click)="toggleOrder(order.id)">
+      <div
+        class="header"
+        (click)="toggleOrder(order.id)"
+        (keydown.enter)="toggleOrder(order.id)"
+        (keydown.space)="toggleOrder(order.id)"
+      >
         <div>
           <strong>Order #{{ order.id }}</strong>
           <span>{{ order.createdAt | date:'medium' }}</span>

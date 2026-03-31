@@ -91,7 +91,13 @@
       <div class="card clickable">
         <h3>Claims by Status</h3>
         <div class="status-bars">
-          <div *ngFor="let bucket of statusBuckets" class="status-row" (click)="goToClaimsWithStatus(bucket.key)">
+          <div
+            *ngFor="let bucket of statusBuckets"
+            class="status-row"
+            (click)="goToClaimsWithStatus(bucket.key)"
+            (keydown.enter)="goToClaimsWithStatus(bucket.key)"
+            (keydown.space)="goToClaimsWithStatus(bucket.key)"
+          >
             <div class="status-label">{{ bucket.label }}</div>
             <div class="status-bar-wrapper">
               <div
