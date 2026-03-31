@@ -237,5 +237,39 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F8%2F3bb06eec-aba7-4c18-9dfd-f0840f6fdbc1_carte+etudiant.jpg"
     ]
+  },
+  {
+    "ref": "e8b4127a-62d3-4cbc-8562-ccf677c97689",
+    "patientName": "3",
+    "description": "test notis",
+    "amount": 120,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-03-31T07:35:21.560Z",
+    "processedAt": "2026-03-31T07:39:10.626Z",
+    "rejectReason": "unworthy",
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F097f26cb-6b81-4183-bc48-20a2c51be3cd_Gemini_Generated_Image_5qhefk5qhefk5qhe.png"
+    ]
+  },
+  {
+    "ref": "7aef0177-af4d-4067-b725-0fff490403fb",
+    "patientName": "3",
+    "description": "testing new notification for claims",
+    "amount": 125,
+    "insuranceCompany": "Insurance 4",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 22.5,
+    "receivedAt": "2026-03-31T07:38:45.405Z",
+    "processedAt": "2026-03-31T07:39:15.806Z",
+    "rejectReason": null,
+    "adjustmentReason": "done",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fb4f7c7e3-b269-4ce4-9403-fbd01dfdf490_Gemini_Generated_Image_rya6r4rya6r4rya6.png"
+    ]
   }
 ]
