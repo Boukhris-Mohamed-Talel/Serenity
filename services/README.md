@@ -18,7 +18,23 @@ Backend services. **One folder = one deployable service** (own process, port, co
 2. **insurance-service** — `cd services/insurance-service && mvn spring-boot:run`.
 3. **marketplace-service** — `cd services/marketplace-service && mvn spring-boot:run`.
 
-Both can share the same MySQL database (`healthcare_db`); insurance-service uses tables `insurance_claims`, `claim_files`, `remboursements`.  
+## Database consolidation model
+
+Default configuration is now consolidated into **2 databases**:
+
+- **healthcare_core_db**: user-service + insurance-service data
+- **healthcare_commerce_db**: marketplace-service + pharmacy-service data
+
+This reduces operational overhead while still separating identity/claims from commerce data.
+
+You can override names using env variables:
+
+- `CORE_DB_NAME` (default: `healthcare_core_db`)
+- `COMMERCE_DB_NAME` (default: `healthcare_commerce_db`)
+- `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`
+
+For pharmacy's cross-read user integration, `USER_DB_URL` defaults to `CORE_DB_NAME`.
+
 The web-app calls user-service for auth/users and insurance-service for claims (send `X-User-Id` header for the logged-in user id).
 
 ## Adding another service

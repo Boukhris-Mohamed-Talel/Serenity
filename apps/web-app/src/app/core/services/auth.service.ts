@@ -90,7 +90,12 @@ export class AuthService {
   }
 
   getUserId(): number | null {
-    return this.currentUserSubject.value?.userId ?? null;
+    const storedUserId = this.currentUserSubject.value?.userId;
+    if (typeof storedUserId === 'number' && Number.isFinite(storedUserId)) {
+      return storedUserId;
+    }
+
+    return this.extractUserIdFromToken();
   }
 
   /** Updates stored auth user with activation flag from `UserService` / profile API (`isActive` → `is_active`). */
@@ -108,6 +113,37 @@ export class AuthService {
     localStorage.setItem(this.TOKEN_KEY, response.accessToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));
     this.currentUserSubject.next(response);
+  }
+
+  private extractUserIdFromToken(): number | null {
+    const token = this.getToken();
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) {
+        return null;
+      }
+
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded));
+      const possibleValues = [payload?.userId, payload?.id, payload?.sub];
+
+      for (const value of possibleValues) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 
   private getStoredUser(): AuthResponse | null {

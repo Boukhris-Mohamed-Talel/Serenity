@@ -1,6 +1,9 @@
 <div class="reviews-container">
   <div class="reviews-header">
-    <h3>Customer Reviews</h3>
+    <div>
+      <h3>Customer Reviews</h3>
+      <p class="subtitle">Real feedback from people who already tried this product.</p>
+    </div>
     <div class="rating-summary">
       <div class="average-rating">
         <span class="stars">★</span>
@@ -20,7 +23,14 @@
   <!-- Review Form -->
   <div class="review-form-section">
     <h5>Write a Review</h5>
-    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
+    <p class="form-helper">Your review helps other users decide faster.</p>
+
+    <div *ngIf="!isLoggedIn()" class="login-prompt">
+      <span>You need to be signed in to submit a review.</span>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="goToLogin()">Sign In</button>
+    </div>
+
+    <form [formGroup]="reviewForm" class="review-form" novalidate>
       <div class="form-group">
         <label for="rating">Rating</label>
         <div class="star-picker" (mouseleave)="clearHoverRating()">
@@ -47,8 +57,8 @@
           rows="4"
           placeholder="Share your experience with this product..."
         ></textarea>
-        <small class="form-text text-muted">
-          {{ reviewForm.get('reviewText')?.value?.length || 0 }}/1000 characters
+        <small class="form-text" [class.text-warning]="isNearCharacterLimit()" [class.text-muted]="!isNearCharacterLimit()">
+          {{ reviewTextLength() }}/1000 characters
         </small>
         <small class="form-text text-danger" *ngIf="reviewForm.get('reviewText')?.touched && reviewForm.get('reviewText')?.hasError('maxlength')">
           Review text must be 1000 characters or less.
@@ -56,12 +66,19 @@
       </div>
 
       <button 
-        type="submit" 
-        class="btn btn-primary"
+        type="button" 
+        class="btn btn-primary submit-btn"
         [disabled]="submitting"
+        (click)="submitReview()"
       >
         {{ submitting ? 'Submitting...' : 'Submit Review' }}
       </button>
+      <small class="form-text text-muted submit-hint" *ngIf="lastActionMessage">
+        {{ lastActionMessage }}
+      </small>
+      <small class="form-text text-muted submit-hint" *ngIf="!isLoggedIn()">
+        You can click submit now. We will ask you to sign in before posting.
+      </small>
     </form>
   </div>
 

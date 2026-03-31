@@ -2,14 +2,19 @@ package com.example.marketplace.controller;
 
 import com.example.marketplace.dto.CreateReviewRequestDTO;
 import com.example.marketplace.dto.ProductReviewDTO;
+import com.example.marketplace.security.JwtTokenProvider;
 import com.example.marketplace.service.ReviewService;
+import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -19,16 +24,20 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-        @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProductReviewDTO> createOrUpdateReview(
-            @RequestHeader("userId") Long userId,
+            @RequestHeader(value = "userId", required = false) Long userId,
             Authentication authentication,
+            HttpServletRequest httpServletRequest,
             @Valid @RequestBody CreateReviewRequestDTO request) {
+        Long resolvedUserId = resolveUserId(userId, httpServletRequest);
+
         ProductReviewDTO review = reviewService.createOrUpdateReview(
-                userId,
-            authentication.getName(),
+                resolvedUserId,
+                authentication.getName(),
                 request.getProductId(),
                 request.getRating(),
                 request.getReviewText()
@@ -50,8 +59,11 @@ public class ReviewController {
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<ProductReviewDTO>> getUserReviews(@RequestHeader("userId") Long userId) {
-        List<ProductReviewDTO> reviews = reviewService.getUserReviews(userId);
+    public ResponseEntity<List<ProductReviewDTO>> getUserReviews(
+            @RequestHeader(value = "userId", required = false) Long userId,
+            HttpServletRequest httpServletRequest) {
+        Long resolvedUserId = resolveUserId(userId, httpServletRequest);
+        List<ProductReviewDTO> reviews = reviewService.getUserReviews(resolvedUserId);
         return ResponseEntity.ok(reviews);
     }
 
@@ -59,8 +71,10 @@ public class ReviewController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteReview(
             @PathVariable Long reviewId,
-            @RequestHeader("userId") Long userId) {
-        reviewService.deleteReview(reviewId, userId);
+            @RequestHeader(value = "userId", required = false) Long userId,
+            HttpServletRequest httpServletRequest) {
+        Long resolvedUserId = resolveUserId(userId, httpServletRequest);
+        reviewService.deleteReview(reviewId, resolvedUserId);
         return ResponseEntity.noContent().build();
     }
 
@@ -68,5 +82,34 @@ public class ReviewController {
     public ResponseEntity<ProductReviewDTO> getReview(@PathVariable Long reviewId) {
         ProductReviewDTO review = reviewService.getReviewById(reviewId);
         return ResponseEntity.ok(review);
+    }
+
+    private Long resolveUserId(Long headerUserId, HttpServletRequest request) {
+        if (headerUserId != null) {
+            return headerUserId;
+        }
+
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!StringUtils.hasText(authorizationHeader) || !authorizationHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing user context in request");
+        }
+
+        String token = authorizationHeader.substring(7);
+        Claims claims = jwtTokenProvider.parseClaims(token);
+
+        Object claimValue = claims.get("userId");
+        if (claimValue instanceof Number number) {
+            return number.longValue();
+        }
+
+        if (claimValue instanceof String value && StringUtils.hasText(value)) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException ignored) {
+                // Fall through to throw a user-facing validation message.
+            }
+        }
+
+        throw new IllegalArgumentException("Unable to resolve userId from token");
     }
 }
