@@ -1,3 +1,61 @@
+.dashboard-shell {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: calc(100vh - 64px - 140px);
+  background-color: var(--bg);
+}
+
+/* Full-bleed art + scrims (no multiply — reads cleaner on light UI) */
+.dashboard-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(
+      ellipse 120% 85% at 50% 45%,
+      rgba(245, 250, 249, 0.15) 0%,
+      rgba(245, 250, 249, 0.55) 45%,
+      rgba(245, 250, 249, 0.92) 100%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(245, 250, 249, 0.88) 0%,
+      rgba(245, 250, 249, 0.28) 42%,
+      rgba(232, 245, 242, 0.4) 55%,
+      rgba(245, 250, 249, 0.82) 100%
+    ),
+    url('/assets/mascot/Img1.png');
+  /* Keep the art visible without "zoom/crop" (no cover). */
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: center, center, 140% 10%;
+  background-size: cover, cover, min(1100px, 92vw) auto;
+  filter: saturate(1.5) contrast(1.03);
+}
+
+/* Light edge wash — keeps corners readable without hiding the art */
+.dashboard-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 38%,
+    transparent 0%,
+    rgba(245, 250, 249, 0.12) 58%,
+    rgba(245, 250, 249, 0.32) 100%
+  );
+}
+
+.dashboard-shell-inner {
+  position: relative;
+  z-index: 1;
+}
+
 .welcome-section {
   display: flex;
   align-items: center;
@@ -32,10 +90,18 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 4px 20px rgba(59, 164, 160, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 
   &:hover {
     box-shadow: var(--shadow-md);
+    border-color: rgba(59, 164, 160, 0.22);
     transform: translateY(-2px);
   }
 }
