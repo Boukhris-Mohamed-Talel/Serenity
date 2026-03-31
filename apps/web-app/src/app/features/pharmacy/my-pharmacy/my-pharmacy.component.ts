@@ -14,6 +14,8 @@ export class MyPharmacyComponent implements OnInit {
   form!: FormGroup;
   loading = true;
   saving = false;
+  deleting = false;
+  hasExistingPharmacy = false;
   successMessage = '';
   errorMessage = '';
   private openingHoursPrefix = '';
@@ -47,12 +49,14 @@ export class MyPharmacyComponent implements OnInit {
     this.loading = true;
     this.pharmacyService.getMyPharmacy().subscribe({
       next: (pharmacy) => {
+        this.hasExistingPharmacy = true;
         this.form.patchValue(pharmacy);
         this.applyOpeningHours(pharmacy.openingHours);
         this.loading = false;
       },
       error: () => {
         // First-time pharmacists may not have a profile yet.
+        this.hasExistingPharmacy = false;
         this.loading = false;
       }
     });
@@ -72,6 +76,7 @@ export class MyPharmacyComponent implements OnInit {
     }
 
     this.saving = true;
+    this.deleting = false;
     this.successMessage = '';
     this.errorMessage = '';
 
@@ -104,6 +109,32 @@ export class MyPharmacyComponent implements OnInit {
       return;
     }
     this.router.navigate(['/pharmacy']);
+  }
+
+  deletePharmacy(): void {
+    if (!this.hasExistingPharmacy || this.deleting || this.saving) {
+      return;
+    }
+
+    if (!window.confirm('Delete your pharmacy profile? This will clear stock, unassign linked prescriptions, and remove default references.')) {
+      return;
+    }
+
+    this.deleting = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.pharmacyService.deleteMyPharmacy().subscribe({
+      next: () => {
+        this.deleting = false;
+        this.successMessage = 'Pharmacy deleted successfully.';
+        this.router.navigate(['/pharmacy']);
+      },
+      error: (err) => {
+        this.deleting = false;
+        this.errorMessage = err.error?.message || 'Failed to delete pharmacy';
+      }
+    });
   }
 
   onLocationSelected(location: PickerLocation): void {

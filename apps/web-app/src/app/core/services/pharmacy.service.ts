@@ -13,6 +13,7 @@ import {
   PrescriptionResponse,
   PrescriptionStatusUpdateRequest,
   StockItemCreateRequest,
+  StockItemRenameRequest,
   StockItemResponse,
   StockQuantityIncrementRequest
 } from '../../shared/models/pharmacy.model';
@@ -32,6 +33,10 @@ export class PharmacyService {
 
   upsertMyPharmacy(payload: PharmacyUpsertRequest): Observable<PharmacyResponse> {
     return this.http.post<PharmacyResponse>(`${this.API_URL}/me`, payload);
+  }
+
+  deleteMyPharmacy(): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/me`);
   }
 
   getInbox(): Observable<PrescriptionResponse[]> {
@@ -115,6 +120,10 @@ export class PharmacyService {
     return this.http.post<StockItemResponse>(`${this.API_URL}/stock`, payload);
   }
 
+  renameStockItem(stockItemId: number, payload: StockItemRenameRequest): Observable<StockItemResponse> {
+    return this.http.patch<StockItemResponse>(`${this.API_URL}/stock/${stockItemId}/rename`, payload);
+  }
+
   incrementStockItem(
     stockItemId: number,
     payload: StockQuantityIncrementRequest
@@ -132,5 +141,9 @@ export class PharmacyService {
 
   restoreStockItem(stockItemId: number): Observable<StockItemResponse> {
     return this.http.patch<StockItemResponse>(`${this.API_URL}/stock/${stockItemId}/restore`, {});
+  }
+
+  deleteArchivedStockItem(stockItemId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/stock/${stockItemId}/permanent`);
   }
 }

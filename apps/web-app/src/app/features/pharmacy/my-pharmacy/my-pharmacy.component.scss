@@ -109,6 +109,14 @@ input[type='time'] {
 .form-actions {
   display: flex;
   justify-content: flex-start;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  color: #ffffff;
+  background: #d96a73;
+  border-color: #cc5d67;
 }
 
 .success {

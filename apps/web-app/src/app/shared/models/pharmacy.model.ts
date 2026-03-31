@@ -161,6 +161,10 @@ export interface StockQuantityIncrementRequest {
   incrementBy: number;
 }
 
+export interface StockItemRenameRequest {
+  medicineName: string;
+}
+
 export interface StockItemResponse {
   id: number;
   pharmacyId: number;

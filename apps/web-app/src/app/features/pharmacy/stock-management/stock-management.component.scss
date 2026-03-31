@@ -259,6 +259,21 @@
   color: #183f3b;
 }
 
+.rename-inline {
+  display: flex;
+  gap: 0.28rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rename-inline input {
+  min-width: 150px;
+  border: 1px solid #bcd9d6;
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.85rem;
+}
+
 .description {
   margin: 0.28rem 0 0;
   max-width: 360px;
