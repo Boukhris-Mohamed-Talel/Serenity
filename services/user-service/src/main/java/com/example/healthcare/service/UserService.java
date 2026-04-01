@@ -38,4 +38,10 @@ public interface UserService {
     List<UserResponseDTO> getDoctors();
 
     List<UserResponseDTO> getPatients();
+
+    List<UserLookupDTO> lookupDoctors();
+
+    List<UserLookupDTO> lookupPatients(String firstName, String lastName);
+
+    List<UserLookupDTO> lookupUsersByIds(List<Long> ids);
 }

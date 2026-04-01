@@ -1,14 +1,10 @@
 <div class="container">
   <section class="page">
     <header class="page-header">
-      <button type="button" class="btn btn-secondary" (click)="backToWorkspace()">Back</button>
-      <div class="header-copy">
-        <h1>Prescription Inbox</h1>
-        <p>Review prescriptions sent to your pharmacy with patient and doctor details.</p>
-      </div>
+      <h1>Prescription Inbox</h1>
+      <p>Review prescriptions sent to your pharmacy with patient and doctor details.</p>
     </header>
 
-    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
     <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 
     <div class="table-wrap" *ngIf="!loading">
@@ -28,10 +24,7 @@
           <tr
             *ngFor="let row of prescriptions"
             class="clickable"
-            tabindex="0"
-            (click)="openPrescription(row)"
-            (keydown.enter)="openPrescription(row)"
-            (keydown.space)="$event.preventDefault(); openPrescription(row)">
+            (click)="openPrescription(row)">
             <td>{{ row.patientName }}</td>
             <td>{{ row.doctorName }}</td>
             <td>

@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { InsuranceClaimResponse } from '../../../shared/models/insurance.model';
@@ -29,16 +29,11 @@ export class ClaimListComponent implements OnInit {
     private readonly insuranceService: InsuranceService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly router: Router,
-    private readonly route: ActivatedRoute
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
-    const statusFromQuery = this.route.snapshot.queryParamMap.get('status');
-    if (statusFromQuery === 'PENDING' || statusFromQuery === 'APPROVED' || statusFromQuery === 'REJECTED') {
-      this.statusFilter = statusFromQuery;
-    }
     if (this.isAdmin) {
       this.loadUsernames();
     }

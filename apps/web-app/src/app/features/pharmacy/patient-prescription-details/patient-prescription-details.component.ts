@@ -31,9 +31,6 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
   lines: PrescriptionLineResponse[] = [];
   alternatives: PrescriptionAlternativeResponse | null = null;
-  selectedAlternativePharmacy: AlternativePharmacyOption | null = null;
-  selectedMapLatitude: number | null = null;
-  selectedMapLongitude: number | null = null;
 
   currentLatitude: number | null = null;
   currentLongitude: number | null = null;
@@ -67,10 +64,6 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
       return;
     }
 
-    if (!window.confirm(`Send this prescription to "${option.pharmacyName}"?`)) {
-      return;
-    }
-
     this.assigning = true;
     this.successMessage = '';
     this.alternativesErrorMessage = '';
@@ -93,7 +86,7 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
   }
 
   statusClass(status: PrescriptionStatus): string {
-    return `status-pill status-pill-${status.toLowerCase()}`;
+    return `status ${status.toLowerCase()}`;
   }
 
   statusLabel(status: PrescriptionStatus): string {
@@ -168,16 +161,6 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
     return result.selectablePharmacies.length > 0 && result.recommendedMode !== 'FULL_MATCH';
   }
 
-  selectAlternativeForPreview(option: AlternativePharmacyOption): void {
-    this.selectedAlternativePharmacy = option;
-    this.selectedMapLatitude = option.latitude ?? null;
-    this.selectedMapLongitude = option.longitude ?? null;
-  }
-
-  isSelectedAlternative(option: AlternativePharmacyOption): boolean {
-    return this.selectedAlternativePharmacy?.pharmacyId === option.pharmacyId;
-  }
-
   private loadPrescription(id: number): void {
     this.loading = true;
     this.errorMessage = '';
@@ -243,15 +226,9 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
     this.pharmacyService.getPrescriptionAlternatives(this.prescriptionId, latitude, longitude).subscribe({
       next: (response) => {
         this.alternatives = response;
-        this.selectedAlternativePharmacy = this.resolveInitialAlternativeForPreview(response);
-        this.selectedMapLatitude = this.selectedAlternativePharmacy?.latitude ?? null;
-        this.selectedMapLongitude = this.selectedAlternativePharmacy?.longitude ?? null;
         this.alternativesLoading = false;
       },
       error: (err) => {
-        this.selectedAlternativePharmacy = null;
-        this.selectedMapLatitude = null;
-        this.selectedMapLongitude = null;
         this.alternativesErrorMessage = err.error?.message || 'Failed to load pharmacy alternatives.';
         this.alternativesLoading = false;
       }
@@ -270,25 +247,5 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
       quantity: item.quantity ?? 0,
       instructions: item.instructions
     }];
-  }
-
-  private resolveInitialAlternativeForPreview(
-    result: PrescriptionAlternativeResponse
-  ): AlternativePharmacyOption | null {
-    if (result.fullMatchPharmacies.length > 0) {
-      return result.fullMatchPharmacies[0];
-    }
-
-    if (result.selectablePharmacies.length > 0) {
-      return result.selectablePharmacies[0];
-    }
-
-    for (const perMedicine of result.perMedicineAlternatives) {
-      if (perMedicine.pharmacies.length > 0) {
-        return perMedicine.pharmacies[0];
-      }
-    }
-
-    return null;
   }
 }

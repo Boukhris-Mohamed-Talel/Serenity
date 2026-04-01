@@ -20,6 +20,10 @@ const routes: Routes = [
   {
     path: 'marketplace',
     loadChildren: () => import('../marketplace-admin/marketplace-admin.module').then(m => m.MarketplaceAdminModule)
+  },
+  {
+    path: 'appointments',
+    loadChildren: () => import('../appointments/appointments.module').then(m => m.AppointmentsModule)
   }
 ];
 

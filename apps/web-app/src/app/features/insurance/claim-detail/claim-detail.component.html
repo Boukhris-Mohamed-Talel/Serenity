@@ -86,7 +86,22 @@
         </div>
       </div>
 
-      <!-- Approval / rejection is now handled by the insurer backend, not the admin UI. -->
+      <div *ngIf="isAdmin && claim.status === 'PENDING'" class="admin-actions card">
+        <h3>Admin Actions</h3>
+        <div class="form-group">
+          <label for="montant">Reimbursement Amount (TND)</label>
+          <input id="montant" type="number" [(ngModel)]="reimbursementAmount" step="0.01" min="0.01" [max]="claim.amount">
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" (click)="approveClaim()" [disabled]="processing || !reimbursementAmount">
+            <span *ngIf="!processing">Approve & Reimburse</span>
+            <span *ngIf="processing" class="spinner spinner-sm"></span>
+          </button>
+          <button class="btn btn-danger" (click)="rejectClaim()" [disabled]="processing">
+            Reject
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

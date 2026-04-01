@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import { PharmacyUpsertRequest } from '../../../shared/models/pharmacy.model';
 import { PickerLocation } from '../../../shared/components/location-picker/location-picker.component';
@@ -14,16 +13,13 @@ export class MyPharmacyComponent implements OnInit {
   form!: FormGroup;
   loading = true;
   saving = false;
-  deleting = false;
-  hasExistingPharmacy = false;
   successMessage = '';
   errorMessage = '';
   private openingHoursPrefix = '';
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly pharmacyService: PharmacyService,
-    private readonly router: Router
+    private readonly pharmacyService: PharmacyService
   ) {}
 
   ngOnInit(): void {
@@ -49,14 +45,12 @@ export class MyPharmacyComponent implements OnInit {
     this.loading = true;
     this.pharmacyService.getMyPharmacy().subscribe({
       next: (pharmacy) => {
-        this.hasExistingPharmacy = true;
         this.form.patchValue(pharmacy);
         this.applyOpeningHours(pharmacy.openingHours);
         this.loading = false;
       },
       error: () => {
         // First-time pharmacists may not have a profile yet.
-        this.hasExistingPharmacy = false;
         this.loading = false;
       }
     });
@@ -71,12 +65,7 @@ export class MyPharmacyComponent implements OnInit {
       return;
     }
 
-    if (!window.confirm('Save pharmacy profile changes?')) {
-      return;
-    }
-
     this.saving = true;
-    this.deleting = false;
     this.successMessage = '';
     this.errorMessage = '';
 
@@ -91,48 +80,10 @@ export class MyPharmacyComponent implements OnInit {
       next: () => {
         this.successMessage = 'Pharmacy profile saved successfully.';
         this.saving = false;
-        this.router.navigate(['/pharmacy']);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to save pharmacy profile';
         this.saving = false;
-      }
-    });
-  }
-
-  backToWorkspace(): void {
-    this.cancel();
-  }
-
-  cancel(): void {
-    if (this.form.dirty && !window.confirm('Discard unsaved pharmacy changes?')) {
-      return;
-    }
-    this.router.navigate(['/pharmacy']);
-  }
-
-  deletePharmacy(): void {
-    if (!this.hasExistingPharmacy || this.deleting || this.saving) {
-      return;
-    }
-
-    if (!window.confirm('Delete your pharmacy profile? This will clear stock, unassign linked prescriptions, and remove default references.')) {
-      return;
-    }
-
-    this.deleting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.pharmacyService.deleteMyPharmacy().subscribe({
-      next: () => {
-        this.deleting = false;
-        this.successMessage = 'Pharmacy deleted successfully.';
-        this.router.navigate(['/pharmacy']);
-      },
-      error: (err) => {
-        this.deleting = false;
-        this.errorMessage = err.error?.message || 'Failed to delete pharmacy';
       }
     });
   }

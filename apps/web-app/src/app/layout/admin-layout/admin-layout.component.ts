@@ -21,6 +21,7 @@ export class AdminLayoutComponent implements OnInit {
     { label: 'Users', icon: 'users', route: '/admin/users' },
     { label: 'Doctors', icon: 'user-md', route: '/admin/doctors' },
     { label: 'Insurance Claims', icon: 'shield', route: '/admin/insurance' },
+    { label: 'Appointments', icon: 'calendar', route: '/admin/appointments' },
     { label: 'Edit User', icon: 'edit', route: '/admin/users/edit', hidden: true }
   ];
 

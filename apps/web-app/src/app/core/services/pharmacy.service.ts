@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  DoctorMedicineSuggestionResponse,
+  DoctorPatientSuggestionResponse,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
   PrescriptionAlternativeResponse,
@@ -10,6 +12,7 @@ import {
   PharmacyCandidateResponse,
   PharmacyResponse,
   PharmacyUpsertRequest,
+  PrescriptionCreateRequest,
   PrescriptionResponse,
   PrescriptionStatusUpdateRequest,
   StockItemCreateRequest,
@@ -37,6 +40,24 @@ export class PharmacyService {
 
   deleteMyPharmacy(): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/me`);
+  }
+
+  createPrescription(payload: PrescriptionCreateRequest): Observable<PrescriptionResponse> {
+    return this.http.post<PrescriptionResponse>(`${this.API_URL}/prescriptions`, payload);
+  }
+
+  suggestDoctorMedicines(patientId: number, query: string): Observable<DoctorMedicineSuggestionResponse> {
+    const encodedQuery = encodeURIComponent(query.trim());
+    return this.http.get<DoctorMedicineSuggestionResponse>(
+      `${this.API_URL}/doctor/medicine-suggestions?patientId=${patientId}&query=${encodedQuery}`
+    );
+  }
+
+  suggestDoctorPatients(query: string): Observable<DoctorPatientSuggestionResponse> {
+    const encodedQuery = encodeURIComponent(query.trim());
+    return this.http.get<DoctorPatientSuggestionResponse>(
+      `${this.API_URL}/doctor/patient-suggestions?query=${encodedQuery}`
+    );
   }
 
   getInbox(): Observable<PrescriptionResponse[]> {
@@ -94,8 +115,8 @@ export class PharmacyService {
     longitude: number,
     radiusKm = 20
   ): Observable<PharmacyCandidateResponse[]> {
-    const query = `?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
-    return this.http.get<PharmacyCandidateResponse[]>(`${this.API_URL}/patient/pharmacies/nearest${query}`);
+    const q = `?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
+    return this.http.get<PharmacyCandidateResponse[]>(`${this.API_URL}/patient/pharmacies/nearest${q}`);
   }
 
   updatePrescriptionStatus(

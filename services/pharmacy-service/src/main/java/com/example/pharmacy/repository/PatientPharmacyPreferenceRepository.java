@@ -7,6 +7,4 @@ import java.util.Optional;
 
 public interface PatientPharmacyPreferenceRepository extends JpaRepository<PatientPharmacyPreference, Long> {
     Optional<PatientPharmacyPreference> findByPatientId(Long patientId);
-
-    long deleteByDefaultPharmacy_Id(Long defaultPharmacyId);
 }

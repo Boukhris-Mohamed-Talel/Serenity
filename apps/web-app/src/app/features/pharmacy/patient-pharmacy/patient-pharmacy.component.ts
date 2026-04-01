@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
-import { PickerMarker } from '../../../shared/components/location-picker/location-picker.component';
 import {
   PatientDefaultPharmacyResponse,
   PharmacyCandidateResponse,
@@ -38,8 +37,6 @@ export class PatientPharmacyComponent implements OnInit {
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
   candidateResults: PharmacyCandidateResponse[] = [];
   prescriptionCards: PrescriptionCardView[] = [];
-  mapMarkers: PickerMarker[] = [];
-  mapMessage = 'Map will show your default pharmacy location.';
 
   ngOnInit(): void {
     this.loadDefaultPharmacy();
@@ -55,14 +52,12 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.getMyDefaultPharmacy().subscribe({
       next: (response) => {
         this.defaultPharmacy = response;
-        this.refreshMapMarkers();
       },
       error: (err) => {
         if (err.status !== 404) {
           this.errorMessage = err.error?.message || 'Failed to load your default pharmacy';
         }
         this.defaultPharmacy = null;
-        this.refreshMapMarkers();
       }
     });
   }
@@ -93,13 +88,11 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.listPatientPharmacies(this.cityFilter, this.governorateFilter).subscribe({
       next: (items) => {
         this.candidateResults = items;
-        this.refreshMapMarkers();
         this.loading = false;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to load pharmacies';
         this.candidateResults = [];
-        this.refreshMapMarkers();
         this.loading = false;
       }
     });
@@ -119,10 +112,22 @@ export class PatientPharmacyComponent implements OnInit {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        this.loadNearestPharmaciesWithFallback(
-          position.coords.latitude,
-          position.coords.longitude
-        );
+        this.pharmacyService
+          .suggestNearestPharmacies(position.coords.latitude, position.coords.longitude)
+          .subscribe({
+            next: (items) => {
+              this.candidateResults = items;
+              this.nearestLoading = false;
+              if (items.length === 0) {
+                this.errorMessage = 'No nearby pharmacies were found in the selected radius.';
+              }
+            },
+            error: (err) => {
+              this.errorMessage = err.error?.message || 'Failed to fetch nearest pharmacies';
+              this.candidateResults = [];
+              this.nearestLoading = false;
+            }
+          });
       },
       () => {
         this.nearestLoading = false;
@@ -133,12 +138,6 @@ export class PatientPharmacyComponent implements OnInit {
   }
 
   setDefault(pharmacyId: number): void {
-    const selectedPharmacy = this.candidateResults.find((candidate) => candidate.id === pharmacyId);
-    const pharmacyName = selectedPharmacy?.name || 'this pharmacy';
-    if (!window.confirm(`Set "${pharmacyName}" as your default pharmacy?`)) {
-      return;
-    }
-
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -146,12 +145,9 @@ export class PatientPharmacyComponent implements OnInit {
     this.pharmacyService.setMyDefaultPharmacy({ pharmacyId }).subscribe({
       next: (response) => {
         this.defaultPharmacy = response;
-        // Keep map lean and focused after update: show only the selected default pharmacy.
-        this.candidateResults = [];
-        this.hasSearchedCandidates = false;
-        this.refreshMapMarkers();
         this.saving = false;
         this.successMessage = 'Default pharmacy updated successfully.';
+        this.loadPrescriptions();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to set default pharmacy';
@@ -180,18 +176,6 @@ export class PatientPharmacyComponent implements OnInit {
     return item.raw.id;
   }
 
-  formatDistanceKm(distanceKm?: number): string {
-    if (typeof distanceKm !== 'number' || !Number.isFinite(distanceKm)) {
-      return '';
-    }
-
-    const compactDistance = distanceKm >= 10
-      ? Math.round(distanceKm)
-      : Math.round(distanceKm * 10) / 10;
-
-    return `${compactDistance} km`;
-  }
-
   private toPrescriptionCard(item: PrescriptionResponse): PrescriptionCardView {
     const lines = item.medicineLines && item.medicineLines.length > 0
       ? item.medicineLines
@@ -209,194 +193,5 @@ export class PatientPharmacyComponent implements OnInit {
       primaryLine: lines[0],
       extraLinesCount: Math.max(lines.length - 1, 0)
     };
-  }
-
-  private refreshMapMarkers(): void {
-    if (this.hasSearchedCandidates) {
-      const markers = this.candidateResults
-        .filter((candidate) => this.hasCoordinates(candidate.latitude, candidate.longitude))
-        .slice(0, 30)
-        .map((candidate) => ({
-          latitude: candidate.latitude as number,
-          longitude: candidate.longitude as number,
-          label: candidate.name,
-          primary: this.isDefault(candidate.id)
-        }));
-
-      this.mapMarkers = markers;
-
-      if (markers.length > 0) {
-        this.mapMessage = `${markers.length} pharmacy location${markers.length > 1 ? 's' : ''} shown on the map.`;
-        return;
-      }
-
-      this.mapMessage = this.candidateResults.length > 0
-        ? 'Search results have no map coordinates to display.'
-        : 'No pharmacy locations to display for this search yet.';
-      return;
-    }
-
-    if (this.defaultPharmacy && this.hasCoordinates(this.defaultPharmacy.latitude, this.defaultPharmacy.longitude)) {
-      this.mapMarkers = [{
-        latitude: this.defaultPharmacy.latitude as number,
-        longitude: this.defaultPharmacy.longitude as number,
-        label: this.defaultPharmacy.pharmacyName,
-        primary: true
-      }];
-      this.mapMessage = 'Showing your current default pharmacy location.';
-      return;
-    }
-
-    this.mapMarkers = [];
-    this.mapMessage = 'No pharmacy coordinates are available yet.';
-  }
-
-  private hasCoordinates(latitude?: number, longitude?: number): boolean {
-    return typeof latitude === 'number' && Number.isFinite(latitude)
-      && typeof longitude === 'number' && Number.isFinite(longitude);
-  }
-
-  private loadNearestPharmaciesWithFallback(latitude: number, longitude: number): void {
-    const primaryRadiusKm = 20;
-    const fallbackRadiusKm = 35;
-
-    this.pharmacyService.suggestNearestPharmacies(latitude, longitude, primaryRadiusKm).subscribe({
-      next: (items) => {
-        if (items.length > 0) {
-          this.candidateResults = items;
-          this.refreshMapMarkers();
-          this.nearestLoading = false;
-          return;
-        }
-        this.tryWiderNearestThenFullList(latitude, longitude, primaryRadiusKm, fallbackRadiusKm);
-      },
-      error: (err) => this.handleSuggestNearestError(err)
-    });
-  }
-
-  private tryWiderNearestThenFullList(
-    latitude: number,
-    longitude: number,
-    primaryRadiusKm: number,
-    fallbackRadiusKm: number
-  ): void {
-    this.pharmacyService.suggestNearestPharmacies(latitude, longitude, fallbackRadiusKm).subscribe({
-      next: (fallbackItems) => {
-        if (fallbackItems.length > 0) {
-          this.candidateResults = fallbackItems;
-          this.refreshMapMarkers();
-          this.nearestLoading = false;
-          this.successMessage = `No pharmacies found within ${primaryRadiusKm} km. Showing nearest matches within ${fallbackRadiusKm} km.`;
-          return;
-        }
-        this.loadNearestFromFullPatientPharmacyList(latitude, longitude, fallbackRadiusKm);
-      },
-      error: (err) => this.handleSuggestNearestError(err)
-    });
-  }
-
-  /** Final fallback: nearest known pharmacies from full list, sorted by distance. */
-  private loadNearestFromFullPatientPharmacyList(
-    latitude: number,
-    longitude: number,
-    fallbackRadiusKm: number
-  ): void {
-    this.pharmacyService.listPatientPharmacies().subscribe({
-      next: (allPharmacies) =>
-        this.applySortedNearestKnownPharmacies(allPharmacies, latitude, longitude, fallbackRadiusKm),
-      error: (listError) => this.handleListPatientPharmaciesError(listError)
-    });
-  }
-
-  private applySortedNearestKnownPharmacies(
-    allPharmacies: PharmacyCandidateResponse[],
-    latitude: number,
-    longitude: number,
-    fallbackRadiusKm: number
-  ): void {
-    const nearestKnown = this.rankPharmaciesByDistance(allPharmacies, latitude, longitude);
-
-    this.candidateResults = nearestKnown;
-    this.refreshMapMarkers();
-    this.nearestLoading = false;
-
-    if (nearestKnown.length > 0) {
-      this.successMessage = `No pharmacies found within ${fallbackRadiusKm} km. Showing closest available pharmacies.`;
-      return;
-    }
-
-    this.errorMessage = '';
-    this.successMessage = 'No nearby pharmacies found for your location. Try searching by city or governorate.';
-  }
-
-  private rankPharmaciesByDistance(
-    allPharmacies: PharmacyCandidateResponse[],
-    latitude: number,
-    longitude: number
-  ): PharmacyCandidateResponse[] {
-    return allPharmacies
-      .map((pharmacy) => this.withDistanceKm(pharmacy, latitude, longitude))
-      .sort((a, b) => {
-        const aDistance = a.distanceKm ?? Number.MAX_SAFE_INTEGER;
-        const bDistance = b.distanceKm ?? Number.MAX_SAFE_INTEGER;
-        return aDistance - bDistance;
-      })
-      .slice(0, 20);
-  }
-
-  private withDistanceKm(
-    pharmacy: PharmacyCandidateResponse,
-    latitude: number,
-    longitude: number
-  ): PharmacyCandidateResponse {
-    if (!this.hasCoordinates(pharmacy.latitude, pharmacy.longitude)) {
-      return { ...pharmacy, distanceKm: undefined };
-    }
-    const distanceKm = this.roundDistance(
-      this.calculateDistanceKm(
-        latitude,
-        longitude,
-        pharmacy.latitude as number,
-        pharmacy.longitude as number
-      )
-    );
-    return { ...pharmacy, distanceKm };
-  }
-
-  private handleSuggestNearestError(err: { error?: { message?: string } }): void {
-    this.errorMessage = err.error?.message
-      || 'Unable to use your location right now. You can still search by city or governorate.';
-    this.candidateResults = [];
-    this.refreshMapMarkers();
-    this.nearestLoading = false;
-  }
-
-  private handleListPatientPharmaciesError(listError: { error?: { message?: string } }): void {
-    this.errorMessage = listError.error?.message || 'Unable to load pharmacies right now.';
-    this.candidateResults = [];
-    this.refreshMapMarkers();
-    this.nearestLoading = false;
-  }
-
-  private calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const earthRadiusKm = 6371;
-    const dLat = this.toRadians(lat2 - lat1);
-    const dLon = this.toRadians(lon2 - lon1);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return earthRadiusKm * c;
-  }
-
-  private roundDistance(distanceKm: number): number {
-    return Math.round(distanceKm * 100) / 100;
-  }
-
-  private toRadians(value: number): number {
-    return value * (Math.PI / 180);
   }
 }

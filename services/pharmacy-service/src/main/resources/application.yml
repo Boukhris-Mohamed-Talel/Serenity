@@ -23,6 +23,10 @@ app:
     url: ${DERBEL_DB_URL:jdbc:mysql://localhost:3306/medical_records_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${DERBEL_DB_USERNAME:root}
     password: ${DERBEL_DB_PASSWORD:}
+  user-db:
+    url: ${USER_DB_URL:jdbc:mysql://localhost:3306/healthcare_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${USER_DB_USERNAME:root}
+    password: ${USER_DB_PASSWORD:}
   user-service:
     base-url: ${USER_SERVICE_BASE_URL:http://localhost:8081}
     me-url: ${USER_SERVICE_ME_URL:http://localhost:8081/api/users/me}

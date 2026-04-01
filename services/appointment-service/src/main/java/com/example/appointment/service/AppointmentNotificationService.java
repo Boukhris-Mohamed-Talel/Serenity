@@ -1,0 +1,27 @@
+package com.example.appointment.service;
+
+import com.example.appointment.dto.AppointmentNotificationResponse;
+import com.example.appointment.dto.AppointmentUnreadCountResponse;
+import com.example.appointment.entity.Appointment;
+
+import java.util.List;
+
+public interface AppointmentNotificationService {
+
+    void notifyScheduledByDoctor(Appointment appt);
+
+    void notifyConfirmed(Appointment appt);
+
+    void notifyRescheduled(Appointment appt, Long actorUserId);
+
+    List<AppointmentNotificationResponse> getMyNotifications(Long userId);
+
+    AppointmentUnreadCountResponse countUnread(Long userId);
+
+    void markAsRead(Long notificationId, Long userId);
+
+    void markAllAsRead(Long userId);
+
+    /** Called every minute to send 1d / 1h / 5m reminders. */
+    void runReminderTick();
+}

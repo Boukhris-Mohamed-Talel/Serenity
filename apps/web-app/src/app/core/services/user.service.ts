@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ProfileUpdateRequest, UserRequest, UserResponse } from '../../shared/models/user.model';
+import { ProfileUpdateRequest, UserLookup, UserRequest, UserResponse } from '../../shared/models/user.model';
 import { AuthService } from './auth.service';
 import { UserName } from '../../shared/models/user-name.model';
 
@@ -13,6 +13,7 @@ import { UserName } from '../../shared/models/user-name.model';
 export class UserService {
 
   private readonly API_URL = `${environment.apiUrl}/users`;
+  private readonly LOOKUP_URL = `${environment.apiUrl}/users/lookup`;
   private cachedUser: UserResponse | null = null;
   private userRequest$: Observable<UserResponse> | null = null;
   private readonly currentUserSubject = new BehaviorSubject<UserResponse | null>(null);
@@ -103,4 +104,31 @@ export class UserService {
     });
   }
 
+  lookupDoctors(): Observable<UserLookup[]> {
+    return this.http.get<UserLookup[]>(`${this.LOOKUP_URL}/doctors`);
+  }
+
+  /**
+   * Omit both names to load all active patients (doctor schedule dropdown).
+   * With firstName and/or lastName (each at least 2 chars when used), filters the list.
+   */
+  lookupPatients(firstName?: string, lastName?: string): Observable<UserLookup[]> {
+    let params = new HttpParams();
+    if (firstName?.trim()) {
+      params = params.set('firstName', firstName.trim());
+    }
+    if (lastName?.trim()) {
+      params = params.set('lastName', lastName.trim());
+    }
+    return this.http.get<UserLookup[]>(`${this.LOOKUP_URL}/patients`, { params });
+  }
+
+  /** Batch resolve user ids → names (POST /api/users/lookup/names). Same auth as other /users calls. */
+  lookupNamesByIds(ids: number[]): Observable<UserLookup[]> {
+    const unique = [...new Set(ids.filter((id) => Number.isFinite(id)))];
+    if (unique.length === 0) {
+      return of([]);
+    }
+    return this.http.post<UserLookup[]>(`${this.LOOKUP_URL}/names`, { ids: unique });
+  }
 }

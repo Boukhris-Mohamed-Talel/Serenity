@@ -7,8 +7,8 @@ import { InsuranceStatisticsComponent } from './insurance-statistics/insurance-s
 
 const routes: Routes = [
   { path: '', component: ClaimListComponent },
-  { path: 'statistics', component: InsuranceStatisticsComponent },
   { path: 'new', component: ClaimFormComponent },
+  { path: 'statistics', component: InsuranceStatisticsComponent },
   { path: ':id', component: ClaimDetailComponent }
 ];
 
