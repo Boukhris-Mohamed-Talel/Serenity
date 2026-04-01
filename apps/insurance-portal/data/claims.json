@@ -288,5 +288,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F62d1dc4e-23d9-4a0c-8238-ea3f11b4d03b_poster4.png"
     ]
+  },
+  {
+    "ref": "6faed761-26c1-4be9-a135-222abbe17094",
+    "patientName": "4",
+    "description": "testetstetst",
+    "amount": 600,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 108,
+    "receivedAt": "2026-04-01T21:39:58.243Z",
+    "processedAt": "2026-04-01T21:40:15.313Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F4%2Faebd329c-f52c-4181-9082-0bdac3343da6_Screenshot+2025-11-07+143248.png"
+    ]
   }
 ]

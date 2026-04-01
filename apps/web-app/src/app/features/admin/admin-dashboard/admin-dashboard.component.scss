@@ -221,6 +221,11 @@ $accent: #3BA4A0;
     color: #ffc107;
   }
 
+  &[data-role='MARKETPLACE_MANAGER'] {
+    background: rgba(236, 72, 153, 0.15);
+    color: #f472b6;
+  }
+
   &[data-role='PATIENT'] {
     background: rgba(59, 164, 160, 0.15);
     color: $accent;

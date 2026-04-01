@@ -69,6 +69,10 @@ const routes: Routes = [
       {
         path: 'articles',
         loadChildren: () => import('./features/marketplace/marketplace.module').then(m => m.MarketplaceModule)
+      },
+      {
+        path: 'appointments',
+        loadChildren: () => import('./features/appointments/appointments.module').then(m => m.AppointmentsModule)
       }
     ]
   },

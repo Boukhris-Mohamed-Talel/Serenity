@@ -4,23 +4,26 @@ Backend services. **One folder = one deployable service** (own process, port, co
 
 ## Current services
 
-| Service             | Path                        | Port | Description              |
-|---------------------|-----------------------------|------|--------------------------|
-| **API Gateway**     | `services/API_Gatewya/`     | 8082 | Routes all service requests.  |
-| **user-service**    | `services/user-service/`    | 8081 | Auth, user CRUD, profiles. |
-| **pharmacy-service** | `services/pharmacy-service/` | 8083 | Pharmacy products, prescriptions. |
-| **insurance-service** | `services/insurance-service/` | 8090 | Insurance claims, reimbursements. |
-| **marketplace-service** | `services/marketplace-service/` | 8088 | Mental health products, checkout, order history. |
+| Service | Path | Port | Description |
+|---------|------|------|-------------|
+| **API_Gatewya** | `services/API_Gatewya/` | 8082 | Spring Cloud Gateway; routes `/api/**` to user-service, appointment-service, insurance-service, and other backends (see `application.yml`). |
+| **user-service** | `services/user-service/` | 8081 | Auth, user CRUD, profiles. |
+| **appointment-service** | `services/appointment-service/` | 8091 | Appointments, calendar, notifications. |
+| **insurance-service** | `services/insurance-service/` | 8090 (default in gateway) | Insurance claims, reimbursements. |
+| **pharmacy-service** | `services/pharmacy-service/` | 8093 (per gateway) | Pharmacy products, prescriptions. |
+| **marketplace-service** | `services/marketplace-service/` | 8088 | Mental health products, checkout. |
 
-## Run order
+Other folders under `services/` (monitoring, doctors, microservices, etc.) are additional deployables—see each module’s `pom.xml` and `application.yml`.
+
+## Run order (typical)
 
 1. **user-service** — `cd services/user-service && mvn spring-boot:run`.
-2. **insurance-service** — `cd services/insurance-service && mvn spring-boot:run`.
-3. **marketplace-service** — `cd services/marketplace-service && mvn spring-boot:run`.
+2. **appointment-service** — `cd services/appointment-service && mvn spring-boot:run`.
+3. **insurance-service** / **pharmacy-service** / **marketplace-service** — as needed for the features you are testing.
+4. **API_Gatewya** — `cd services/API_Gatewya && mvn spring-boot:run`.
 
-Both can share the same MySQL database (`healthcare_db`); insurance-service uses tables `insurance_claims`, `claim_files`, `remboursements`.  
-The web-app calls user-service for auth/users and insurance-service for claims (send `X-User-Id` header for the logged-in user id).
+The Angular app points at the gateway (e.g. `http://localhost:8082/api`). Services can share the same MySQL database (`healthcare_db`) where configured.
 
 ## Adding another service
 
-Create a new folder under `services/` (e.g. `notifications-service`), same layout as these two. See [docs/ADDING_A_SERVICE.md](../docs/ADDING_A_SERVICE.md).
+Create a new folder under `services/` (e.g. `notifications-service`), same layout as an existing service. See [docs/ADDING_A_SERVICE.md](../docs/ADDING_A_SERVICE.md).

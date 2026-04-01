@@ -40,6 +40,8 @@ spring:
             enable: true
 
 app:
+  # Shared with appointment-service for reminder emails (X-Internal-Key on POST /api/internal/users/emails-by-ids)
+  internal-api-key: ${INTERNAL_API_KEY:}
   upload:
     dir: ${UPLOAD_DIR:uploads}
   public-base-url: ${USER_PUBLIC_BASE_URL:http://localhost:8081}

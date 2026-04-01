@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ProfileUpdateRequest, UserRequest, UserResponse } from '../../shared/models/user.model';
+import { ProfileUpdateRequest, UserRequest, UserResponse, UserLookup } from '../../shared/models/user.model';
 import { AuthService } from './auth.service';
 import { UserName } from '../../shared/models/user-name.model';
 
@@ -101,6 +101,28 @@ export class UserService {
     return this.http.get<UserName[]>(`${this.API_URL}/names`, {
       params: { ids: ids.join(',') }
     });
+  }
+
+  /** GET /api/users/lookup/doctors — active doctors for appointment booking. */
+  lookupDoctors(): Observable<UserLookup[]> {
+    return this.http.get<UserLookup[]>(`${this.API_URL}/lookup/doctors`);
+  }
+
+  /** GET /api/users/lookup/patients — doctor scheduling (optional name filter). */
+  lookupPatients(firstName?: string, lastName?: string): Observable<UserLookup[]> {
+    let params = new HttpParams();
+    if (firstName != null && firstName !== '') {
+      params = params.set('firstName', firstName);
+    }
+    if (lastName != null && lastName !== '') {
+      params = params.set('lastName', lastName);
+    }
+    return this.http.get<UserLookup[]>(`${this.API_URL}/lookup/patients`, { params });
+  }
+
+  /** POST /api/users/lookup/names — resolve user ids to names (appointments UI). */
+  lookupNamesByIds(ids: number[]): Observable<UserLookup[]> {
+    return this.http.post<UserLookup[]>(`${this.API_URL}/lookup/names`, { ids });
   }
 
 }

@@ -13,6 +13,7 @@
       <a routerLink="/statistics" routerLinkActive="active">Statistics</a>
       <a routerLink="/patients" routerLinkActive="active">Patients</a>
       <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
       <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
       <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
@@ -51,13 +52,13 @@
         </div>
       </div>
 
-      <!-- 👇 Insurance notifications bell -->
+      <!-- Insurance + appointment notifications -->
       <div class="notification-menu">
         <button
           class="notification-btn"
           type="button"
           (click)="toggleNotifications($event)"
-          aria-label="Insurance notifications"
+          aria-label="Notifications"
         >
           <span class="bell">🛡️</span>
           <span class="notification-badge" *ngIf="unreadNotificationCount > 0">
@@ -71,7 +72,7 @@
           (keydown)="$event.stopPropagation()"
         >
           <div class="notification-header">
-            <strong>Insurance notifications</strong>
+            <strong>Notifications</strong>
             <button
               type="button"
               class="mark-all-btn"
@@ -87,7 +88,7 @@
           </div>
 
           <div class="notification-state" *ngIf="!notificationsLoading && notifications.length === 0">
-            No insurance notifications.
+            No notifications yet.
           </div>
 
           <div class="notification-list" *ngIf="!notificationsLoading && notifications.length > 0">
@@ -114,7 +115,6 @@
           </div>
         </div>
       </div>
-      <!-- 👆 Insurance notifications bell -->
 
       <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
 
@@ -145,7 +145,7 @@
           >
             <div class="notif-content">
               <div class="notif-sender">💬 {{ notif.senderName }}</div>
-              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text?.length > 40 ? '...' : '' }}</div>
+              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text.length > 40 ? '...' : '' }}</div>
             </div>
             <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
           </div>
@@ -176,6 +176,7 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/appointments">Appointments</a>
       <a routerLink="/monitoring" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/articles">Articles</a>
       <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
