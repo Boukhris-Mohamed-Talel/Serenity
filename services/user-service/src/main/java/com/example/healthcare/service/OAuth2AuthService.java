@@ -134,7 +134,7 @@ public class OAuth2AuthService {
 
     private AuthResponseDTO buildAuthResponse(User user) {
         String role = "ROLE_" + user.getRole().name();
-        String token = jwtTokenProvider.generateToken(user.getEmail(), role);
+        String token = jwtTokenProvider.generateToken(user.getEmail(), role, user.getId());
 
         return AuthResponseDTO.builder()
                 .accessToken(token)

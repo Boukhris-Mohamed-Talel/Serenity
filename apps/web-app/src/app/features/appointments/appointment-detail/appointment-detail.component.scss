@@ -1,0 +1,19 @@
+.detail-card {
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  h2 {
+    margin-top: 0;
+  }
+}
+
+.tele-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.hint {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

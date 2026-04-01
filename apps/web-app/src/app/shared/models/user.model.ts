@@ -52,3 +52,18 @@ export interface AuthResponse {
   email: string;
   role: string;
 }
+
+/** Short user row for doctor/patient pickers (GET /api/users/lookup/doctors | .../patients). */
+export interface UserLookup {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export function formatUserLookupName(u: { firstName?: string | null; lastName?: string | null }): string {
+  const parts = [u.firstName, u.lastName].filter(
+    (x): x is string => typeof x === 'string' && x.trim().length > 0
+  );
+  return parts.length > 0 ? parts.join(' ') : '—';
+}

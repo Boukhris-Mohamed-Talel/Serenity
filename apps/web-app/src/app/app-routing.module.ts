@@ -30,6 +30,10 @@ const routes: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       {
+        path: 'pharmacy',
+        loadChildren: () => import('./features/pharmacy/pharmacy.module').then(m => m.PharmacyModule)
+      },
+      {
         path: 'profile',
         loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
       },
@@ -37,11 +41,14 @@ const routes: Routes = [
         path: 'users',
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
       },
-      // Insurance module (uncomment when features/insurance exists)
-      // {
-      //   path: 'insurance',
-      //   loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
-      // }
+      {
+        path: 'insurance',
+        loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
+      },
+      {
+        path: 'appointments',
+        loadChildren: () => import('./features/appointments/appointments.module').then(m => m.AppointmentsModule)
+      }
     ]
   },
   { path: '**', redirectTo: '' }

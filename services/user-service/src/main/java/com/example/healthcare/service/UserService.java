@@ -25,4 +25,10 @@ public interface UserService {
     void activateUser(Long id);
 
     void deleteUser(Long id);
+
+    List<UserLookupDTO> lookupDoctors();
+
+    List<UserLookupDTO> lookupPatients(String firstName, String lastName);
+
+    List<UserLookupDTO> lookupUsersByIds(List<Long> ids);
 }

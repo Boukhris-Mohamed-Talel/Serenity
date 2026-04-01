@@ -1,0 +1,62 @@
+<div class="container claim-list-page">
+  <div class="page-header">
+    <h1>{{ isAdmin ? 'All appointments' : 'My appointments' }}</h1>
+    <div class="header-actions">
+      <a *ngIf="authService.hasRole('PATIENT')" routerLink="book" class="btn btn-primary">Book appointment</a>
+      <a *ngIf="authService.hasRole('DOCTOR')" routerLink="schedule" class="btn btn-primary">Schedule for patient</a>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div *ngIf="loading" class="loading-container">
+    <span class="spinner"></span>
+    <p>Loading appointments...</p>
+  </div>
+
+  <div *ngIf="!loading && appointments.length === 0" class="card empty-card">
+    <p>No appointments yet.</p>
+  </div>
+
+  <div *ngIf="!loading && appointments.length > 0" class="card table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th *ngIf="isAdmin">Patient</th>
+          <th *ngIf="isAdmin">Doctor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of appointments" (click)="openRow(a)" class="click-row">
+          <td>{{ a.appointmentDate }}</td>
+          <td>{{ a.timeSlot }}</td>
+          <td>{{ a.type === 'TELECONSULTATION' ? 'Video' : 'In person' }}</td>
+          <td><span [ngClass]="statusClass(a.status)">{{ a.status }}</span></td>
+          <td *ngIf="isAdmin">{{ patientName(a) }}</td>
+          <td *ngIf="isAdmin">{{ doctorName(a) }}</td>
+          <td class="actions" (click)="$event.stopPropagation()">
+            <button
+              *ngIf="authService.hasRole('DOCTOR') && isDoctorFor(a) && a.status === 'PENDING'"
+              type="button"
+              class="btn btn-sm btn-primary"
+              (click)="confirm(a, $event)">
+              Confirm
+            </button>
+            <button
+              *ngIf="(isPatientFor(a) || isDoctorFor(a)) && (a.status === 'PENDING' || a.status === 'CONFIRMED')"
+              type="button"
+              class="btn btn-sm btn-secondary"
+              (click)="cancel(a, $event)">
+              Cancel
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

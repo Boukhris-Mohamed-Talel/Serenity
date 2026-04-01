@@ -1,0 +1,60 @@
+<div class="container claim-list-page" *ngIf="!loading && appointment">
+  <div class="page-header">
+    <h1>Appointment #{{ appointment.id }}</h1>
+    <button type="button" class="btn btn-secondary" (click)="back()">Back to list</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div class="card detail-card">
+    <p><strong>Date:</strong> {{ appointment.appointmentDate }} at {{ appointment.timeSlot }}</p>
+    <p><strong>Status:</strong> {{ appointment.status }}</p>
+    <p><strong>Type:</strong> {{ appointment.type === 'TELECONSULTATION' ? 'Teleconsultation' : 'In person' }}</p>
+    <p><strong>Patient:</strong> {{ patientDisplayName }}</p>
+    <p><strong>Doctor:</strong> {{ doctorDisplayName }}</p>
+    <p *ngIf="appointment.notes"><strong>Notes:</strong> {{ appointment.notes }}</p>
+  </div>
+
+  <div class="card detail-card" *ngIf="appointment.type === 'TELECONSULTATION'">
+    <h2>Teleconsultation</h2>
+
+    <ng-container *ngIf="appointment.status === 'COMPLETED'">
+      <p class="hint">This visit is completed. The meeting link is no longer available.</p>
+      <ng-container *ngIf="tele as t">
+        <p *ngIf="t.startTime"><strong>Started:</strong> {{ t.startTime | date: 'short' }}</p>
+        <p *ngIf="t.endTime"><strong>Ended:</strong> {{ t.endTime | date: 'short' }}</p>
+        <p><strong>Room status:</strong> {{ t.status }}</p>
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="appointment.status !== 'COMPLETED'">
+      <p class="hint">Jitsi Meet link is reserved for this appointment. Open it when the session starts.</p>
+      <ng-container *ngIf="tele as t">
+        <p><strong>Room status:</strong> {{ t.status }}</p>
+        <p *ngIf="t.startTime"><strong>Started:</strong> {{ t.startTime | date: 'short' }}</p>
+        <div class="tele-actions">
+          <button type="button" class="btn btn-primary" (click)="openRoom()" [disabled]="!t.meetingUrl">
+            Open meeting
+          </button>
+          <button
+            *ngIf="isDoctor || isPatient"
+            type="button"
+            class="btn btn-secondary"
+            (click)="startVideo()"
+            [disabled]="appointment.status !== 'CONFIRMED'">
+            Start / join session
+          </button>
+        </div>
+      </ng-container>
+      <p *ngIf="!tele && appointment.status === 'PENDING'">Video link is created when the doctor confirms.</p>
+    </ng-container>
+  </div>
+
+  <div class="card detail-card" *ngIf="isDoctor && appointment.status === 'CONFIRMED'">
+    <button type="button" class="btn btn-primary" (click)="complete()">Mark visit completed</button>
+  </div>
+</div>
+
+<div class="container" *ngIf="loading">
+  <p>Loading…</p>
+</div>

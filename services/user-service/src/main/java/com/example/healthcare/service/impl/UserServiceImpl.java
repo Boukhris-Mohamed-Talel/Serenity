@@ -18,10 +18,15 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -184,5 +189,76 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.delete(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupDoctors() {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.DOCTOR).stream()
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupPatients(String firstName, String lastName) {
+        String fn = firstName != null ? firstName.trim() : "";
+        String ln = lastName != null ? lastName.trim() : "";
+
+        // No filters: full list for doctor dropdown (sorted by name).
+        if (fn.isEmpty() && ln.isEmpty()) {
+            return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.PATIENT).stream()
+                    .map(this::toLookupDto)
+                    .toList();
+        }
+
+        if (fn.length() < 2 && ln.length() < 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Enter at least 2 characters in first name and/or last name to search.");
+        }
+        Specification<User> spec = (root, query, cb) -> {
+            var p = cb.and(
+                    cb.equal(root.get("role"), Role.PATIENT),
+                    cb.isTrue(root.get("isActive"))
+            );
+            if (fn.length() >= 2) {
+                p = cb.and(p, cb.like(cb.lower(root.get("firstName")), "%" + fn.toLowerCase() + "%"));
+            }
+            if (ln.length() >= 2) {
+                p = cb.and(p, cb.like(cb.lower(root.get("lastName")), "%" + ln.toLowerCase() + "%"));
+            }
+            return p;
+        };
+        return userRepository.findAll(spec).stream()
+                .map(this::toLookupDto)
+                .sorted(Comparator.comparing(UserLookupDTO::getLastName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(UserLookupDTO::getFirstName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupUsersByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        if (ids.size() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most 100 user ids per request.");
+        }
+        return ids.stream()
+                .distinct()
+                .map(userRepository::findById)
+                .flatMap(Optional::stream)
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    private UserLookupDTO toLookupDto(User user) {
+        return UserLookupDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .build();
     }
 }
