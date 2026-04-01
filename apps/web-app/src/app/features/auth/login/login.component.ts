@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   loginForm!: FormGroup;
   errorMessage = '';
+  infoMessage = '';
   loading = false;
   socialLoading = false;
   googleReady = false;
@@ -38,6 +39,11 @@ export class LoginComponent implements OnInit, AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
+
+    const stateMessage = history.state?.message;
+    if (typeof stateMessage === 'string' && stateMessage.trim()) {
+      this.infoMessage = stateMessage;
+    }
 
     this.initFacebookSdk();
   }

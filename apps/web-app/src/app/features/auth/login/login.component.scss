@@ -96,6 +96,19 @@
   margin-top: 0.5rem;
 }
 
+.forgot-link {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.2rem;
+
+  a {
+    font-size: 0.84rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+
 .social-divider {
   display: flex;
   align-items: center;
@@ -194,6 +207,12 @@
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
+}
+
+.alert-info {
+  background: rgba(64, 163, 173, 0.12);
+  color: #18656d;
+  border: 1px solid rgba(64, 163, 173, 0.3);
 }
 
 @media (max-width: 900px) {

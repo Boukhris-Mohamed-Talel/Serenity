@@ -54,3 +54,25 @@ export interface AuthResponse {
   /** Synced from profile (`/users/me`) for pending-doctor polling; `1` means active. */
   is_active?: number;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordVerifyRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ForgotPasswordResetRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
+export interface ForgotPasswordVerifyResponse extends MessageResponse {
+  resetToken: string;
+}

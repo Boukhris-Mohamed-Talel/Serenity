@@ -2,7 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, UserRequest } from '../../shared/models/user.model';
+import {
+  AuthResponse,
+  ForgotPasswordResetRequest,
+  ForgotPasswordVerifyRequest,
+  ForgotPasswordVerifyResponse,
+  LoginRequest,
+  MessageResponse,
+  UserRequest
+} from '../../shared/models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +50,20 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.API_URL}/oauth2/facebook`, { token: accessToken }).pipe(
       tap(response => this.storeAuth(response))
     );
+  }
+
+  requestPasswordOtp(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.API_URL}/password/forgot/request`, { email });
+  }
+
+  verifyPasswordOtp(email: string, otp: string): Observable<ForgotPasswordVerifyResponse> {
+    const request: ForgotPasswordVerifyRequest = { email, otp };
+    return this.http.post<ForgotPasswordVerifyResponse>(`${this.API_URL}/password/forgot/verify`, request);
+  }
+
+  resetForgottenPassword(token: string, newPassword: string): Observable<MessageResponse> {
+    const request: ForgotPasswordResetRequest = { token, newPassword };
+    return this.http.post<MessageResponse>(`${this.API_URL}/password/forgot/reset`, request);
   }
 
   onLogout(callback: () => void): void {
