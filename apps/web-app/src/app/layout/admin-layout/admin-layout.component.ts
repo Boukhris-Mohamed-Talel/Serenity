@@ -19,7 +19,6 @@ export class AdminLayoutComponent implements OnInit {
   navItems = [
     { label: 'Dashboard', icon: 'grid', route: '/admin' },
     { label: 'Users', icon: 'users', route: '/admin/users' },
-    { label: 'Insurance Claims', icon: 'shield', route: '/admin/insurance' },
     { label: 'Appointments', icon: 'users', route: '/admin/appointments' },
     { label: 'Edit User', icon: 'edit', route: '/admin/users/edit', hidden: true }
   ];

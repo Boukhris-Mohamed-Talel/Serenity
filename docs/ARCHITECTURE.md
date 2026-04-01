@@ -7,11 +7,12 @@ The repo is organized so each backend domain is a **separate service** under `se
 ```
 healthcare-system/
 ├── apps/
-│   └── web-app/                 # Angular SPA (calls user-service + insurance-service)
+│   └── web-app/                 # Angular SPA (calls API gateway)
 │
 ├── services/
 │   ├── user-service/            # Auth, user CRUD, profiles (port 8081)
-│   ├── insurance-service/      # Claims, reimbursements (port 8082)
+│   ├── API_Gatewya/             # Spring Cloud Gateway (port 8082)
+│   ├── appointment-service/     # Appointments (port 8091)
 │   └── README.md
 │
 ├── docs/
@@ -22,18 +23,20 @@ healthcare-system/
 
 ## Services
 
-| Service             | Port | Role |
-|---------------------|------|------|
-| **user-service**    | 8081 | Login, register, user management, profiles. JWT auth. |
-| **insurance-service** | 8082 | Submit claims, list claims, approve/reject. Uses `X-User-Id` header for caller identity. |
+| Service | Port | Role |
+|---------|------|------|
+| **user-service** | 8081 | Login, register, user management, profiles. JWT auth. |
+| **API_Gatewya** | 8082 | Routes `/api/auth/**`, `/api/users/**`, `/api/appointments/**` to the appropriate backends. |
+| **appointment-service** | 8091 | Appointments, notifications. Uses JWT from the gateway. |
 
-The web-app talks to both: user-service for auth and users, insurance-service for insurance endpoints (and passes the logged-in user id in `X-User-Id`).
+The web-app uses the gateway as its API base URL; the gateway forwards requests and can attach user context headers.
 
 ## Run order
 
 1. MySQL up, database created.
 2. `cd services/user-service && mvn spring-boot:run`
-3. `cd services/insurance-service && mvn spring-boot:run`
-4. `cd apps/web-app && npm install && ng serve`
+3. `cd services/appointment-service && mvn spring-boot:run`
+4. `cd services/API_Gatewya && mvn spring-boot:run`
+5. `cd apps/web-app && npm install && ng serve`
 
 See [README.md](../README.md) and [services/README.md](../services/README.md) for details.

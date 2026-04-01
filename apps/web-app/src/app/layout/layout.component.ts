@@ -1,12 +1,10 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, of, Subscription } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
-import { InsuranceService } from '../core/services/insurance.service';
 import { AppointmentService } from '../core/services/appointment.service';
-import { InsuranceNotification } from '../shared/models/insurance.model';
 import { AppointmentNotification, NavbarNotification } from '../shared/models/appointment.model';
 import { UserResponse } from '../shared/models/user.model';
 
@@ -31,7 +29,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   constructor(
     public readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly insuranceService: InsuranceService,
     private readonly appointmentService: AppointmentService,
     private readonly router: Router
   ) {}
@@ -83,8 +80,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
         return '🛡️';
       case 'DOCTOR':
         return '👨‍⚕️';
-      case 'PHARMACIST':
-        return '💊';
       default:
         return '🧑';
     }
@@ -117,13 +112,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
     const wasUnread = !notification.isRead;
 
     if (wasUnread) {
-      this.locallyReadNotificationIds.add(`${notification.source}-${notification.id}`);
+      this.locallyReadNotificationIds.add(`appointment-${notification.id}`);
       notification.isRead = true;
-      const req$ =
-        notification.source === 'insurance'
-          ? this.insuranceService.markNotificationAsRead(notification.id)
-          : this.appointmentService.markAppointmentNotificationRead(notification.id);
-      req$.subscribe({
+      this.appointmentService.markAppointmentNotificationRead(notification.id).subscribe({
         next: () => {
           this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
           this.refreshNotifications();
@@ -132,9 +123,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
 
     this.notificationsOpen = false;
-    if (notification.claimId != null) {
-      this.router.navigate(['/insurance', notification.claimId]);
-    } else if (notification.appointmentId != null) {
+    if (notification.appointmentId != null) {
       const base = this.router.url.split('?')[0].includes('/admin/')
         ? '/admin/appointments'
         : '/appointments';
@@ -145,12 +134,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
   markAllAsRead(event: MouseEvent): void {
     event.stopPropagation();
     for (const notification of this.notifications) {
-      this.locallyReadNotificationIds.add(`${notification.source}-${notification.id}`);
+      this.locallyReadNotificationIds.add(`appointment-${notification.id}`);
     }
-    forkJoin([
-      this.insuranceService.markAllNotificationsAsRead().pipe(catchError(() => of(undefined))),
-      this.appointmentService.markAllAppointmentNotificationsRead().pipe(catchError(() => of(undefined)))
-    ]).subscribe({
+    this.appointmentService.markAllAppointmentNotificationsRead().pipe(catchError(() => of(undefined))).subscribe({
       next: () => {
         this.notifications = this.notifications.map((n) => ({ ...n, isRead: true }));
         this.unreadNotificationCount = 0;
@@ -170,76 +156,34 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   private refreshNotifications(): void {
-    forkJoin({
-      insurance: this.insuranceService.getUnreadNotificationsCount().pipe(
-        catchError(() => of({ unreadCount: 0 }))
-      ),
-      appointment: this.appointmentService.getAppointmentNotificationsUnreadCount().pipe(
-        catchError(() => of({ unreadCount: 0 }))
-      )
-    }).subscribe({
-      next: ({ insurance, appointment }) => {
-        this.unreadNotificationCount =
-          (insurance.unreadCount || 0) + (appointment.unreadCount || 0);
+    this.appointmentService.getAppointmentNotificationsUnreadCount().pipe(
+      catchError(() => of({ unreadCount: 0 }))
+    ).subscribe({
+      next: (r) => {
+        this.unreadNotificationCount = r.unreadCount || 0;
       }
     });
   }
 
   private loadNotifications(): void {
     this.notificationsLoading = true;
-    let insuranceRows: InsuranceNotification[] = [];
-    let appointmentRows: AppointmentNotification[] = [];
-    let pending = 2;
-
-    const finish = (): void => {
-      const merged: NavbarNotification[] = [
-        ...insuranceRows.map((n) => ({
-          source: 'insurance' as const,
-          id: n.id,
-          title: n.title,
-          message: n.message,
-          isRead: n.isRead || this.locallyReadNotificationIds.has(`insurance-${n.id}`),
-          createdAt: this.normalizeNotificationDate(n.createdAt),
-          claimId: n.claimId,
-          appointmentId: null
-        })),
-        ...appointmentRows.map((n) => ({
-          source: 'appointment' as const,
+    this.appointmentService.getAppointmentNotifications().pipe(catchError(() => of([] as AppointmentNotification[]))).subscribe({
+      next: (rows) => {
+        const appointmentRows = rows || [];
+        this.notifications = appointmentRows.map((n) => ({
           id: n.id,
           title: n.title,
           message: n.message,
           isRead: n.isRead || this.locallyReadNotificationIds.has(`appointment-${n.id}`),
           createdAt: this.normalizeNotificationDate(n.createdAt),
-          claimId: null,
           appointmentId: n.appointmentId
-        }))
-      ];
-      merged.sort((a, b) => this.notificationSortKey(b.createdAt) - this.notificationSortKey(a.createdAt));
-      this.notifications = merged;
-      this.notificationsLoading = false;
-    };
-
-    const step = (): void => {
-      pending -= 1;
-      if (pending === 0) {
-        finish();
+        }));
+        this.notifications.sort((a, b) => this.notificationSortKey(b.createdAt) - this.notificationSortKey(a.createdAt));
+        this.notificationsLoading = false;
+      },
+      error: () => {
+        this.notificationsLoading = false;
       }
-    };
-
-    this.insuranceService.getMyNotifications().pipe(catchError(() => of([] as InsuranceNotification[]))).subscribe({
-      next: (rows) => {
-        insuranceRows = rows || [];
-        step();
-      },
-      error: () => step()
-    });
-
-    this.appointmentService.getAppointmentNotifications().pipe(catchError(() => of([] as AppointmentNotification[]))).subscribe({
-      next: (rows) => {
-        appointmentRows = rows || [];
-        step();
-      },
-      error: () => step()
     });
   }
 

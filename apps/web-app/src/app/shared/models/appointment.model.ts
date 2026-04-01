@@ -67,16 +67,14 @@ export interface AppointmentUnreadCountResponse {
   unreadCount: number;
 }
 
-/** Merged bell dropdown: insurance + appointment notifications. */
+/** Bell dropdown: appointment notifications. */
 export interface NavbarNotification {
-  source: 'insurance' | 'appointment';
   id: number;
   title: string;
   message: string;
   isRead: boolean;
   createdAt: string;
-  claimId?: number | null;
-  appointmentId?: number | null;
+  appointmentId: number | null;
 }
 
 export function appointmentParticipantDisplayName(

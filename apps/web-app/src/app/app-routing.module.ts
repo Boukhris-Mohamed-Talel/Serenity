@@ -30,20 +30,12 @@ const routes: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       {
-        path: 'pharmacy',
-        loadChildren: () => import('./features/pharmacy/pharmacy.module').then(m => m.PharmacyModule)
-      },
-      {
         path: 'profile',
         loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
       },
       {
         path: 'users',
         loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule)
-      },
-      {
-        path: 'insurance',
-        loadChildren: () => import('./features/insurance/insurance.module').then(m => m.InsuranceModule)
       },
       {
         path: 'appointments',

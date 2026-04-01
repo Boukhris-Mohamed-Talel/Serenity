@@ -2,10 +2,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { LocationPickerComponent } from './components/location-picker/location-picker.component';
 
 @NgModule({
-  declarations: [LocationPickerComponent],
+  declarations: [],
   imports: [
     CommonModule,
     FormsModule,
@@ -16,8 +15,7 @@ import { LocationPickerComponent } from './components/location-picker/location-p
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    RouterModule,
-    LocationPickerComponent
+    RouterModule
   ]
 })
 export class SharedModule {}

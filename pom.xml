@@ -13,9 +13,7 @@
 
     <modules>
         <module>services/user-service</module>
-        <module>services/insurance-service</module>
         <module>services/API_Gatewya</module>
-        <module>services/pharmacy-service</module>
         <module>services/appointment-service</module>
     </modules>
 </project>

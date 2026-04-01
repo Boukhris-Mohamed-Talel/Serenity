@@ -12,18 +12,6 @@
       <a routerLink="/profile" routerLinkActive="active">
         Profile
       </a>
-      <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">
-        Pharmacy Workspace
-      </a>
-      <a routerLink="/pharmacy/doctor" routerLinkActive="active" *ngIf="authService.hasRole('DOCTOR')">
-        Pharmacy
-      </a>
-      <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">
-        Pharmacy
-      </a>
-      <a routerLink="/insurance" routerLinkActive="active">
-        Insurance Claims
-      </a>
       <a routerLink="/appointments" routerLinkActive="active">
         Appointments
       </a>
@@ -99,9 +87,6 @@
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
       <a routerLink="/appointments">Appointments</a>
-      <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
-      <a routerLink="/pharmacy/doctor" *ngIf="authService.hasRole('DOCTOR')">Pharmacy</a>
-      <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

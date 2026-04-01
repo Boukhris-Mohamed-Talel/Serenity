@@ -43,11 +43,6 @@ public class JwtGatewayFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
-        // Unauthenticated file access (portal attachment links, direct URLs to insurance-service uploads).
-        if (path.startsWith("/api/files")) {
-            return chain.filter(exchange);
-        }
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
