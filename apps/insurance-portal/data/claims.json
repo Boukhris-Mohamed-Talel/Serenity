@@ -288,5 +288,22 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F62d1dc4e-23d9-4a0c-8238-ea3f11b4d03b_poster4.png"
     ]
+  },
+  {
+    "ref": "ddf50c20-767f-4428-87da-1773df1b292b",
+    "patientName": "2",
+    "description": "test oafejkfmqslf",
+    "amount": 500,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 125,
+    "receivedAt": "2026-04-01T10:15:02.850Z",
+    "processedAt": "2026-04-01T10:15:32.823Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F2%2Fc4c19b13-f6b1-47f4-97df-50a7ca0cc881_Screenshot+2025-11-07+143248.png"
+    ]
   }
 ]
