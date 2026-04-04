@@ -75,6 +75,7 @@
       </div>
 
       <div class="rx-actions">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="downloadPdf(p.id)">📄 PDF / QR Code</button>
         <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
         <button type="button" class="btn btn-danger btn-sm" (click)="openDeletePrescription(p.id)">Delete</button>
       </div>

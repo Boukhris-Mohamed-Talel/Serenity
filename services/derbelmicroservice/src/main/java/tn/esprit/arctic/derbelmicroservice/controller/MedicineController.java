@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import tn.esprit.arctic.derbelmicroservice.dto.request.MedicineRequestDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.ApiResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.MedicineResponseDTO;
+import tn.esprit.arctic.derbelmicroservice.dto.response.OpenFDAMedicineDTO;
 import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IMedicineService;
 
@@ -34,6 +35,29 @@ public class MedicineController {
                 .message("Liste des médicaments récupérée avec succès")
                 .data(list)
                 .build());
+    }
+
+    @GetMapping("/external-search")
+    public ResponseEntity<ApiResponseDTO<List<OpenFDAMedicineDTO>>> searchExternalMedicines(
+            @RequestParam String query) {
+        DerbelAuth.requireDoctorOrAdmin();
+        return ResponseEntity.ok(ApiResponseDTO.<List<OpenFDAMedicineDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Résultats OpenFDA récupérés avec succès")
+                .data(medicineService.searchExternalFdaMedicines(query))
+                .build());
+    }
+
+    @PostMapping("/get-or-create")
+    public ResponseEntity<ApiResponseDTO<MedicineResponseDTO>> getOrCreateMedicine(
+            @Valid @RequestBody MedicineRequestDTO dto) {
+        DerbelAuth.requireDoctorOrAdmin();
+        MedicineResponseDTO created = medicineService.getOrCreateMedicine(dto);
+        return new ResponseEntity<>(ApiResponseDTO.<MedicineResponseDTO>builder()
+                .status(HttpStatus.CREATED.value())
+                .message("Médicament récupéré ou créé avec succès")
+                .data(created)
+                .build(), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -79,4 +103,5 @@ public class MedicineController {
                 .message("Médicament supprimé avec succès")
                 .build());
     }
+
 }

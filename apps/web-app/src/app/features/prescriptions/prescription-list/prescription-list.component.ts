@@ -51,6 +51,22 @@ export class PrescriptionListComponent implements OnInit {
     });
   }
 
+  downloadPdf(id: number): void {
+    this.prescriptionService.downloadPdf(id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ordonnance-${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.notification.error('Erreur lors du téléchargement du PDF')
+    });
+  }
+
   openDeletePrescription(id: number): void {
     this.deleteConfirm = { id };
   }
