@@ -215,7 +215,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let a of displayedAppointments" (click)="openRow(a)" class="click-row">
+            <tr
+              *ngFor="let a of displayedAppointments"
+              class="click-row"
+              role="button"
+              tabindex="0"
+              (click)="openRow(a)"
+              (keydown.enter)="openRow(a)"
+              (keydown.space)="$event.preventDefault(); openRow(a)">
               <td>{{ a.appointmentDate }}</td>
               <td>{{ a.timeSlot }}</td>
               <td>{{ a.type === 'TELECONSULTATION' ? 'Video' : 'In person' }}</td>
