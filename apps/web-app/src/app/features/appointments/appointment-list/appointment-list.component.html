@@ -229,7 +229,7 @@
               <td><span [ngClass]="statusClass(a.status)">{{ a.status }}</span></td>
               <td *ngIf="scopeAll">{{ patientName(a) }}</td>
               <td *ngIf="scopeAll">{{ doctorName(a) }}</td>
-              <td class="actions" (click)="$event.stopPropagation()">
+              <td class="actions" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                 <button
                   *ngIf="authService.hasRole('DOCTOR') && isDoctorFor(a) && a.status === 'PENDING'"
                   type="button"
