@@ -2,10 +2,12 @@ package com.example.insurance.controller;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.security.InsuranceAuth;
 import com.example.insurance.service.InsuranceClaimService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -52,6 +54,24 @@ public class InsuranceClaimController {
         ));
     }
 
+    @GetMapping("/claims/me/paged")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PageResponseDTO<InsuranceClaimResponseDTO>> getMyClaimsPaged(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String insuranceCompany,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "claimDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "12") @Min(1) Integer size
+    ) {
+        Long userId = InsuranceAuth.requireUserId();
+        return ResponseEntity.ok(insuranceClaimService.getClaimsByUserIdPaged(
+                userId, status, insuranceCompany, fromDate, toDate, sortBy, sortDir, page, size
+        ));
+    }
+
     @GetMapping("/claims")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<InsuranceClaimResponseDTO>> getAllClaims(
@@ -64,6 +84,24 @@ public class InsuranceClaimController {
     ) {
         return ResponseEntity.ok(insuranceClaimService.getAllClaims(
                 status, insuranceCompany, fromDate, toDate, sortBy, sortDir
+        ));
+    }
+
+    @GetMapping("/claims/paged")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PageResponseDTO<InsuranceClaimResponseDTO>> getAllClaimsPaged(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String insuranceCompany,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "claimDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "12") @Min(1) Integer size
+    ) {
+        return ResponseEntity.ok(insuranceClaimService.getAllClaimsPaged(
+                status, insuranceCompany, fromDate, toDate, sortBy, sortDir, userId, page, size
         ));
     }
 

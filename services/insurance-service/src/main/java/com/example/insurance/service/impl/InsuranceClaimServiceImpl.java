@@ -2,6 +2,7 @@ package com.example.insurance.service.impl;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RemboursementResponseDTO;
 import com.example.insurance.integration.InsurancePortalClient;
 import com.example.insurance.integration.PortalSubmitClaimRequest;
@@ -16,6 +17,9 @@ import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -153,6 +157,44 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     ) {
         return findClaims(null, status, insuranceCompany, fromDate, toDate, sortBy, sortDir)
                 .stream().map(this::toResponseDTO).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponseDTO<InsuranceClaimResponseDTO> getClaimsByUserIdPaged(
+            Long userId,
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir,
+            int page,
+            int size
+    ) {
+        Page<InsuranceClaimResponseDTO> dtoPage = findClaimsPaged(
+                userId, status, insuranceCompany, fromDate, toDate, sortBy, sortDir, null, page, size
+        ).map(this::toResponseDTO);
+        return PageResponseDTO.fromPage(dtoPage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponseDTO<InsuranceClaimResponseDTO> getAllClaimsPaged(
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir,
+            Long userId,
+            int page,
+            int size
+    ) {
+        Page<InsuranceClaimResponseDTO> dtoPage = findClaimsPaged(
+                null, status, insuranceCompany, fromDate, toDate, sortBy, sortDir, userId, page, size
+        ).map(this::toResponseDTO);
+        return PageResponseDTO.fromPage(dtoPage);
     }
 
     @Override
@@ -326,17 +368,53 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             String sortByRaw,
             String sortDirRaw
     ) {
+        Sort sort = buildSort(sortByRaw, sortDirRaw);
+        Specification<InsuranceClaim> spec = buildClaimSpecification(userId, statusRaw, insuranceCompany, fromDate, toDate, null);
+        return claimRepository.findAll(spec, sort);
+    }
+
+    private Page<InsuranceClaim> findClaimsPaged(
+            Long userId,
+            String statusRaw,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortByRaw,
+            String sortDirRaw,
+            Long adminUserFilterId,
+            int page,
+            int size
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(size, 1);
+        Sort sort = buildSort(sortByRaw, sortDirRaw);
+        Pageable pageable = PageRequest.of(safePage, safeSize, sort);
+        Specification<InsuranceClaim> spec = buildClaimSpecification(
+                userId, statusRaw, insuranceCompany, fromDate, toDate, adminUserFilterId
+        );
+        return claimRepository.findAll(spec, pageable);
+    }
+
+    private Specification<InsuranceClaim> buildClaimSpecification(
+            Long userId,
+            String statusRaw,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Long adminUserFilterId
+    ) {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromDate cannot be after toDate");
         }
 
         ClaimStatus status = parseStatus(statusRaw);
-        Sort sort = buildSort(sortByRaw, sortDirRaw);
-
         Specification<InsuranceClaim> spec = Specification.where(null);
 
         if (userId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("userId"), userId));
+        }
+        if (adminUserFilterId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("userId"), adminUserFilterId));
         }
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
@@ -356,8 +434,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             spec = spec.and((root, query, cb) ->
                     cb.lessThan(root.get("claimDate"), java.util.Date.from(toInstant)));
         }
-
-        return claimRepository.findAll(spec, sort);
+        return spec;
     }
 
     private ClaimStatus parseStatus(String statusRaw) {

@@ -342,5 +342,39 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F23%2Ffa57fdf4-17bb-478b-b155-7fa4ce4e9c64_SerLogo+%281%29.png"
     ]
+  },
+  {
+    "ref": "b657aab6-3329-488e-9f35-f309af41d7aa",
+    "patientName": "3",
+    "description": "this is to test pagination",
+    "amount": 125,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 1,
+    "status": "APPROVED",
+    "reimbursementAmount": 12.5,
+    "receivedAt": "2026-04-05T12:58:32.890Z",
+    "processedAt": "2026-04-05T12:59:01.211Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fdcfed4cd-1416-45bb-9daa-df8f5d1634dc_SerLogo+%281%29.png"
+    ]
+  },
+  {
+    "ref": "075ea340-d06f-4328-aee3-7babbfd4a9b1",
+    "patientName": "3",
+    "description": "this is to test pagination 2",
+    "amount": 150,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 18,
+    "receivedAt": "2026-04-05T12:58:50.018Z",
+    "processedAt": "2026-04-05T12:58:57.710Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F323dba02-f273-41a7-9eb4-7920985fd3f3_SerLogo__1_-removebg-preview.png"
+    ]
   }
 ]

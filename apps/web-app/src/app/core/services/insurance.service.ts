@@ -9,6 +9,7 @@ import {
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
+import { PageResponseDTO } from '../../models/page-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -55,6 +56,37 @@ export class InsuranceService {
     });
   }
 
+  getMyClaimsPaged(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponseDTO<InsuranceClaimResponse>> {
+    return this.http.get<PageResponseDTO<InsuranceClaimResponse>>(`${this.API_URL}/claims/me/paged`, {
+      params: this.buildClaimQueryParams(filters)
+    });
+  }
+
+  getAllClaimsPaged(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+    userId?: number;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponseDTO<InsuranceClaimResponse>> {
+    return this.http.get<PageResponseDTO<InsuranceClaimResponse>>(`${this.API_URL}/claims/paged`, {
+      params: this.buildClaimQueryParams(filters)
+    });
+  }
+
   getClaimById(id: number): Observable<InsuranceClaimResponse> {
     return this.http.get<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}`);
   }
@@ -94,6 +126,9 @@ export class InsuranceService {
     toDate?: string;
     sortBy?: string;
     sortDir?: string;
+    userId?: number;
+    page?: number;
+    size?: number;
   }): HttpParams {
     let params = new HttpParams();
     if (!filters) return params;
@@ -104,6 +139,9 @@ export class InsuranceService {
     if (filters.toDate) params = params.set('toDate', filters.toDate);
     if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
     if (filters.sortDir) params = params.set('sortDir', filters.sortDir);
+    if (filters.userId != null) params = params.set('userId', String(filters.userId));
+    if (filters.page != null) params = params.set('page', String(filters.page));
+    if (filters.size != null) params = params.set('size', String(filters.size));
     return params;
   }
 }

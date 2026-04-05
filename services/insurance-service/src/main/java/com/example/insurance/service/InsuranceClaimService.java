@@ -2,6 +2,7 @@ package com.example.insurance.service;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.PageResponseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -32,6 +33,30 @@ public interface InsuranceClaimService {
             LocalDate toDate,
             String sortBy,
             String sortDir
+    );
+
+    PageResponseDTO<InsuranceClaimResponseDTO> getClaimsByUserIdPaged(
+            Long userId,
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir,
+            int page,
+            int size
+    );
+
+    PageResponseDTO<InsuranceClaimResponseDTO> getAllClaimsPaged(
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir,
+            Long userId,
+            int page,
+            int size
     );
 
     InsuranceClaimResponseDTO getClaimById(Long id, Long requesterUserId, boolean isAdmin);

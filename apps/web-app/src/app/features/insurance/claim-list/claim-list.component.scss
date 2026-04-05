@@ -327,3 +327,35 @@
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.16);
 }
+
+.pagination-bar {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.page-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.page-btn {
+  min-width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.2);
+    font-weight: 600;
+  }
+}

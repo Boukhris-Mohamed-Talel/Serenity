@@ -18,7 +18,7 @@
       <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
       <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/articles" routerLinkActive="active">Articles</a>
-      <a routerLink="/insurance" routerLinkActive="active">Insurance</a>
+      <a routerLink="/insurance" routerLinkActive="active" *ngIf="authService.isPatient()">Insurance</a>
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
     </div>
 

@@ -12,7 +12,12 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./claim-list.component.scss']
 })
 export class ClaimListComponent implements OnInit, OnDestroy {
+  private static readonly PAGE_SIZE = 12;
+
   claims: InsuranceClaimResponse[] = [];
+  currentPage = 0;
+  totalPages = 0;
+  totalElements = 0;
   loading = true;
   errorMessage = '';
   isAdmin = false;
@@ -52,21 +57,32 @@ export class ClaimListComponent implements OnInit, OnDestroy {
 
   loadClaims(): void {
     this.loading = true;
+    const selectedUserId =
+      this.isAdmin && this.userFilter !== 'ALL' ? Number(this.userFilter) : undefined;
     const backendFilters = {
       status: this.statusFilter === 'ALL' ? undefined : this.statusFilter,
       fromDate: this.fromDate || undefined,
       toDate: this.toDate || undefined,
       sortBy: this.sortBy === 'DATE' ? 'claimDate' : 'reimbursementAmount',
-      sortDir: this.sortDirection.toLowerCase()
+      sortDir: this.sortDirection.toLowerCase(),
+      userId: Number.isFinite(selectedUserId) ? selectedUserId : undefined,
+      page: this.currentPage,
+      size: ClaimListComponent.PAGE_SIZE
     };
 
     const source$ = this.isAdmin
-      ? this.insuranceService.getAllClaims(backendFilters)
-      : this.insuranceService.getMyClaims(backendFilters);
+      ? this.insuranceService.getAllClaimsPaged(backendFilters)
+      : this.insuranceService.getMyClaimsPaged(backendFilters);
 
     source$.subscribe({
-      next: (claims) => {
-        this.claims = claims;
+      next: (response) => {
+        this.claims = response.content || [];
+        this.totalElements = response.totalElements || 0;
+        this.totalPages = response.totalPages || 0;
+        if (this.totalPages > 0 && this.currentPage >= this.totalPages) {
+          this.updateQueryParams({ page: this.totalPages - 1 });
+          return;
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -89,24 +105,13 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   }
 
   get filteredClaims(): InsuranceClaimResponse[] {
-    let list = [...this.claims];
-
-    if (this.isAdmin && this.userFilter !== 'ALL') {
-      list = list.filter(c => this.getUserKey(c) === this.userFilter);
-    }
-
-    return list;
+    return this.claims;
   }
 
   get availableUsers(): { key: string; label: string }[] {
-    const map = new Map<string, string>();
-    for (const claim of this.claims) {
-      const key = this.getUserKey(claim);
-      const label = this.getUserLabel(claim);
-      map.set(key, label);
-    }
-    return Array.from(map.entries())
-      .map(([key, label]) => ({ key, label }))
+    return Array.from(this.userLabelsByUserId.entries())
+      .map(([id, label]) => ({ key: String(id), label }))
+      .filter((user) => user.key.trim().length > 0)
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -118,7 +123,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
       fromDate: null,
       toDate: null,
       sortBy: null,
-      sortDir: null
+      sortDir: null,
+      page: null
     });
   }
 
@@ -128,7 +134,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     }
     this.updateQueryParams({
       fromDate: this.fromDate || null,
-      toDate: this.toDate || null
+      toDate: this.toDate || null,
+      page: 0
     });
   }
 
@@ -138,7 +145,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     }
     this.updateQueryParams({
       fromDate: this.fromDate || null,
-      toDate: this.toDate || null
+      toDate: this.toDate || null,
+      page: 0
     });
   }
 
@@ -151,7 +159,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     this.statusFilter = value;
     this.openDropdown = null;
     this.updateQueryParams({
-      status: value === 'ALL' ? null : value
+      status: value === 'ALL' ? null : value,
+      page: 0
     });
   }
 
@@ -159,7 +168,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     this.userFilter = value;
     this.openDropdown = null;
     this.updateQueryParams({
-      user: value === 'ALL' ? null : value
+      user: value === 'ALL' ? null : value,
+      page: 0
     });
   }
 
@@ -167,7 +177,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     this.sortBy = value;
     this.openDropdown = null;
     this.updateQueryParams({
-      sortBy: value === 'DATE' ? 'claimDate' : 'reimbursementAmount'
+      sortBy: value === 'DATE' ? 'claimDate' : 'reimbursementAmount',
+      page: 0
     });
   }
 
@@ -175,7 +186,8 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     this.sortDirection = value;
     this.openDropdown = null;
     this.updateQueryParams({
-      sortDir: value.toLowerCase()
+      sortDir: value.toLowerCase(),
+      page: 0
     });
   }
 
@@ -200,7 +212,27 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     if (this.userFilter === 'ALL') {
       return 'All users';
     }
-    return this.availableUsers.find(u => u.key === this.userFilter)?.label || 'All users';
+    return this.userLabelsByUserId.get(Number(this.userFilter)) || 'All users';
+  }
+
+  get pageNumbers(): number[] {
+    if (this.totalPages <= 1) {
+      return [];
+    }
+    const start = Math.max(0, this.currentPage - 2);
+    const end = Math.min(this.totalPages - 1, this.currentPage + 2);
+    const pages: number[] = [];
+    for (let p = start; p <= end; p++) {
+      pages.push(p);
+    }
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages || page === this.currentPage) {
+      return;
+    }
+    this.updateQueryParams({ page });
   }
 
   @HostListener('document:click')
@@ -258,6 +290,9 @@ export class ClaimListComponent implements OnInit, OnDestroy {
 
     const userParam = params.get('user');
     this.userFilter = this.isAdmin && userParam ? userParam : 'ALL';
+
+    const pageParam = Number(params.get('page'));
+    this.currentPage = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
   }
 
   private updateQueryParams(queryParams: {
@@ -267,6 +302,7 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     toDate?: string | null;
     sortBy?: string | null;
     sortDir?: string | null;
+    page?: number | null;
   }): void {
     this.router.navigate([], {
       relativeTo: this.route,
