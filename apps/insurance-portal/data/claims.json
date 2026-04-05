@@ -305,5 +305,25 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F4%2Faebd329c-f52c-4181-9082-0bdac3343da6_Screenshot+2025-11-07+143248.png"
     ]
+  },
+  {
+    "ref": "d1741a65-fdbb-41fd-8c90-aac2da8753ee",
+    "patientName": "21",
+    "description": "this is a testing for validation on claim form",
+    "amount": 149.92,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 26.99,
+    "receivedAt": "2026-04-05T11:47:41.465Z",
+    "processedAt": "2026-04-05T11:48:41.581Z",
+    "rejectReason": null,
+    "adjustmentReason": "all good",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F367d32df-239e-4aeb-8ce8-e257640c2934_SerLogo__1_-removebg-preview.png",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F830d95a5-c69e-4807-8775-541a32bb82dc_SerLogo+%281%29.png",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F66b7766c-af19-4837-b461-6554295822fe_mental-health-record-tester-Patient-1774783731974.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F74d81723-ba88-47bc-84de-097db9fb5a13_SerLogo+%281%29.png"
+    ]
   }
 ]

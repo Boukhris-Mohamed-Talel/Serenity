@@ -16,6 +16,8 @@ import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,14 +29,25 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class InsuranceClaimServiceImpl implements InsuranceClaimService {
+    private static final Set<String> ALLOWED_INSURANCE_COMPANIES = Set.of(
+            "Insurance 1", "Insurance 2", "Insurance 3", "Insurance 4", "Insurance 5"
+    );
+    private static final Set<String> ALLOWED_FILE_TYPES = Set.of(
+            "application/pdf", "image/jpeg", "image/png"
+    );
+    private static final int MAX_FILES = 5;
+    private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
 
     private final InsuranceClaimRepository claimRepository;
     private final RemboursementRepository remboursementRepository;
@@ -48,6 +61,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
     @Override
     public InsuranceClaimResponseDTO submitClaim(Long userId, InsuranceClaimRequestDTO request, List<MultipartFile> files) {
+        validateBusinessRules(request, files);
+
         List<String> filePaths = new ArrayList<>();
         if (files != null && !files.isEmpty()) {
             filePaths = saveFiles(files, userId);
@@ -59,10 +74,10 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         Double reimbursementAmount = calculateReimbursement(request.getAmount(), request.getInsuranceGrade());
 
         InsuranceClaim claim = InsuranceClaim.builder()
-                .description(request.getDescription())
+                .description(request.getDescription().trim())
                 .amount(request.getAmount())
                 .reimbursementAmount(reimbursementAmount)
-                .insuranceCompany(request.getInsuranceCompany())
+                .insuranceCompany(request.getInsuranceCompany().trim())
                 .insuranceGrade(request.getInsuranceGrade())
                 .reason(null)
                 .status(ClaimStatus.PENDING)
@@ -101,14 +116,41 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     @Override
     @Transactional(readOnly = true)
     public List<InsuranceClaimResponseDTO> getClaimsByUserId(Long userId) {
-        return claimRepository.findByUserIdOrderByClaimDateDesc(userId)
+        return getClaimsByUserId(userId, null, null, null, null, "claimDate", "desc");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InsuranceClaimResponseDTO> getClaimsByUserId(
+            Long userId,
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir
+    ) {
+        return findClaims(userId, status, insuranceCompany, fromDate, toDate, sortBy, sortDir)
                 .stream().map(this::toResponseDTO).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<InsuranceClaimResponseDTO> getAllClaims() {
-        return claimRepository.findAllByOrderByClaimDateDesc()
+        return getAllClaims(null, null, null, null, "claimDate", "desc");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InsuranceClaimResponseDTO> getAllClaims(
+            String status,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortBy,
+            String sortDir
+    ) {
+        return findClaims(null, status, insuranceCompany, fromDate, toDate, sortBy, sortDir)
                 .stream().map(this::toResponseDTO).toList();
     }
 
@@ -168,6 +210,9 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             Path uploadPath = Paths.get(uploadDir, "claims", userId.toString());
             Files.createDirectories(uploadPath);
             for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
                 String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
                 Path filePath = uploadPath.resolve(filename);
                 file.transferTo(filePath.toAbsolutePath().toFile());
@@ -177,6 +222,37 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             throw new RuntimeException("Failed to upload files", e);
         }
         return paths;
+    }
+
+    private void validateBusinessRules(InsuranceClaimRequestDTO request, List<MultipartFile> files) {
+        if (request.getDescription() == null || request.getDescription().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description is required");
+        }
+        if (request.getInsuranceCompany() == null || !ALLOWED_INSURANCE_COMPANIES.contains(request.getInsuranceCompany().trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insurance company is invalid");
+        }
+        if (request.getInsuranceGrade() == null || request.getInsuranceGrade() < 1.0 || request.getInsuranceGrade() > 5.0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insurance grade must be between 1 and 5");
+        }
+
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        if (files.size() > MAX_FILES) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Maximum 5 files are allowed");
+        }
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each file must be <= 10 MB");
+            }
+            String type = file.getContentType();
+            if (type == null || !ALLOWED_FILE_TYPES.contains(type.toLowerCase())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF, JPG and PNG files are allowed");
+            }
+        }
     }
 
     private InsuranceClaimResponseDTO toResponseDTO(InsuranceClaim claim) {
@@ -238,5 +314,79 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             urls.add(base + "/api/files/open?path=" + encoded);
         }
         return urls;
+    }
+
+    private List<InsuranceClaim> findClaims(
+            Long userId,
+            String statusRaw,
+            String insuranceCompany,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String sortByRaw,
+            String sortDirRaw
+    ) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromDate cannot be after toDate");
+        }
+
+        ClaimStatus status = parseStatus(statusRaw);
+        Sort sort = buildSort(sortByRaw, sortDirRaw);
+
+        Specification<InsuranceClaim> spec = Specification.where(null);
+
+        if (userId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("userId"), userId));
+        }
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (insuranceCompany != null && !insuranceCompany.isBlank()) {
+            String lowered = insuranceCompany.trim().toLowerCase();
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("insuranceCompany")), "%" + lowered + "%"));
+        }
+        if (fromDate != null) {
+            var fromInstant = fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("claimDate"), java.util.Date.from(fromInstant)));
+        }
+        if (toDate != null) {
+            var toInstant = toDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThan(root.get("claimDate"), java.util.Date.from(toInstant)));
+        }
+
+        return claimRepository.findAll(spec, sort);
+    }
+
+    private ClaimStatus parseStatus(String statusRaw) {
+        if (statusRaw == null || statusRaw.isBlank()) {
+            return null;
+        }
+        try {
+            return ClaimStatus.valueOf(statusRaw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + statusRaw);
+        }
+    }
+
+    private Sort buildSort(String sortByRaw, String sortDirRaw) {
+        String sortBy = sortByRaw == null ? "claimDate" : sortByRaw.trim();
+        String field = switch (sortBy.toLowerCase()) {
+            case "date", "claimdate" -> "claimDate";
+            case "amount" -> "amount";
+            case "reimbursement", "reimbursementamount" -> "reimbursementAmount";
+            case "status" -> "status";
+            case "insurancecompany", "company" -> "insuranceCompany";
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sortBy: " + sortByRaw);
+        };
+
+        String sortDir = sortDirRaw == null ? "desc" : sortDirRaw.trim().toLowerCase();
+        Sort.Direction direction = switch (sortDir) {
+            case "asc" -> Sort.Direction.ASC;
+            case "desc" -> Sort.Direction.DESC;
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sortDir: " + sortDirRaw);
+        };
+        return Sort.by(direction, field);
     }
 }
