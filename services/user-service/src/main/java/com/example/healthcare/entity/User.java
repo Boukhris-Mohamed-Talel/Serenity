@@ -42,6 +42,9 @@ public class User {
     @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
 
+    @Column(length = 100)
+    private InsuranceCompany insuranceCompany;
+
     @Builder.Default
     private Boolean isActive = true;
 

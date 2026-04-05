@@ -5,6 +5,7 @@ export interface UserRequest {
   lastName: string;
   phone?: string;
   dateOfBirth?: string;
+  insuranceCompany?: string;
   role?: string;
 }
 
@@ -15,6 +16,7 @@ export interface UserResponse {
   lastName: string;
   phone: string;
   dateOfBirth: string;
+  insuranceCompany?: string;
   isActive: boolean;
   createdAt: string;
   role: string;
@@ -34,6 +36,7 @@ export interface ProfileUpdateRequest {
   lastName: string;
   phone?: string;
   dateOfBirth?: string;
+  insuranceCompany?: string;
   bio?: string;
   avatar?: string;
   preferredLanguage?: string;

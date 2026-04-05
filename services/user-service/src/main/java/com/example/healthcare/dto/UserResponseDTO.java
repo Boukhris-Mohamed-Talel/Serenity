@@ -1,5 +1,6 @@
 package com.example.healthcare.dto;
 
+import com.example.healthcare.entity.InsuranceCompany;
 import lombok.*;
 
 import java.util.Date;
@@ -17,6 +18,7 @@ public class UserResponseDTO {
     private String lastName;
     private String phone;
     private Date dateOfBirth;
+    private InsuranceCompany insuranceCompany;
     private Boolean isActive;
     private Date createdAt;
     private String role;

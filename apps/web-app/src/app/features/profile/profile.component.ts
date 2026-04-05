@@ -5,6 +5,7 @@ import { finalize } from 'rxjs/operators';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DoctorService } from '../../core/services/doctor.service';
+import { INSURANCE_COMPANIES } from '../../shared/models/insurance.model';
 import { UserResponse } from '../../shared/models/user.model';
 import { environment } from '../../../environments/environment';
 
@@ -38,6 +39,7 @@ export class ProfileComponent implements OnInit {
     { value: 'de', label: 'Deutsch' },
     { value: 'ar', label: 'العربية' }
   ];
+  insuranceCompanies = INSURANCE_COMPANIES;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -57,6 +59,7 @@ export class ProfileComponent implements OnInit {
       lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       phone: [''],
       dateOfBirth: [''],
+      insuranceCompany: [''],
       bio: ['', [Validators.maxLength(1000)]],
       avatar: [''],
       preferredLanguage: ['en'],
@@ -81,6 +84,7 @@ export class ProfileComponent implements OnInit {
           lastName: user.lastName,
           phone: user.phone || '',
           dateOfBirth: this.formatDateForInput(user.dateOfBirth),
+          insuranceCompany: user.insuranceCompany || '',
           bio: user.profile?.bio || '',
           avatar: user.profile?.avatar || '',
           preferredLanguage: user.profile?.preferredLanguage || 'en',
@@ -135,6 +139,7 @@ export class ProfileComponent implements OnInit {
         lastName: this.user.lastName,
         phone: this.user.phone || '',
         dateOfBirth: this.formatDateForInput(this.user.dateOfBirth),
+        insuranceCompany: this.user.insuranceCompany || '',
         bio: this.user.profile?.bio || '',
         avatar: this.user.profile?.avatar || '',
         preferredLanguage: this.user.profile?.preferredLanguage || 'en',

@@ -159,6 +159,7 @@ public class UserServiceImpl implements UserService {
         if (request.getLastName() != null) user.setLastName(request.getLastName());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
         if (request.getDateOfBirth() != null) user.setDateOfBirth(request.getDateOfBirth());
+        if (request.getInsuranceCompany() != null) user.setInsuranceCompany(request.getInsuranceCompany());
 
         UserProfile profile = user.getProfile();
         if (profile == null) {

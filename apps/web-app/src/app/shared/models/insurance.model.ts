@@ -22,13 +22,10 @@ export interface InsuranceClaimResponse {
   remboursements: RemboursementResponse[];
 }
 
-export const INSURANCE_COMPANIES = [
-  'Insurance 1',
-  'Insurance 2',
-  'Insurance 3',
-  'Insurance 4',
-  'Insurance 5'
-];
+export const INSURANCE_COMPANIES = Array.from(
+  { length: 10 },
+  (_, index) => `Insurance ${index + 1}`
+);
 
 export const INSURANCE_GRADES: { value: number; label: string; percentage: number }[] = [
   { value: 1, label: 'Grade 1', percentage: 10 },

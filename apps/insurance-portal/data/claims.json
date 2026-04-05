@@ -325,5 +325,22 @@
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F66b7766c-af19-4837-b461-6554295822fe_mental-health-record-tester-Patient-1774783731974.pdf",
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F21%2F74d81723-ba88-47bc-84de-097db9fb5a13_SerLogo+%281%29.png"
     ]
+  },
+  {
+    "ref": "39a33e7a-aedc-47b9-af40-57d6af3f1f3a",
+    "patientName": "23",
+    "description": "this is a test",
+    "amount": 1550,
+    "insuranceCompany": "Insurance 3",
+    "insuranceGrade": 3,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-04-05T12:43:43.915Z",
+    "processedAt": "2026-04-05T12:43:52.622Z",
+    "rejectReason": "noope",
+    "adjustmentReason": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F23%2Ffa57fdf4-17bb-478b-b155-7fa4ce4e9c64_SerLogo+%281%29.png"
+    ]
   }
 ]

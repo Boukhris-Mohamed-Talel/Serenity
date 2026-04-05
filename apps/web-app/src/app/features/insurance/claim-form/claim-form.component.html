@@ -9,13 +9,14 @@
   <form [formGroup]="claimForm" (ngSubmit)="onSubmit()" class="card claim-form">
     <div class="form-group">
       <label for="insuranceCompany">Insurance Company</label>
-      <select id="insuranceCompany" formControlName="insuranceCompany">
+      <select id="insuranceCompany" formControlName="insuranceCompany" [disabled]="true">
         <option value="" disabled>Select your insurance company</option>
         <option *ngFor="let company of companies" [value]="company">{{ company }}</option>
       </select>
-      <div *ngIf="isControlInvalid('insuranceCompany')" class="form-error">
-        <span *ngIf="claimForm.get('insuranceCompany')?.errors?.['required']">Insurance company is required.</span>
-        <span *ngIf="claimForm.get('insuranceCompany')?.errors?.['invalidCompany']">Please select a valid insurance company.</span>
+      <div class="form-hint">This value is automatically bound to your profile to prevent claim mistakes.</div>
+      <div *ngIf="!loadingUserInsurance && !userInsuranceCompany" class="form-error">
+        No insurance company is set on your profile. Please update it in
+        <a routerLink="/profile">My Profile</a>.
       </div>
     </div>
 
@@ -109,7 +110,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary" [disabled]="submitting">
+    <button type="submit" class="btn btn-primary" [disabled]="submitting || loadingUserInsurance || !userInsuranceCompany">
       <span *ngIf="!submitting">Submit Claim</span>
       <span *ngIf="submitting" class="spinner spinner-sm"></span>
     </button>

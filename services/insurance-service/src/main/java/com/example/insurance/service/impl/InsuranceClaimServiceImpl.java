@@ -41,7 +41,8 @@ import java.util.UUID;
 @Transactional
 public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     private static final Set<String> ALLOWED_INSURANCE_COMPANIES = Set.of(
-            "Insurance 1", "Insurance 2", "Insurance 3", "Insurance 4", "Insurance 5"
+            "Insurance 1", "Insurance 2", "Insurance 3", "Insurance 4", "Insurance 5",
+            "Insurance 6", "Insurance 7", "Insurance 8", "Insurance 9", "Insurance 10"
     );
     private static final Set<String> ALLOWED_FILE_TYPES = Set.of(
             "application/pdf", "image/jpeg", "image/png"

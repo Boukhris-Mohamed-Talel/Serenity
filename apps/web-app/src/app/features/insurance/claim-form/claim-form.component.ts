@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { InsuranceService } from '../../../core/services/insurance.service';
+import { UserService } from '../../../core/services/user.service';
 import { INSURANCE_COMPANIES, INSURANCE_GRADES } from '../../../shared/models/insurance.model';
 
 @Component({
@@ -9,7 +10,7 @@ import { INSURANCE_COMPANIES, INSURANCE_GRADES } from '../../../shared/models/in
   templateUrl: './claim-form.component.html',
   styleUrls: ['./claim-form.component.scss']
 })
-export class ClaimFormComponent {
+export class ClaimFormComponent implements OnInit {
   private static readonly MAX_DESCRIPTION_LENGTH = 500;
   private static readonly MAX_AMOUNT = 100000;
   private static readonly MAX_FILES = 5;
@@ -21,6 +22,8 @@ export class ClaimFormComponent {
   submitting = false;
   errorMessage = '';
   fileErrorMessage = '';
+  loadingUserInsurance = true;
+  userInsuranceCompany = '';
 
   readonly companies = INSURANCE_COMPANIES;
   readonly grades = INSURANCE_GRADES;
@@ -29,6 +32,7 @@ export class ClaimFormComponent {
   constructor(
     private readonly fb: FormBuilder,
     private readonly insuranceService: InsuranceService,
+    private readonly userService: UserService,
     private readonly router: Router
   ) {
     this.claimForm = this.fb.group({
@@ -43,12 +47,16 @@ export class ClaimFormComponent {
         Validators.min(0.01),
         Validators.max(ClaimFormComponent.MAX_AMOUNT)
       ]],
-      insuranceCompany: ['', [Validators.required, this.allowedCompanyValidator()]],
+      insuranceCompany: [{ value: '', disabled: true }, [Validators.required, this.allowedCompanyValidator()]],
       insuranceGrade: [null, [Validators.required, this.allowedGradeValidator()]]
     });
 
     this.claimForm.get('amount')?.valueChanges.subscribe(() => this.calculateReimbursement());
     this.claimForm.get('insuranceGrade')?.valueChanges.subscribe(() => this.calculateReimbursement());
+  }
+
+  ngOnInit(): void {
+    this.loadUserInsuranceCompany();
   }
 
   calculateReimbursement(): void {
@@ -127,6 +135,13 @@ export class ClaimFormComponent {
   }
 
   onSubmit(): void {
+    if (this.loadingUserInsurance) {
+      return;
+    }
+    if (!this.userInsuranceCompany) {
+      this.errorMessage = 'Please set your insurance company in your profile before submitting a claim.';
+      return;
+    }
     if (this.claimForm.invalid) {
       this.claimForm.markAllAsTouched();
       return;
@@ -138,12 +153,14 @@ export class ClaimFormComponent {
     this.submitting = true;
     this.errorMessage = '';
 
-    const description = String(this.claimForm.value.description || '').trim().replace(/\s+/g, ' ');
+    const formRawValue = this.claimForm.getRawValue();
+    const description = String(formRawValue.description || '').trim().replace(/\s+/g, ' ');
     const formValue = {
-      ...this.claimForm.value,
+      ...formRawValue,
       description,
-      amount: Number(this.claimForm.value.amount),
-      insuranceGrade: Number(this.claimForm.value.insuranceGrade)
+      insuranceCompany: this.userInsuranceCompany,
+      amount: Number(formRawValue.amount),
+      insuranceGrade: Number(formRawValue.insuranceGrade)
     };
 
     this.insuranceService.submitClaim(formValue, this.files).subscribe({
@@ -189,5 +206,24 @@ export class ClaimFormComponent {
       const numeric = Number(control.value);
       return Number.isFinite(numeric) && allowed.has(numeric) ? null : { invalidGrade: true };
     };
+  }
+
+  private loadUserInsuranceCompany(): void {
+    this.loadingUserInsurance = true;
+    this.userService.getCurrentUser().subscribe({
+      next: (user) => {
+        const company = (user.insuranceCompany || '').trim();
+        this.userInsuranceCompany = company;
+        this.claimForm.patchValue({ insuranceCompany: company });
+        this.loadingUserInsurance = false;
+        if (!company) {
+          this.errorMessage = 'No insurance company is set on your profile. Please update your profile first.';
+        }
+      },
+      error: () => {
+        this.loadingUserInsurance = false;
+        this.errorMessage = 'Failed to load your insurance company. Please refresh and try again.';
+      }
+    });
   }
 }
