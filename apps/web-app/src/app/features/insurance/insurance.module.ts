@@ -5,12 +5,14 @@ import { InsuranceRoutingModule } from './insurance-routing.module';
 import { ClaimListComponent } from './claim-list/claim-list.component';
 import { ClaimFormComponent } from './claim-form/claim-form.component';
 import { ClaimDetailComponent } from './claim-detail/claim-detail.component';
+import { InsuranceStatisticsComponent } from './insurance-statistics/insurance-statistics.component';
 
 @NgModule({
   declarations: [
     ClaimListComponent,
     ClaimFormComponent,
-    ClaimDetailComponent
+    ClaimDetailComponent,
+    InsuranceStatisticsComponent
   ],
   imports: [
     CommonModule,

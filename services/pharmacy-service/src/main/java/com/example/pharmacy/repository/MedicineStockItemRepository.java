@@ -37,4 +37,6 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
     );
 
     Optional<MedicineStockItem> findByIdAndPharmacyOwnerUserId(Long id, Long ownerUserId);
+
+    void deleteByPharmacyId(Long pharmacyId);
 }

@@ -28,6 +28,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -157,6 +159,7 @@ public class UserServiceImpl implements UserService {
         if (request.getLastName() != null) user.setLastName(request.getLastName());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
         if (request.getDateOfBirth() != null) user.setDateOfBirth(request.getDateOfBirth());
+        if (request.getInsuranceCompany() != null) user.setInsuranceCompany(request.getInsuranceCompany());
 
         UserProfile profile = user.getProfile();
         if (profile == null) {
@@ -281,5 +284,60 @@ public class UserServiceImpl implements UserService {
     public List<UserResponseDTO> getPatients() {
         List<User> patients = userRepository.findByRole(Role.PATIENT);
         return userMapper.toResponseDTOList(patients);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupDoctors() {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.DOCTOR).stream()
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupPatients(String firstName, String lastName) {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.PATIENT).stream()
+                .filter(u -> matchesOptionalNameFilter(u.getFirstName(), firstName))
+                .filter(u -> matchesOptionalNameFilter(u.getLastName(), lastName))
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupUsersByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<User> found = userRepository.findAllById(ids);
+        Map<Long, User> byId = found.stream().collect(Collectors.toMap(User::getId, u -> u));
+        return ids.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    private boolean matchesOptionalNameFilter(String fieldValue, String query) {
+        if (query == null || query.isBlank()) {
+            return true;
+        }
+        if (query.length() < 2) {
+            return true;
+        }
+        if (fieldValue == null) {
+            return false;
+        }
+        return fieldValue.toLowerCase().contains(query.toLowerCase());
+    }
+
+    private UserLookupDTO toLookupDto(User user) {
+        return UserLookupDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .build();
     }
 }

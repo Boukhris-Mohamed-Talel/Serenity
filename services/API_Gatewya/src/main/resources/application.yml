@@ -8,6 +8,12 @@ spring:
         # ("Access-Control-Allow-Origin contains multiple values").
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
       routes:
+        # Must match /api/appointments/** (e.g. calendar-hints, list, patient-request). If this route is missing,
+        # requests fall through and return 404 "No static resource api/appointments/...".
+        - id: appointment-service
+          uri: http://localhost:8091
+          predicates:
+            - Path=/api/appointments/**
         - id: auth-service
           uri: http://localhost:8081
           predicates:
@@ -83,7 +89,6 @@ spring:
 
 server:
   port: 8082
-
 
 app:
   jwt:

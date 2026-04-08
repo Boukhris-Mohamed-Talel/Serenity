@@ -1,5 +1,6 @@
 package com.example.healthcare.dto;
 
+import com.example.healthcare.entity.InsuranceCompany;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -21,6 +22,8 @@ public class ProfileUpdateDTO {
     private String phone;
 
     private Date dateOfBirth;
+
+    private InsuranceCompany insuranceCompany;
 
     @Size(max = 1000)
     private String bio;

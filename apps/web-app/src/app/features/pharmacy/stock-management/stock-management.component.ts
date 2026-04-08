@@ -16,6 +16,8 @@ export class StockManagementComponent implements OnInit {
   includeArchived = false;
   incrementValue: Record<number, number> = {};
   selectedImageItem: StockItemResponse | null = null;
+  renamingItemId: number | null = null;
+  renameDraft = '';
 
   items: StockItemResponse[] = [];
 
@@ -28,6 +30,7 @@ export class StockManagementComponent implements OnInit {
   loadStock(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.cancelRename();
 
     this.pharmacyService.listStock(this.query, this.includeArchived).subscribe({
       next: (items) => {
@@ -65,6 +68,56 @@ export class StockManagementComponent implements OnInit {
         this.errorMessage = err.error?.message || 'Failed to increment stock quantity';
       }
     });
+  }
+
+  startRename(item: StockItemResponse): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.renamingItemId = item.id;
+    this.renameDraft = item.medicineName;
+  }
+
+  cancelRename(): void {
+    this.renamingItemId = null;
+    this.renameDraft = '';
+  }
+
+  saveRename(item: StockItemResponse): void {
+    const normalizedName = this.renameDraft.trim();
+    if (normalizedName.length < 2 || normalizedName.length > 80) {
+      this.errorMessage = 'Medicine name must be between 2 and 80 characters.';
+      return;
+    }
+
+    if (!window.confirm(`Rename "${item.medicineName}" to "${normalizedName}"?`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.pharmacyService.renameStockItem(item.id, { medicineName: normalizedName }).subscribe({
+      next: (updated) => {
+        this.successMessage = `Medicine renamed to ${updated.medicineName}`;
+        this.replaceItem(updated);
+        this.cancelRename();
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to rename medicine';
+      }
+    });
+  }
+
+  onRenameKeydown(event: KeyboardEvent, item: StockItemResponse): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.saveRename(item);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelRename();
+    }
   }
 
   markOutOfStock(item: StockItemResponse): void {
@@ -124,6 +177,33 @@ export class StockManagementComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to restore medicine';
+      }
+    });
+  }
+
+  deletePermanently(item: StockItemResponse): void {
+    if (!item.archived) {
+      this.errorMessage = 'Only archived medicines can be deleted permanently.';
+      return;
+    }
+
+    if (!window.confirm(`Delete "${item.medicineName}" permanently? This cannot be undone.`)) {
+      return;
+    }
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.pharmacyService.deleteArchivedStockItem(item.id).subscribe({
+      next: () => {
+        this.successMessage = `${item.medicineName} deleted permanently`;
+        this.items = this.items.filter(x => x.id !== item.id);
+        if (this.renamingItemId === item.id) {
+          this.cancelRename();
+        }
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to delete medicine permanently';
       }
     });
   }

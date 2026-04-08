@@ -1,0 +1,49 @@
+server:
+  port: ${SERVER_PORT:8091}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/appointments_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  # Optional Gmail / SMTP — set MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD (Gmail: app password).
+  # Reminder emails go to the patient when this, INTERNAL_API_KEY, and user-service internal API are configured.
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+app:
+  internal-api-key: ${INTERNAL_API_KEY:}
+  user-service:
+    # Same host as the SPA apiUrl gateway (8082) so lookups work when only the gateway exposes /api/users.
+    # Use http://localhost:8081 if you run user-service without the gateway.
+    base-url: ${USER_SERVICE_URL:http://localhost:8082}
+    # Internal email lookup (must match user-service port when gateway has no /api/internal route).
+    internal-base-url: ${USER_SERVICE_INTERNAL_URL:http://localhost:8081}
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+  teleconsultation:
+    default-duration-minutes: ${TELECONSULT_DEFAULT_MINUTES:30}
+    jitsi-room-prefix: ${JITSI_ROOM_PREFIX:serenity-appt}

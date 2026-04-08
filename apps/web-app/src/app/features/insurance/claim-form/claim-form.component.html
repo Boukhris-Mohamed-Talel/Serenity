@@ -9,12 +9,14 @@
   <form [formGroup]="claimForm" (ngSubmit)="onSubmit()" class="card claim-form">
     <div class="form-group">
       <label for="insuranceCompany">Insurance Company</label>
-      <select id="insuranceCompany" formControlName="insuranceCompany">
+      <select id="insuranceCompany" formControlName="insuranceCompany" [disabled]="true">
         <option value="" disabled>Select your insurance company</option>
         <option *ngFor="let company of companies" [value]="company">{{ company }}</option>
       </select>
-      <div *ngIf="claimForm.get('insuranceCompany')?.touched && claimForm.get('insuranceCompany')?.errors" class="form-error">
-        <span *ngIf="claimForm.get('insuranceCompany')?.errors?.['required']">Insurance company is required.</span>
+      <div class="form-hint">This value is automatically bound to your profile to prevent claim mistakes.</div>
+      <div *ngIf="!loadingUserInsurance && !userInsuranceCompany" class="form-error">
+        No insurance company is set on your profile. Please update it in
+        <a routerLink="/profile">My Profile</a>.
       </div>
     </div>
 
@@ -24,28 +26,35 @@
         <option [ngValue]="null" disabled>Select your insurance grade</option>
         <option *ngFor="let grade of grades" [ngValue]="grade.value">{{ grade.label }} — {{ grade.percentage }}% coverage</option>
       </select>
-      <div *ngIf="claimForm.get('insuranceGrade')?.touched && claimForm.get('insuranceGrade')?.errors" class="form-error">
+      <div *ngIf="isControlInvalid('insuranceGrade')" class="form-error">
         <span *ngIf="claimForm.get('insuranceGrade')?.errors?.['required']">Insurance grade is required.</span>
+        <span *ngIf="claimForm.get('insuranceGrade')?.errors?.['invalidGrade']">Please select a valid insurance grade.</span>
       </div>
     </div>
 
     <div class="form-group">
       <label for="description">Description</label>
       <textarea id="description" formControlName="description" rows="4"
+                maxlength="500"
                 placeholder="Describe your claim (e.g., medications purchased for treatment...)"></textarea>
-      <div *ngIf="claimForm.get('description')?.touched && claimForm.get('description')?.errors" class="form-error">
+      <div class="form-hint">{{ descriptionLength }}/500 characters</div>
+      <div *ngIf="isControlInvalid('description')" class="form-error">
         <span *ngIf="claimForm.get('description')?.errors?.['required']">Description is required.</span>
+        <span *ngIf="claimForm.get('description')?.errors?.['whitespace']">Description cannot be empty spaces only.</span>
         <span *ngIf="claimForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters.</span>
+        <span *ngIf="claimForm.get('description')?.errors?.['maxlength']">Description cannot exceed 500 characters.</span>
       </div>
     </div>
 
     <div class="form-group">
       <label for="amount">Amount Paid for Medication (TND)</label>
       <input id="amount" type="number" formControlName="amount" step="0.01" min="0.01"
+             max="100000"
              placeholder="Enter the total amount you paid">
-      <div *ngIf="claimForm.get('amount')?.touched && claimForm.get('amount')?.errors" class="form-error">
+      <div *ngIf="isControlInvalid('amount')" class="form-error">
         <span *ngIf="claimForm.get('amount')?.errors?.['required']">Amount is required.</span>
         <span *ngIf="claimForm.get('amount')?.errors?.['min']">Amount must be greater than 0.</span>
+        <span *ngIf="claimForm.get('amount')?.errors?.['max']">Amount cannot exceed 100,000 TND.</span>
       </div>
     </div>
 
@@ -78,6 +87,7 @@
           <small>PDF, JPG, PNG — up to 10 MB each</small>
         </label>
       </div>
+      <div *ngIf="fileErrorMessage" class="form-error">{{ fileErrorMessage }}</div>
 
       <div *ngIf="files.length > 0" class="file-list">
         <div *ngFor="let file of files; let i = index" class="file-item">
@@ -100,7 +110,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary" [disabled]="submitting">
+    <button type="submit" class="btn btn-primary" [disabled]="submitting || loadingUserInsurance || !userInsuranceCompany">
       <span *ngIf="!submitting">Submit Claim</span>
       <span *ngIf="submitting" class="spinner spinner-sm"></span>
     </button>

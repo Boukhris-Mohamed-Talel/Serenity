@@ -1,6 +1,7 @@
 package com.example.pharmacy.controller;
 
 import com.example.pharmacy.dto.StockItemCreateRequestDTO;
+import com.example.pharmacy.dto.StockItemRenameRequestDTO;
 import com.example.pharmacy.dto.StockItemResponseDTO;
 import com.example.pharmacy.dto.StockQuantityIncrementRequestDTO;
 import com.example.pharmacy.service.StockService;
@@ -33,6 +34,14 @@ public class StockController {
         return ResponseEntity.ok(stockService.createStockItem(request));
     }
 
+    @PatchMapping("/{stockItemId}/rename")
+    public ResponseEntity<StockItemResponseDTO> renameStockItem(
+        @PathVariable Long stockItemId,
+        @Valid @RequestBody StockItemRenameRequestDTO request
+    ) {
+        return ResponseEntity.ok(stockService.renameStockItem(stockItemId, request.getMedicineName()));
+    }
+
     @PatchMapping("/{stockItemId}/increment")
     public ResponseEntity<StockItemResponseDTO> incrementQuantity(
         @PathVariable Long stockItemId,
@@ -55,6 +64,12 @@ public class StockController {
     @DeleteMapping("/{stockItemId}")
     public ResponseEntity<Void> archiveStockItem(@PathVariable Long stockItemId) {
         stockService.archiveStockItem(stockItemId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{stockItemId}/permanent")
+    public ResponseEntity<Void> deleteArchivedStockItem(@PathVariable Long stockItemId) {
+        stockService.deleteArchivedStockItem(stockItemId);
         return ResponseEntity.noContent().build();
     }
 

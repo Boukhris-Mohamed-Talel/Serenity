@@ -1,11 +1,14 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '../core/services/auth.service';
 import { CrisisAlertService } from '../core/services/crisis-alert.service';
 import { UserService } from '../core/services/user.service';
 import { InsuranceService } from '../core/services/insurance.service';
+import { AppointmentService } from '../core/services/appointment.service';
 import { InsuranceNotification } from '../shared/models/insurance.model';
+import { AppointmentNotification, NavbarNotification } from '../shared/models/appointment.model';
 import { CrisisAlertPayload } from '../shared/models/mood.model';
 import { UserResponse } from '../shared/models/user.model';
 import { WebSocketService } from '../core/services/web-socket.service';
@@ -19,24 +22,29 @@ export class LayoutComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   characterVisible = false;
   user: UserResponse | null = null;
-  notifications: InsuranceNotification[] = [];
+  notifications: NavbarNotification[] = [];
   unreadNotificationCount = 0;
   notificationsOpen = false;
   notificationsLoading = false;
-  private readonly locallyReadNotificationIds = new Set<number>();
+  private readonly locallyReadNotificationIds = new Set<string>();
   alerts: CrisisAlertPayload[] = [];
   notificationPanelOpen = false;
-  private peekInterval: any;
+  private peekInterval: ReturnType<typeof setInterval> | undefined;
   private userSub!: Subscription;
   private wsSub!: Subscription;
-  
-  // Message notifications from WebSocket
-  messageNotifications: any[] = [];
+  messageNotifications: Array<{
+    id: number;
+    text: string;
+    senderName: string;
+    conversationId: number;
+    time: Date;
+    read: boolean;
+  }> = [];
   unreadMessageCount = 0;
   notifDropdownVisible = false;
   private alertsSub!: Subscription;
   private authSub!: Subscription;
-  private notificationRefreshInterval: any;
+  private notificationRefreshInterval: ReturnType<typeof setInterval> | undefined;
 
   constructor(
     public readonly authService: AuthService,
@@ -44,7 +52,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private readonly userService: UserService,
     private readonly router: Router,
     private readonly webSocketService: WebSocketService,
-    private readonly insuranceService: InsuranceService
+    private readonly insuranceService: InsuranceService,
+    private readonly appointmentService: AppointmentService
   ) {}
 
   ngOnInit(): void {
@@ -54,20 +63,18 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.authService.isLoggedIn()) {
       this.userService.getCurrentUser().subscribe();
 
-      this.userSub = this.userService.currentUser$.subscribe(user => {
+      this.userSub = this.userService.currentUser$.subscribe((user) => {
         this.user = user;
         if (user && !this.peekInterval) {
           this.startPeekAnimation();
         }
       });
 
-      // 👇 WebSocket notifications
       this.webSocketService.connect();
 
       this.wsSub = this.webSocketService.newMessage$.subscribe((msg: any) => {
         const currentUserId = this.authService.getCurrentUser()?.userId;
         if (msg.senderId !== currentUserId && !msg.deletedMessageId) {
-          // 👇 fetch sender name
           this.userService.getUsersNamesById([msg.senderId]).subscribe({
             next: (users) => {
               const sender = users[0];
@@ -76,7 +83,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
               this.messageNotifications.unshift({
                 id: msg.id,
                 text: msg.content,
-                senderName,           // 👈
+                senderName,
                 conversationId: msg.conversationId,
                 time: new Date(),
                 read: false
@@ -87,7 +94,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
               this.messageNotifications.unshift({
                 id: msg.id,
                 text: msg.content,
-                senderName: 'Unknown', // 👈 fallback
+                senderName: 'Unknown',
                 conversationId: msg.conversationId,
                 time: new Date(),
                 read: false
@@ -98,11 +105,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
         }
       });
 
-
       this.refreshNotifications();
       this.notificationRefreshInterval = setInterval(() => this.refreshNotifications(), 20000);
 
-      this.alertsSub = this.crisisAlertService.alerts$.subscribe(alerts => {
+      this.alertsSub = this.crisisAlertService.alerts$.subscribe((alerts) => {
         this.alerts = alerts;
       });
     }
@@ -117,35 +123,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.peekInterval) clearInterval(this.peekInterval);
-    if (this.userSub) this.userSub.unsubscribe();
-    if (this.wsSub) this.wsSub.unsubscribe();
-  }
-
-  toggleNotifDropdown() {
-    this.notifDropdownVisible = !this.notifDropdownVisible;
-    if (this.notifDropdownVisible) {
-      this.unreadMessageCount = 0;
-      this.messageNotifications = this.messageNotifications.map(n => ({ ...n, read: true }));
-    }
-  }
-
-  goToConversation(notif: any) {
-    this.notifDropdownVisible = false;
-    this.router.navigate(['/messagerie']);
-  }
-
-  clearNotifications() {
-    this.messageNotifications = [];
-    this.unreadMessageCount = 0;
     if (this.peekInterval) {
       clearInterval(this.peekInterval);
     }
     if (this.userSub) {
       this.userSub.unsubscribe();
     }
-    if (this.notificationRefreshInterval) {
-      clearInterval(this.notificationRefreshInterval);
+    if (this.wsSub) {
+      this.wsSub.unsubscribe();
     }
     if (this.alertsSub) {
       this.alertsSub.unsubscribe();
@@ -153,9 +138,30 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.authSub) {
       this.authSub.unsubscribe();
     }
+    if (this.notificationRefreshInterval) {
+      clearInterval(this.notificationRefreshInterval);
+    }
     if (this.authService.isDoctor()) {
       this.crisisAlertService.disconnect();
     }
+  }
+
+  toggleNotifDropdown(): void {
+    this.notifDropdownVisible = !this.notifDropdownVisible;
+    if (this.notifDropdownVisible) {
+      this.unreadMessageCount = 0;
+      this.messageNotifications = this.messageNotifications.map((n) => ({ ...n, read: true }));
+    }
+  }
+
+  goToConversation(_notif: { conversationId: number }): void {
+    this.notifDropdownVisible = false;
+    this.router.navigate(['/messagerie']);
+  }
+
+  clearNotifications(): void {
+    this.messageNotifications = [];
+    this.unreadMessageCount = 0;
   }
 
   get unreadCount(): number {
@@ -184,24 +190,33 @@ export class LayoutComponent implements OnInit, OnDestroy {
   clearAllAlerts(): void {
     this.crisisAlertService.clearAlerts();
     this.notificationPanelOpen = false;
-    if (this.notificationRefreshInterval) {
-      clearInterval(this.notificationRefreshInterval);
-    }
   }
 
   getDisplayName(): string {
-    if (this.user?.profile?.isAnonymous) return 'Anonymous';
-    if (this.user?.firstName) return this.user.firstName;
+    if (this.user?.profile?.isAnonymous) {
+      return 'Anonymous';
+    }
+    if (this.user?.firstName) {
+      return this.user.firstName;
+    }
     return (this.authService.getCurrentUser()?.email || '').split('@')[0];
   }
 
   getCharacterEmoji(): string {
-    if (this.user?.profile?.isAnonymous) return '🥷';
+    if (this.user?.profile?.isAnonymous) {
+      return '🥷';
+    }
     switch (this.user?.role) {
-      case 'ADMIN': return '🛡️';
-      case 'DOCTOR': return '👨‍⚕️';
-      case 'PHARMACIST': return '💊';
-      default: return '🧑';
+      case 'ADMIN':
+        return '🛡️';
+      case 'DOCTOR':
+        return '👨‍⚕️';
+      case 'PHARMACIST':
+        return '💊';
+      case 'MARKETPLACE_MANAGER':
+        return '🛒';
+      default:
+        return '🧑';
     }
   }
 
@@ -228,14 +243,18 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  onNotificationClick(notification: InsuranceNotification, event: MouseEvent): void {
+  onNotificationClick(notification: NavbarNotification, event: MouseEvent): void {
     event.stopPropagation();
     const wasUnread = !notification.isRead;
 
     if (wasUnread) {
-      this.locallyReadNotificationIds.add(notification.id);
+      this.locallyReadNotificationIds.add(`${notification.source}-${notification.id}`);
       notification.isRead = true;
-      this.insuranceService.markNotificationAsRead(notification.id).subscribe({
+      const req$ =
+        notification.source === 'insurance'
+          ? this.insuranceService.markNotificationAsRead(notification.id)
+          : this.appointmentService.markAppointmentNotificationRead(notification.id);
+      req$.subscribe({
         next: () => {
           this.unreadNotificationCount = Math.max(0, this.unreadNotificationCount - 1);
           this.refreshNotifications();
@@ -244,19 +263,27 @@ export class LayoutComponent implements OnInit, OnDestroy {
     }
 
     this.notificationsOpen = false;
-    if (notification.claimId != null) {
+    if (notification.source === 'insurance' && notification.claimId != null) {
       this.router.navigate(['/insurance', notification.claimId]);
+    } else if (notification.source === 'appointment' && notification.appointmentId != null) {
+      const base = this.router.url.split('?')[0].includes('/admin/')
+        ? '/admin/appointments'
+        : '/appointments';
+      this.router.navigate([base, notification.appointmentId]);
     }
   }
 
   markAllAsRead(event: MouseEvent): void {
     event.stopPropagation();
     for (const notification of this.notifications) {
-      this.locallyReadNotificationIds.add(notification.id);
+      this.locallyReadNotificationIds.add(`${notification.source}-${notification.id}`);
     }
-    this.insuranceService.markAllNotificationsAsRead().subscribe({
+    forkJoin([
+      this.insuranceService.markAllNotificationsAsRead().pipe(catchError(() => of(undefined))),
+      this.appointmentService.markAllAppointmentNotificationsRead().pipe(catchError(() => of(undefined)))
+    ]).subscribe({
       next: () => {
-        this.notifications = this.notifications.map(n => ({ ...n, isRead: true }));
+        this.notifications = this.notifications.map((n) => ({ ...n, isRead: true }));
         this.unreadNotificationCount = 0;
         this.refreshNotifications();
       }
@@ -274,26 +301,91 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   private refreshNotifications(): void {
-    this.insuranceService.getUnreadNotificationsCount().subscribe({
-      next: (res) => {
-        this.unreadNotificationCount = res.unreadCount || 0;
+    forkJoin({
+      insurance: this.insuranceService.getUnreadNotificationsCount().pipe(
+        catchError(() => of({ unreadCount: 0 }))
+      ),
+      appointment: this.appointmentService.getAppointmentNotificationsUnreadCount().pipe(
+        catchError(() => of({ unreadCount: 0 }))
+      )
+    }).subscribe({
+      next: ({ insurance, appointment }) => {
+        this.unreadNotificationCount =
+          (insurance.unreadCount || 0) + (appointment.unreadCount || 0);
       }
     });
   }
 
   private loadNotifications(): void {
     this.notificationsLoading = true;
-    this.insuranceService.getMyNotifications().subscribe({
-      next: (items) => {
-        this.notifications = (items || []).map(item => ({
-          ...item,
-          isRead: item.isRead || this.locallyReadNotificationIds.has(item.id)
-        }));
-        this.notificationsLoading = false;
-      },
-      error: () => {
-        this.notificationsLoading = false;
+    let insuranceRows: InsuranceNotification[] = [];
+    let appointmentRows: AppointmentNotification[] = [];
+    let pending = 2;
+
+    const finish = (): void => {
+      const merged: NavbarNotification[] = [
+        ...insuranceRows.map((n) => ({
+          source: 'insurance' as const,
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          isRead: n.isRead || this.locallyReadNotificationIds.has(`insurance-${n.id}`),
+          createdAt: this.normalizeNotificationDate(n.createdAt),
+          claimId: n.claimId,
+          appointmentId: null
+        })),
+        ...appointmentRows.map((n) => ({
+          source: 'appointment' as const,
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          isRead: n.isRead || this.locallyReadNotificationIds.has(`appointment-${n.id}`),
+          createdAt: this.normalizeNotificationDate(n.createdAt),
+          claimId: null,
+          appointmentId: n.appointmentId
+        }))
+      ];
+      merged.sort((a, b) => this.notificationSortKey(b.createdAt) - this.notificationSortKey(a.createdAt));
+      this.notifications = merged;
+      this.notificationsLoading = false;
+    };
+
+    const step = (): void => {
+      pending -= 1;
+      if (pending === 0) {
+        finish();
       }
+    };
+
+    this.insuranceService.getMyNotifications().pipe(catchError(() => of([] as InsuranceNotification[]))).subscribe({
+      next: (rows) => {
+        insuranceRows = rows || [];
+        step();
+      },
+      error: () => step()
     });
+
+    this.appointmentService
+      .getAppointmentNotifications()
+      .pipe(catchError(() => of([] as AppointmentNotification[])))
+      .subscribe({
+        next: (rows) => {
+          appointmentRows = rows || [];
+          step();
+        },
+        error: () => step()
+      });
+  }
+
+  private normalizeNotificationDate(value: string | unknown): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+    return new Date().toISOString();
+  }
+
+  private notificationSortKey(iso: string): number {
+    const t = new Date(iso).getTime();
+    return Number.isNaN(t) ? 0 : t;
   }
 }

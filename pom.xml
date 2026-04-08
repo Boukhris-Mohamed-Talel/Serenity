@@ -9,10 +9,12 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>healthcare-system</name>
-    <description>Root POM so IntelliJ shows Maven when you open this folder</description>
+    <description>Aggregator POM: import this in IntelliJ so the Maven tool window lists all backend services.</description>
 
     <modules>
         <module>services/user-service</module>
         <module>services/insurance-service</module>
+        <module>services/API_Gatewya</module>
+        <module>services/appointment-service</module>
     </modules>
 </project>

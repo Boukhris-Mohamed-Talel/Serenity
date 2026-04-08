@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -8,6 +9,7 @@ import {
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
+import { PageResponseDTO } from '../../models/page-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -28,12 +30,61 @@ export class InsuranceService {
     return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims`, formData);
   }
 
-  getMyClaims(): Observable<InsuranceClaimResponse[]> {
-    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`);
+  getMyClaims(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+  }): Observable<InsuranceClaimResponse[]> {
+    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims/me`, {
+      params: this.buildClaimQueryParams(filters)
+    });
   }
 
-  getAllClaims(): Observable<InsuranceClaimResponse[]> {
-    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims`);
+  getAllClaims(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+  }): Observable<InsuranceClaimResponse[]> {
+    return this.http.get<InsuranceClaimResponse[]>(`${this.API_URL}/claims`, {
+      params: this.buildClaimQueryParams(filters)
+    });
+  }
+
+  getMyClaimsPaged(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponseDTO<InsuranceClaimResponse>> {
+    return this.http.get<PageResponseDTO<InsuranceClaimResponse>>(`${this.API_URL}/claims/me/paged`, {
+      params: this.buildClaimQueryParams(filters)
+    });
+  }
+
+  getAllClaimsPaged(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+    userId?: number;
+    page?: number;
+    size?: number;
+  }): Observable<PageResponseDTO<InsuranceClaimResponse>> {
+    return this.http.get<PageResponseDTO<InsuranceClaimResponse>>(`${this.API_URL}/claims/paged`, {
+      params: this.buildClaimQueryParams(filters)
+    });
   }
 
   getClaimById(id: number): Observable<InsuranceClaimResponse> {
@@ -66,5 +117,31 @@ export class InsuranceService {
 
   markAllNotificationsAsRead(): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/notifications/me/read-all`, {});
+  }
+
+  private buildClaimQueryParams(filters?: {
+    status?: string;
+    insuranceCompany?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+    sortDir?: string;
+    userId?: number;
+    page?: number;
+    size?: number;
+  }): HttpParams {
+    let params = new HttpParams();
+    if (!filters) return params;
+
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.insuranceCompany) params = params.set('insuranceCompany', filters.insuranceCompany);
+    if (filters.fromDate) params = params.set('fromDate', filters.fromDate);
+    if (filters.toDate) params = params.set('toDate', filters.toDate);
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters.sortDir) params = params.set('sortDir', filters.sortDir);
+    if (filters.userId != null) params = params.set('userId', String(filters.userId));
+    if (filters.page != null) params = params.set('page', String(filters.page));
+    if (filters.size != null) params = params.set('size', String(filters.size));
+    return params;
   }
 }

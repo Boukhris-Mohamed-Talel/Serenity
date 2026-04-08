@@ -34,3 +34,9 @@ app:
     api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
   status-poller:
     fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS:5000}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

@@ -5,6 +5,7 @@ import com.example.pharmacy.dto.PharmacyUpsertRequestDTO;
 import com.example.pharmacy.service.PharmacyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,5 +31,11 @@ public class PharmacyController {
     @PutMapping
     public ResponseEntity<PharmacyResponseDTO> updateMyPharmacy(@Valid @RequestBody PharmacyUpsertRequestDTO request) {
         return ResponseEntity.ok(pharmacyService.upsertMyPharmacy(request));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteMyPharmacy() {
+        pharmacyService.deleteMyPharmacy();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

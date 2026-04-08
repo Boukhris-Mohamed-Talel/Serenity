@@ -1,8 +1,27 @@
 <div class="container claim-list-page" [class.user-mode]="!isAdmin" [class.admin-mode]="isAdmin">
   <div class="page-header">
-    <h1>{{ isAdmin ? 'All Insurance Claims' : 'My Insurance Claims' }}</h1>
+    <div class="page-title-group">
+      <h1>{{ isAdmin ? 'Insurance Workbench' : 'My Insurance Claims' }}</h1>
+      <p *ngIf="isAdmin" class="page-subtitle">Browse all claims or switch to analytics.</p>
+    </div>
     <a *ngIf="!isAdmin" routerLink="new" class="btn btn-primary">Submit New Claim</a>
   </div>
+
+  <!-- Admin-only sub navigation between Claims and Statistics -->
+  <nav *ngIf="isAdmin" class="sub-tabs">
+    <a
+      routerLink="/admin/insurance"
+      routerLinkActive="active"
+    >
+      Claims
+    </a>
+    <a
+      routerLink="/admin/insurance/statistics"
+      routerLinkActive="active"
+    >
+      Statistics
+    </a>
+  </nav>
 
   <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
 
@@ -11,7 +30,7 @@
     <p>Loading claims...</p>
   </div>
 
-  <div *ngIf="!loading && claims.length > 0" class="filters card">
+  <div *ngIf="!loading && totalElements > 0" class="filters card">
     <div class="filter-grid">
       <div class="filter-item">
         <label>Status</label>
@@ -82,18 +101,18 @@
       </div>
     </div>
     <div class="filter-actions">
-      <span class="result-count">{{ filteredClaims.length }} result(s)</span>
+      <span class="result-count">{{ totalElements }} result(s)</span>
       <button class="btn btn-secondary btn-sm" (click)="clearFilters()">Reset filters</button>
     </div>
   </div>
 
-  <div *ngIf="!loading && claims.length === 0" class="empty-state card">
+  <div *ngIf="!loading && totalElements === 0" class="empty-state card">
     <p *ngIf="!isAdmin">You haven't submitted any claims yet.</p>
     <p *ngIf="isAdmin">No insurance claims have been submitted yet.</p>
     <a *ngIf="!isAdmin" routerLink="new" class="btn btn-primary" style="margin-top: 1rem;">Submit your first claim</a>
   </div>
 
-  <div *ngIf="!loading && claims.length > 0 && filteredClaims.length === 0" class="empty-state card">
+  <div *ngIf="!loading && totalElements > 0 && filteredClaims.length === 0" class="empty-state card">
     <p>No claims match the selected filters.</p>
   </div>
 
@@ -129,5 +148,27 @@
       </div>
       <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">View Details</a>
     </div>
+  </div>
+
+  <div *ngIf="!loading && totalPages > 1" class="pagination-bar card">
+    <button class="btn btn-secondary btn-sm" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">
+      Previous
+    </button>
+
+    <div class="page-buttons">
+      <button
+        *ngFor="let page of pageNumbers"
+        type="button"
+        class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="goToPage(page)"
+      >
+        {{ page + 1 }}
+      </button>
+    </div>
+
+    <button class="btn btn-secondary btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
+      Next
+    </button>
   </div>
 </div>
