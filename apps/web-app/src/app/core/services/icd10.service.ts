@@ -12,7 +12,7 @@ export interface Icd10Result {
 export class Icd10Service {
   private readonly apiUrl = 'https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) { }
 
   search(term: string): Observable<Icd10Result[]> {
     if (!term || term.trim().length < 2) {
