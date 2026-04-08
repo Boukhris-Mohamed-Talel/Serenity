@@ -6,6 +6,7 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { StatisticsComponent } from './features/statistics/statistics.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
+import { ContratComponent } from './features/contrat/contrat.component';
 
 
 const routes: Routes = [
@@ -76,6 +77,7 @@ const routes: Routes = [
       }
     ]
   },
+  { path: 'contrat', component: ContratComponent },
   { path: '**', redirectTo: '' }
 ];
 

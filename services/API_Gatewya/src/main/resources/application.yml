@@ -74,6 +74,7 @@ spring:
             allowed-origins:
               - "http://localhost:4200"
               - "http://localhost:3000"
+              #- "http://192.168.1.145:4200"
             allowed-methods:
               - GET
               - POST
@@ -89,6 +90,7 @@ spring:
 
 server:
   port: 8082
+  #address: 0.0.0.0
 
 app:
   jwt:
