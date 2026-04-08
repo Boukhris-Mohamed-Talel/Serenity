@@ -10,8 +10,8 @@
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
       <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
-      <a routerLink="/statistics" routerLinkActive="active">Statistics</a>
-      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/statistics" routerLinkActive="active" *ngIf="authService.isDoctor()">Statistics</a>
+      <a routerLink="/patients" routerLinkActive="active" *ngIf="authService.isDoctor()">Patients</a>
       <a routerLink="/profile" routerLinkActive="active">Profile</a>
       <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
       <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
@@ -181,7 +181,7 @@
       <a routerLink="/articles">Articles</a>
       <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
-      <a routerLink="/patients">Patients</a>
+      <a routerLink="/patients" *ngIf="authService.isDoctor()">Patients</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>
