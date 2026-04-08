@@ -114,7 +114,11 @@
                 class="alt-item"
                 [class.selected]="isSelectedAlternative(option)"
                 *ngFor="let option of result.fullMatchPharmacies; trackBy: trackByAlternativeId"
-                (click)="selectAlternativeForPreview(option)">
+                role="button"
+                tabindex="0"
+                (click)="selectAlternativeForPreview(option)"
+                (keydown.enter)="selectAlternativeForPreview(option)"
+                (keydown.space)="$event.preventDefault(); selectAlternativeForPreview(option)">
                 <div>
                   <p class="name">{{ option.pharmacyName }}</p>
                   <p class="meta" *ngIf="option.distanceKm != null">{{ option.distanceKm }} km away</p>
@@ -151,7 +155,11 @@
                 class="alt-item"
                 [class.selected]="isSelectedAlternative(option)"
                 *ngFor="let option of result.selectablePharmacies; trackBy: trackByAlternativeId"
-                (click)="selectAlternativeForPreview(option)">
+                role="button"
+                tabindex="0"
+                (click)="selectAlternativeForPreview(option)"
+                (keydown.enter)="selectAlternativeForPreview(option)"
+                (keydown.space)="$event.preventDefault(); selectAlternativeForPreview(option)">
                 <div>
                   <p class="name">{{ option.pharmacyName }}</p>
                   <p class="meta" *ngIf="option.distanceKm != null">{{ option.distanceKm }} km away</p>

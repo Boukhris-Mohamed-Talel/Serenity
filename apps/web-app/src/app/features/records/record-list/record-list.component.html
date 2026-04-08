@@ -1,0 +1,172 @@
+<section class="saas-page">
+  <header class="saas-page-header">
+    <div class="saas-page-title">
+      <h1 *ngIf="patient">Records for {{ patient.firstName }} {{ patient.lastName }}</h1>
+      <h1 *ngIf="!patient">Medical records</h1>
+      <p class="saas-lead">Track diagnoses, severity and status for this patient.</p>
+    </div>
+    <div class="saas-toolbar" *ngIf="patientId">
+      <a [routerLink]="['/patients', patientId]" class="btn btn-secondary btn-lg">Patient details</a>
+      <a [routerLink]="['new']" class="btn btn-primary btn-lg">+ New record</a>
+    </div>
+  </header>
+
+  <nav class="saas-breadcrumb" *ngIf="patientId" aria-label="Breadcrumb">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId]">Patient</a>
+    <span class="sep">/</span>
+    <span class="current">Records</span>
+  </nav>
+
+  <!-- Search bar -->
+  <div class="search-bar">
+    <div class="search-inputs">
+      <input
+        type="text"
+        [(ngModel)]="searchDiagnosis"
+        placeholder="Search by diagnosis..."
+        class="search-input"
+        (keyup.enter)="search()" />
+      <select [(ngModel)]="searchStatus" class="search-select">
+        <option value="">All Statuses</option>
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="CLOSED">CLOSED</option>
+      </select>
+      <select [(ngModel)]="searchSeverity" class="search-select">
+        <option value="">All Severities</option>
+        <option value="LOW">LOW</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="HIGH">HIGH</option>
+      </select>
+    </div>
+    <div class="search-actions">
+      <button type="button" class="btn btn-primary" (click)="search()" [disabled]="searchLoading">
+        <span class="material-icons">search</span> Search
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="clearSearch()" *ngIf="isSearching">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Search results -->
+  <ng-container *ngIf="isSearching">
+    <div class="saas-card" *ngIf="searchLoading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Searching…</span>
+      </div>
+    </div>
+
+    <div class="saas-card saas-empty" *ngIf="!searchLoading && !searchResults.length">
+      <div class="saas-empty-icon" aria-hidden="true">🔍</div>
+      <h2>No results found</h2>
+      <p>No records match your search criteria. Try different filters.</p>
+    </div>
+
+    <div *ngIf="!searchLoading && searchResults.length">
+      <p class="search-count">{{ searchResults.length }} result(s)</p>
+      <div class="record-cards">
+        <article class="record-card" *ngFor="let r of searchResults">
+          <div class="record-body">
+            <div class="record-main">
+              <div class="record-diagnosis">{{ r.diagnosis }}</div>
+              <div class="record-date">{{ r.date }}</div>
+            </div>
+            <div class="record-badges">
+              <span class="badge-pill"
+                [ngClass]="{
+                  'badge-low':    r.severity === 'LOW',
+                  'badge-medium': r.severity === 'MEDIUM',
+                  'badge-high':   r.severity === 'HIGH'
+                }">
+                {{ r.severity }}
+              </span>
+              <span class="badge-pill"
+                [ngClass]="{
+                  'badge-active': r.status === 'ACTIVE',
+                  'badge-closed': r.status === 'CLOSED'
+                }">
+                {{ r.status }}
+              </span>
+            </div>
+          </div>
+          <div class="record-actions">
+            <a [routerLink]="[r.id, 'prescriptions']" class="btn btn-primary btn-sm">Prescriptions</a>
+            <a [routerLink]="[r.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+            <button type="button" class="btn btn-danger btn-sm" (click)="openDeleteRecord(r.id)">Delete</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Normal list (hidden during search) -->
+  <ng-container *ngIf="!isSearching">
+    <!-- Loading -->
+    <div class="saas-card" *ngIf="loading">
+      <div class="saas-loading">
+        <span class="saas-spinner" aria-hidden="true"></span>
+        <span>Loading records…</span>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="saas-card saas-empty" *ngIf="!loading && !records.length">
+      <div class="saas-empty-icon" aria-hidden="true">🗂️</div>
+      <h2>No records</h2>
+      <p>Create a medical record to store diagnosis, notes and prescriptions.</p>
+      <div class="saas-empty-actions" *ngIf="patientId">
+        <a [routerLink]="['new']" class="btn btn-primary">Create record</a>
+      </div>
+    </div>
+
+    <!-- Card list -->
+    <div class="record-cards" *ngIf="!loading && records.length">
+      <article class="record-card" *ngFor="let r of records">
+        <div class="record-body">
+          <div class="record-main">
+            <div class="record-diagnosis">{{ r.diagnosis }}</div>
+            <div class="record-date">{{ r.date }}</div>
+          </div>
+          <div class="record-badges">
+            <span
+              class="badge-pill"
+              [ngClass]="{
+                'badge-low':    r.severity === 'LOW',
+                'badge-medium': r.severity === 'MEDIUM',
+                'badge-high':   r.severity === 'HIGH'
+              }">
+              {{ r.severity }}
+            </span>
+            <span
+              class="badge-pill"
+              [ngClass]="{
+                'badge-active': r.status === 'ACTIVE',
+                'badge-closed': r.status === 'CLOSED'
+              }">
+              {{ r.status }}
+            </span>
+          </div>
+        </div>
+        <div class="record-actions">
+          <a [routerLink]="[r.id, 'prescriptions']" class="btn btn-primary btn-sm">Prescriptions</a>
+          <a [routerLink]="[r.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
+          <button type="button" class="btn btn-danger btn-sm" (click)="openDeleteRecord(r.id)">Delete</button>
+        </div>
+      </article>
+    </div>
+  </ng-container>
+</section>
+
+<app-confirm-dialog
+  [open]="!!deleteConfirm"
+  title="Delete this record?"
+  message="This action is permanent. Related prescriptions may also be affected depending on server configuration."
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  [danger]="true"
+  (confirm)="confirmDeleteRecord()"
+  (cancel)="closeDeleteConfirm()">
+</app-confirm-dialog>

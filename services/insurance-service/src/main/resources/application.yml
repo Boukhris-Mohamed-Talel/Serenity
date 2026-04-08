@@ -1,0 +1,42 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/healthcare_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+    expiration-ms: ${JWT_EXPIRATION:86400000}
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+  public-base-url: ${INSURANCE_PUBLIC_BASE_URL:http://localhost:8090}
+  insurance-portal:
+    api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
+  status-poller:
+    fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS:5000}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

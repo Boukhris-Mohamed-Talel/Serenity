@@ -1,5 +1,6 @@
 package com.example.healthcare.dto;
 
+import com.example.healthcare.entity.InsuranceCompany;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -31,6 +32,8 @@ public class UserRequestDTO {
 
     @Past(message = "Date of birth must be in the past")
     private Date dateOfBirth;
+
+    private InsuranceCompany insuranceCompany;
 
     private String role;
 }

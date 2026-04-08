@@ -1,26 +1,29 @@
 # Services
 
-Backend APIs and microservices. **One folder = one deployable service** (own process, own port, own config).
+Backend services. **One folder = one deployable service** (own process, port, config).
 
 ## Current services
 
-| Service          | Path               | Port | Description                    |
-|------------------|--------------------|------|--------------------------------|
+| Service | Path | Port | Description |
+|---------|------|------|-------------|
+| **API_Gatewya** | `services/API_Gatewya/` | 8082 | Spring Cloud Gateway; routes `/api/**` to user-service, appointment-service, insurance-service, and other backends (see `application.yml`). |
 | **user-service** | `services/user-service/` | 8081 | Auth, user CRUD, profiles. |
+| **appointment-service** | `services/appointment-service/` | 8091 | Appointments, calendar, notifications. |
+| **insurance-service** | `services/insurance-service/` | 8090 (default in gateway) | Insurance claims, reimbursements. |
+| **pharmacy-service** | `services/pharmacy-service/` | 8093 (per gateway) | Pharmacy products, prescriptions. |
+| **marketplace-service** | `services/marketplace-service/` | 8088 | Mental health products, checkout. |
 
-## Adding a new microservice
+Other folders under `services/` (monitoring, doctors, microservices, etc.) are additional deployables—see each module’s `pom.xml` and `application.yml`.
 
-1. **Create a new folder** under `services/` with a clear name, e.g. `insurance-service`.
-2. **One service per folder**: own `pom.xml` (or build file), own `application.yml`, own main class. Do not put multiple runnable apps in one folder.
-3. **Own port**: assign a dedicated port (e.g. 8082, 8083) in that service’s config.
-4. **Communication**: services call each other via HTTP (REST) or message queue when you introduce one. No shared database per service when you go full microservices; for now, new services can share the same DB or use their own.
-5. **Convention**: same repo layout as `user-service` (e.g. `src/main/java`, `src/main/resources`) so the repo stays consistent.
+## Run order (typical)
 
-## Target layout (when more services are added)
+1. **user-service** — `cd services/user-service && mvn spring-boot:run`.
+2. **appointment-service** — `cd services/appointment-service && mvn spring-boot:run`.
+3. **insurance-service** / **pharmacy-service** / **marketplace-service** — as needed for the features you are testing.
+4. **API_Gatewya** — `cd services/API_Gatewya && mvn spring-boot:run`.
 
-```
-services/
-├── user-service/       # Auth, user CRUD, profiles (current)
-├── insurance-service/  # Claims, reimbursements (to be added)
-└── README.md           # this file
-```
+The Angular app points at the gateway (e.g. `http://localhost:8082/api`). Services can share the same MySQL database (`healthcare_db`) where configured.
+
+## Adding another service
+
+Create a new folder under `services/` (e.g. `notifications-service`), same layout as an existing service. See [docs/ADDING_A_SERVICE.md](../docs/ADDING_A_SERVICE.md).
