@@ -53,7 +53,7 @@ export class SelectRoleComponent {
     if (!this.selectedRole) return;
 
     const token = this.authService.getToken();
-    console.log('JWT Token being sent:', token);
+    console.log('AAAAAA:', token);
     // Call backend to update role
     this.authService.updateUserRole(this.selectedRole).subscribe({
       next: (res) => {

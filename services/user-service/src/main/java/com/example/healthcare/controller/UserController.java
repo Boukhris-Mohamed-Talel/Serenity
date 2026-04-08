@@ -4,10 +4,11 @@ import com.example.healthcare.dto.ProfileUpdateDTO;
 import com.example.healthcare.dto.UserDTO;
 import com.example.healthcare.dto.UserRequestDTO;
 import com.example.healthcare.dto.UserResponseDTO;
+import com.example.healthcare.entity.AuthResponse;
+import com.example.healthcare.security.jwt.JwtTokenProvider;
 import com.example.healthcare.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,6 +23,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCurrentUser(Authentication authentication) {
@@ -82,13 +84,24 @@ public class UserController {
 
     @PutMapping("/update-role")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponseDTO> updateUserRole(
+    public ResponseEntity<AuthResponse> updateUserRole(
             Authentication authentication,
             @RequestParam String role) {
 
         String email = authentication.getName();
         UserResponseDTO updatedUser = userService.updateUserRole(email, role);
-        return ResponseEntity.ok(updatedUser);
+        String newToken = jwtTokenProvider.generateToken(updatedUser.getEmail(), "ROLE_" + role, updatedUser.getId());
+
+        // Return AuthResponse with new token
+        AuthResponse response = new AuthResponse(
+                newToken,           // accessToken with updated role
+                "Bearer",           // tokenType
+                updatedUser.getId(),
+                email,
+                role                // Updated role
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")

@@ -2,11 +2,12 @@ package serenity.doctors_service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
+import serenity.doctors_service.security.JwtService;
 import serenity.doctors_service.service.IDoctorVerificationService;
 import serenity.doctors_service.service.RedisPublisher;
 
@@ -29,17 +30,24 @@ public class DoctorVerificationController {
     @Autowired
     private RedisPublisher redisPublisher;
 
+    @Autowired
+    private JwtService jwtService;
+
     // Create verification with files
+    @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/add_verification")
     public ResponseEntity<DoctorVerification> create(
             @RequestParam("cv") MultipartFile cv,
             @RequestParam("diploma") MultipartFile diploma,
             @RequestParam("licenseNumber") String licenseNumber,
             @RequestParam("nationalId") String nationalId,
-            @RequestHeader("X-User-Id") String userIdHeader
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "x-doctor-id", required = false) String doctorIdHeader,
+            @RequestHeader(value = "userid", required = false) String userIdFallback,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) throws IOException {
 
-        Long doctorId = Long.parseLong(userIdHeader);
+        Long doctorId = resolveDoctorId(userIdHeader, doctorIdHeader, userIdFallback, authorization);
 
         DoctorVerification verification = service.saveVerification(
                 doctorId, cv, diploma, licenseNumber, nationalId
@@ -49,6 +57,7 @@ public class DoctorVerificationController {
     }
 
     // Update verification
+    @PreAuthorize("hasRole('DOCTOR')")
     @PutMapping("/update_verification/{id}")
     public ResponseEntity<DoctorVerification> update(
             @PathVariable Long id,
@@ -56,10 +65,13 @@ public class DoctorVerificationController {
             @RequestParam(value = "diploma", required = false) MultipartFile diploma,
             @RequestParam("licenseNumber") String licenseNumber,
             @RequestParam("nationalId") String nationalId,
-            @RequestHeader("X-User-Id") String userIdHeader
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "x-doctor-id", required = false) String doctorIdHeader,
+            @RequestHeader(value = "userid", required = false) String userIdFallback,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) throws IOException {
 
-        Long doctorId = Long.parseLong(userIdHeader);
+        Long doctorId = resolveDoctorId(userIdHeader, doctorIdHeader, userIdFallback, authorization);
 
         // Load existing verification from DB
         List<DoctorVerification> list = service.findById(id);
@@ -99,38 +111,69 @@ public class DoctorVerificationController {
     }
 
     // Get all verifications
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<DoctorVerification>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
     // Get verification by ID
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<List<DoctorVerification>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(service.findById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DOCTOR')")
     @GetMapping("FindByDoctorID/{id}")
     public ResponseEntity<List<DoctorVerification>> findByDoctorID(@PathVariable Long id) {
         return ResponseEntity.ok(service.findByDoctorId(id));
     }
 
     // Delete verification by ID
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("Approve/{id}")
     public ResponseEntity<Void> approve(@PathVariable Long id) {
         service.Approve(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("Reject/{id}")
     public ResponseEntity<Void> reject(@PathVariable Long id) {
         service.Reject(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Long resolveDoctorId(String xUserId, String xDoctorId, String userId, String authorization) {
+        String raw = firstNonBlank(xUserId, xDoctorId, userId);
+        if (StringUtils.hasText(raw)) {
+            return Long.parseLong(raw.trim());
+        }
+
+        if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
+            Long tokenUserId = jwtService.extractUserId(authorization.substring(7));
+            if (tokenUserId != null) {
+                return tokenUserId;
+            }
+        }
+
+        throw new IllegalArgumentException("Missing doctor identifier");
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 }

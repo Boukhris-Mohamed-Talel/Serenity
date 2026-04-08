@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
@@ -44,6 +43,17 @@ public class JwtService {
         }
 
         return List.of();
+    }
+
+    public Long extractUserId(String token) {
+        Object userId = extractAllClaims(token).get("userId");
+        if (userId instanceof Number n) {
+            return n.longValue();
+        }
+        if (userId instanceof String s && !s.isBlank()) {
+            return Long.parseLong(s.trim());
+        }
+        return null;
     }
 
     private Claims extractAllClaims(String token) {
