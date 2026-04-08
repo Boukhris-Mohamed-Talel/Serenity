@@ -5,6 +5,10 @@ import com.example.healthcare.dto.DoctorUpdateRequest;
 import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.service.DoctorService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -24,12 +28,11 @@ public class DoctorController {
     @Autowired
     private DoctorService doctorService;
 
-    @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/{userId}")
     public ResponseEntity<DoctorResponseDTO> createDoctorForExistingUser(
             @PathVariable Long userId,
-            @RequestParam("speciality") String speciality,
-            @RequestParam("image") MultipartFile image
+            @RequestParam("speciality") @NotBlank @Size(min = 2) @Pattern(regexp = "^[A-Za-z ]+$") String speciality,
+            @RequestParam("image") @NotNull MultipartFile image
     ) throws IOException {
         DoctorResponseDTO doctor = doctorService.createDoctorForExistingUser(userId, speciality, image);
         return ResponseEntity.ok(doctor);
@@ -54,6 +57,8 @@ public class DoctorController {
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DoctorResponseDTO> updateDoctor(
             @PathVariable Long id,
+            @RequestParam(required = false) @Size(min = 2) @Pattern(regexp = "^[A-Za-z ]+$") String specialty,
+            @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String phone,
@@ -61,9 +66,7 @@ public class DoctorController {
             @RequestParam(required = false) String avatarUrl,
             @RequestParam(required = false) String bio,
             @RequestParam(required = false) String preferredLanguage,
-            @RequestParam(required = false) Boolean isAnonymous,
-            @RequestParam(required = false) String specialty,
-            @RequestParam(required = false) MultipartFile image
+            @RequestParam(required = false) Boolean isAnonymous
     ) throws IOException {
 
         DoctorUpdateRequest request = DoctorUpdateRequest.builder()

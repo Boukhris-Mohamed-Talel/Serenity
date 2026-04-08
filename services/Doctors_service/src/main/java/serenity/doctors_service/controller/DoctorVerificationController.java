@@ -1,5 +1,9 @@
 package serenity.doctors_service.controller;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,10 +41,10 @@ public class DoctorVerificationController {
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/add_verification")
     public ResponseEntity<DoctorVerification> create(
-            @RequestParam("cv") MultipartFile cv,
-            @RequestParam("diploma") MultipartFile diploma,
-            @RequestParam("licenseNumber") String licenseNumber,
-            @RequestParam("nationalId") String nationalId,
+            @RequestParam("cv") @NotNull MultipartFile cv,
+            @RequestParam("diploma") @NotNull MultipartFile diploma,
+            @RequestParam("licenseNumber") @NotBlank @Size(min = 5, max = 20) @Pattern(regexp = "^[A-Za-z0-9 ]+$") String licenseNumber,
+            @RequestParam("nationalId") @NotBlank @Size(min = 8, max = 8) @Pattern(regexp = "^[0-9 ]+$") String nationalId,
             @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestHeader(value = "x-doctor-id", required = false) String doctorIdHeader,
             @RequestHeader(value = "userid", required = false) String userIdFallback,
@@ -63,8 +67,8 @@ public class DoctorVerificationController {
             @PathVariable Long id,
             @RequestParam(value = "cv", required = false) MultipartFile cv,
             @RequestParam(value = "diploma", required = false) MultipartFile diploma,
-            @RequestParam("licenseNumber") String licenseNumber,
-            @RequestParam("nationalId") String nationalId,
+            @RequestParam("licenseNumber") @NotBlank @Size(min = 5, max = 20) @Pattern(regexp = "^[A-Za-z0-9 ]+$") String licenseNumber,
+            @RequestParam("nationalId") @NotBlank @Size(min = 8, max = 8) @Pattern(regexp = "^[0-9 ]+$") String nationalId,
             @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestHeader(value = "x-doctor-id", required = false) String doctorIdHeader,
             @RequestHeader(value = "userid", required = false) String userIdFallback,
@@ -73,19 +77,15 @@ public class DoctorVerificationController {
 
         Long doctorId = resolveDoctorId(userIdHeader, doctorIdHeader, userIdFallback, authorization);
 
-        // Load existing verification from DB
         List<DoctorVerification> list = service.findById(id);
         if (list.isEmpty()) {
             throw new RuntimeException("Verification not found");
         }
         DoctorVerification verification = list.get(0);
 
-
-        // Update fields
         verification.setLicenseNumber(licenseNumber);
         verification.setNationalId(nationalId);
 
-        // Handle file uploads
         Path uploadPath = Paths.get(uploadDir);
         Files.createDirectories(uploadPath);
 
@@ -104,7 +104,6 @@ public class DoctorVerificationController {
         }
 
         DoctorVerification updated = service.save(verification);
-
         redisPublisher.publishVerification(updated);
 
         return ResponseEntity.ok(updated);
