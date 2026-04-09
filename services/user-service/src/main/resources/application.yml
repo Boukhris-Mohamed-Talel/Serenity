@@ -23,9 +23,28 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:raefhossni@gmail.com}
+    password: ${SMTP_PASSWORD:rhwt ksis csqy pezj}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 app:
+  # Shared with appointment-service for reminder emails (X-Internal-Key on POST /api/internal/users/emails-by-ids)
+  internal-api-key: ${INTERNAL_API_KEY:}
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  public-base-url: ${USER_PUBLIC_BASE_URL:http://localhost:8081}
   insurance:
     api-url: ${INSURANCE_API_URL:http://localhost:3000/api}
   jwt:
@@ -37,3 +56,11 @@ app:
     facebook:
       app-id: ${FACEBOOK_APP_ID:}
       app-secret: ${FACEBOOK_APP_SECRET:}
+  password-reset:
+    otp-length: ${PASSWORD_RESET_OTP_LENGTH:6}
+    otp-ttl-seconds: ${PASSWORD_RESET_OTP_TTL_SECONDS:300}
+    otp-max-attempts: ${PASSWORD_RESET_OTP_MAX_ATTEMPTS:5}
+    reset-token-ttl-seconds: ${PASSWORD_RESET_TOKEN_TTL_SECONDS:900}
+  mail:
+    from: ${MAIL_FROM:raefhossni@gmail.com}
+

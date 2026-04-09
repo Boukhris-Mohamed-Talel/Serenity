@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ProfileUpdateRequest, UserRequest, UserResponse } from '../../shared/models/user.model';
+import { ProfileUpdateRequest, UserRequest, UserResponse, UserLookup } from '../../shared/models/user.model';
 import { AuthService } from './auth.service';
+import { UserName } from '../../shared/models/user-name.model';
 
 @Injectable({
   providedIn: 'root'
@@ -58,12 +59,26 @@ export class UserService {
     );
   }
 
+  uploadAvatar(file: File): Observable<UserResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UserResponse>(`${this.API_URL}/me/avatar`, formData).pipe(
+      tap(user => {
+        this.cachedUser = user;
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
   getAllUsers(): Observable<UserResponse[]> {
     return this.http.get<UserResponse[]>(this.API_URL);
   }
 
   getUserById(id: number): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.API_URL}/${id}`);
+    const token = this.authService.getToken();
+    return this.http.get<UserResponse>(`${this.API_URL}/${id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
   }
 
   updateUser(id: number, request: UserRequest): Observable<UserResponse> {
@@ -81,4 +96,33 @@ export class UserService {
   activateUser(id: number): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/${id}/activate`, {});
   }
+
+  getUsersNamesById(ids: number[]): Observable<UserName[]> {
+    return this.http.get<UserName[]>(`${this.API_URL}/names`, {
+      params: { ids: ids.join(',') }
+    });
+  }
+
+  /** GET /api/users/lookup/doctors — active doctors for appointment booking. */
+  lookupDoctors(): Observable<UserLookup[]> {
+    return this.http.get<UserLookup[]>(`${this.API_URL}/lookup/doctors`);
+  }
+
+  /** GET /api/users/lookup/patients — doctor scheduling (optional name filter). */
+  lookupPatients(firstName?: string, lastName?: string): Observable<UserLookup[]> {
+    let params = new HttpParams();
+    if (firstName != null && firstName !== '') {
+      params = params.set('firstName', firstName);
+    }
+    if (lastName != null && lastName !== '') {
+      params = params.set('lastName', lastName);
+    }
+    return this.http.get<UserLookup[]>(`${this.API_URL}/lookup/patients`, { params });
+  }
+
+  /** POST /api/users/lookup/names — resolve user ids to names (appointments UI). */
+  lookupNamesByIds(ids: number[]): Observable<UserLookup[]> {
+    return this.http.post<UserLookup[]>(`${this.API_URL}/lookup/names`, { ids });
+  }
+
 }

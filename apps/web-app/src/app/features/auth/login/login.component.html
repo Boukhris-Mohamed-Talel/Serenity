@@ -20,6 +20,9 @@
         <div *ngIf="errorMessage" class="alert alert-error">
           {{ errorMessage }}
         </div>
+        <div *ngIf="infoMessage" class="alert alert-info">
+          {{ infoMessage }}
+        </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
@@ -49,6 +52,9 @@
             <div class="error-message" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')">
               Password is required
             </div>
+          </div>
+          <div class="forgot-link">
+            <a routerLink="/auth/forgot-password">Forgot password?</a>
           </div>
 
           <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.invalid || loading">

@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 *,
 *::before,
 *::after {
@@ -73,6 +75,7 @@ a {
   &-primary {
     background: var(--primary);
     color: #fff;
+
     &:hover:not(:disabled) {
       background: var(--primary-dark);
       box-shadow: 0 4px 12px rgba(59, 164, 160, 0.35);
@@ -84,6 +87,7 @@ a {
     background: var(--surface);
     color: var(--text);
     border-color: var(--border);
+
     &:hover:not(:disabled) {
       background: var(--bg);
       border-color: var(--primary);
@@ -93,6 +97,7 @@ a {
   &-danger {
     background: var(--danger);
     color: #fff;
+
     &:hover:not(:disabled) {
       background: #c25555;
       box-shadow: 0 4px 12px rgba(217, 107, 107, 0.3);
@@ -119,7 +124,9 @@ a {
     color: var(--text);
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     width: 100%;
     padding: 0.625rem 0.75rem;
     border: 2px solid var(--border);
@@ -175,7 +182,8 @@ table {
   width: 100%;
   border-collapse: collapse;
 
-  th, td {
+  th,
+  td {
     text-align: left;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--border);
@@ -242,5 +250,81 @@ table {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Form Layout styles restored from patient-form */
+.card-form {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+
+  span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: var(--surface);
+    color: var(--text);
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 164, 160, 0.15);
+      background: var(--surface);
+    }
+
+    &.ng-touched.ng-invalid {
+      border-color: var(--danger);
+      background: #fdf0f0;
+    }
+  }
+
+  .err {
+    font-size: 0.75rem;
+    color: var(--danger);
+    font-weight: 600;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
 }

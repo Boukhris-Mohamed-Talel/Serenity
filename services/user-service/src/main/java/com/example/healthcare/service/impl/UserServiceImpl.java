@@ -12,6 +12,8 @@ import com.example.healthcare.repository.UserRepository;
 import com.example.healthcare.security.jwt.JwtTokenProvider;
 import com.example.healthcare.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -20,8 +22,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +46,12 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
+
+    @Value("${app.public-base-url:http://localhost:8081}")
+    private String publicBaseUrl;
 
     @Override
     public AuthResponseDTO registerUser(UserRequestDTO request) {
@@ -74,15 +93,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponseDTO updateUserRole(String email, String role) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        user.setRole(Role.valueOf(role.toUpperCase()));
+        userRepository.save(user);
+
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-            String token = jwtTokenProvider.generateToken(authentication);
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(InvalidCredentialsException::new);
+
+            String token = jwtTokenProvider.generateToken(authentication);
 
             return AuthResponseDTO.builder()
                     .accessToken(token)
@@ -145,6 +175,47 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponseDTO uploadAvatar(String email, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Avatar file is required");
+        }
+        String contentType = file.getContentType();
+        if (!StringUtils.hasText(contentType) || !contentType.toLowerCase().startsWith("image/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image uploads are allowed");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        String original = file.getOriginalFilename();
+        String safeName = StringUtils.hasText(original)
+                ? original.replace("\\", "_").replace("/", "_").replace("..", "_")
+                : "avatar";
+        String filename = UUID.randomUUID() + "_" + safeName;
+
+        Path dir = Paths.get(uploadDir, "avatars", String.valueOf(user.getId()));
+        Path target = dir.resolve(filename).normalize();
+        try {
+            Files.createDirectories(dir);
+            file.transferTo(target.toAbsolutePath().toFile());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save avatar");
+        }
+
+        String base = publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
+        String avatarUrl = base + "/uploads/avatars/" + user.getId() + "/" + filename;
+
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            profile = UserProfile.builder().user(user).build();
+            user.setProfile(profile);
+        }
+        profile.setAvatar(avatarUrl);
+        userRepository.save(user);
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
     public UserResponseDTO updateUser(Long id, UserRequestDTO request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
@@ -186,10 +257,86 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
     }
 
+    public List<UserDTO> searchUsers(String query) {
+        return userRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query)
+                .stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .toList();
+    }
+
+    public List<UserDTO> getUsersNamesByIds(List<Long> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
+                .collect(Collectors.toList());
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<UserResponseDTO> getDoctors() {
         List<User> doctors = userRepository.findByRole(Role.DOCTOR);
         return userMapper.toResponseDTOList(doctors);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> getPatients() {
+        List<User> patients = userRepository.findByRole(Role.PATIENT);
+        return userMapper.toResponseDTOList(patients);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupDoctors() {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.DOCTOR).stream()
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupPatients(String firstName, String lastName) {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.PATIENT).stream()
+                .filter(u -> matchesOptionalNameFilter(u.getFirstName(), firstName))
+                .filter(u -> matchesOptionalNameFilter(u.getLastName(), lastName))
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupUsersByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<User> found = userRepository.findAllById(ids);
+        Map<Long, User> byId = found.stream().collect(Collectors.toMap(User::getId, u -> u));
+        return ids.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    private boolean matchesOptionalNameFilter(String fieldValue, String query) {
+        if (query == null || query.isBlank()) {
+            return true;
+        }
+        if (query.length() < 2) {
+            return true;
+        }
+        if (fieldValue == null) {
+            return false;
+        }
+        return fieldValue.toLowerCase().contains(query.toLowerCase());
+    }
+
+    private UserLookupDTO toLookupDto(User user) {
+        return UserLookupDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .build();
     }
 }

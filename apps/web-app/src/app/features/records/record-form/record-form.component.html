@@ -1,0 +1,54 @@
+<div class="container medical-page">
+  <div class="page-head">
+    <h1>{{ isEdit ? 'Edit medical record' : 'New medical record' }}</h1>
+  </div>
+
+  <p class="breadcrumb" *ngIf="patientId">
+    <a routerLink="/patients">Patients</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId]">Patient</a>
+    <span class="sep">/</span>
+    <a [routerLink]="['/patients', patientId, 'records']">Records</a>
+  </p>
+
+  <div *ngIf="loading" class="state-muted">Loading…</div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
+    <div class="form-grid">
+      <label class="field full">
+        <span>Diagnosis *</span>
+        <input type="text" formControlName="diagnosis" maxlength="255" />
+        <small class="err" *ngIf="form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched">Required (max 255 characters)</small>
+      </label>
+      <label class="field">
+        <span>Date *</span>
+        <input type="date" formControlName="date" />
+        <small class="err" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Date is required</small>
+      </label>
+      <label class="field">
+        <span>Severity *</span>
+        <select formControlName="severity">
+          <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
+        </select>
+        <small class="err" *ngIf="form.get('severity')?.invalid && form.get('severity')?.touched">Severity is required</small>
+      </label>
+      <label class="field">
+        <span>Status *</span>
+        <select formControlName="status">
+          <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+        </select>
+        <small class="err" *ngIf="form.get('status')?.invalid && form.get('status')?.touched">Status is required</small>
+      </label>
+      <label class="field full">
+        <span>Notes</span>
+        <textarea formControlName="notes" rows="4" maxlength="2000"></textarea>
+        <small class="err" *ngIf="form.get('notes')?.invalid && form.get('notes')?.touched">Max 2000 characters</small>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">Save</button>
+    </div>
+  </form>
+</div>

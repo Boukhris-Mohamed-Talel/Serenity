@@ -319,6 +319,14 @@ export class MoodListComponent implements OnInit, OnDestroy {
     });
   }
 
+  goToOutcomeTrackingDashboard(): void {
+    if (!this.isDoctorView) {
+      return;
+    }
+
+    this.router.navigate(['/monitoring/outcomes']);
+  }
+
   get selectedPatientEntries(): MoodEntryResponse[] {
     if (!this.selectedPatient) {
       return [];

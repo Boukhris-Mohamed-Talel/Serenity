@@ -436,8 +436,17 @@
       }
     }
 
-    .btn-export-record {
+    .detail-actions {
       margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn-outcome-dashboard,
+    .btn-export-record {
       border: 1px solid #0d9488;
       background: #ffffff;
       color: #0d9488;

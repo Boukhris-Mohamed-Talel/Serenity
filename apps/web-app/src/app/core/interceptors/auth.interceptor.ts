@@ -22,12 +22,19 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.authService.getToken();
     const shouldAttachToken = this.shouldAttachToken(request.url);
+    const currentUser = this.authService.getCurrentUser();
+    const userId = currentUser?.userId;
 
     if (token && shouldAttachToken) {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`
+      };
+      if (userId != null) {
+        headers['X-Doctor-Id'] = String(userId);
+        headers['userId'] = String(userId);
+      }
       request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
+        setHeaders: headers
       });
     }
 
@@ -58,6 +65,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return url.startsWith('http://localhost:8082') ||
       url.startsWith('http://localhost:8085') ||
+      url.startsWith('http://localhost:8099') ||
       url.includes('/api/');
   }
 }

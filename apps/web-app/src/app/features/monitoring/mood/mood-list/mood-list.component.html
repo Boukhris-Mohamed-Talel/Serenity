@@ -12,7 +12,7 @@
 
   <div class="page-shell" [class.doctor-shell]="isDoctorView">
 
-    <header class="page-header">
+    <header class="page-header">S
       <div>
         <h1>Monitoring Dashboard</h1>
         <p>{{ getHeaderSubtitle() }}</p>
@@ -63,8 +63,11 @@
           <div
             class="patient-item"
             *ngFor="let patient of filteredPatients"
-            [class.active]="selectedPatient?.id === patient.id"
-            (click)="selectPatient(patient)">
+            [class.active]="selectedPatient?.id === patient.id" role="button"
+            tabindex="0"
+            (click)="selectPatient(patient)"
+            (keydown.enter)="selectPatient(patient)"
+            (keydown.space)="$event.preventDefault(); selectPatient(patient)">
             <div class="patient-avatar">
               <img
                 *ngIf="patient.avatarUrl"
@@ -120,9 +123,14 @@
               <span class="avg-value">{{ averageMood }}/10</span>
             </div>
 
-            <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
-              {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
-            </button>
+            <div class="detail-actions">
+              <button class="btn-outcome-dashboard" (click)="goToOutcomeTrackingDashboard()">
+                Outcome Dashboard
+              </button>
+              <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
+                {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
+              </button>
+            </div>
           </div>
 
           <div class="entries-grid">

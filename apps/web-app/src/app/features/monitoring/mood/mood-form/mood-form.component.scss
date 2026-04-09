@@ -260,6 +260,13 @@
   margin: 0;
 }
 
+.write-hint {
+  margin: 0.5rem 0 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #3f6470;
+}
+
 // Mood Preview
 .mood-preview {
   padding: 1.5rem;
@@ -377,31 +384,43 @@
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
+  border: 2px solid #c9d8de;
   border-radius: calc(var(--radius) - 2px);
   font-family: inherit;
   font-size: 0.95rem;
   color: var(--text-dark);
-  background: var(--background);
+  background: #ffffff;
   transition: all 0.2s ease;
   box-sizing: border-box;
   margin-bottom: 0.5rem;
 
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 0 3px rgba(59, 164, 160, 0.2);
   }
 
   &::placeholder {
-    color: var(--text-light);
+    color: #6b8791;
+  }
+
+  &.ng-touched.ng-invalid {
+    border-color: #d96b6b;
+    box-shadow: 0 0 0 2px rgba(217, 107, 107, 0.16);
   }
 
   &.textarea {
     resize: vertical;
-    min-height: 100px;
+    min-height: 120px;
+    line-height: 1.6;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
+}
+
+.input-support-text {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7d86;
 }
 
 // Character Count

@@ -1,0 +1,40 @@
+<div class="outcome-dashboard">
+  <div class="header-row">
+    <div>
+      <h1>Outcome Tracking Dashboard</h1>
+      <p>Doctor-level monitoring KPIs based on patient mood entries.</p>
+    </div>
+    <button class="btn-back" (click)="goBack()">Back to Monitoring</button>
+  </div>
+
+  <div *ngIf="loading" class="state-box">Loading outcomes...</div>
+  <div *ngIf="!loading && errorMessage" class="state-box state-error">{{ errorMessage }}</div>
+
+  <div *ngIf="!loading && !errorMessage" class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-label">Total Patients</span>
+      <span class="kpi-value">{{ kpis.totalPatients }}</span>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-label">Average Mood</span>
+      <span class="kpi-value">{{ kpis.averageMood }}/10</span>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-label">Average Mood Change</span>
+      <span class="kpi-value">{{ kpis.averageMoodChange }}</span>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-label">Crisis Events</span>
+      <span class="kpi-value">{{ kpis.crisisEvents }}</span>
+    </div>
+
+    <div class="kpi-card kpi-alert">
+      <span class="kpi-label">Active High-Risk Patients</span>
+      <span class="kpi-value">{{ kpis.activeHighRiskPatients }}</span>
+    </div>
+  </div>
+</div>
+

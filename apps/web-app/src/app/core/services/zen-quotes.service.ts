@@ -20,6 +20,11 @@ interface AllOriginsResponse {
   };
 }
 
+interface QuotableResponse {
+  content: string;
+  author: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,6 +32,7 @@ export class ZenQuotesService {
 
   private readonly ZEN_QUOTES_URL = 'https://zenquotes.io/api/random';
   private readonly JINA_PROXY_BASE_URL = 'https://r.jina.ai/http://zenquotes.io/api/random';
+  private readonly QUOTABLE_URL = 'https://api.quotable.io/random';
 
   private readonly FALLBACK_QUOTES: MotivationalQuote[] = [
     {
@@ -68,8 +74,15 @@ export class ZenQuotesService {
       catchError(() => this.http.get(jinaProxyUrl, { responseType: 'text' }).pipe(
         map(raw => this.parseRawOrThrow(raw))
       )),
+      catchError(() => this.http.get<QuotableResponse>(`${this.QUOTABLE_URL}?_=${Date.now()}`).pipe(
+        map(item => this.toQuotableQuoteOrThrow(item))
+      )),
       catchError(() => of(this.getRandomFallbackQuote()))
     );
+  }
+
+  getFallbackQuote(): MotivationalQuote {
+    return this.getRandomFallbackQuote();
   }
 
   private toQuoteOrThrow(items: ZenQuoteApiItem[] | null | undefined): MotivationalQuote {
@@ -101,6 +114,18 @@ export class ZenQuotesService {
       const parsed = JSON.parse(extracted) as ZenQuoteApiItem[];
       return this.toQuoteOrThrow(parsed);
     }
+  }
+
+  private toQuotableQuoteOrThrow(item: QuotableResponse | null | undefined): MotivationalQuote {
+    const text = item?.content?.trim();
+    if (!text) {
+      throw new Error('Invalid quotable payload');
+    }
+
+    return {
+      text,
+      author: item?.author?.trim() || 'Unknown'
+    };
   }
 
   private extractJsonArray(raw: string): string | null {

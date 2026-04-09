@@ -19,7 +19,9 @@ export class AdminLayoutComponent implements OnInit {
   navItems = [
     { label: 'Dashboard', icon: 'grid', route: '/admin' },
     { label: 'Users', icon: 'users', route: '/admin/users' },
-    // { label: 'Insurance Claims', icon: 'shield', route: '/admin/insurance' }, // uncomment when insurance module exists
+    { label: 'Doctors', icon: 'user-md', route: '/admin/doctors' },
+    { label: 'Insurance Claims', icon: 'shield', route: '/admin/insurance' },
+    { label: 'Appointments', icon: 'calendar_today', route: '/admin/appointments' },
     { label: 'Edit User', icon: 'edit', route: '/admin/users/edit', hidden: true }
   ];
 

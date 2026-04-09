@@ -1,0 +1,98 @@
+.page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-header p {
+  margin-top: 0.35rem;
+  color: #5d7d7a;
+}
+
+.details-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.details-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-self: flex-start;
+}
+
+.actions .btn {
+  padding: 0.22rem 0.58rem;
+  font-size: 0.78rem;
+  min-height: 1.6rem;
+  border-radius: 9px;
+}
+
+.line-items ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.medicine-line {
+  margin-bottom: 0.7rem;
+  line-height: 1.35;
+}
+
+.line-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  align-items: baseline;
+}
+
+.med-name {
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+
+.meta {
+  margin-right: 0.75rem;
+  color: #47627b;
+}
+
+.line-main .meta {
+  margin-right: 0;
+}
+
+.stock-note {
+  display: inline-flex;
+  margin-top: 0.22rem;
+  color: #244f74;
+  font-size: 0.84rem;
+  background: #eef5fb;
+  border: 1px solid #d7e6f4;
+  border-radius: 999px;
+  padding: 0.14rem 0.6rem;
+}
+
+.hint {
+  color: #5b6570;
+}
+
+.error {
+  color: #b52424;
+}
+
+.success {
+  color: #1d7a2a;
+}

@@ -1,0 +1,28 @@
+package com.example.insurance.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class InsuranceClaimRequestDTO {
+
+    @NotBlank(message = "Description is required")
+    private String description;
+
+    @NotNull(message = "Amount is required")
+    @Positive(message = "Amount must be positive")
+    private Double amount;
+
+    @NotBlank(message = "Insurance company is required")
+    private String insuranceCompany;
+
+    @NotNull(message = "Insurance grade is required")
+    @Positive(message = "Insurance grade must be positive")
+    private Double insuranceGrade;
+}

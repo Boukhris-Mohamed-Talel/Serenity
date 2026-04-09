@@ -1,3 +1,5 @@
+<app-toast></app-toast>
+
 <nav class="navbar">
   <div class="container navbar-inner">
     <a routerLink="/" class="navbar-brand">
@@ -6,30 +8,25 @@
     </a>
 
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Dashboard
-      </a>
-      <a routerLink="/profile" routerLinkActive="active">
-        Profile
-      </a>
-      <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">
-        Monitoring
-      </a>
-      <!-- Reimbursements (uncomment when insurance module exists)
-      <a routerLink="/insurance" routerLinkActive="active">
-        Reimbursements
-      </a>
-      -->
-      <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">
-        Users
-      </a>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
+      <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
+      <a routerLink="/statistics" routerLinkActive="active">Statistics</a>
+      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
+      <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
+      <a routerLink="/articles" routerLinkActive="active">Articles</a>
+      <a routerLink="/insurance" routerLinkActive="active">Insurance</a>
+      <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
     </div>
 
     <div class="navbar-actions" *ngIf="authService.isLoggedIn()">
       <div class="notif-bell-wrap" *ngIf="authService.isDoctor()">
-        <button class="notif-bell-btn" (click)="toggleNotificationPanel()" aria-label="Crisis alerts">
+        <button class="notif-bell-btn" (click)="toggleAlertPanel()" aria-label="Crisis alerts">
           <span class="material-icons">notifications</span>
-          <span class="notif-badge" *ngIf="alerts.length > 0">{{ alerts.length }}</span>
+          <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
         </button>
 
         <div class="notif-panel" *ngIf="notificationPanelOpen">
@@ -55,7 +52,107 @@
         </div>
       </div>
 
+      <!-- Insurance + appointment notifications -->
+      <div class="notification-menu">
+        <button
+          class="notification-btn"
+          type="button"
+          (click)="toggleNotifications($event)"
+          aria-label="Notifications"
+        >
+          <span class="bell">🛡️</span>
+          <span class="notification-badge" *ngIf="unreadNotificationCount > 0">
+            {{ unreadNotificationCount }}
+          </span>
+        </button>
+        <div
+          class="notification-dropdown"
+          *ngIf="notificationsOpen"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+        >
+          <div class="notification-header">
+            <strong>Notifications</strong>
+            <button
+              type="button"
+              class="mark-all-btn"
+              (click)="markAllAsRead($event)"
+              *ngIf="unreadNotificationCount > 0"
+            >
+              Mark all read
+            </button>
+          </div>
+
+          <div class="notification-state" *ngIf="notificationsLoading">
+            Loading...
+          </div>
+
+          <div class="notification-state" *ngIf="!notificationsLoading && notifications.length === 0">
+            No notifications yet.
+          </div>
+
+          <div class="notification-list" *ngIf="!notificationsLoading && notifications.length > 0">
+            <button
+              type="button"
+              class="notification-item"
+              *ngFor="let notification of notifications"
+              [class.unread]="!notification.isRead"
+              (click)="onNotificationClick(notification, $event)"
+            >
+              <div class="notification-title-row">
+                <span class="notification-title">
+                  {{ notification.title }}
+                </span>
+                <span class="dot" *ngIf="!notification.isRead"></span>
+              </div>
+              <p class="notification-message">
+                {{ notification.message }}
+              </p>
+              <small class="notification-date">
+                {{ formatNotificationDate(notification.createdAt) }}
+              </small>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
+
+      <!-- 👇 Notification Bell -->
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="toggleNotifDropdown(); $event.stopPropagation()">
+          🔔
+          <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+        </button>
+
+        <div class="notif-dropdown" *ngIf="notifDropdownVisible" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="notif-header">
+            <span>Notifications</span>
+            <button class="clear-btn" (click)="clearNotifications()" *ngIf="notifications.length > 0">Clear all</button>
+          </div>
+
+          <div class="notif-empty" *ngIf="notifications.length === 0">
+            No new notifications
+          </div>
+
+          <div
+            class="notif-item"
+            *ngFor="let notif of messageNotifications"
+            [ngClass]="{ unread: !notif.read }"
+            (click)="goToConversation(notif)"
+            (keydown.enter)="goToConversation(notif)"
+            (keydown.space)="goToConversation(notif)"
+          >
+            <div class="notif-content">
+              <div class="notif-sender">💬 {{ notif.senderName }}</div>
+              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text.length > 40 ? '...' : '' }}</div>
+            </div>
+            <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
+          </div>
+        </div>
+      </div>
+      <!-- 👆 End Bell -->
+
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>
 
@@ -79,7 +176,12 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/appointments">Appointments</a>
       <a routerLink="/monitoring" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
+      <a routerLink="/articles">Articles</a>
+      <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
+      <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
+      <a routerLink="/patients">Patients</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

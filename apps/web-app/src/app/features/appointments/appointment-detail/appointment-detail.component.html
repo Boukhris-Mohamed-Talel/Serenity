@@ -1,0 +1,150 @@
+<div class="container claim-list-page" *ngIf="!loading && appointment">
+  <div class="page-header detail-page-header">
+    <h1>Appointment #{{ appointment.id }}</h1>
+    <div class="page-header-actions">
+      <button type="button" class="btn btn-secondary" (click)="back()">Back to list</button>
+      <button
+        *ngIf="canReschedule && !showReschedulePanel"
+        type="button"
+        class="btn btn-primary"
+        (click)="openReschedulePanel()">
+        Reschedule
+      </button>
+      <button
+        *ngIf="canReschedule && showReschedulePanel"
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeReschedulePanel()">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div class="card detail-card">
+    <p><strong>Date:</strong> {{ appointment.appointmentDate }} at {{ appointment.timeSlot }}</p>
+    <p><strong>Status:</strong> {{ appointment.status }}</p>
+    <p><strong>Type:</strong> {{ appointment.type === 'TELECONSULTATION' ? 'Teleconsultation' : 'In person' }}</p>
+    <p><strong>Patient:</strong> {{ patientDisplayName }}</p>
+    <p><strong>Doctor:</strong> {{ doctorDisplayName }}</p>
+    <p *ngIf="appointment.notes"><strong>Notes:</strong> {{ appointment.notes }}</p>
+  </div>
+
+  <div class="card detail-card reschedule-panel" *ngIf="canReschedule && showReschedulePanel">
+    <h2>Reschedule</h2>
+    <p class="hint">Same rules as booking: work hours 08:00–20:00, ~90 min visit, no conflicts with other visits.</p>
+    <div class="book-layout">
+      <div class="form-card">
+        <label for="rescheduleDate">New date</label>
+        <input
+          id="rescheduleDate"
+          type="date"
+          name="rescheduleDate"
+          [(ngModel)]="rescheduleDate"
+          [min]="minDateStr"
+          (ngModelChange)="onRescheduleDateChange($event)" />
+
+        <label for="rescheduleTime">New time (24h, e.g. 14:30)</label>
+        <input id="rescheduleTime" type="text" [(ngModel)]="rescheduleTime" name="rescheduleTime" autocomplete="off" />
+
+        <p class="hint rules-hint">
+          Working hours <strong>08:00–20:00</strong> (visit ~1h30, latest start <strong>18:30</strong>).
+          <span *ngIf="rescheduleDate === minDateStr"> On today, pick a time <strong>after</strong> now.</span>
+        </p>
+
+        <p class="hint warn" *ngIf="schedulingWindowError">{{ schedulingWindowError }}</p>
+        <p class="hint warn" *ngIf="hasRescheduleSlotConflict() && !schedulingWindowError">
+          This time overlaps another visit (~1h30 blocks — see taken times on the right).
+        </p>
+
+        <div class="reschedule-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="rescheduleSubmitting"
+            (click)="submitReschedule()">
+            {{ rescheduleSubmitting ? 'Saving…' : 'Save new time' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="book-side">
+        <div class="cal-block">
+          <p class="cal-caption">Pick a day</p>
+          <p class="hint warn" *ngIf="calendarLoadError">{{ calendarLoadError }}</p>
+          <p class="hint cal-hint" *ngIf="loadingRescheduleCal">Loading calendar…</p>
+          <app-appointment-calendar
+            [busySlots]="rescheduleBusy"
+            [selectedDate]="rescheduleDate"
+            (selectedDateChange)="onRescheduleDateChange($event)"
+            [viewMonth]="rescheduleCalMonth"
+            [viewYear]="rescheduleCalYear"
+            (viewMonthChange)="onRescheduleCalMonthChange($event)"
+            [showTimeChipsInCells]="false"
+          />
+        </div>
+        <app-appointment-busy-times-panel
+          class="busy-wrap"
+          *ngIf="rescheduleDate"
+          [busySlots]="rescheduleBusy"
+          [selectedDate]="rescheduleDate"
+          [legendDoctor]="'Doctor (already booked)'"
+          [legendPatient]="'Patient (other visits)'"
+          heading="Taken times on this day"
+          subheading="Do not reuse the same start time (HH:mm) as these rows."
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="card detail-card" *ngIf="appointment.type === 'TELECONSULTATION'">
+    <h2>Teleconsultation</h2>
+
+    <ng-container *ngIf="appointment.status === 'COMPLETED'">
+      <p class="hint">This visit is completed. The meeting link is no longer available.</p>
+      <ng-container *ngIf="tele as t">
+        <p *ngIf="t.startTime"><strong>Started:</strong> {{ t.startTime | date: 'short' }}</p>
+        <p *ngIf="t.endTime"><strong>Ended:</strong> {{ t.endTime | date: 'short' }}</p>
+        <p><strong>Room status:</strong> {{ t.status }}</p>
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="appointment.status === 'CANCELLED'">
+      <p class="hint">This appointment was cancelled. The meeting link is no longer available.</p>
+      <ng-container *ngIf="tele as t">
+        <p><strong>Room status:</strong> {{ t.status }}</p>
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED'">
+      <p class="hint">Jitsi Meet link is reserved for this appointment. Open it when the session starts.</p>
+      <ng-container *ngIf="tele as t">
+        <p><strong>Room status:</strong> {{ t.status }}</p>
+        <p *ngIf="t.startTime"><strong>Started:</strong> {{ t.startTime | date: 'short' }}</p>
+        <div class="tele-actions">
+          <button type="button" class="btn btn-primary" (click)="openRoom()" [disabled]="!t.meetingUrl">
+            Open meeting
+          </button>
+          <button
+            *ngIf="isDoctor || isPatient"
+            type="button"
+            class="btn btn-secondary"
+            (click)="startVideo()"
+            [disabled]="appointment.status !== 'CONFIRMED'">
+            Start / join session
+          </button>
+        </div>
+      </ng-container>
+      <p *ngIf="!tele && appointment.status === 'PENDING'">Video link is created when the doctor confirms.</p>
+    </ng-container>
+  </div>
+
+  <div class="card detail-card" *ngIf="isDoctor && appointment.status === 'CONFIRMED'">
+    <button type="button" class="btn btn-primary" (click)="complete()">Mark visit completed</button>
+  </div>
+</div>
+
+<div class="container" *ngIf="loading">
+  <p>Loading…</p>
+</div>
