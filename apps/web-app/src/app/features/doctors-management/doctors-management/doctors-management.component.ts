@@ -157,7 +157,18 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
           console.log('Verification diploma:', verification.diploma);
           console.log('Verification nationalId:', verification.nationalId);
           console.log('Verification submittedAt:', verification.submittedAt);
+          console.log('Verification Contract Approved:', verification.contractApproved);
           this.selectedVerification = verification;
+          
+          // Automatically complete verification if contract is approved
+          if (verification.contractApproved) {
+            console.log('Contract already approved! Auto-completing verification...');
+            this.verificationLoading = false;
+            setTimeout(() => {
+              this.completeVerification();
+            }, 500);
+            return;
+          }
         }
         this.verificationLoading = false;
         console.log('selectedVerification set:', this.selectedVerification);
@@ -252,55 +263,53 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     if (!this.selectedVerification || !this.selectedDoctor) return;
 
     const verificationId = this.selectedVerification.verification_id;
+    const token = this.authService.getToken();
+    
+    if (!token) {
+      this.showToast('Authentication token not found', 'error');
+      return;
+    }
+
+    // Step 1: Approve the verification (generates token and sends email to doctor)
+    this.verificationLoading = true;
+    this.doctorVerificationService.approveVerification(verificationId, token).subscribe({
+      next: () => {
+        console.log('Verification record approved successfully');
+        this.showToast('Doctor approval email sent. Please refresh the page after doctor approves the contract.', 'success');
+        this.verificationLoading = false;
+        setTimeout(() => {
+          this.closeVerificationModal();
+          this.loadDoctors();
+        }, 2000);
+      },
+      error: (err) => {
+        console.error('Error approving verification:', err);
+        this.showToast('Failed to approve verification', 'error');
+        this.verificationLoading = false;
+      }
+    });
+  }
+
+  completeVerification(): void {
+    if (!this.selectedVerification || !this.selectedDoctor) return;
+
+    const verificationId = this.selectedVerification.verification_id;
     const doctorId = this.selectedDoctor.id;
 
+    console.log('Auto-completing verification for doctor:', doctorId, 'verification:', verificationId);
+
     // Step 1: Verify the doctor
+    this.verificationLoading = true;
     this.doctorService.verifyDoctor(doctorId).subscribe({
       next: () => {
         console.log('Doctor verified successfully');
         
-        const token = this.authService.getToken();
-        if (!token) {
-          this.showToast('Authentication token not found', 'error');
-          return;
-        }
-        console.log(token);
-        this.doctorVerificationService.approveVerification(verificationId, token).subscribe({
-          next: () => {
-            console.log('Verification record approved successfully');
-            this.doctorVerificationService.deleteVerification(verificationId).subscribe({
-              next: () => {
-                console.log('Verification record deleted successfully');
-                this.showToast('Doctor approved and verification record deleted', 'success');
-                setTimeout(() => {
-                  this.closeVerificationModal();
-                  this.loadDoctors();
-                }, 1500);
-              },
-              error: (err) => {
-                console.error('Error deleting verification:', err);
-                this.showToast('Doctor verified but failed to delete verification record', 'error');
-                setTimeout(() => {
-                  this.closeVerificationModal();
-                  this.loadDoctors();
-                }, 1500);
-              }
-            })
-            
-          },
-          error: (err) => {
-            console.error('Error approving verification:', err);
-            this.showToast('Doctor verified but failed to approve', 'error');
-            setTimeout(() => {
-              this.closeVerificationModal();
-              this.loadDoctors();
-            }, 1500);
-          }
-        })
-        /*this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+        // Step 2: Delete the verification record
+        this.doctorVerificationService.deleteVerification(verificationId).subscribe({
           next: () => {
             console.log('Verification record deleted successfully');
-            this.showToast('Doctor approved and verification record deleted', 'success');
+            this.showToast('Doctor verified and contract process completed', 'success');
+            this.verificationLoading = false;
             setTimeout(() => {
               this.closeVerificationModal();
               this.loadDoctors();
@@ -309,16 +318,69 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
           error: (err) => {
             console.error('Error deleting verification:', err);
             this.showToast('Doctor verified but failed to delete verification record', 'error');
+            this.verificationLoading = false;
             setTimeout(() => {
               this.closeVerificationModal();
               this.loadDoctors();
             }, 1500);
           }
-        });*/
+        });
       },
       error: (err) => {
         console.error('Error verifying doctor:', err);
         this.showToast('Failed to verify doctor', 'error');
+        this.verificationLoading = false;
+      }
+    });
+  }
+
+  private proceedWithVerification(): void {
+    console.log('=== PROCEED WITH VERIFICATION ===');
+    console.log('selectedVerification:', this.selectedVerification);
+    console.log('selectedDoctor:', this.selectedDoctor);
+
+    if (!this.selectedVerification || !this.selectedDoctor) {
+      console.log('Missing verification or doctor data');
+      return;
+    }
+
+    const verificationId = this.selectedVerification.verification_id;
+    const doctorId = this.selectedDoctor.id;
+
+    console.log('Calling verifyDoctor with ID:', doctorId);
+
+    // Step 3: Verify the doctor
+    this.verificationLoading = true;
+    this.doctorService.verifyDoctor(doctorId).subscribe({
+      next: () => {
+        console.log('Doctor verified successfully');
+        
+        // Step 4: Delete the verification record
+        this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+          next: () => {
+            console.log('Verification record deleted successfully');
+            this.showToast('Doctor verified and contract process completed', 'success');
+            this.verificationLoading = false;
+            setTimeout(() => {
+              this.closeVerificationModal();
+              this.loadDoctors();
+            }, 1500);
+          },
+          error: (err) => {
+            console.error('Error deleting verification:', err);
+            this.showToast('Doctor verified but failed to delete verification record', 'error');
+            this.verificationLoading = false;
+            setTimeout(() => {
+              this.closeVerificationModal();
+              this.loadDoctors();
+            }, 1500);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error verifying doctor:', err);
+        this.showToast('Failed to verify doctor', 'error');
+        this.verificationLoading = false;
       }
     });
   }

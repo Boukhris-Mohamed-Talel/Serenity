@@ -79,4 +79,8 @@ export class DoctorVerificationService {
       formData
     );
   }
+
+  approveContract(token: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/approve-contract`, null, { params: { token } });
+  }
 }

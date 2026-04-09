@@ -9,4 +9,5 @@ export interface DoctorVerification {
   submittedAt: string;
   createdAt?: string;
   updatedAt?: string;
+  contractApproved?: boolean;
 }

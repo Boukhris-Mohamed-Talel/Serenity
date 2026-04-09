@@ -157,6 +157,12 @@ public class DoctorVerificationController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/approve-contract")
+    public ResponseEntity<Void> approveContract(@RequestParam("token") String token) {
+        service.approveContract(token);
+        return ResponseEntity.ok().build();
+    }
+
     private Long resolveDoctorId(String xUserId, String xDoctorId, String userId, String authorization) {
         String raw = firstNonBlank(xUserId, xDoctorId, userId);
         if (StringUtils.hasText(raw)) {

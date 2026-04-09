@@ -32,6 +32,23 @@ public class DoctorVerification {
 
     private String rejectionReason;
 
+    private String approvalToken;
+
+    private boolean contractApproved;
+
+    public boolean isContractApproved() {
+        return contractApproved;
+    }
+
+    public void setContractApproved(boolean contractApproved) {
+        this.contractApproved = contractApproved;
+    }
+
+
+    public String getApprovalToken() { return approvalToken; }
+    public void setApprovalToken(String approvalToken) { this.approvalToken = approvalToken; }
+
+
     public enum Status {
         PENDING,
         APPROVED,

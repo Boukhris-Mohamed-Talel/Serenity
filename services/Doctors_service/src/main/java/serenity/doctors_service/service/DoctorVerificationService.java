@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class DoctorVerificationService implements IDoctorVerificationService {
@@ -104,28 +105,33 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Override
     public void Approve(Long verification_id, @RequestHeader("Authorization") String authHeader){
         DoctorVerification verification = repository.findById(verification_id).get();
+
+        // Generate a random token and save it in the verification
+        String token = UUID.randomUUID().toString();
+        verification.setApprovalToken(token);
+        repository.save(verification);
+
         Long doctor_id = verification.getDoctorId();
         String url = "http://localhost:8081/api/doctors/email?doctorId=" + doctor_id;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", authHeader); // pass the same JWT
+        headers.set("Authorization", authHeader);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
         String email = response.getBody();
         String subject = "Verification Approved – Serenity";
+        String link = "http://localhost:4200/contrat?token=" + token;
+
         String message = "<p>Dear Doctor,</p>"
                 + "<p>We are pleased to inform you that your verification with <strong>Serenity</strong> has been successfully approved.</p>"
                 + "<p>You can access your contract by clicking the link below:</p>"
-                + "<p><a href='http://localhost:4200/contrat'>View Contract</a></p>"
+                + "<p><a href='" + link + "'>View Contract</a></p>"
                 + "<p>Thank you for being part of Serenity.</p>"
                 + "<p>Best regards,<br>Serenity Team</p>";
+
         mailService.sendEmail(email, subject, message);
-
-
-        /*verification.setStatus(DoctorVerification.Status.APPROVED);
-        repository.save(verification);*/
     }
 
     @Override
@@ -147,6 +153,16 @@ public class DoctorVerificationService implements IDoctorVerificationService {
                 + "<p>Best regards,<br>Serenity Team</p>";
 
         mailService.sendEmail(recipient, subject, message);
+    }
+
+    @Override
+    public void approveContract(String token) {
+        DoctorVerification verification = repository.findByApprovalToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+
+        verification.setContractApproved(true);
+        verification.setApprovalToken(null); // invalidate token after use
+        repository.save(verification);
     }
 
 
