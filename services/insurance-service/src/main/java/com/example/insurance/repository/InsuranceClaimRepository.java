@@ -14,4 +14,6 @@ public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, 
     List<InsuranceClaim> findAllByOrderByClaimDateDesc();
 
     List<InsuranceClaim> findByStatusOrderByClaimDateDesc(ClaimStatus status);
+
+    List<InsuranceClaim> findByStatusInOrderByClaimDateDesc(List<ClaimStatus> statuses);
 }

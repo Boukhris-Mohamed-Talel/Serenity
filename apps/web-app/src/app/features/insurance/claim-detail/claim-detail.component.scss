@@ -133,13 +133,27 @@
       color: var(--text);
     }
 
-    input {
+    input,
+    textarea {
       width: 100%;
       padding: 0.6rem;
       border: 1px solid var(--border);
       border-radius: 8px;
       font-family: inherit;
       font-size: 0.9rem;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .err {
+      display: block;
+      margin-top: 0.4rem;
+      color: var(--danger);
+      font-size: 0.8rem;
+      font-weight: 600;
     }
   }
 }
@@ -177,4 +191,9 @@
   gap: 0.75rem;
   padding: 3rem;
   color: var(--text-light);
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
 }

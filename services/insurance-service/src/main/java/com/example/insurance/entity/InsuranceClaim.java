@@ -45,7 +45,7 @@ public class InsuranceClaim {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private ClaimStatus status = ClaimStatus.PENDING;
+    private ClaimStatus status = ClaimStatus.SUBMITTED;
 
     @Column(unique = true)
     private String externalRef;
@@ -62,6 +62,26 @@ public class InsuranceClaim {
     @OneToMany(mappedBy = "insuranceClaim", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Remboursement> remboursements = new ArrayList<>();
+
+    @Column(name = "info_request_reason", length = 1000)
+    private String infoRequestReason;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "info_request_deadline")
+    private Date infoRequestDeadline;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "info_requested_at")
+    private Date infoRequestedAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "info_responded_at")
+    private Date infoRespondedAt;
+
+    @OneToMany(mappedBy = "insuranceClaim", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("changedAt ASC")
+    @Builder.Default
+    private List<InsuranceClaimTransition> transitions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

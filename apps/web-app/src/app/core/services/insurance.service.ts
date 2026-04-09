@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   InsuranceClaimRequest,
   InsuranceClaimResponse,
+  InsuranceClaimTransition,
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
@@ -97,6 +98,36 @@ export class InsuranceService {
 
   rejectClaim(id: number): Observable<InsuranceClaimResponse> {
     return this.http.patch<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/reject`, {});
+  }
+
+  requestAdditionalDocuments(id: number, payload: { reason: string; deadline: string }): Observable<InsuranceClaimResponse> {
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/request-documents`, payload);
+  }
+
+  submitAdditionalDocuments(
+    id: number,
+    payload: { message?: string; description?: string; amount?: number; insuranceGrade?: number },
+    files: File[]
+  ): Observable<InsuranceClaimResponse> {
+    const formData = new FormData();
+    if (payload.message?.trim()) {
+      formData.append('message', payload.message.trim());
+    }
+    if (payload.description != null) {
+      formData.append('description', payload.description);
+    }
+    if (payload.amount != null) {
+      formData.append('amount', String(payload.amount));
+    }
+    if (payload.insuranceGrade != null) {
+      formData.append('insuranceGrade', String(payload.insuranceGrade));
+    }
+    files.forEach((file) => formData.append('files', file));
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/documents-response`, formData);
+  }
+
+  getClaimTimeline(id: number): Observable<InsuranceClaimTransition[]> {
+    return this.http.get<InsuranceClaimTransition[]>(`${this.API_URL}/claims/${id}/timeline`);
   }
 
   deleteClaim(id: number): Observable<void> {

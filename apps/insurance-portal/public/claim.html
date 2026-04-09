@@ -57,7 +57,12 @@
       font-weight: 700;
     }
     .PENDING { background: #dbeafe; color: #1d4ed8; }
+    .SUBMITTED { background: #e0e7ff; color: #3730a3; }
+    .UNDER_REVIEW { background: #cffafe; color: #155e75; }
+    .NEEDS_INFO { background: #fef3c7; color: #92400e; }
     .APPROVED { background: #d1fae5; color: #065f46; }
+    .PARTIALLY_APPROVED { background: #dbeafe; color: #1e40af; }
+    .PAID { background: #dcfce7; color: #166534; }
     .REJECTED { background: #fee2e2; color: #991b1b; }
     .grid {
       display: grid;
@@ -190,7 +195,7 @@
           ${attachmentsHtml}
         </div>
 
-        ${claim.status === 'PENDING' ? `
+        ${['PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_INFO'].includes(claim.status) ? `
           <div class="actions">
             <div>
               <div class="label" style="margin-bottom:0.25rem;">Approved reimbursement amount (TND)</div>
@@ -200,8 +205,17 @@
               <div class="label" style="margin-bottom:0.25rem;">Reason</div>
               <textarea id="decisionReason" placeholder="Required for rejection. Required if reimbursement amount is changed."></textarea>
             </div>
+            <div>
+              <div class="label" style="margin-bottom:0.25rem;">Deadline (for NEEDS_INFO)</div>
+              <input type="datetime-local" id="deadlineInput">
+            </div>
             <div class="btn-row">
               <button class="approve" onclick="approve(${Number(claim.amount)}, ${Number(claim.reimbursementAmount ?? claim.amount)})">Approve</button>
+              <button class="muted" onclick="needInfo()">Request Docs</button>
+              ${claim.status === 'NEEDS_INFO'
+                ? '<button class="muted" onclick="markUnderReview()">Mark Under Review</button>'
+                : ''
+              }
               <button class="reject" onclick="reject()">Reject</button>
               <button class="muted" onclick="location.href='/'">Cancel</button>
             </div>
@@ -269,6 +283,48 @@
       });
       if (!res.ok) {
         msg.textContent = 'Failed to reject claim.';
+        return;
+      }
+      location.href = '/';
+    }
+
+    async function needInfo() {
+      const reasonInput = document.getElementById('decisionReason');
+      const deadlineInput = document.getElementById('deadlineInput');
+      const msg = document.getElementById('msg');
+      const infoRequestReason = reasonInput.value.trim();
+      const infoRequestDeadline = deadlineInput.value;
+      if (!infoRequestReason) {
+        msg.textContent = 'Reason is required to request additional documents.';
+        return;
+      }
+      if (!infoRequestDeadline) {
+        msg.textContent = 'Deadline is required to request additional documents.';
+        return;
+      }
+
+      const res = await fetch(`${API}/api/claims/${encodeURIComponent(ref)}/need-info`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          infoRequestReason,
+          infoRequestDeadline: new Date(infoRequestDeadline).toISOString()
+        })
+      });
+      if (!res.ok) {
+        msg.textContent = 'Failed to set claim to NEEDS_INFO.';
+        return;
+      }
+      location.href = '/';
+    }
+
+    async function markUnderReview() {
+      const msg = document.getElementById('msg');
+      const res = await fetch(`${API}/api/claims/${encodeURIComponent(ref)}/mark-under-review`, {
+        method: 'PATCH'
+      });
+      if (!res.ok) {
+        msg.textContent = 'Failed to set claim to UNDER_REVIEW.';
         return;
       }
       location.href = '/';

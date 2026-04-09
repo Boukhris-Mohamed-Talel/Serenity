@@ -55,13 +55,16 @@ app.post('/api/claims', (req, res) => {
     amount: numericAmount,
     insuranceCompany: insuranceCompany || 'N/A',
     insuranceGrade: insuranceGrade || 0,
-    status: 'PENDING',
+    status: 'SUBMITTED',
     // Default to proposed reimbursement from healthcare app (grade-based)
     reimbursementAmount: Number.isFinite(numericReimbursement) ? numericReimbursement : numericAmount,
     receivedAt: new Date().toISOString(),
     processedAt: null,
     rejectReason: null,
     adjustmentReason: null,
+    infoRequestReason: null,
+    infoRequestDeadline: null,
+    infoRespondedAt: null,
     attachmentUrls: Array.isArray(attachmentUrls) ? attachmentUrls.filter(url => typeof url === 'string' && url.trim() !== '') : []
   };
 
@@ -81,13 +84,16 @@ app.get('/api/claims/:ref/status', (req, res) => {
 
   const reason = claim.status === 'REJECTED'
     ? claim.rejectReason
-    : (claim.adjustmentReason || null);
+    : claim.status === 'NEEDS_INFO'
+      ? claim.infoRequestReason
+      : (claim.adjustmentReason || null);
 
   res.json({
     ref: claim.ref,
     status: claim.status,
     reimbursementAmount: claim.reimbursementAmount,
-    reason
+    reason,
+    infoRequestDeadline: claim.infoRequestDeadline || null
   });
 });
 
@@ -114,6 +120,8 @@ app.patch('/api/claims/:ref/approve', (req, res) => {
   claim.processedAt = new Date().toISOString();
   claim.rejectReason = null;
   claim.adjustmentReason = adjustmentReason || null;
+  claim.infoRequestReason = null;
+  claim.infoRequestDeadline = null;
   saveClaimsToDisk();
 
   console.log('[APPROVED] Claim status saved.');
@@ -133,11 +141,81 @@ app.patch('/api/claims/:ref/reject', (req, res) => {
   claim.processedAt = new Date().toISOString();
   claim.rejectReason = rejectReason;
   claim.adjustmentReason = null;
+  claim.infoRequestReason = null;
+  claim.infoRequestDeadline = null;
   saveClaimsToDisk();
 
   console.log('[REJECTED] Claim status saved.');
   res.json(claim);
 });
+
+app.patch('/api/claims/:ref/need-info', (req, res) => {
+  const claim = claims.find(c => c.ref === req.params.ref);
+  if (!claim) return res.status(404).json({ error: 'Claim not found' });
+
+  const infoRequestReason = typeof req.body.infoRequestReason === 'string' ? req.body.infoRequestReason.trim() : '';
+  const infoRequestDeadline = typeof req.body.infoRequestDeadline === 'string' ? req.body.infoRequestDeadline.trim() : '';
+  if (!infoRequestReason) {
+    return res.status(400).json({ error: 'Info request reason is required' });
+  }
+  if (!infoRequestDeadline) {
+    return res.status(400).json({ error: 'Info request deadline is required' });
+  }
+
+  claim.status = 'NEEDS_INFO';
+  claim.infoRequestReason = infoRequestReason;
+  claim.infoRequestDeadline = infoRequestDeadline;
+  claim.processedAt = null;
+  claim.rejectReason = null;
+  claim.adjustmentReason = null;
+  saveClaimsToDisk();
+
+  console.log('[NEEDS_INFO] Claim status saved.');
+  res.json(claim);
+});
+
+app.patch('/api/claims/:ref/mark-under-review', (req, res) => {
+  const claim = claims.find(c => c.ref === req.params.ref);
+  if (!claim) return res.status(404).json({ error: 'Claim not found' });
+  claim.status = 'UNDER_REVIEW';
+  claim.infoRespondedAt = new Date().toISOString();
+  saveClaimsToDisk();
+  console.log('[UNDER_REVIEW] Claim status saved.');
+  res.json(claim);
+});
+
+const handleResubmission = (req, res) => {
+  const claim = claims.find(c => c.ref === req.params.ref);
+  if (!claim) return res.status(404).json({ error: 'Claim not found' });
+
+  const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
+  const amount = Number(req.body.amount);
+  const reimbursementAmount = Number(req.body.reimbursementAmount);
+  const insuranceGrade = Number(req.body.insuranceGrade);
+  const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+  const attachmentUrls = Array.isArray(req.body.attachmentUrls)
+    ? req.body.attachmentUrls.filter((u) => typeof u === 'string' && u.trim() !== '')
+    : [];
+
+  if (description) claim.description = description;
+  if (Number.isFinite(amount) && amount > 0) claim.amount = amount;
+  if (Number.isFinite(reimbursementAmount) && reimbursementAmount >= 0) claim.reimbursementAmount = reimbursementAmount;
+  if (Number.isFinite(insuranceGrade) && insuranceGrade >= 1 && insuranceGrade <= 5) claim.insuranceGrade = insuranceGrade;
+  if (attachmentUrls.length > 0) claim.attachmentUrls = attachmentUrls;
+
+  claim.status = 'UNDER_REVIEW';
+  claim.infoRespondedAt = new Date().toISOString();
+  claim.adjustmentReason = message || null;
+  claim.rejectReason = null;
+  claim.processedAt = null;
+  saveClaimsToDisk();
+
+  console.log('[RESUBMISSION] Claim updated and set to UNDER_REVIEW.');
+  res.json(claim);
+};
+
+app.patch('/api/claims/:ref/resubmission', handleResubmission);
+app.post('/api/claims/:ref/resubmission', handleResubmission);
 
 app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

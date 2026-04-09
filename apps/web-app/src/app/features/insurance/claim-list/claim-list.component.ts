@@ -24,7 +24,7 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   private readonly userLabelsByUserId = new Map<number, string>();
   private queryParamsSub?: Subscription;
 
-  statusFilter: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' = 'ALL';
+  statusFilter: 'ALL' | 'PENDING' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFO' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'PAID' | 'REJECTED' = 'ALL';
   fromDate = '';
   toDate = '';
   userFilter = 'ALL';
@@ -95,7 +95,9 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   getStatusClass(status: string): string {
     switch (status) {
       case 'APPROVED': return 'badge badge-success';
+      case 'PAID': return 'badge badge-success';
       case 'REJECTED': return 'badge badge-danger';
+      case 'NEEDS_INFO': return 'badge badge-warning';
       default: return 'badge badge-primary';
     }
   }
@@ -155,7 +157,7 @@ export class ClaimListComponent implements OnInit, OnDestroy {
     this.openDropdown = this.openDropdown === name ? null : name;
   }
 
-  selectStatus(value: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'): void {
+  selectStatus(value: 'ALL' | 'PENDING' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFO' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'PAID' | 'REJECTED'): void {
     this.statusFilter = value;
     this.openDropdown = null;
     this.updateQueryParams({
@@ -194,7 +196,12 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   get statusFilterLabel(): string {
     switch (this.statusFilter) {
       case 'PENDING': return 'Pending';
+      case 'SUBMITTED': return 'Submitted';
+      case 'UNDER_REVIEW': return 'Under review';
+      case 'NEEDS_INFO': return 'Needs info';
       case 'APPROVED': return 'Approved';
+      case 'PARTIALLY_APPROVED': return 'Partially approved';
+      case 'PAID': return 'Paid';
       case 'REJECTED': return 'Rejected';
       default: return 'All';
     }
@@ -273,7 +280,14 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   private applyQueryParams(params: import('@angular/router').ParamMap): void {
     const statusParam = params.get('status');
     this.statusFilter =
-      statusParam === 'PENDING' || statusParam === 'APPROVED' || statusParam === 'REJECTED'
+      statusParam === 'PENDING'
+      || statusParam === 'SUBMITTED'
+      || statusParam === 'UNDER_REVIEW'
+      || statusParam === 'NEEDS_INFO'
+      || statusParam === 'APPROVED'
+      || statusParam === 'PARTIALLY_APPROVED'
+      || statusParam === 'PAID'
+      || statusParam === 'REJECTED'
         ? statusParam
         : 'ALL';
 

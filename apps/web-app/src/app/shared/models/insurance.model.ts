@@ -19,7 +19,21 @@ export interface InsuranceClaimResponse {
   filePaths: string[];
   userId: number;
   userFullName: string;
+  infoRequestReason?: string | null;
+  infoRequestDeadline?: string | null;
+  infoRequestedAt?: string | null;
+  infoRespondedAt?: string | null;
   remboursements: RemboursementResponse[];
+}
+
+export interface InsuranceClaimTransition {
+  id: number;
+  fromStatus?: string | null;
+  toStatus: string;
+  changedByUserId: number;
+  changedByRole: string;
+  reason?: string | null;
+  changedAt: string;
 }
 
 export const INSURANCE_COMPANIES = Array.from(
@@ -47,7 +61,7 @@ export interface InsuranceNotification {
   id: number;
   userId: number;
   claimId: number | null;
-  type: 'CLAIM_SENT_TO_INSURER' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED' | 'DOCUMENTS_REQUESTED';
+  type: 'CLAIM_SENT_TO_INSURER' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED' | 'DOCUMENTS_REQUESTED' | 'DOCUMENTS_SUBMITTED';
   title: string;
   message: string;
   isRead: boolean;
