@@ -172,6 +172,13 @@ public class DoctorService implements IDoctorService {
         return doctorMapper.toDTO(saved);
     }
 
+    @Override
+    public String getDoctorEmail(Long id){
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
+        return doctor.getEmail();
+    }
+
     private void log(String message) {
         try {
             java.nio.file.Files.writeString(

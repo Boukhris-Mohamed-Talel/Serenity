@@ -24,4 +24,6 @@ public interface IDoctorVerificationService {
     void Approve(Long verification_id);
 
     void Reject(Long verification_id);
+
+    void testEmail();
 }

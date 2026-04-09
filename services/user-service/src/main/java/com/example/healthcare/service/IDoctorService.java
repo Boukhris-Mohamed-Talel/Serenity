@@ -17,4 +17,5 @@ public interface IDoctorService {
     DoctorResponseDTO updateDoctorFull(Long id, DoctorUpdateRequest request) throws IOException;
     void deleteDoctor(Long id);
     void Verify(Long id);
+    String getDoctorEmail(Long id);
 }

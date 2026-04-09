@@ -151,6 +151,12 @@ public class DoctorVerificationController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/test-email")
+    public ResponseEntity<Void> testEmail() {
+        service.testEmail();
+        return ResponseEntity.ok().build();
+    }
+
     private Long resolveDoctorId(String xUserId, String xDoctorId, String userId, String authorization) {
         String raw = firstNonBlank(xUserId, xDoctorId, userId);
         if (StringUtils.hasText(raw)) {

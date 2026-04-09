@@ -2,12 +2,12 @@ package serenity.doctors_service.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 import serenity.doctors_service.repository.DoctorVerificationRepository;
 import serenity.doctors_service.service.RedisPublisher;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +15,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DoctorVerificationService implements IDoctorVerificationService {
@@ -23,6 +22,12 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Autowired
     private DoctorVerificationRepository repository;
     private final String uploadDir = "uploads/";
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Autowired
+    private MailService mailService;
+
+
 
     @Autowired
     private RedisPublisher publisher;
@@ -94,8 +99,14 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Override
     public void Approve(Long verification_id){
         DoctorVerification verification = repository.findById(verification_id).get();
-        verification.setStatus(DoctorVerification.Status.APPROVED);
-        repository.save(verification);
+        Long doctor_id = verification.getDoctorId();
+        String url = "http://localhost:8081/api/doctors/email?doctorId=" + doctor_id;
+        String email = restTemplate.getForObject(url, String.class);
+        mailService.sendEmail(email, "Doctor Verification Approved", "Your verification has been approved. Congratulations!");
+
+
+        /*verification.setStatus(DoctorVerification.Status.APPROVED);
+        repository.save(verification);*/
     }
 
     @Override
@@ -103,6 +114,11 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         DoctorVerification verification = repository.findById(verification_id).get();
         verification.setStatus(DoctorVerification.Status.REJECTED);
         repository.save(verification);
+    }
+
+    @Override
+    public void testEmail(){
+        mailService.sendEmail("sihaythemabdellaoui@gmail.com", "Doctor Verification Approved", "Your verification has been approved. Congratulations!");
     }
 
 

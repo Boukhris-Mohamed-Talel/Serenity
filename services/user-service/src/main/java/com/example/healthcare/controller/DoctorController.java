@@ -99,4 +99,11 @@ public class DoctorController {
         doctorService.Verify(id);
         return ResponseEntity.ok().build();
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/email")
+    public ResponseEntity<String> getDoctorEmail(@RequestParam Long doctorId) {
+        String email = doctorService.getDoctorEmail(doctorId);
+        return ResponseEntity.ok(email);
+    }
 }
