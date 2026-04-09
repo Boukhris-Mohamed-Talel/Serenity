@@ -114,7 +114,14 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
         String email = response.getBody();
-        mailService.sendEmail(email, "Doctor Verification Approved", "AAAAAAAAAAA333333");
+        String subject = "Verification Approved – Serenity";
+        String message = "<p>Dear Doctor,</p>"
+                + "<p>We are pleased to inform you that your verification with <strong>Serenity</strong> has been successfully approved.</p>"
+                + "<p>You can access your contract by clicking the link below:</p>"
+                + "<p><a href='http://localhost:4200/contrat'>View Contract</a></p>"
+                + "<p>Thank you for being part of Serenity.</p>"
+                + "<p>Best regards,<br>Serenity Team</p>";
+        mailService.sendEmail(email, subject, message);
 
 
         /*verification.setStatus(DoctorVerification.Status.APPROVED);
@@ -130,7 +137,16 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
     @Override
     public void testEmail(){
-        mailService.sendEmail("sihaythemabdellaoui@gmail.com", "Doctor Verification Approved", "Your verification has been approved. Congratulations!");
+        String recipient = "sihaythemabdellaoui@gmail.com";
+        String subject = "Verification Approved – Serenity";
+        String message = "<p>Dear Doctor,</p>"
+                + "<p>We are pleased to inform you that your verification with <strong>Serenity</strong> has been successfully approved.</p>"
+                + "<p>You can access your contract by clicking the link below:</p>"
+                + "<p><a href='http://localhost:4200/contrat'>View Contract</a></p>"
+                + "<p>Thank you for being part of Serenity.</p>"
+                + "<p>Best regards,<br>Serenity Team</p>";
+
+        mailService.sendEmail(recipient, subject, message);
     }
 
 

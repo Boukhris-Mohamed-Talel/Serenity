@@ -31,8 +31,9 @@ export class DoctorVerificationService {
     return this.http.get<DoctorVerification>(`${this.API_URL}/${id}`);
   }
 
-  approveVerification(verificationId: number): Observable<any> {
-    return this.http.put(`${this.API_URL}/Approve/${verificationId}`, {});
+  approveVerification(verificationId: number, token: string): Observable<any> {
+    const headers = { Authorization: `Bearer ${token}` };
+    return this.http.put(`${this.API_URL}/Approve/${verificationId}`, {}, { headers });
   }
 
   rejectVerification(verificationId: number): Observable<any> {

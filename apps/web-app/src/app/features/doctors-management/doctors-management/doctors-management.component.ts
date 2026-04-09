@@ -11,6 +11,7 @@ import { DoctorVerification } from '../../../shared/models/doctor-verification.m
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-doctors-management',
@@ -58,7 +59,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     private readonly httpClient: HttpClient,
     private readonly sanitizer: DomSanitizer,
     private readonly webSocketService: WebSocketService,
-    private readonly ngZone: NgZone
+    private readonly ngZone: NgZone,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -257,8 +259,45 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
       next: () => {
         console.log('Doctor verified successfully');
         
-        // Step 2: Delete the verification record
-        this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+        const token = this.authService.getToken();
+        if (!token) {
+          this.showToast('Authentication token not found', 'error');
+          return;
+        }
+        console.log(token);
+        this.doctorVerificationService.approveVerification(verificationId, token).subscribe({
+          next: () => {
+            console.log('Verification record approved successfully');
+            this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+              next: () => {
+                console.log('Verification record deleted successfully');
+                this.showToast('Doctor approved and verification record deleted', 'success');
+                setTimeout(() => {
+                  this.closeVerificationModal();
+                  this.loadDoctors();
+                }, 1500);
+              },
+              error: (err) => {
+                console.error('Error deleting verification:', err);
+                this.showToast('Doctor verified but failed to delete verification record', 'error');
+                setTimeout(() => {
+                  this.closeVerificationModal();
+                  this.loadDoctors();
+                }, 1500);
+              }
+            })
+            
+          },
+          error: (err) => {
+            console.error('Error approving verification:', err);
+            this.showToast('Doctor verified but failed to approve', 'error');
+            setTimeout(() => {
+              this.closeVerificationModal();
+              this.loadDoctors();
+            }, 1500);
+          }
+        })
+        /*this.doctorVerificationService.deleteVerification(verificationId).subscribe({
           next: () => {
             console.log('Verification record deleted successfully');
             this.showToast('Doctor approved and verification record deleted', 'success');
@@ -275,7 +314,7 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
               this.loadDoctors();
             }, 1500);
           }
-        });
+        });*/
       },
       error: (err) => {
         console.error('Error verifying doctor:', err);
