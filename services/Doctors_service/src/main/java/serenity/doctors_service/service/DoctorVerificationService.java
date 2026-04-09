@@ -1,7 +1,12 @@
 package serenity.doctors_service.service;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
@@ -97,12 +102,19 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     }
 
     @Override
-    public void Approve(Long verification_id){
+    public void Approve(Long verification_id, @RequestHeader("Authorization") String authHeader){
         DoctorVerification verification = repository.findById(verification_id).get();
         Long doctor_id = verification.getDoctorId();
         String url = "http://localhost:8081/api/doctors/email?doctorId=" + doctor_id;
-        String email = restTemplate.getForObject(url, String.class);
-        mailService.sendEmail(email, "Doctor Verification Approved", "Your verification has been approved. Congratulations!");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authHeader); // pass the same JWT
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+        String email = response.getBody();
+        mailService.sendEmail(email, "Doctor Verification Approved", "AAAAAAAAAAA333333");
 
 
         /*verification.setStatus(DoctorVerification.Status.APPROVED);

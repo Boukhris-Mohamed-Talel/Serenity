@@ -1,5 +1,6 @@
 package serenity.doctors_service.service;
 
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
 import serenity.doctors_service.entity.DoctorVerification;
 
@@ -21,7 +22,7 @@ public interface IDoctorVerificationService {
 
     void deleteById(Long verification_id);
 
-    void Approve(Long verification_id);
+    void Approve(Long verification_id, @RequestHeader("Authorization") String authHeader);
 
     void Reject(Long verification_id);
 

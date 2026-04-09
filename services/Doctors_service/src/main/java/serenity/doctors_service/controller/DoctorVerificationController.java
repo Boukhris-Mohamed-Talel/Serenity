@@ -139,8 +139,8 @@ public class DoctorVerificationController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("Approve/{id}")
-    public ResponseEntity<Void> approve(@PathVariable Long id) {
-        service.Approve(id);
+    public ResponseEntity<Void> approve(@PathVariable Long id, @RequestHeader("Authorization") String authHeader) {
+        service.Approve(id, authHeader);
         return ResponseEntity.noContent().build();
     }
 
