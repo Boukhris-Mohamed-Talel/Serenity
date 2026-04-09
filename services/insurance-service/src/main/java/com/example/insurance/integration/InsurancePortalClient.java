@@ -44,5 +44,19 @@ public class InsurancePortalClient {
             return null;
         }
     }
+
+    public void notifyResubmission(String ref, PortalResubmissionRequest request) {
+        try {
+            restTemplate.postForEntity(
+                    portalApiUrl + "/claims/{ref}/resubmission",
+                    request,
+                    Void.class,
+                    ref
+            );
+            log.info("Notified portal claim resubmission, externalRef={}", ref);
+        } catch (RestClientException e) {
+            log.warn("Failed to notify portal claim resubmission, externalRef={}, error={}", ref, e.getMessage());
+        }
+    }
 }
 

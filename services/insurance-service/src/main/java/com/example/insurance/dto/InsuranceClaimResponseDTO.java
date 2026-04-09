@@ -24,5 +24,9 @@ public class InsuranceClaimResponseDTO {
     private String externalRef;
     private List<String> filePaths;
     private Long userId;
+    private String infoRequestReason;
+    private Date infoRequestDeadline;
+    private Date infoRequestedAt;
+    private Date infoRespondedAt;
     private List<RemboursementResponseDTO> remboursements;
 }

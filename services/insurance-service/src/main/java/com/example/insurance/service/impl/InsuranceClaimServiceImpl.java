@@ -2,15 +2,19 @@ package com.example.insurance.service.impl;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RemboursementResponseDTO;
 import com.example.insurance.integration.InsurancePortalClient;
+import com.example.insurance.integration.PortalResubmissionRequest;
 import com.example.insurance.integration.PortalSubmitClaimRequest;
 import com.example.insurance.entity.ClaimStatus;
 import com.example.insurance.entity.InsuranceClaim;
+import com.example.insurance.entity.InsuranceClaimTransition;
 import com.example.insurance.entity.NotificationType;
 import com.example.insurance.entity.Remboursement;
 import com.example.insurance.repository.InsuranceClaimRepository;
+import com.example.insurance.repository.InsuranceClaimTransitionRepository;
 import com.example.insurance.repository.RemboursementRepository;
 import com.example.insurance.service.InsuranceClaimService;
 import com.example.insurance.service.NotificationService;
@@ -36,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -55,6 +60,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
 
     private final InsuranceClaimRepository claimRepository;
+    private final InsuranceClaimTransitionRepository transitionRepository;
     private final RemboursementRepository remboursementRepository;
     private final InsurancePortalClient insurancePortalClient;
     private final NotificationService notificationService;
@@ -85,13 +91,14 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .insuranceCompany(request.getInsuranceCompany().trim())
                 .insuranceGrade(request.getInsuranceGrade())
                 .reason(null)
-                .status(ClaimStatus.PENDING)
+                .status(ClaimStatus.SUBMITTED)
                 .externalRef(externalRef)
                 .userId(userId)
                 .filePaths(filePaths)
                 .build();
 
         claimRepository.save(claim);
+        recordTransition(claim, null, ClaimStatus.SUBMITTED, userId, "USER", "Claim submitted");
 
         // Fire-and-forget: external provider may accept/reject asynchronously.
         // Our scheduler will poll portal status and update this claim.
@@ -209,9 +216,159 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     }
 
     @Override
-    public InsuranceClaimResponseDTO approveClaim(Long id, Double montant) {
+    public InsuranceClaimResponseDTO requestAdditionalDocuments(Long claimId, Long adminUserId, String reason, Date deadline) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+        ensureTransitionAllowed(claim.getStatus(), ClaimStatus.NEEDS_INFO);
+
+        ClaimStatus fromStatus = claim.getStatus();
+        claim.setStatus(ClaimStatus.NEEDS_INFO);
+        claim.setInfoRequestReason(reason == null ? null : reason.trim());
+        claim.setInfoRequestDeadline(deadline);
+        claim.setInfoRequestedAt(new Date());
+        claim.setInfoRespondedAt(null);
+        claimRepository.save(claim);
+        recordTransition(claim, fromStatus, ClaimStatus.NEEDS_INFO, adminUserId, "ADMIN", reason);
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.DOCUMENTS_REQUESTED,
+                "Additional documents required",
+                "Your claim requires additional documents before it can be processed."
+        );
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO submitAdditionalDocuments(
+            Long claimId,
+            Long userId,
+            String message,
+            String description,
+            Double amount,
+            Double insuranceGrade,
+            List<MultipartFile> files
+    ) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+        if (!claim.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to update this claim");
+        }
+        if (claim.getStatus() != ClaimStatus.NEEDS_INFO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Claim is not waiting for additional documents");
+        }
+        if (claim.getInfoRequestDeadline() != null && claim.getInfoRequestDeadline().before(new Date())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document submission deadline has passed");
+        }
+        validateAdditionalFiles(files);
+
+        boolean hasChanges = false;
+        if (description != null) {
+            String trimmed = description.trim();
+            if (trimmed.length() < 10 || trimmed.length() > 500) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description must be between 10 and 500 characters");
+            }
+            if (!trimmed.equals(claim.getDescription())) {
+                claim.setDescription(trimmed);
+                hasChanges = true;
+            }
+        }
+        if (amount != null) {
+            if (amount <= 0 || amount > 100000.0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be between 0.01 and 100000");
+            }
+            if (!amount.equals(claim.getAmount())) {
+                claim.setAmount(amount);
+                hasChanges = true;
+            }
+        }
+        if (insuranceGrade != null) {
+            if (insuranceGrade < 1.0 || insuranceGrade > 5.0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insurance grade must be between 1 and 5");
+            }
+            if (!insuranceGrade.equals(claim.getInsuranceGrade())) {
+                claim.setInsuranceGrade(insuranceGrade);
+                hasChanges = true;
+            }
+        }
+
+        List<String> newFiles = saveFiles(files == null ? List.of() : files, userId);
+        if (!newFiles.isEmpty()) {
+            List<String> merged = new ArrayList<>(claim.getFilePaths() == null ? List.of() : claim.getFilePaths());
+            merged.addAll(newFiles);
+            claim.setFilePaths(merged);
+            hasChanges = true;
+        }
+
+        String normalizedMessage = message == null ? "" : message.trim();
+        if (!normalizedMessage.isEmpty()) {
+            hasChanges = true;
+        }
+        if (!hasChanges) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No changes detected. Update at least one field, add a message, or attach a document."
+            );
+        }
+
+        ClaimStatus fromStatus = claim.getStatus();
+        claim.setStatus(ClaimStatus.UNDER_REVIEW);
+        claim.setInfoRespondedAt(new Date());
+        claim.setReimbursementAmount(calculateReimbursement(claim.getAmount(), claim.getInsuranceGrade()));
+        claimRepository.save(claim);
+        if (claim.getExternalRef() != null && !claim.getExternalRef().isBlank()) {
+            insurancePortalClient.notifyResubmission(
+                    claim.getExternalRef(),
+                    new PortalResubmissionRequest(
+                            claim.getDescription(),
+                            claim.getAmount(),
+                            claim.getReimbursementAmount(),
+                            claim.getInsuranceGrade(),
+                            normalizedMessage.isEmpty() ? null : normalizedMessage,
+                            buildAttachmentUrls(claim.getFilePaths())
+                    )
+            );
+        }
+        recordTransition(
+                claim,
+                fromStatus,
+                ClaimStatus.UNDER_REVIEW,
+                userId,
+                "USER",
+                normalizedMessage.isEmpty() ? "Patient revised claim and submitted requested documents" : normalizedMessage
+        );
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.DOCUMENTS_SUBMITTED,
+                "Additional documents submitted",
+                "Your additional documents have been received and your claim is now under review."
+        );
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InsuranceClaimTransitionResponseDTO> getClaimTimeline(Long claimId, Long requesterUserId, boolean isAdmin) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+        if (!isAdmin && !claim.getUserId().equals(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to view this claim timeline");
+        }
+        return transitionRepository.findByInsuranceClaimIdOrderByChangedAtAsc(claimId)
+                .stream()
+                .map(this::toTransitionDto)
+                .toList();
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO approveClaim(Long id, Double montant, Long adminUserId) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
+        ensureTransitionAllowed(claim.getStatus(), ClaimStatus.APPROVED);
+        ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.APPROVED);
         // Reimbursement becomes known at approval time
         claim.setReimbursementAmount(montant);
@@ -223,18 +380,36 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .build();
         remboursementRepository.save(remboursement);
         claimRepository.save(claim);
+        recordTransition(claim, fromStatus, ClaimStatus.APPROVED, adminUserId, "ADMIN", "Claim approved");
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_APPROVED,
+                "Claim approved",
+                "Your claim has been approved."
+        );
         return toResponseDTO(claim);
     }
 
     @Override
-    public InsuranceClaimResponseDTO rejectClaim(Long id) {
+    public InsuranceClaimResponseDTO rejectClaim(Long id, Long adminUserId) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
+        ensureTransitionAllowed(claim.getStatus(), ClaimStatus.REJECTED);
+        ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.REJECTED);
         // Schema expects non-null reimbursement_amount
         claim.setReimbursementAmount(0.0);
         claim.setReason(null);
         claimRepository.save(claim);
+        recordTransition(claim, fromStatus, ClaimStatus.REJECTED, adminUserId, "ADMIN", "Claim rejected");
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_REJECTED,
+                "Claim rejected",
+                "Your claim has been rejected."
+        );
         return toResponseDTO(claim);
     }
 
@@ -242,6 +417,9 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     public void deleteClaim(Long id) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
+        if (claim.getStatus() != ClaimStatus.REJECTED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only rejected claims can be deleted");
+        }
 
         // JPA mappings (cascade + orphanRemoval) handle remboursements + files cleanup where configured.
         claimRepository.delete(claim);
@@ -298,6 +476,24 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         }
     }
 
+    private void validateAdditionalFiles(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each file must be <= 10 MB");
+            }
+            String type = file.getContentType();
+            if (type == null || !ALLOWED_FILE_TYPES.contains(type.toLowerCase())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF, JPG and PNG files are allowed");
+            }
+        }
+    }
+
     private InsuranceClaimResponseDTO toResponseDTO(InsuranceClaim claim) {
         List<RemboursementResponseDTO> rembDtos = claim.getRemboursements() != null
                 ? claim.getRemboursements().stream()
@@ -324,8 +520,85 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .externalRef(claim.getExternalRef())
                 .filePaths(claim.getFilePaths())
                 .userId(claim.getUserId())
+                .infoRequestReason(claim.getInfoRequestReason())
+                .infoRequestDeadline(claim.getInfoRequestDeadline())
+                .infoRequestedAt(claim.getInfoRequestedAt())
+                .infoRespondedAt(claim.getInfoRespondedAt())
                 .remboursements(rembDtos)
                 .build();
+    }
+
+    private InsuranceClaimTransitionResponseDTO toTransitionDto(InsuranceClaimTransition transition) {
+        return InsuranceClaimTransitionResponseDTO.builder()
+                .id(transition.getId())
+                .fromStatus(transition.getFromStatus() == null ? null : transition.getFromStatus().name())
+                .toStatus(transition.getToStatus().name())
+                .changedByUserId(transition.getChangedByUserId())
+                .changedByRole(transition.getChangedByRole())
+                .reason(transition.getReason())
+                .changedAt(transition.getChangedAt())
+                .build();
+    }
+
+    private void recordTransition(
+            InsuranceClaim claim,
+            ClaimStatus fromStatus,
+            ClaimStatus toStatus,
+            Long changedByUserId,
+            String changedByRole,
+            String reason
+    ) {
+        InsuranceClaimTransition transition = InsuranceClaimTransition.builder()
+                .insuranceClaim(claim)
+                .fromStatus(fromStatus)
+                .toStatus(toStatus)
+                .changedByUserId(changedByUserId)
+                .changedByRole(changedByRole)
+                .reason(reason)
+                .build();
+        transitionRepository.save(transition);
+    }
+
+    private void ensureTransitionAllowed(ClaimStatus from, ClaimStatus to) {
+        if (from == null) {
+            return;
+        }
+        if (from == to) {
+            return;
+        }
+        boolean allowed;
+        switch (from) {
+            case PENDING:
+            case SUBMITTED:
+                allowed = to == ClaimStatus.UNDER_REVIEW
+                        || to == ClaimStatus.NEEDS_INFO
+                        || to == ClaimStatus.APPROVED
+                        || to == ClaimStatus.PARTIALLY_APPROVED
+                        || to == ClaimStatus.REJECTED;
+                break;
+            case UNDER_REVIEW:
+                allowed = to == ClaimStatus.NEEDS_INFO
+                        || to == ClaimStatus.APPROVED
+                        || to == ClaimStatus.PARTIALLY_APPROVED
+                        || to == ClaimStatus.REJECTED;
+                break;
+            case NEEDS_INFO:
+                allowed = to == ClaimStatus.UNDER_REVIEW || to == ClaimStatus.REJECTED;
+                break;
+            case APPROVED:
+            case PARTIALLY_APPROVED:
+                allowed = to == ClaimStatus.PAID;
+                break;
+            case PAID:
+            case REJECTED:
+                allowed = false;
+                break;
+            default:
+                allowed = false;
+        }
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status transition: " + from + " -> " + to);
+        }
     }
 
     private Double calculateReimbursement(Double amount, Double insuranceGrade) {

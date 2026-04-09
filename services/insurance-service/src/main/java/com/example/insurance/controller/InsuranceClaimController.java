@@ -2,7 +2,10 @@ package com.example.insurance.controller;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
+import com.example.insurance.dto.RequestAdditionalDocumentsDTO;
+import com.example.insurance.dto.SubmitAdditionalDocumentsDTO;
 import com.example.insurance.security.InsuranceAuth;
 import com.example.insurance.service.InsuranceClaimService;
 import jakarta.validation.Valid;
@@ -10,6 +13,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +21,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -113,19 +118,64 @@ public class InsuranceClaimController {
         return ResponseEntity.ok(insuranceClaimService.getClaimById(id, userId, admin));
     }
 
+    @GetMapping("/claims/{id}/timeline")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<InsuranceClaimTransitionResponseDTO>> getClaimTimeline(@PathVariable Long id) {
+        Long userId = InsuranceAuth.requireUserId();
+        boolean admin = InsuranceAuth.isAdmin();
+        return ResponseEntity.ok(insuranceClaimService.getClaimTimeline(id, userId, admin));
+    }
+
+    @PostMapping("/claims/{id}/request-documents")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InsuranceClaimResponseDTO> requestAdditionalDocuments(
+            @PathVariable Long id,
+            @Valid @RequestBody RequestAdditionalDocumentsDTO request
+    ) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Admin is read-only in this app. Claim decisions are managed by the external insurer portal."
+        );
+    }
+
+    @PostMapping(value = "/claims/{id}/documents-response", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<InsuranceClaimResponseDTO> submitAdditionalDocuments(
+            @PathVariable Long id,
+            @Valid @ModelAttribute SubmitAdditionalDocumentsDTO request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) {
+        Long userId = InsuranceAuth.requireUserId();
+        return ResponseEntity.ok(insuranceClaimService.submitAdditionalDocuments(
+                id,
+                userId,
+                request.getMessage(),
+                request.getDescription(),
+                request.getAmount(),
+                request.getInsuranceGrade(),
+                files
+        ));
+    }
+
     @PatchMapping("/claims/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InsuranceClaimResponseDTO> approveClaim(
             @PathVariable Long id,
             @RequestParam @NotNull(message = "Amount is required")
             @DecimalMin(value = "0.01", message = "Amount must be greater than 0") Double montant) {
-        return ResponseEntity.ok(insuranceClaimService.approveClaim(id, montant));
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Admin is read-only in this app. Claim decisions are managed by the external insurer portal."
+        );
     }
 
     @PatchMapping("/claims/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<InsuranceClaimResponseDTO> rejectClaim(@PathVariable Long id) {
-        return ResponseEntity.ok(insuranceClaimService.rejectClaim(id));
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Admin is read-only in this app. Claim decisions are managed by the external insurer portal."
+        );
     }
 
     @DeleteMapping("/claims/{id}")

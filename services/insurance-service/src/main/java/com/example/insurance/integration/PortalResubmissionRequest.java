@@ -5,15 +5,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PortalClaimStatusResponse {
-    private String ref;
-    private String status;
+public class PortalResubmissionRequest {
+    private String description;
+    private Double amount;
     private Double reimbursementAmount;
-    private String reason;
-    private String infoRequestDeadline;
+    private Double insuranceGrade;
+    private String message;
+    private List<String> attachmentUrls;
 }
-

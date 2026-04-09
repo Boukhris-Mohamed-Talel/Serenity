@@ -4,7 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PrescriptionService } from '../../../core/services/prescription.service';
 import { MedicineService } from '../../../core/services/medicine.service';
 import { PrescriptionItemRequest, PrescriptionRequest } from '../../../models/prescription.model';
-import { Medicine } from '../../../models/medicine.model';
+import { Medicine, OpenFDAMedicine } from '../../../models/medicine.model';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { getParamFromRouteTree } from '../../../shared/utils/route-params';
 
@@ -22,6 +24,9 @@ export class PrescriptionFormComponent implements OnInit {
   saving = false;
 
   medicines: Medicine[] = [];
+  searchResults: { [index: number]: OpenFDAMedicine[] } = {};
+  medicineWarnings: { [index: number]: string } = {};
+  searchSubject = new Subject<{ index: number; query: string }>();
 
   readonly form = this.fb.group({
     status: ['ACTIVE', [Validators.required]],
@@ -52,6 +57,7 @@ export class PrescriptionFormComponent implements OnInit {
 
   private createItemGroup(initial?: {
     medicineId?: number;
+    medicineNameSearch?: string;
     dosage?: string;
     frequency?: string;
     quantity?: number;
@@ -60,6 +66,7 @@ export class PrescriptionFormComponent implements OnInit {
     instructions?: string;
   }): FormGroup {
     return this.fb.group({
+      medicineNameSearch: [initial?.medicineNameSearch ?? ''],
       medicineId: [initial?.medicineId ?? '', [Validators.required]],
       dosage: [initial?.dosage ?? '', [Validators.required, Validators.maxLength(50)]],
       frequency: [initial?.frequency ?? '', [Validators.required, Validators.maxLength(50)]],
@@ -93,6 +100,17 @@ export class PrescriptionFormComponent implements OnInit {
         this.loadPrescription(this.prescriptionId);
       }
     }
+
+    this.searchSubject.pipe(debounceTime(500)).subscribe(({ index, query }) => {
+      if (query.trim().length < 2) {
+        this.searchResults[index] = [];
+        return;
+      }
+      this.medicineService.searchOpenFda(query).subscribe({
+        next: (res) => (this.searchResults[index] = res),
+        error: () => (this.searchResults[index] = [])
+      });
+    });
   }
 
   private loadMedicines(): void {
@@ -115,6 +133,7 @@ export class PrescriptionFormComponent implements OnInit {
           items.forEach(item =>
             this.itemsArray.push(this.createItemGroup({
               medicineId: item.medicine?.id,
+              medicineNameSearch: item.medicine?.name ?? '',
               dosage: item.dosage ?? '',
               frequency: item.frequency ?? '',
               quantity: item.quantity ?? 1,
@@ -132,6 +151,34 @@ export class PrescriptionFormComponent implements OnInit {
           this.router.navigate(['/patients', this.patientId, 'records', this.recordId, 'prescriptions']);
         }
       }
+    });
+  }
+
+  onSearchInput(index: number, event: Event): void {
+    const query = (event.target as HTMLInputElement).value;
+    // Clear id if user types something new
+    const ctrl = this.itemsArray.at(index).get('medicineId');
+    if (ctrl?.value) {
+      ctrl.patchValue('');
+      this.medicineWarnings[index] = '';
+    }
+    this.searchSubject.next({ index, query });
+  }
+
+  selectMedicine(index: number, med: OpenFDAMedicine): void {
+    this.medicineWarnings[index] = med.sideEffects || '';
+    this.itemsArray.at(index).patchValue({ medicineNameSearch: med.name });
+    
+    this.medicineService.getOrCreate({ 
+      name: med.name, 
+      description: med.description, 
+      sideEffects: med.sideEffects 
+    }).subscribe({
+      next: (localMed) => {
+        this.itemsArray.at(index).patchValue({ medicineId: localMed.id });
+        this.searchResults[index] = [];
+      },
+      error: () => this.notification.error('Erreur lors de la sauvegarde du médicament')
     });
   }
 

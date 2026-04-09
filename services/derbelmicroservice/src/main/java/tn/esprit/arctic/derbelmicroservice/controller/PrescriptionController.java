@@ -14,7 +14,10 @@ import tn.esprit.arctic.derbelmicroservice.dto.response.ApiResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PageResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.dto.response.PrescriptionResponseDTO;
 import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
+import tn.esprit.arctic.derbelmicroservice.service.IPdfGeneratorService;
 import tn.esprit.arctic.derbelmicroservice.service.IPrescriptionService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
@@ -24,6 +27,7 @@ import java.util.List;
 public class PrescriptionController {
 
     private final IPrescriptionService prescriptionService;
+    private final IPdfGeneratorService pdfGeneratorService;
 
     @GetMapping
     public ResponseEntity<ApiResponseDTO<PageResponseDTO<PrescriptionResponseDTO>>> getAllPrescriptions(
@@ -60,6 +64,27 @@ public class PrescriptionController {
                 .message("Prescription récupérée avec succès")
                 .data(prescription)
                 .build());
+    }
+
+    @GetMapping("/{id:\\d+}/pdf")
+    public ResponseEntity<byte[]> downloadPrescriptionPdf(@PathVariable Long id) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        try {
+            PrescriptionResponseDTO prescription = prescriptionService.getPrescriptionById(id, authenticatedUserId, isAdmin);
+            byte[] pdfBytes = pdfGeneratorService.generatePrescriptionPdf(prescription);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"ordonnance-" + id + ".pdf\"");
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/record/{recordId}")

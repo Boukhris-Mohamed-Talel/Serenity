@@ -59,6 +59,10 @@ export class PrescriptionService {
     );
   }
 
+  downloadPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/prescriptions/${id}/pdf`, { responseType: 'blob' });
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

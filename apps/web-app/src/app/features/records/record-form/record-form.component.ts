@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalRecordService } from '../../../core/services/medical-record.service';
+import { Icd10Service, Icd10Result } from '../../../core/services/icd10.service';
 import { MedicalRecordRequest } from '../../../models/medical-record.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { getParamFromRouteTree } from '../../../shared/utils/route-params';
@@ -18,6 +21,12 @@ export class RecordFormComponent implements OnInit {
   isEdit = false;
   loading = false;
   saving = false;
+
+  // ICD-10 autocomplete
+  icdResults: Icd10Result[] = [];
+  icdSearching = false;
+  showIcdDropdown = false;
+  private readonly diagnosisSearch$ = new Subject<string>();
 
   readonly form = this.fb.group({
     diagnosis: ['', [Validators.required, Validators.maxLength(255)]],
@@ -36,7 +45,8 @@ export class RecordFormComponent implements OnInit {
     private readonly router: Router,
     private readonly recordService: MedicalRecordService,
     private readonly auth: AuthService,
-    private readonly notification: NotificationService
+    private readonly notification: NotificationService,
+    private readonly icd10Service: Icd10Service
   ) {}
 
   ngOnInit(): void {
@@ -58,6 +68,46 @@ export class RecordFormComponent implements OnInit {
         this.loadRecord(this.recordId);
       }
     }
+
+    // ICD-10 autocomplete pipeline
+    this.diagnosisSearch$
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          if (term.length < 2) {
+            this.icdResults = [];
+            this.icdSearching = false;
+            this.showIcdDropdown = false;
+            return [];
+          }
+          this.icdSearching = true;
+          return this.icd10Service.search(term);
+        })
+      )
+      .subscribe((results) => {
+        this.icdResults = results;
+        this.icdSearching = false;
+        this.showIcdDropdown = results.length > 0;
+      });
+  }
+
+  onDiagnosisInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.diagnosisSearch$.next(value);
+  }
+
+  selectDiagnosis(result: Icd10Result): void {
+    this.form.patchValue({ diagnosis: `${result.code} - ${result.name}` });
+    this.showIcdDropdown = false;
+    this.icdResults = [];
+  }
+
+  hideIcdDropdown(): void {
+    // Delay to allow click on dropdown item to register
+    setTimeout(() => {
+      this.showIcdDropdown = false;
+    }, 200);
   }
 
   private loadRecord(id: number): void {
