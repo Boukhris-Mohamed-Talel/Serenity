@@ -92,35 +92,59 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
 
     // Listen for new doctor verifications from WebSocket
     this.webSocketService.newVerification$
-  .pipe(takeUntil(this.destroy$))
-  .subscribe({
-    next: (verification: DoctorVerification) => {
-      console.log('Verification event via WebSocket:', verification);
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (verification: DoctorVerification) => {
+          console.log('Verification event via WebSocket:', verification);
 
-      this.ngZone.run(() => {
-        const isExisting = this.selectedVerification?.verification_id === verification.verification_id;
+          this.ngZone.run(() => {
+            const isExisting = this.selectedVerification?.verification_id === verification.verification_id;
 
-        if (isExisting) {
-          // Update the modal if the current verification matches
-          this.selectedVerification = verification;
-          this.showToast('A doctor verification has been updated', 'success');
-        } else {
-          // Otherwise, treat it as a new verification
-          this.showToast('A new doctor verification has been added', 'success');
-        }
+            if (isExisting) {
+              // Update the modal if the current verification matches
+              this.selectedVerification = verification;
+              this.showToast('A doctor verification has been updated', 'success');
+            } else {
+              // Otherwise, treat it as a new verification
+              this.showToast('A new doctor verification has been added', 'success');
+            }
 
-        // Update doctor list if needed
-        const doctorIndex = this.doctors.findIndex(d => d.id === verification.doctorId);
-        if (doctorIndex !== -1) {
-          this.doctors[doctorIndex] = {
-            ...this.doctors[doctorIndex],
-            isActive: verification.status === 'VERIFIED' ? true : this.doctors[doctorIndex].isActive
-          };
-        }
+            // Update doctor list if needed
+            const doctorIndex = this.doctors.findIndex(d => d.id === verification.doctorId);
+            if (doctorIndex !== -1) {
+              this.doctors[doctorIndex] = {
+                ...this.doctors[doctorIndex],
+                isActive: verification.status === 'VERIFIED' ? true : this.doctors[doctorIndex].isActive
+              };
+            }
+          });
+        },
+        error: (err) => console.error('Error receiving verification event:', err)
       });
-    },
-    error: (err) => console.error('Error receiving verification event:', err)
-  });
+
+    // Listen for contract approvals from WebSocket
+    this.webSocketService.contractApproved$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (verification: DoctorVerification) => {
+          console.log('Contract approved event via WebSocket:', verification);
+
+          this.ngZone.run(() => {
+            // Check if this is the verification we're currently viewing
+            if (this.selectedVerification?.verification_id === verification.verification_id) {
+              console.log('Doctor approved contract for current verification!');
+              this.selectedVerification = verification;
+              this.showToast('Doctor approved the contract! Completing verification...', 'success');
+              
+              // Auto-complete the verification
+              setTimeout(() => {
+                this.completeVerification();
+              }, 1000);
+            }
+          });
+        },
+        error: (err) => console.error('Error receiving contract approval:', err)
+      });
   }
 
   ngOnDestroy(): void {
@@ -160,7 +184,7 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
           console.log('Verification Contract Approved:', verification.contractApproved);
           this.selectedVerification = verification;
           
-          // Automatically complete verification if contract is approved
+          // If contract is already approved, complete the verification automatically
           if (verification.contractApproved) {
             console.log('Contract already approved! Auto-completing verification...');
             this.verificationLoading = false;
@@ -275,12 +299,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     this.doctorVerificationService.approveVerification(verificationId, token).subscribe({
       next: () => {
         console.log('Verification record approved successfully');
-        this.showToast('Doctor approval email sent. Please refresh the page after doctor approves the contract.', 'success');
+        this.showToast('Doctor approval email sent. Waiting for contract approval...', 'success');
         this.verificationLoading = false;
-        setTimeout(() => {
-          this.closeVerificationModal();
-          this.loadDoctors();
-        }, 2000);
       },
       error: (err) => {
         console.error('Error approving verification:', err);
@@ -305,57 +325,6 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
         console.log('Doctor verified successfully');
         
         // Step 2: Delete the verification record
-        this.doctorVerificationService.deleteVerification(verificationId).subscribe({
-          next: () => {
-            console.log('Verification record deleted successfully');
-            this.showToast('Doctor verified and contract process completed', 'success');
-            this.verificationLoading = false;
-            setTimeout(() => {
-              this.closeVerificationModal();
-              this.loadDoctors();
-            }, 1500);
-          },
-          error: (err) => {
-            console.error('Error deleting verification:', err);
-            this.showToast('Doctor verified but failed to delete verification record', 'error');
-            this.verificationLoading = false;
-            setTimeout(() => {
-              this.closeVerificationModal();
-              this.loadDoctors();
-            }, 1500);
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Error verifying doctor:', err);
-        this.showToast('Failed to verify doctor', 'error');
-        this.verificationLoading = false;
-      }
-    });
-  }
-
-  private proceedWithVerification(): void {
-    console.log('=== PROCEED WITH VERIFICATION ===');
-    console.log('selectedVerification:', this.selectedVerification);
-    console.log('selectedDoctor:', this.selectedDoctor);
-
-    if (!this.selectedVerification || !this.selectedDoctor) {
-      console.log('Missing verification or doctor data');
-      return;
-    }
-
-    const verificationId = this.selectedVerification.verification_id;
-    const doctorId = this.selectedDoctor.id;
-
-    console.log('Calling verifyDoctor with ID:', doctorId);
-
-    // Step 3: Verify the doctor
-    this.verificationLoading = true;
-    this.doctorService.verifyDoctor(doctorId).subscribe({
-      next: () => {
-        console.log('Doctor verified successfully');
-        
-        // Step 4: Delete the verification record
         this.doctorVerificationService.deleteVerification(verificationId).subscribe({
           next: () => {
             console.log('Verification record deleted successfully');

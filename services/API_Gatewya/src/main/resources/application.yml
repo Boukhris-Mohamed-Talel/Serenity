@@ -62,6 +62,10 @@ spring:
           uri: ws://localhost:8083
           predicates:
             - Path=/ws-doctor-verification/**
+        - id: websocket-route-approved-contract
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws-approve-contract/**
         - id: derbel-service
           uri: http://localhost:8099
           predicates:

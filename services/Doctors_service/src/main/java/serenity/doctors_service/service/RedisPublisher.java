@@ -45,4 +45,18 @@ public class RedisPublisher {
             e.printStackTrace();
         }
     }
+
+    public void publishApproveContract(Object message) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+            String json = mapper.writeValueAsString(message);
+            redisTemplate.convertAndSend("approve-contract", json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -37,6 +37,8 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
     @Autowired
     private RedisPublisher publisher;
+    @Autowired
+    private RedisPublisher redisPublisher;
 
     @Override
     public DoctorVerification save(DoctorVerification verification) {
@@ -163,6 +165,8 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         verification.setContractApproved(true);
         verification.setApprovalToken(null); // invalidate token after use
         repository.save(verification);
+
+        redisPublisher.publishApproveContract(verification);
     }
 
 
