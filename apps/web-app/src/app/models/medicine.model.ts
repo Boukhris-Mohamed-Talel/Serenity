@@ -12,3 +12,9 @@ export interface MedicineRequest {
   description?: string;
   sideEffects?: string;
 }
+
+export interface OpenFDAMedicine {
+  name: string;
+  description: string;
+  sideEffects: string;
+}
