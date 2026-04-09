@@ -387,14 +387,16 @@
     "status": "REJECTED",
     "reimbursementAmount": null,
     "receivedAt": "2026-04-09T11:04:49.923Z",
-    "processedAt": "2026-04-09T11:16:05.411Z",
-    "rejectReason": "ho",
+    "processedAt": "2026-04-09T11:39:58.447Z",
+    "rejectReason": "no non o",
     "adjustmentReason": null,
     "attachmentUrls": [
-      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fdb5a9277-c8ec-4ed4-80ba-2ae3ec5e984a_Gemini_Generated_Image_qcjwtoqcjwtoqcjw.png"
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fdb5a9277-c8ec-4ed4-80ba-2ae3ec5e984a_Gemini_Generated_Image_qcjwtoqcjwtoqcjw.png",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fcb4fd7c1-a715-4bd4-9df6-88921b3dc4d6_Gemini_Generated_Image_pfj41rpfj41rpfj4.png"
     ],
     "infoRequestReason": null,
-    "infoRequestDeadline": null
+    "infoRequestDeadline": null,
+    "infoRespondedAt": "2026-04-09T11:39:47.393Z"
   },
   {
     "ref": "8f604dff-8c06-48c4-8e44-563896f1337d",
@@ -403,17 +405,19 @@
     "amount": 120,
     "insuranceCompany": "Insurance 2",
     "insuranceGrade": 2,
-    "status": "REJECTED",
-    "reimbursementAmount": null,
+    "status": "APPROVED",
+    "reimbursementAmount": 14.4,
     "receivedAt": "2026-04-09T11:12:45.997Z",
-    "processedAt": "2026-04-09T11:16:10.136Z",
-    "rejectReason": "no",
+    "processedAt": "2026-04-09T11:39:30.064Z",
+    "rejectReason": null,
     "adjustmentReason": null,
     "infoRequestReason": null,
     "infoRequestDeadline": null,
-    "infoRespondedAt": null,
+    "infoRespondedAt": "2026-04-09T11:39:23.832Z",
     "attachmentUrls": [
-      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F10379038-df56-4b8f-b980-1fac39903d0b_Gemini_Generated_Image_6bfi0e6bfi0e6bfi.png"
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F10379038-df56-4b8f-b980-1fac39903d0b_Gemini_Generated_Image_6bfi0e6bfi0e6bfi.png",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F5ff4022d-094f-423c-8d5f-8505f3820e3c_663360064_1687980179034654_5869463879584342052_n.png",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F1ef1fea9-95f4-4b70-8701-35a9de8b970d_Gemini_Generated_Image_3tepnw3tepnw3tep.png"
     ]
   },
   {
@@ -435,6 +439,26 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F4a266101-48f9-49b6-b207-44c41ac7cce9_Gemini_Generated_Image_qcjwtoqcjwtoqcjw.png",
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fe8d2e348-debc-4d41-9c29-d2f578f2a192_664782689_1505418697592182_7317517457708312985_n.png"
+    ]
+  },
+  {
+    "ref": "369bf2cd-9ccc-44dd-b6ae-f750a8c4464c",
+    "patientName": "3",
+    "description": "readjsutment",
+    "amount": 150,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 3,
+    "status": "NEEDS_INFO",
+    "reimbursementAmount": 27,
+    "receivedAt": "2026-04-09T11:34:14.862Z",
+    "processedAt": null,
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": "please doc missing",
+    "infoRequestDeadline": "2026-04-17T13:34:00.000Z",
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F596afe6d-e0d2-4251-bcc4-538cf1f7dcd5_Gemini_Generated_Image_kytuufkytuufkytu.png"
     ]
   }
 ]
