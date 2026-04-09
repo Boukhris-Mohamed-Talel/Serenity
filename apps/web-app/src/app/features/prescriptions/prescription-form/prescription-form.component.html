@@ -45,7 +45,7 @@
                 <div class="autocomplete-wrapper" style="position: relative;">
                   <input type="text" formControlName="medicineNameSearch" (input)="onSearchInput(i, $event)" placeholder="Type to search FDA (e.g. Aspirin)..." autocomplete="off">
                   <div class="autocomplete-dropdown" *ngIf="searchResults[i]?.length" style="position: absolute; width: 100%; border: 1px solid #ccc; background: #fff; z-index: 10; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <div class="autocomplete-item" *ngFor="let m of searchResults[i]" (click)="selectMedicine(i, m)" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
+                    <div class="autocomplete-item" *ngFor="let m of searchResults[i]" (click)="selectMedicine(i, m)" (keydown.enter)="selectMedicine(i, m)" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
                       <strong>{{ m.name }}</strong>
                     </div>
                   </div>
