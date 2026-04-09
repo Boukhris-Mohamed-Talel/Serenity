@@ -9,6 +9,8 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class SelectRoleComponent {
   selectedRole: string | null = null;
+  loading = false;
+  errorMessage = '';
 
   roles = [
     {
@@ -50,14 +52,20 @@ export class SelectRoleComponent {
   }
 
   continue() {
-    if (!this.selectedRole) return;
+    if (!this.selectedRole || this.loading) return;
 
-    const token = this.authService.getToken();
-    console.log('JWT Token being sent:', token);
-    // Call backend to update role
-    this.authService.updateUserRole(this.selectedRole).subscribe({
+    if (this.selectedRole === 'pharmacist') {
+      this.router.navigate(['/pharmacy/apply']);
+      return;
+    }
+
+    this.loading = true;
+    this.errorMessage = '';
+    const targetRole = this.selectedRole === 'insurer' ? 'MARKETPLACE_MANAGER' : this.selectedRole;
+
+    this.authService.updateUserRole(targetRole).subscribe({
       next: (res) => {
-        console.log('Role updated:', res);
+        this.loading = false;
 
         switch (this.selectedRole) {
           case 'doctor':
@@ -76,7 +84,10 @@ export class SelectRoleComponent {
             this.router.navigate(['/']);
         }
       },
-      error: (err) => console.error('Failed to update role:', err)
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err.error?.message || 'Failed to update role.';
+      }
     });
     
   }

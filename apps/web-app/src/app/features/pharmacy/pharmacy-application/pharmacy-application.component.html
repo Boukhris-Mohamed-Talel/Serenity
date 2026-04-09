@@ -1,0 +1,121 @@
+<div class="container">
+  <section class="application-page">
+    <header class="page-header">
+      <div>
+        <h1>Apply as Pharmacist</h1>
+        <p>Submit your official pharmacy verification documents. You can continue using Serenity as a patient while your request is reviewed.</p>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="continueAsPatient()">Back to Patient Pharmacy</button>
+    </header>
+
+    <article class="status-card" *ngIf="application as app">
+      <h2>Current Request Status</h2>
+      <p class="status-line">
+        <span class="badge" [class.submitted]="app.status === 'SUBMITTED'" [class.rejected]="app.status === 'REJECTED'" [class.approved]="app.status === 'APPROVED'">
+          {{ app.status }}
+        </span>
+      </p>
+      <p *ngIf="app.submittedAt">Submitted: {{ app.submittedAt | date: 'medium' }}</p>
+      <p *ngIf="app.reviewedAt">Reviewed: {{ app.reviewedAt | date: 'medium' }}</p>
+      <p class="review-comment" *ngIf="app.reviewComment">Admin comment: {{ app.reviewComment }}</p>
+      <div class="actions" *ngIf="app.status === 'APPROVED'">
+        <button type="button" class="btn btn-primary" (click)="goToPharmacistWorkspace()">Go To Pharmacist Workspace</button>
+      </div>
+    </article>
+
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <form class="application-form card" [formGroup]="applicationForm" (ngSubmit)="submit()">
+      <h3>Pharmacist Information</h3>
+      <div class="grid">
+        <label>
+          First Name
+          <input type="text" formControlName="firstName" />
+        </label>
+        <label>
+          Last Name
+          <input type="text" formControlName="lastName" />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" />
+        </label>
+        <label>
+          Phone
+          <input type="text" formControlName="phone" />
+        </label>
+        <label>
+          CIN Number
+          <input type="text" formControlName="cinNumber" />
+        </label>
+        <label>
+          CNOP/CNOPT Number
+          <input type="text" formControlName="cnopNumber" />
+        </label>
+      </div>
+
+      <h3>Pharmacy Information</h3>
+      <div class="grid">
+        <label>
+          Pharmacy Name
+          <input type="text" formControlName="pharmacyName" />
+        </label>
+        <label>
+          Authorization Reference Number
+          <input type="text" formControlName="authorizationReferenceNumber" />
+        </label>
+        <label>
+          Opening Hours
+          <input type="text" formControlName="openingHours" />
+        </label>
+        <label class="full-width">
+          Address
+          <input type="text" formControlName="addressLine" />
+        </label>
+        <label>
+          City
+          <input type="text" formControlName="city" />
+        </label>
+        <label>
+          Governorate
+          <input type="text" formControlName="governorate" />
+        </label>
+      </div>
+
+      <h3>Pharmacy Location</h3>
+      <app-location-picker
+        [latitude]="applicationForm.value.latitude ?? null"
+        [longitude]="applicationForm.value.longitude ?? null"
+        [readonly]="!canSubmit"
+        (locationSelected)="onLocationSelected($event)">
+      </app-location-picker>
+
+      <h3>Required Documents</h3>
+      <div class="documents">
+        <label>
+          CIN Document (PDF/JPG/PNG)
+          <input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="onFileSelected($event, 'cin')" [disabled]="!canSubmit" />
+          <small *ngIf="application?.cinDocumentUploaded">A CIN document is already stored. Uploading a new file will replace it.</small>
+        </label>
+        <label>
+          CNOP/CNOPT Proof (PDF/JPG/PNG)
+          <input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="onFileSelected($event, 'cnopt')" [disabled]="!canSubmit" />
+          <small *ngIf="application?.cnoptProofUploaded">A CNOP/CNOPT proof is already stored. Uploading a new file will replace it.</small>
+        </label>
+        <label>
+          Legal Pharmacy Control Proof (PDF/JPG/PNG)
+          <input type="file" accept=".pdf,.png,.jpg,.jpeg" (change)="onFileSelected($event, 'legal')" [disabled]="!canSubmit" />
+          <small *ngIf="application?.legalDocumentUploaded">A legal proof document is already stored. Uploading a new file will replace it.</small>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!canSubmit">
+          {{ submitting ? 'Submitting...' : 'Submit Application' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="continueAsPatient()">Continue As Patient</button>
+      </div>
+    </form>
+  </section>
+</div>

@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface PharmacyRepository extends JpaRepository<Pharmacy, Long> {
     Optional<Pharmacy> findByOwnerUserId(Long ownerUserId);
     List<Pharmacy> findAllByOrderByNameAsc();
+    boolean existsByLicenseNumberIgnoreCase(String licenseNumber);
 
     @Query("""
         select p from Pharmacy p

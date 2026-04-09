@@ -11,6 +11,8 @@ public interface UserService {
 
     UserResponseDTO updateUserRole(String email, String role);
 
+    UserResponseDTO assignRoleInternally(Long userId, String role);
+
     AuthResponseDTO login(LoginRequestDTO request);
 
     List<UserResponseDTO> getAllUsers();
