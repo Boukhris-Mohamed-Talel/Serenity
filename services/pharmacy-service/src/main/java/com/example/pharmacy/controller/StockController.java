@@ -6,9 +6,11 @@ import com.example.pharmacy.dto.StockItemResponseDTO;
 import com.example.pharmacy.dto.StockQuantityIncrementRequestDTO;
 import com.example.pharmacy.service.StockService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/pharmacy/stock")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('PHARMACIST')")
+@Validated
 public class StockController {
 
     private final StockService stockService;
@@ -36,7 +39,7 @@ public class StockController {
 
     @PatchMapping("/{stockItemId}/rename")
     public ResponseEntity<StockItemResponseDTO> renameStockItem(
-        @PathVariable Long stockItemId,
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId,
         @Valid @RequestBody StockItemRenameRequestDTO request
     ) {
         return ResponseEntity.ok(stockService.renameStockItem(stockItemId, request.getMedicineName()));
@@ -44,43 +47,55 @@ public class StockController {
 
     @PatchMapping("/{stockItemId}/increment")
     public ResponseEntity<StockItemResponseDTO> incrementQuantity(
-        @PathVariable Long stockItemId,
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId,
         @Valid @RequestBody StockQuantityIncrementRequestDTO request
     ) {
         return ResponseEntity.ok(stockService.incrementQuantity(stockItemId, request.getIncrementBy()));
     }
 
     @PatchMapping("/{stockItemId}/out-of-stock")
-    public ResponseEntity<StockItemResponseDTO> markOutOfStock(@PathVariable Long stockItemId) {
+    public ResponseEntity<StockItemResponseDTO> markOutOfStock(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         return handleMarkOutOfStock(stockItemId);
     }
 
     @PostMapping("/{stockItemId}/out-of-stock")
     // Backward-compatible alias for clients still using POST instead of PATCH.
-    public ResponseEntity<StockItemResponseDTO> markOutOfStockPost(@PathVariable Long stockItemId) {
+    public ResponseEntity<StockItemResponseDTO> markOutOfStockPost(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         return handleMarkOutOfStock(stockItemId);
     }
 
     @DeleteMapping("/{stockItemId}")
-    public ResponseEntity<Void> archiveStockItem(@PathVariable Long stockItemId) {
+    public ResponseEntity<Void> archiveStockItem(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         stockService.archiveStockItem(stockItemId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{stockItemId}/permanent")
-    public ResponseEntity<Void> deleteArchivedStockItem(@PathVariable Long stockItemId) {
+    public ResponseEntity<Void> deleteArchivedStockItem(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         stockService.deleteArchivedStockItem(stockItemId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{stockItemId}/restore")
-    public ResponseEntity<StockItemResponseDTO> restoreStockItem(@PathVariable Long stockItemId) {
+    public ResponseEntity<StockItemResponseDTO> restoreStockItem(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         return handleRestoreStockItem(stockItemId);
     }
 
     @PostMapping("/{stockItemId}/restore")
     // Backward-compatible alias for clients still using POST instead of PATCH.
-    public ResponseEntity<StockItemResponseDTO> restoreStockItemPost(@PathVariable Long stockItemId) {
+    public ResponseEntity<StockItemResponseDTO> restoreStockItemPost(
+        @PathVariable @Positive(message = "Stock item id must be positive") Long stockItemId
+    ) {
         return handleRestoreStockItem(stockItemId);
     }
 

@@ -69,7 +69,10 @@
 
         <div class="form-group">
           <label for="phone">Phone (optional)</label>
-          <input id="phone" type="tel" formControlName="phone" placeholder="+1 234 567 8900" />
+          <input id="phone" type="tel" formControlName="phone" maxlength="8" inputmode="numeric" placeholder="8 digits" />
+          <div class="error-message" *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.hasError('pattern')">
+            Phone must be exactly 8 digits
+          </div>
         </div>
 
         <div class="form-group">

@@ -32,26 +32,50 @@
         <label>
           First Name
           <input type="text" formControlName="firstName" />
+          <small class="field-error" *ngIf="applicationForm.get('firstName')?.touched && applicationForm.get('firstName')?.hasError('required')">
+            First name is required.
+          </small>
         </label>
         <label>
           Last Name
           <input type="text" formControlName="lastName" />
+          <small class="field-error" *ngIf="applicationForm.get('lastName')?.touched && applicationForm.get('lastName')?.hasError('required')">
+            Last name is required.
+          </small>
         </label>
         <label>
           Email
           <input type="email" formControlName="email" />
+          <small class="field-error" *ngIf="applicationForm.get('email')?.touched && applicationForm.get('email')?.hasError('required')">
+            Email is required.
+          </small>
+          <small class="field-error" *ngIf="applicationForm.get('email')?.touched && applicationForm.get('email')?.hasError('email')">
+            Enter a valid email.
+          </small>
         </label>
         <label>
           Phone
-          <input type="text" formControlName="phone" />
+          <input type="text" formControlName="phone" maxlength="8" inputmode="numeric" />
+          <small class="field-error" *ngIf="applicationForm.get('phone')?.touched && applicationForm.get('phone')?.hasError('pattern')">
+            Phone must be exactly 8 digits.
+          </small>
         </label>
         <label>
           CIN Number
-          <input type="text" formControlName="cinNumber" />
+          <input type="text" formControlName="cinNumber" maxlength="8" inputmode="numeric" />
+          <small class="field-error" *ngIf="applicationForm.get('cinNumber')?.touched && applicationForm.get('cinNumber')?.hasError('required')">
+            CIN number is required.
+          </small>
+          <small class="field-error" *ngIf="applicationForm.get('cinNumber')?.touched && applicationForm.get('cinNumber')?.hasError('pattern')">
+            CIN number must be exactly 8 digits.
+          </small>
         </label>
         <label>
           CNOP/CNOPT Number
           <input type="text" formControlName="cnopNumber" />
+          <small class="field-error" *ngIf="applicationForm.get('cnopNumber')?.touched && applicationForm.get('cnopNumber')?.hasError('required')">
+            CNOP/CNOPT number is required.
+          </small>
         </label>
       </div>
 
@@ -60,10 +84,16 @@
         <label>
           Pharmacy Name
           <input type="text" formControlName="pharmacyName" />
+          <small class="field-error" *ngIf="applicationForm.get('pharmacyName')?.touched && applicationForm.get('pharmacyName')?.hasError('required')">
+            Pharmacy name is required.
+          </small>
         </label>
         <label>
           Authorization Reference Number
           <input type="text" formControlName="authorizationReferenceNumber" />
+          <small class="field-error" *ngIf="applicationForm.get('authorizationReferenceNumber')?.touched && applicationForm.get('authorizationReferenceNumber')?.hasError('required')">
+            Authorization reference number is required.
+          </small>
         </label>
         <label>
           Opening Hours
@@ -72,14 +102,23 @@
         <label class="full-width">
           Address
           <input type="text" formControlName="addressLine" />
+          <small class="field-error" *ngIf="applicationForm.get('addressLine')?.touched && applicationForm.get('addressLine')?.hasError('required')">
+            Address is required.
+          </small>
         </label>
         <label>
           City
           <input type="text" formControlName="city" />
+          <small class="field-error" *ngIf="applicationForm.get('city')?.touched && applicationForm.get('city')?.hasError('required')">
+            City is required.
+          </small>
         </label>
         <label>
           Governorate
           <input type="text" formControlName="governorate" />
+          <small class="field-error" *ngIf="applicationForm.get('governorate')?.touched && applicationForm.get('governorate')?.hasError('required')">
+            Governorate is required.
+          </small>
         </label>
       </div>
 
@@ -90,6 +129,10 @@
         [readonly]="!canSubmit"
         (locationSelected)="onLocationSelected($event)">
       </app-location-picker>
+      <small class="field-error" *ngIf="(applicationForm.get('latitude')?.touched || applicationForm.get('longitude')?.touched)
+        && (applicationForm.get('latitude')?.hasError('required') || applicationForm.get('longitude')?.hasError('required'))">
+        Pharmacy location is required.
+      </small>
 
       <h3>Required Documents</h3>
       <div class="documents">

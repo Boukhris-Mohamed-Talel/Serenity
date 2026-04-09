@@ -33,7 +33,7 @@
           <span class="field-title">Phone</span>
           <input formControlName="phone" type="tel" maxlength="8" inputmode="numeric" pattern="[0-9]*" />
           <span class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.invalid">
-            Phone must be digits only and maximum 8 numbers.
+            Phone must be exactly 8 digits.
           </span>
         </label>
 

@@ -30,7 +30,7 @@ export class MyPharmacyComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       licenseNumber: ['', [Validators.required]],
-      phone: ['', [Validators.maxLength(8), Validators.pattern(/^\d{0,8}$/)]],
+      phone: ['', [Validators.pattern(/^\d{8}$/)]],
       openingHours: [''],
       openingFrom: [''],
       openingTo: [''],

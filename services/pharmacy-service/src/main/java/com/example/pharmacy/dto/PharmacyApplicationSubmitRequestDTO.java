@@ -1,10 +1,9 @@
 package com.example.pharmacy.dto;
 
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @Getter
@@ -25,6 +24,7 @@ public class PharmacyApplicationSubmitRequestDTO {
     private String email;
 
     @NotBlank(message = "CIN number is required")
+    @Pattern(regexp = "^\\d{8}$", message = "CIN number must be exactly 8 digits")
     private String cinNumber;
 
     @NotBlank(message = "CNOP/CNOPT number is required")
@@ -46,15 +46,12 @@ public class PharmacyApplicationSubmitRequestDTO {
     private String governorate;
 
     @NotNull(message = "Latitude is required")
-    @DecimalMin(value = "-90.0", message = "Latitude must be >= -90")
-    @DecimalMax(value = "90.0", message = "Latitude must be <= 90")
     private Double latitude;
 
     @NotNull(message = "Longitude is required")
-    @DecimalMin(value = "-180.0", message = "Longitude must be >= -180")
-    @DecimalMax(value = "180.0", message = "Longitude must be <= 180")
     private Double longitude;
 
+    @Pattern(regexp = "^$|^\\d{8}$", message = "Phone must be exactly 8 digits")
     private String phone;
     private String openingHours;
 }
