@@ -2,21 +2,21 @@
   <div class="page-header">
     <div class="page-title-group">
       <h1>Insurance Workbench</h1>
-      <p class="page-subtitle">OCR mismatch alerts sent to admin accounts.</p>
+      <p class="page-subtitle">Claim mismatch alerts sent to admin accounts.</p>
     </div>
   </div>
 
   <nav class="sub-tabs">
     <a routerLink="/admin/insurance" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Claims</a>
     <a routerLink="/admin/insurance/statistics" routerLinkActive="active">Statistics</a>
-    <a routerLink="/admin/insurance/ocr-notifications" routerLinkActive="active">OCR Notifications</a>
+    <a routerLink="/admin/insurance/ocr-notifications" routerLinkActive="active">Notifications</a>
   </nav>
 
   <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
 
   <div class="summary-cards" *ngIf="!loading && !errorMessage">
     <div class="summary-card">
-      <span class="label">Total OCR Alerts</span>
+      <span class="label">Total Alerts</span>
       <strong>{{ ocrNotifications.length }}</strong>
     </div>
     <div class="summary-card major">
