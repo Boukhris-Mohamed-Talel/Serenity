@@ -1,0 +1,83 @@
+<div class="verification-page">
+  <header class="page-header">
+    <h1>Pharmacy Verification Queue</h1>
+    <p>Review pharmacist applications and decide whether to approve or reject.</p>
+  </header>
+
+  <div class="filters">
+    <button
+      type="button"
+      class="filter-btn"
+      *ngFor="let filter of filters"
+      [class.active]="selectedFilter === filter"
+      (click)="setFilter(filter)">
+      {{ filter }}
+    </button>
+  </div>
+
+  <p class="error" *ngIf="listErrorMessage">{{ listErrorMessage }}</p>
+
+  <div class="grid">
+    <section class="card list-card">
+      <h2>Applications</h2>
+      <p class="hint" *ngIf="loadingList">Loading applications...</p>
+      <p class="hint" *ngIf="!loadingList && applications.length === 0">No applications in this status.</p>
+
+      <div class="list" *ngIf="!loadingList && applications.length > 0">
+        <article class="list-item" *ngFor="let item of applications; trackBy: trackByApplicationId">
+          <div>
+            <p class="name">{{ item.applicantName }}</p>
+            <p class="meta">{{ item.pharmacyName }} - {{ item.city }}, {{ item.governorate }}</p>
+            <p class="meta">Submitted: {{ item.submittedAt | date: 'medium' }}</p>
+            <span class="status" [class]="'status ' + item.status.toLowerCase()">{{ item.status }}</span>
+          </div>
+          <button type="button" class="btn btn-secondary" (click)="openDetails(item.id)">Review</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="card details-card">
+      <h2>Application Details</h2>
+      <p class="hint" *ngIf="loadingDetails">Loading details...</p>
+      <p class="hint" *ngIf="!loadingDetails && !selectedDetails">Select an application to review.</p>
+      <p class="error" *ngIf="detailsErrorMessage">{{ detailsErrorMessage }}</p>
+      <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+
+      <ng-container *ngIf="selectedDetails as details">
+        <div class="details-grid">
+          <div>
+            <h3>Applicant</h3>
+            <p>{{ details.firstName }} {{ details.lastName }}</p>
+            <p>{{ details.email }}</p>
+            <p>CIN: {{ details.cinNumber }}</p>
+            <p>CNOP/CNOPT: {{ details.cnopNumber }}</p>
+          </div>
+          <div>
+            <h3>Pharmacy</h3>
+            <p>{{ details.pharmacyName }}</p>
+            <p>Authorization Ref: {{ details.authorizationReferenceNumber }}</p>
+            <p>{{ details.addressLine }}</p>
+            <p>{{ details.city }}, {{ details.governorate }}</p>
+            <p *ngIf="details.phone">Phone: {{ details.phone }}</p>
+            <p *ngIf="details.openingHours">Hours: {{ details.openingHours }}</p>
+          </div>
+        </div>
+
+        <div class="documents">
+          <h3>Documents</h3>
+          <button type="button" class="btn btn-secondary" (click)="openDocument(details.cinDocumentUrl)" [disabled]="!details.cinDocumentUrl">Open CIN</button>
+          <button type="button" class="btn btn-secondary" (click)="openDocument(details.cnoptProofUrl)" [disabled]="!details.cnoptProofUrl">Open CNOP/CNOPT Proof</button>
+          <button type="button" class="btn btn-secondary" (click)="openDocument(details.legalDocumentUrl)" [disabled]="!details.legalDocumentUrl">Open Legal Proof</button>
+        </div>
+
+        <div class="actions" *ngIf="details.status === 'SUBMITTED'">
+          <textarea [(ngModel)]="reviewComment" placeholder="Rejection comment (required if rejecting)"></textarea>
+          <div class="action-row">
+            <button type="button" class="btn btn-primary" (click)="approveSelected()" [disabled]="actionLoading">Approve</button>
+            <button type="button" class="btn btn-danger" (click)="rejectSelected()" [disabled]="actionLoading">Reject</button>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+  </div>
+</div>

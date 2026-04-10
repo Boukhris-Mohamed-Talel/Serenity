@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
+import { PharmacyApplicationsComponent } from './pharmacy-applications/pharmacy-applications.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -24,11 +25,15 @@ const routes: Routes = [
   {
     path: 'appointments',
     loadChildren: () => import('../appointments/appointments.module').then(m => m.AppointmentsModule)
+  },
+  {
+    path: 'pharmacy-applications',
+    component: PharmacyApplicationsComponent
   }
 ];
 
 @NgModule({
-  declarations: [AdminDashboardComponent],
+  declarations: [AdminDashboardComponent, PharmacyApplicationsComponent],
   imports: [
     SharedModule,
     RouterModule.forChild(routes)

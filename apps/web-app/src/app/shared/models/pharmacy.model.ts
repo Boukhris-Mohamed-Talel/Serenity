@@ -150,6 +150,92 @@ export interface PrescriptionLineResponse {
 
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';
 
+export type PharmacyApplicationStatus = 'SUBMITTED' | 'REJECTED' | 'APPROVED';
+
+export interface PharmacyApplicationSubmitRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface PharmacyApplicationResponse {
+  id: number;
+  userId: number;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedByAdminId?: number;
+  reviewComment?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+  cinDocumentUploaded: boolean;
+  cnoptProofUploaded: boolean;
+  legalDocumentUploaded: boolean;
+}
+
+export interface AdminPharmacyApplicationSummary {
+  id: number;
+  userId: number;
+  applicantName: string;
+  email: string;
+  pharmacyName: string;
+  city: string;
+  governorate: string;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+}
+
+export interface AdminPharmacyApplicationDetails {
+  id: number;
+  userId: number;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedByAdminId?: number;
+  reviewComment?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+  cinDocumentUrl?: string;
+  cnoptProofUrl?: string;
+  legalDocumentUrl?: string;
+}
+
 export interface StockItemCreateRequest {
   medicineName: string;
   quantity: number;

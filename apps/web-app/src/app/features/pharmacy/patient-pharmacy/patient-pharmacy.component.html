@@ -7,6 +7,31 @@
       </div>
     </header>
 
+    <article class="card application-status-card" *ngIf="showApplicationCard">
+      <div class="application-status-head">
+        <h3>Pharmacist Application</h3>
+        <button type="button" class="btn btn-secondary" (click)="openApplyAsPharmacist()">
+          {{ pharmacyApplication ? 'Open Application' : 'Apply As Pharmacist' }}
+        </button>
+      </div>
+
+      <ng-container *ngIf="pharmacyApplication as application">
+        <p class="status-row">
+          Status:
+          <span
+            class="status-chip"
+            [class.submitted]="application.status === 'SUBMITTED'"
+            [class.rejected]="application.status === 'REJECTED'"
+            [class.approved]="application.status === 'APPROVED'">
+            {{ application.status }}
+          </span>
+        </p>
+        <p class="meta" *ngIf="application.submittedAt">Submitted: {{ application.submittedAt | date: 'medium' }}</p>
+        <p class="meta" *ngIf="application.reviewedAt">Reviewed: {{ application.reviewedAt | date: 'medium' }}</p>
+        <p class="application-comment" *ngIf="application.reviewComment">Admin comment: {{ application.reviewComment }}</p>
+      </ng-container>
+    </article>
+
     <article class="card default-card" *ngIf="defaultPharmacy as selected; else noDefault">
       <div class="default-head">
         <h3>Current Default Pharmacy</h3>

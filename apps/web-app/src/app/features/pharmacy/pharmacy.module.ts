@@ -10,6 +10,7 @@ import { StockManagementComponent } from './stock-management/stock-management.co
 import { AddMedicineComponent } from './add-medicine/add-medicine.component';
 import { PatientPharmacyComponent } from './patient-pharmacy/patient-pharmacy.component';
 import { PatientPrescriptionDetailsComponent } from './patient-prescription-details/patient-prescription-details.component';
+import { PharmacyApplicationComponent } from './pharmacy-application/pharmacy-application.component';
 
 const routes: Routes = [
   {
@@ -59,6 +60,12 @@ const routes: Routes = [
     component: PatientPharmacyComponent,
     canActivate: [RoleGuard],
     data: { roles: ['PATIENT'] }
+  },
+  {
+    path: 'apply',
+    component: PharmacyApplicationComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['PATIENT'] }
   }
 ];
 
@@ -71,7 +78,8 @@ const routes: Routes = [
     StockManagementComponent,
     AddMedicineComponent,
     PatientPharmacyComponent,
-    PatientPrescriptionDetailsComponent
+    PatientPrescriptionDetailsComponent,
+    PharmacyApplicationComponent
   ],
   imports: [SharedModule, RouterModule.forChild(routes)]
 })

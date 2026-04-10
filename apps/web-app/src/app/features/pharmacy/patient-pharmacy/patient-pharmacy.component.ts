@@ -4,6 +4,7 @@ import { PharmacyService } from '../../../core/services/pharmacy.service';
 import { PickerMarker } from '../../../shared/components/location-picker/location-picker.component';
 import {
   PatientDefaultPharmacyResponse,
+  PharmacyApplicationResponse,
   PharmacyCandidateResponse,
   PrescriptionLineResponse,
   PrescriptionResponse
@@ -26,6 +27,7 @@ export class PatientPharmacyComponent implements OnInit {
   nearestLoading = false;
   saving = false;
   prescriptionsLoading = true;
+  applicationLoading = true;
   hasSearchedCandidates = false;
 
   errorMessage = '';
@@ -36,14 +38,20 @@ export class PatientPharmacyComponent implements OnInit {
   governorateFilter = '';
 
   defaultPharmacy: PatientDefaultPharmacyResponse | null = null;
+  pharmacyApplication: PharmacyApplicationResponse | null = null;
   candidateResults: PharmacyCandidateResponse[] = [];
   prescriptionCards: PrescriptionCardView[] = [];
   mapMarkers: PickerMarker[] = [];
   mapMessage = 'Map will show your default pharmacy location.';
 
+  get showApplicationCard(): boolean {
+    return !this.applicationLoading && this.pharmacyApplication != null;
+  }
+
   ngOnInit(): void {
     this.loadDefaultPharmacy();
     this.loadPrescriptions();
+    this.loadPharmacyApplication();
   }
 
   constructor(
@@ -172,6 +180,10 @@ export class PatientPharmacyComponent implements OnInit {
     this.router.navigate(['/pharmacy/patient/prescriptions', card.raw.id]);
   }
 
+  openApplyAsPharmacist(): void {
+    this.router.navigate(['/pharmacy/apply']);
+  }
+
   trackByCandidateId(_: number, item: PharmacyCandidateResponse): number {
     return item.id;
   }
@@ -209,6 +221,23 @@ export class PatientPharmacyComponent implements OnInit {
       primaryLine: lines[0],
       extraLinesCount: Math.max(lines.length - 1, 0)
     };
+  }
+
+  private loadPharmacyApplication(): void {
+    this.applicationLoading = true;
+    this.pharmacyService.getMyPharmacyApplication().subscribe({
+      next: (application) => {
+        this.pharmacyApplication = application;
+        this.applicationLoading = false;
+      },
+      error: (err) => {
+        if (err.status !== 404) {
+          this.errorMessage = err.error?.message || 'Failed to load pharmacist application status';
+        }
+        this.pharmacyApplication = null;
+        this.applicationLoading = false;
+      }
+    });
   }
 
   private refreshMapMarkers(): void {

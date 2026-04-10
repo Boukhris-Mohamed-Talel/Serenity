@@ -47,6 +47,56 @@
   color: #5d7d7a;
 }
 
+.application-status-card {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.application-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.application-status-head h3 {
+  margin: 0;
+}
+
+.status-row {
+  margin: 0.1rem 0;
+  color: #3f5f63;
+}
+
+.status-chip {
+  display: inline-flex;
+  margin-left: 0.45rem;
+  border-radius: 999px;
+  padding: 0.16rem 0.52rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.status-chip.submitted {
+  background: #fff4db;
+  color: #825f00;
+}
+
+.status-chip.rejected {
+  background: #fdeaea;
+  color: #9f2727;
+}
+
+.status-chip.approved {
+  background: #e2f7e8;
+  color: #0e6e35;
+}
+
+.application-comment {
+  margin: 0.2rem 0 0;
+  color: #9f2727;
+}
+
 .default-card.empty {
   background: #f7fcfb;
 }

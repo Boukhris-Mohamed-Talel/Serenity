@@ -5,10 +5,12 @@ import com.example.healthcare.dto.DoctorUpdateRequest;
 import com.example.healthcare.entity.Doctor;
 import com.example.healthcare.service.DoctorService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/doctors")
+@Validated
 public class DoctorController {
 
     @Autowired
@@ -52,7 +55,8 @@ public class DoctorController {
             @PathVariable Long id,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String phone,
+            @RequestParam(required = false)
+            @Pattern(regexp = "^$|^\\d{8}$", message = "Phone must be exactly 8 digits") String phone,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date dateOfBirth,
             @RequestParam(required = false) String avatarUrl,
             @RequestParam(required = false) String bio,

@@ -2,8 +2,7 @@ package com.example.pharmacy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @Getter
@@ -19,6 +18,7 @@ public class PharmacyUpsertRequestDTO {
     @NotBlank(message = "License number is required")
     private String licenseNumber;
 
+    @Pattern(regexp = "^$|^\\d{8}$", message = "Phone must be exactly 8 digits")
     private String phone;
     private String openingHours;
     private String addressLine;
@@ -26,13 +26,9 @@ public class PharmacyUpsertRequestDTO {
     private String governorate;
 
     @NotNull(message = "Pharmacy latitude is required")
-    @DecimalMin(value = "-90.0", message = "Latitude must be >= -90")
-    @DecimalMax(value = "90.0", message = "Latitude must be <= 90")
     private Double latitude;
 
     @NotNull(message = "Pharmacy longitude is required")
-    @DecimalMin(value = "-180.0", message = "Longitude must be >= -180")
-    @DecimalMax(value = "180.0", message = "Longitude must be <= 180")
     private Double longitude;
 
     private Boolean supportsEmergency;

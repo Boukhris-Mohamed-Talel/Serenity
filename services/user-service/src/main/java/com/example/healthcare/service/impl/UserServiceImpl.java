@@ -97,9 +97,24 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        user.setRole(Role.valueOf(role.toUpperCase()));
+        Role requestedRole = parseRole(role);
+        if (requestedRole == Role.PHARMACIST) {
+            throw new IllegalArgumentException("PHARMACIST role cannot be self-assigned");
+        }
+
+        user.setRole(requestedRole);
         userRepository.save(user);
 
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
+    public UserResponseDTO assignRoleInternally(Long userId, String role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        user.setRole(parseRole(role));
+        userRepository.save(user);
         return userMapper.toResponseDTO(user);
     }
 
@@ -339,5 +354,16 @@ public class UserServiceImpl implements UserService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .build();
+    }
+
+    private Role parseRole(String role) {
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("Role is required");
+        }
+        try {
+            return Role.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role value: " + role);
+        }
     }
 }
