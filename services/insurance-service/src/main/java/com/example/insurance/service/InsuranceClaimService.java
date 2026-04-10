@@ -2,6 +2,7 @@ package com.example.insurance.service;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -82,4 +83,6 @@ public interface InsuranceClaimService {
     );
 
     List<InsuranceClaimTransitionResponseDTO> getClaimTimeline(Long claimId, Long requesterUserId, boolean isAdmin);
+
+    List<InsuranceClaimOcrAuditResponseDTO> getClaimOcrAudit(Long claimId, Long requesterUserId, boolean isAdmin);
 }

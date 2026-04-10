@@ -61,7 +61,14 @@ export interface InsuranceNotification {
   id: number;
   userId: number;
   claimId: number | null;
-  type: 'CLAIM_SENT_TO_INSURER' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED' | 'DOCUMENTS_REQUESTED' | 'DOCUMENTS_SUBMITTED';
+  type:
+    | 'CLAIM_SENT_TO_INSURER'
+    | 'CLAIM_APPROVED'
+    | 'CLAIM_REJECTED'
+    | 'DOCUMENTS_REQUESTED'
+    | 'DOCUMENTS_SUBMITTED'
+    | 'OCR_MINOR_MISMATCH'
+    | 'OCR_MAJOR_BLOCKED';
   title: string;
   message: string;
   isRead: boolean;

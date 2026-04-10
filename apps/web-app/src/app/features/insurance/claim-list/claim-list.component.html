@@ -12,6 +12,7 @@
     <a
       routerLink="/admin/insurance"
       routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
     >
       Claims
     </a>
@@ -20,6 +21,12 @@
       routerLinkActive="active"
     >
       Statistics
+    </a>
+    <a
+      routerLink="/admin/insurance/ocr-notifications"
+      routerLinkActive="active"
+    >
+      OCR Notifications
     </a>
   </nav>
 

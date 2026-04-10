@@ -1,6 +1,7 @@
 package com.example.insurance.controller;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
+import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
 import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
@@ -124,6 +125,14 @@ public class InsuranceClaimController {
         Long userId = InsuranceAuth.requireUserId();
         boolean admin = InsuranceAuth.isAdmin();
         return ResponseEntity.ok(insuranceClaimService.getClaimTimeline(id, userId, admin));
+    }
+
+    @GetMapping("/claims/{id}/ocr-audit")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<InsuranceClaimOcrAuditResponseDTO>> getClaimOcrAudit(@PathVariable Long id) {
+        Long userId = InsuranceAuth.requireUserId();
+        boolean admin = InsuranceAuth.isAdmin();
+        return ResponseEntity.ok(insuranceClaimService.getClaimOcrAudit(id, userId, admin));
     }
 
     @PostMapping("/claims/{id}/request-documents")

@@ -138,6 +138,10 @@ export class InsuranceService {
     return this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications/me`);
   }
 
+  getAllNotificationsForAdmin(): Observable<InsuranceNotification[]> {
+    return this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications`);
+  }
+
   getUnreadNotificationsCount(): Observable<NotificationUnreadCountResponse> {
     return this.http.get<NotificationUnreadCountResponse>(`${this.API_URL}/notifications/me/unread-count`);
   }

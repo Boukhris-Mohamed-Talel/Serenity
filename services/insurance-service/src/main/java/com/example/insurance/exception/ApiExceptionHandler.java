@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -47,5 +48,14 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String field = ex.getName() != null ? ex.getName() : "Request parameter";
         return ResponseEntity.badRequest().body(Map.of("message", field + " has an invalid format"));
+    }
+
+    @ExceptionHandler(OcrMajorMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleOcrMajorMismatch(OcrMajorMismatchException ex) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("message", ex.getMessage());
+        payload.put("severity", "MAJOR");
+        payload.put("mismatches", ex.getMismatches());
+        return ResponseEntity.badRequest().body(payload);
     }
 }

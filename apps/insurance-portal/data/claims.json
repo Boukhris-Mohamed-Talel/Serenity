@@ -448,17 +448,59 @@
     "amount": 150,
     "insuranceCompany": "Insurance 2",
     "insuranceGrade": 3,
-    "status": "NEEDS_INFO",
-    "reimbursementAmount": 27,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
     "receivedAt": "2026-04-09T11:34:14.862Z",
-    "processedAt": null,
-    "rejectReason": null,
+    "processedAt": "2026-04-10T10:50:18.608Z",
+    "rejectReason": "naaaah",
     "adjustmentReason": null,
-    "infoRequestReason": "please doc missing",
-    "infoRequestDeadline": "2026-04-17T13:34:00.000Z",
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
     "infoRespondedAt": null,
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F596afe6d-e0d2-4251-bcc4-538cf1f7dcd5_Gemini_Generated_Image_kytuufkytuufkytu.png"
+    ]
+  },
+  {
+    "ref": "39c628c1-c2df-43fc-85e2-58e409778123",
+    "patientName": "3",
+    "description": "this is a test",
+    "amount": 130,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 23.4,
+    "receivedAt": "2026-04-10T10:53:44.051Z",
+    "processedAt": "2026-04-10T11:04:43.099Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": "2026-04-10T11:04:32.589Z",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Ffe56757e-8658-414e-85d6-17ecce0f4428_medical_invoice+%281%29.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F93efac1a-7ccf-45ad-a88a-f60da27f1e5d_medical_invoice+%281%29.pdf"
+    ]
+  },
+  {
+    "ref": "fa6e88eb-21a2-4ebf-ad98-f7c07dbc3b1c",
+    "patientName": "3",
+    "description": "test for passage",
+    "amount": 128,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 15.36,
+    "receivedAt": "2026-04-10T11:10:25.935Z",
+    "processedAt": "2026-04-10T11:11:32.166Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": "2026-04-10T11:11:18.849Z",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fa47ec261-24ff-4af9-8fa2-19eefaa1fd89_medical_invoice_insurance4.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F5c9f3e2d-2904-40a9-8911-ae28e53294df_medical_invoice+%281%29.pdf"
     ]
   }
 ]

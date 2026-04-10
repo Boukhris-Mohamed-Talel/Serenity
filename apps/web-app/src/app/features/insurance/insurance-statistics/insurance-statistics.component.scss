@@ -1,4 +1,43 @@
 .insurance-stats-page {
+  .sub-tabs {
+    display: inline-flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+
+    a {
+      position: relative;
+      padding: 0.2rem 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-light);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -0.25rem;
+        width: 0;
+        height: 2px;
+        border-radius: 999px;
+        background: linear-gradient(to right, #38bdf8, #6366f1);
+        transition: width 0.2s ease;
+      }
+
+      &.active {
+        color: #e5e7eb;
+
+        &::after {
+          width: 100%;
+        }
+      }
+    }
+  }
+
   .page-header {
     display: flex;
     justify-content: space-between;
