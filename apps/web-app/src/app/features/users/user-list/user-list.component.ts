@@ -18,7 +18,10 @@ export class UserListComponent implements OnInit {
     { label: '1 month', value: 'ONE_MONTH' },
     { label: 'Permanent', value: 'PERMANENT' }
   ];
-  selectedBanDurationByUser: Record<number, BanDuration> = {};
+  showBanModal = false;
+  showBanDurationMenu = false;
+  selectedBanDuration: BanDuration = 'ONE_DAY';
+  banTargetUser: UserResponse | null = null;
 
   constructor(private readonly userService: UserService) {}
 
@@ -31,10 +34,6 @@ export class UserListComponent implements OnInit {
     this.userService.getAllUsers().subscribe({
       next: (users) => {
         this.users = users;
-        this.selectedBanDurationByUser = users.reduce<Record<number, BanDuration>>((acc, user) => {
-          acc[user.id] = 'ONE_DAY';
-          return acc;
-        }, {});
         this.loading = false;
       },
       error: (err) => {
@@ -75,15 +74,49 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  banUser(id: number): void {
-    const duration = this.selectedBanDurationByUser[id] || 'ONE_DAY';
+  openBanModal(user: UserResponse): void {
+    this.banTargetUser = user;
+    this.selectedBanDuration = 'ONE_DAY';
+    this.showBanDurationMenu = false;
+    this.showBanModal = true;
+  }
+
+  closeBanModal(): void {
+    this.showBanModal = false;
+    this.showBanDurationMenu = false;
+    this.banTargetUser = null;
+    this.selectedBanDuration = 'ONE_DAY';
+  }
+
+  toggleBanDurationMenu(): void {
+    this.showBanDurationMenu = !this.showBanDurationMenu;
+  }
+
+  selectBanDuration(value: BanDuration): void {
+    this.selectedBanDuration = value;
+    this.showBanDurationMenu = false;
+  }
+
+  getSelectedBanDurationLabel(): string {
+    return this.banOptions.find(option => option.value === this.selectedBanDuration)?.label ?? '1 day';
+  }
+
+  confirmBan(): void {
+    if (!this.banTargetUser) {
+      return;
+    }
+
+    const duration = this.selectedBanDuration;
     const confirmMessage = duration === 'PERMANENT'
       ? 'Are you sure you want to permanently ban this user?'
       : 'Are you sure you want to ban this user?';
     if (!confirm(confirmMessage)) return;
 
-    this.userService.banUser(id, duration).subscribe({
-      next: () => this.loadUsers(),
+    this.userService.banUser(this.banTargetUser.id, duration).subscribe({
+      next: () => {
+        this.closeBanModal();
+        this.loadUsers();
+      },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to ban user';
       }

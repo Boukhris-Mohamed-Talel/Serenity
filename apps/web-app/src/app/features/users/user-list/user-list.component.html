@@ -51,17 +51,12 @@
             <button *ngIf="!user.isActive" class="btn btn-primary btn-sm" (click)="activateUser(user.id)">
               Activate
             </button>
-            <div class="ban-controls">
-              <select class="ban-select" [(ngModel)]="selectedBanDurationByUser[user.id]" [disabled]="isCurrentlyBanned(user)">
-                <option *ngFor="let option of banOptions" [ngValue]="option.value">{{ option.label }}</option>
-              </select>
-              <button *ngIf="!isCurrentlyBanned(user)" class="btn btn-danger btn-sm" (click)="banUser(user.id)">
-                Ban
-              </button>
-              <button *ngIf="isCurrentlyBanned(user)" class="btn btn-secondary btn-sm" (click)="unbanUser(user.id)">
-                Unban
-              </button>
-            </div>
+            <button *ngIf="!isCurrentlyBanned(user)" class="btn btn-danger btn-sm" (click)="openBanModal(user)">
+              Ban
+            </button>
+            <button *ngIf="isCurrentlyBanned(user)" class="btn btn-secondary btn-sm" (click)="unbanUser(user.id)">
+              Unban
+            </button>
             <button class="btn btn-danger btn-sm" (click)="deleteUser(user.id)">
               Delete
             </button>
@@ -69,5 +64,40 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showBanModal" (click)="closeBanModal()">
+    <div class="ban-modal card" (click)="$event.stopPropagation()">
+      <h3>Ban User</h3>
+      <p *ngIf="banTargetUser">
+        Choose ban period for <strong>{{ banTargetUser.firstName }} {{ banTargetUser.lastName }}</strong>.
+      </p>
+      <label class="ban-label" for="banDuration">Ban duration</label>
+      <div class="ban-select-wrap">
+        <button
+          id="banDuration"
+          type="button"
+          class="ban-select-button"
+          [attr.aria-expanded]="showBanDurationMenu"
+          (click)="toggleBanDurationMenu()">
+          <span>{{ getSelectedBanDurationLabel() }}</span>
+          <span class="ban-select-icon" [class.open]="showBanDurationMenu"></span>
+        </button>
+        <div class="ban-options" *ngIf="showBanDurationMenu">
+          <button
+            *ngFor="let option of banOptions"
+            type="button"
+            class="ban-option"
+            [class.active]="option.value === selectedBanDuration"
+            (click)="selectBanDuration(option.value)">
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" (click)="closeBanModal()">Cancel</button>
+        <button class="btn btn-danger" type="button" (click)="confirmBan()">Confirm ban</button>
+      </div>
+    </div>
   </div>
 </div>
