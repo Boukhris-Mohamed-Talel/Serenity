@@ -18,10 +18,14 @@ export interface UserResponse {
   dateOfBirth: string;
   insuranceCompany?: string;
   isActive: boolean;
+  isPermanentlyBanned?: boolean;
+  bannedUntil?: string | null;
   createdAt: string;
   role: string;
   profile: UserProfile;
 }
+
+export type BanDuration = 'ONE_DAY' | 'THREE_DAYS' | 'ONE_WEEK' | 'ONE_MONTH' | 'PERMANENT';
 
 export interface UserProfile {
   id: number;

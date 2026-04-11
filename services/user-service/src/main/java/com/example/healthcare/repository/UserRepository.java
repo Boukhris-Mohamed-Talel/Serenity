@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Date;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -20,4 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(Role role);
 
     List<User> findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role role);
+
+    List<User> findByIsPermanentlyBannedFalseAndBannedUntilLessThanEqual(Date date);
 }

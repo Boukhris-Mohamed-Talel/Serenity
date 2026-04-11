@@ -20,6 +20,8 @@ public class UserResponseDTO {
     private Date dateOfBirth;
     private InsuranceCompany insuranceCompany;
     private Boolean isActive;
+    private Boolean isPermanentlyBanned;
+    private Date bannedUntil;
     private Date createdAt;
     private String role;
     private UserProfileDTO profile;

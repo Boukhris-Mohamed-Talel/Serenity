@@ -38,8 +38,8 @@
             <span class="badge badge-primary">{{ user.role }}</span>
           </td>
           <td>
-            <span [class]="user.isActive ? 'badge badge-success' : 'badge badge-danger'">
-              {{ user.isActive ? 'Active' : 'Inactive' }}
+            <span [class]="isCurrentlyBanned(user) ? 'badge badge-danger' : (user.isActive ? 'badge badge-success' : 'badge badge-warning')">
+              {{ getBanStatusText(user) }}
             </span>
           </td>
           <td>{{ user.createdAt | date:'mediumDate' }}</td>
@@ -51,6 +51,17 @@
             <button *ngIf="!user.isActive" class="btn btn-primary btn-sm" (click)="activateUser(user.id)">
               Activate
             </button>
+            <div class="ban-controls">
+              <select class="ban-select" [(ngModel)]="selectedBanDurationByUser[user.id]" [disabled]="isCurrentlyBanned(user)">
+                <option *ngFor="let option of banOptions" [ngValue]="option.value">{{ option.label }}</option>
+              </select>
+              <button *ngIf="!isCurrentlyBanned(user)" class="btn btn-danger btn-sm" (click)="banUser(user.id)">
+                Ban
+              </button>
+              <button *ngIf="isCurrentlyBanned(user)" class="btn btn-secondary btn-sm" (click)="unbanUser(user.id)">
+                Unban
+              </button>
+            </div>
             <button class="btn btn-danger btn-sm" (click)="deleteUser(user.id)">
               Delete
             </button>

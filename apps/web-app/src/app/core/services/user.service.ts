@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ProfileUpdateRequest, UserRequest, UserResponse, UserLookup } from '../../shared/models/user.model';
+import { ProfileUpdateRequest, UserRequest, UserResponse, UserLookup, BanDuration } from '../../shared/models/user.model';
 import { AuthService } from './auth.service';
 import { UserName } from '../../shared/models/user-name.model';
 
@@ -95,6 +95,14 @@ export class UserService {
 
   activateUser(id: number): Observable<void> {
     return this.http.patch<void>(`${this.API_URL}/${id}/activate`, {});
+  }
+
+  banUser(id: number, duration: BanDuration): Observable<void> {
+    return this.http.patch<void>(`${this.API_URL}/${id}/ban`, { duration });
+  }
+
+  unbanUser(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.API_URL}/${id}/unban`, {});
   }
 
   getUsersNamesById(ids: number[]): Observable<UserName[]> {

@@ -502,5 +502,67 @@
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fa47ec261-24ff-4af9-8fa2-19eefaa1fd89_medical_invoice_insurance4.pdf",
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F5c9f3e2d-2904-40a9-8911-ae28e53294df_medical_invoice+%281%29.pdf"
     ]
+  },
+  {
+    "ref": "1a681a1e-37c1-4b33-a287-06234a1619b3",
+    "patientName": "3",
+    "description": "testetetet",
+    "amount": 130,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-04-10T12:57:30.748Z",
+    "processedAt": "2026-04-10T12:57:44.882Z",
+    "rejectReason": "no",
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F6b3b3881-78ad-4e68-89e9-d61a06115431_medical_invoice+%281%29.pdf"
+    ]
+  },
+  {
+    "ref": "11281533-726c-448b-8e3e-389af1dc5719",
+    "patientName": "3",
+    "description": "efdsfsdfdsd",
+    "amount": 128,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-04-10T12:58:03.975Z",
+    "processedAt": "2026-04-10T12:58:50.839Z",
+    "rejectReason": "bad certificate",
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": "2026-04-10T12:58:26.874Z",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fc55a85db-7b6e-4a11-a6f6-8b8843535187_medical_invoice_insurance4.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F4c3ad7ad-26dd-4f40-862a-9f30c0094afb_medical_invoice+%281%29.pdf"
+    ]
+  },
+  {
+    "ref": "3a5204df-df56-418f-87a5-2b9625031b0f",
+    "patientName": "3",
+    "description": "testetsshss",
+    "amount": 128.03,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-04-10T13:06:41.292Z",
+    "processedAt": "2026-04-10T13:07:30.163Z",
+    "rejectReason": "ndo",
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": "2026-04-10T13:07:07.963Z",
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F4a13a17e-b6d5-4f69-8cac-5e0a100eae50_medical_invoice_insurance4.pdf",
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2F4d12d960-05cc-451f-b549-09d9a775c596_medical_invoice+%281%29.pdf"
+    ]
   }
 ]

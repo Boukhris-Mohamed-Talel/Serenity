@@ -1,12 +1,14 @@
 package com.example.healthcare.service.impl;
 
 import com.example.healthcare.dto.*;
+import com.example.healthcare.entity.BanDuration;
 import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
 import com.example.healthcare.entity.UserProfile;
 import com.example.healthcare.exception.EmailAlreadyExistsException;
 import com.example.healthcare.exception.InvalidCredentialsException;
 import com.example.healthcare.exception.ResourceNotFoundException;
+import com.example.healthcare.exception.UserBannedException;
 import com.example.healthcare.mapper.UserMapper;
 import com.example.healthcare.repository.UserRepository;
 import com.example.healthcare.security.jwt.JwtTokenProvider;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,8 +30,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.nio.file.Files;
@@ -40,6 +46,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService {
+    private static final DateTimeFormatter BAN_UNTIL_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -62,6 +70,8 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setIsActive(true);
+        user.setIsPermanentlyBanned(false);
+        user.setBannedUntil(null);
 
         if (request.getRole() != null && !request.getRole().isBlank()) {
             user.setRole(Role.valueOf(request.getRole()));
@@ -121,11 +131,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(InvalidCredentialsException::new);
+            ensureNotBanned(user);
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
             String token = jwtTokenProvider.generateToken(authentication);
 
@@ -138,6 +149,8 @@ public class UserServiceImpl implements UserService {
                     .build();
         } catch (DisabledException e) {
             throw new InvalidCredentialsException("Your account has been deactivated. Please contact an administrator.");
+        } catch (LockedException e) {
+            throw new UserBannedException("Your account is currently banned.");
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException();
         }
@@ -267,6 +280,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void banUser(Long id, BanDuration duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Ban duration is required");
+        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        Date now = new Date();
+        user.setIsPermanentlyBanned(duration.isPermanent());
+        user.setBannedUntil(duration.resolveBannedUntil(now));
+        userRepository.save(user);
+    }
+
+    @Override
+    public void unbanUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        user.setIsPermanentlyBanned(false);
+        user.setBannedUntil(null);
+        userRepository.save(user);
+    }
+
+    @Override
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
@@ -365,5 +400,26 @@ public class UserServiceImpl implements UserService {
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Invalid role value: " + role);
         }
+    }
+
+    private void ensureNotBanned(User user) {
+        if (Boolean.TRUE.equals(user.getIsPermanentlyBanned())) {
+            throw new UserBannedException("Your account has been permanently banned.");
+        }
+
+        Date bannedUntil = user.getBannedUntil();
+        if (bannedUntil == null) {
+            return;
+        }
+
+        Date now = new Date();
+        if (bannedUntil.after(now)) {
+            String formatted = BAN_UNTIL_FORMATTER.format(bannedUntil.toInstant());
+            throw new UserBannedException("Your account is banned until " + formatted + ".");
+        }
+
+        user.setBannedUntil(null);
+        user.setIsPermanentlyBanned(false);
+        userRepository.save(user);
     }
 }

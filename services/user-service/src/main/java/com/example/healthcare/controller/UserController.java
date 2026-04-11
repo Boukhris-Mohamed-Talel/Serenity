@@ -4,6 +4,7 @@ import com.example.healthcare.dto.ProfileUpdateDTO;
 import com.example.healthcare.dto.UserDTO;
 import com.example.healthcare.dto.UserRequestDTO;
 import com.example.healthcare.dto.UserResponseDTO;
+import com.example.healthcare.dto.BanUserRequestDTO;
 import com.example.healthcare.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +78,20 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> activateUser(@PathVariable Long id) {
         userService.activateUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/ban")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> banUser(@PathVariable Long id, @Valid @RequestBody BanUserRequestDTO request) {
+        userService.banUser(id, request.getDuration());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/unban")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unbanUser(@PathVariable Long id) {
+        userService.unbanUser(id);
         return ResponseEntity.noContent().build();
     }
 
