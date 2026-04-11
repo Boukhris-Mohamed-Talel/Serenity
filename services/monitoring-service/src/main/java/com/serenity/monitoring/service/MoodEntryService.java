@@ -2,6 +2,7 @@ package com.serenity.monitoring.service;
 
 import com.serenity.monitoring.dto.MoodEntryRequestDTO;
 import com.serenity.monitoring.dto.MoodEntryResponseDTO;
+import com.serenity.monitoring.dto.DoctorMonitoringDashboardDTO;
 
 import java.util.List;
 
@@ -21,6 +22,11 @@ public interface MoodEntryService {
      * Get all mood entries assigned to a doctor.
      */
     List<MoodEntryResponseDTO> getMoodEntriesByDoctor(Long doctorId);
+
+    /**
+     * Get doctor analytics dashboard with mood and trigger insights.
+     */
+    DoctorMonitoringDashboardDTO getDoctorDashboard(Long doctorId);
 
     /**
      * Get a specific mood entry by ID

@@ -2,6 +2,7 @@ package com.serenity.monitoring.controller;
 
 import com.serenity.monitoring.dto.MoodEntryRequestDTO;
 import com.serenity.monitoring.dto.MoodEntryResponseDTO;
+import com.serenity.monitoring.dto.DoctorMonitoringDashboardDTO;
 import com.serenity.monitoring.service.MoodEntryService;
 import com.serenity.monitoring.service.PatientRecordExportService;
 import jakarta.validation.Valid;
@@ -52,6 +53,22 @@ public class MoodEntryController {
     @GetMapping("/doctor/{doctorId}")
     public ResponseEntity<List<MoodEntryResponseDTO>> getMoodEntriesByDoctor(@PathVariable Long doctorId) {
         List<MoodEntryResponseDTO> response = moodEntryService.getMoodEntriesByDoctor(doctorId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get full analytics dashboard for the doctor.
+     * GET /api/monitoring/mood/doctor/{doctorId}/analytics
+     */
+    @GetMapping("/doctor/{doctorId}/analytics")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<DoctorMonitoringDashboardDTO> getDoctorAnalytics(@PathVariable Long doctorId,
+                                                                           @AuthenticationPrincipal CustomUserDetails currentUser) {
+        if (currentUser == null || !doctorId.equals(currentUser.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only access analytics for your own doctor account");
+        }
+
+        DoctorMonitoringDashboardDTO response = moodEntryService.getDoctorDashboard(doctorId);
         return ResponseEntity.ok(response);
     }
 

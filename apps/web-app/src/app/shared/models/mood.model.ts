@@ -48,3 +48,39 @@ export interface CrisisAlertPayload {
   timestamp: string;
 }
 
+export interface MoodTrendPoint {
+  date: string;
+  averageMood: number;
+  entryCount: number;
+  crisisCount: number;
+}
+
+export interface PatientMoodPoint {
+  patientId: number;
+  patientName: string;
+  patientAvatarUrl?: string | null;
+  x: number;
+  latestMoodScore: number;
+  averageMoodScore: number;
+  moodChange: number;
+  entryCount: number;
+  crisisCount: number;
+  latestEntryAt: string;
+  latestTriggerType?: string | null;
+  latestTriggerDescription?: string | null;
+  latestTriggerIntensity?: number | null;
+  latestTriggerAt?: string | null;
+}
+
+export interface DoctorMonitoringDashboard {
+  totalPatients: number;
+  totalMoodEntries: number;
+  totalClinicalTriggers: number;
+  crisisEvents: number;
+  averageMood: number;
+  averageMoodChange: number;
+  activeHighRiskPatients: number;
+  moodTrend: MoodTrendPoint[];
+  patientPoints: PatientMoodPoint[];
+}
+

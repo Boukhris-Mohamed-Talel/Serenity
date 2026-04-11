@@ -60,6 +60,12 @@
   }
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .btn-primary-main {
   display: inline-flex;
   align-items: center;

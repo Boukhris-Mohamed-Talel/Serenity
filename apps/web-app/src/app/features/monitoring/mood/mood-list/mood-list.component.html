@@ -12,15 +12,20 @@
 
   <div class="page-shell" [class.doctor-shell]="isDoctorView">
 
-    <header class="page-header">S
+    <header class="page-header">
       <div>
         <h1>Monitoring Dashboard</h1>
         <p>{{ getHeaderSubtitle() }}</p>
       </div>
-      <button *ngIf="!isDoctorView" class="btn-primary-main" (click)="createNewEntry()">
-        <span class="material-icons">add</span>
-        New Entry
-      </button>
+      <div class="header-actions">
+        <button *ngIf="isDoctorView" class="btn-primary-main" (click)="goToOutcomeTrackingDashboard()">
+          Global Analytics
+        </button>
+        <button *ngIf="!isDoctorView" class="btn-primary-main" (click)="createNewEntry()">
+          <span class="material-icons">add</span>
+          New Entry
+        </button>
+      </div>
     </header>
 
     <div *ngIf="loading" class="loading-state">
@@ -124,9 +129,6 @@
             </div>
 
             <div class="detail-actions">
-              <button class="btn-outcome-dashboard" (click)="goToOutcomeTrackingDashboard()">
-                Outcome Dashboard
-              </button>
               <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
                 {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
               </button>

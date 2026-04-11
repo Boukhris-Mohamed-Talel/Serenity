@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
+  DoctorMonitoringDashboard,
   EmotionalTriggerRequest,
   EmotionalTriggerResponse,
   MoodEntry,
@@ -43,6 +44,13 @@ export class MonitoringService {
    */
   getMoodEntriesForDoctor(doctorId: number): Observable<MoodEntryResponse[]> {
     return this.http.get<MoodEntryResponse[]>(`${this.API_URL}/doctor/${doctorId}`);
+  }
+
+  /**
+   * Get full doctor analytics dashboard (KPIs + trend + patient points).
+   */
+  getDoctorDashboardAnalytics(doctorId: number): Observable<DoctorMonitoringDashboard> {
+    return this.http.get<DoctorMonitoringDashboard>(`${this.API_URL}/doctor/${doctorId}/analytics`);
   }
 
   /**

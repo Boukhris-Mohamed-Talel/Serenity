@@ -1,40 +1,138 @@
 <div class="outcome-dashboard">
   <div class="header-row">
     <div>
-      <h1>Outcome Tracking Dashboard</h1>
-      <p>Doctor-level monitoring KPIs based on patient mood entries.</p>
+      <h1>Monitoring Intelligence Dashboard</h1>
+      <p>Live doctor analytics for mood evolution, crisis pressure, and trigger insights.</p>
     </div>
     <button class="btn-back" (click)="goBack()">Back to Monitoring</button>
   </div>
 
-  <div *ngIf="loading" class="state-box">Loading outcomes...</div>
+  <div *ngIf="loading" class="state-box">Loading dashboard...</div>
   <div *ngIf="!loading && errorMessage" class="state-box state-error">{{ errorMessage }}</div>
 
-  <div *ngIf="!loading && !errorMessage" class="kpi-grid">
-    <div class="kpi-card">
-      <span class="kpi-label">Total Patients</span>
-      <span class="kpi-value">{{ kpis.totalPatients }}</span>
+  <ng-container *ngIf="!loading && !errorMessage && dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Patients</span>
+        <span class="kpi-value">{{ dashboard.totalPatients }}</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Mood Entries</span>
+        <span class="kpi-value">{{ dashboard.totalMoodEntries }}</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Clinical Triggers</span>
+        <span class="kpi-value">{{ dashboard.totalClinicalTriggers }}</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Average Mood</span>
+        <span class="kpi-value">{{ dashboard.averageMood }}/10</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-label">Mood Change</span>
+        <span class="kpi-value" [class.positive]="dashboard.averageMoodChange >= 0">
+          {{ dashboard.averageMoodChange > 0 ? '+' : '' }}{{ dashboard.averageMoodChange }}
+        </span>
+      </div>
+
+      <div class="kpi-card kpi-alert">
+        <span class="kpi-label">Active High-Risk</span>
+        <span class="kpi-value">{{ dashboard.activeHighRiskPatients }}</span>
+      </div>
     </div>
 
-    <div class="kpi-card">
-      <span class="kpi-label">Average Mood</span>
-      <span class="kpi-value">{{ kpis.averageMood }}/10</span>
-    </div>
+    <section class="chart-card">
+      <div class="chart-head">
+        <h3>Global Mood Curve (All Associated Patients)</h3>
+        <span class="chart-sub">{{ trendSummary }}</span>
+      </div>
 
-    <div class="kpi-card">
-      <span class="kpi-label">Average Mood Change</span>
-      <span class="kpi-value">{{ kpis.averageMoodChange }}</span>
-    </div>
+      <div class="chart-wrap" *ngIf="hasTrendData; else emptyChart">
+        <svg [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="moodArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#0d9488" stop-opacity="0.35"></stop>
+              <stop offset="100%" stop-color="#0d9488" stop-opacity="0.02"></stop>
+            </linearGradient>
+          </defs>
 
-    <div class="kpi-card">
-      <span class="kpi-label">Crisis Events</span>
-      <span class="kpi-value">{{ kpis.crisisEvents }}</span>
-    </div>
+          <g *ngFor="let tick of yTicks">
+            <line
+              [attr.x1]="chartPadding"
+              [attr.y1]="chartPadding + ((10 - tick) / 9) * (chartHeight - chartPadding * 2)"
+              [attr.x2]="chartWidth - chartPadding"
+              [attr.y2]="chartPadding + ((10 - tick) / 9) * (chartHeight - chartPadding * 2)"
+              class="grid-line">
+            </line>
+            <text
+              [attr.x]="chartPadding - 30"
+              [attr.y]="chartPadding + ((10 - tick) / 9) * (chartHeight - chartPadding * 2) + 4"
+              class="axis-label">
+              {{ tick }}
+            </text>
+          </g>
 
-    <div class="kpi-card kpi-alert">
-      <span class="kpi-label">Active High-Risk Patients</span>
-      <span class="kpi-value">{{ kpis.activeHighRiskPatients }}</span>
-    </div>
-  </div>
+          <line [attr.x1]="chartPadding" [attr.y1]="chartHeight - chartPadding" [attr.x2]="chartWidth - chartPadding" [attr.y2]="chartHeight - chartPadding" class="axis"></line>
+          <line [attr.x1]="chartPadding" [attr.y1]="chartPadding" [attr.x2]="chartPadding" [attr.y2]="chartHeight - chartPadding" class="axis"></line>
+
+          <path [attr.d]="areaPath" class="trend-area"></path>
+          <path [attr.d]="chartPath" class="trend-line"></path>
+
+          <g *ngFor="let p of chartPoints; let i = index">
+            <circle
+              [attr.cx]="p.x"
+              [attr.cy]="p.y"
+              r="5"
+              class="trend-dot"
+              (mouseenter)="hoveredTrendIndex = i"
+              (mouseleave)="hoveredTrendIndex = null">
+            </circle>
+          </g>
+
+          <g *ngIf="hoveredPoint">
+            <rect [attr.x]="hoveredPoint.x - 95" [attr.y]="hoveredPoint.y - 62" width="190" height="42" rx="8" class="tooltip-bg"></rect>
+            <text [attr.x]="hoveredPoint.x" [attr.y]="hoveredPoint.y - 45" text-anchor="middle" class="tooltip-text">
+              {{ hoveredPoint.label }} | mood {{ hoveredPoint.mood }}/10
+            </text>
+            <text [attr.x]="hoveredPoint.x" [attr.y]="hoveredPoint.y - 30" text-anchor="middle" class="tooltip-text tooltip-sub">
+              crisis total {{ hoveredPoint.crisisCount }}
+            </text>
+          </g>
+        </svg>
+      </div>
+
+      <ng-template #emptyChart>
+        <div class="state-box">No patient points yet.</div>
+      </ng-template>
+    </section>
+
+    <section class="patients-board">
+      <div class="board-head">
+        <h3>All Associated Patients ({{ patientPoints.length }})</h3>
+      </div>
+
+      <div class="patient-grid" *ngIf="patientPoints.length > 0; else emptyPatients">
+        <article class="patient-card" *ngFor="let patient of patientPoints">
+          <div class="patient-card-head">
+            <h4>{{ patient.patientName }}</h4>
+            <span class="badge-mood" [ngClass]="moodBadgeClass(patient.latestMoodScore)">{{ patient.latestMoodScore }}/10</span>
+          </div>
+
+          <p><strong>Entries:</strong> {{ patient.entryCount }} | <strong>Crisis:</strong> {{ patient.crisisCount }}</p>
+          <p><strong>Average:</strong> {{ patient.averageMoodScore }}/10 | <strong>Change:</strong> {{ patient.moodChange > 0 ? '+' : '' }}{{ patient.moodChange }}</p>
+          <p><strong>Latest Trigger:</strong> {{ patient.latestTriggerType || 'No clinical trigger yet' }}</p>
+          <p class="trigger-desc" *ngIf="patient.latestTriggerDescription">{{ patient.latestTriggerDescription }}</p>
+        </article>
+      </div>
+
+      <ng-template #emptyPatients>
+        <div class="state-box">No associated patients with mood entries yet.</div>
+      </ng-template>
+    </section>
+  </ng-container>
 </div>
 

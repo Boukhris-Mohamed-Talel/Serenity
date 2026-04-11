@@ -221,7 +221,7 @@ export class MoodListComponent implements OnInit, OnDestroy {
 
   getHeaderSubtitle(): string {
     return this.isDoctorView
-      ? 'Track mood entries from patients assigned to you'
+      ? 'Global view across all patients assigned to you'
       : 'Monitor your emotional wellness over time';
   }
 

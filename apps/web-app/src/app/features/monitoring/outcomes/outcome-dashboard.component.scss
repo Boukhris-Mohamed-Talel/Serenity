@@ -1,5 +1,9 @@
 .outcome-dashboard {
   padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .header-row {
@@ -54,7 +58,7 @@
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
 }
 
@@ -79,6 +83,10 @@
     font-size: 24px;
     font-weight: 800;
     color: #1a1a2e;
+
+    &.positive {
+      color: #16a34a;
+    }
   }
 
   &.kpi-alert {
@@ -87,6 +95,177 @@
     .kpi-value {
       color: #ef4444;
     }
+  }
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px 16px;
+
+  .chart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #0f172a;
+    }
+
+    .chart-sub {
+      font-size: 12px;
+      color: #64748b;
+    }
+  }
+}
+
+.chart-wrap {
+  width: 100%;
+  height: 420px;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+
+  .axis {
+    stroke: #cbd5e1;
+    stroke-width: 1;
+  }
+
+  .grid-line {
+    stroke: #e2e8f0;
+    stroke-width: 1;
+    stroke-dasharray: 4 6;
+  }
+
+  .axis-label {
+    fill: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .trend-area {
+    fill: url(#moodArea);
+  }
+
+  .trend-line {
+    fill: none;
+    stroke: #0d9488;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .trend-dot {
+    fill: #0ea5e9;
+    stroke: #ffffff;
+    stroke-width: 2;
+    cursor: pointer;
+    transition: transform 0.2s ease, fill 0.2s ease;
+
+    &:hover {
+      transform: scale(1.12);
+      fill: #0284c7;
+    }
+
+  }
+
+  .tooltip-bg {
+    fill: #0f172a;
+    opacity: 0.88;
+  }
+
+  .tooltip-text {
+    fill: #e2e8f0;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tooltip-sub {
+    fill: #a5b4fc;
+    font-size: 10px;
+  }
+}
+
+.patients-board {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+
+  .board-head {
+    margin-bottom: 10px;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #0f172a;
+    }
+  }
+}
+
+.patient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.patient-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+
+  .patient-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    h4 {
+      margin: 0;
+      color: #1e293b;
+      font-size: 16px;
+    }
+
+    .badge-mood {
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+
+      &.critical {
+        background: #dc2626;
+      }
+
+      &.medium {
+        background: #d97706;
+      }
+
+      &.good {
+        background: #0d9488;
+      }
+    }
+  }
+
+  p {
+    margin: 5px 0;
+    color: #334155;
+    font-size: 13px;
+  }
+
+  .trigger-desc {
+    font-style: italic;
+    color: #0f172a;
   }
 }
 
