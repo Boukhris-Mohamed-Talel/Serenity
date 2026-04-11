@@ -15,11 +15,6 @@
         <module>services/user-service</module>
         <module>services/insurance-service</module>
         <module>services/API_Gatewya</module>
-        <module>services/pharmacy-service</module>
         <module>services/appointment-service</module>
-        <module>services/Doctors_service</module>
-        <module>services/derbelmicroservice</module>
-        <module>services/monitoring-service</module>
-        <module>services/marketplace-service</module>
     </modules>
 </project>

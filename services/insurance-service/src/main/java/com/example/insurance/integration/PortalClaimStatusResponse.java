@@ -14,5 +14,6 @@ public class PortalClaimStatusResponse {
     private String status;
     private Double reimbursementAmount;
     private String reason;
+    private String infoRequestDeadline;
 }
 

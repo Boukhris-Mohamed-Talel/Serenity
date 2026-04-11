@@ -20,13 +20,27 @@
     <span class="current">Prescriptions</span>
   </nav>
 
-  <div class="saas-card" *ngIf="loading">
-    <div class="saas-loading">
-      <span class="saas-spinner" aria-hidden="true"></span>
-      <span>Loading prescriptions…</span>
+  <!-- ═══ SKELETON LOADING ═══ -->
+  <div class="rx-cards" *ngIf="loading">
+    <div class="rx-ticket skeleton-ticket" *ngFor="let s of [1,2]">
+      <div class="ticket-perforation"></div>
+      <div class="ticket-top">
+        <div class="skeleton-line skeleton-badge-line"></div>
+        <div class="skeleton-line skeleton-date-line"></div>
+      </div>
+      <div class="ticket-body">
+        <div class="skeleton-line skeleton-title-line"></div>
+        <div class="skeleton-pill-row">
+          <div class="skeleton-pill"></div>
+          <div class="skeleton-pill"></div>
+        </div>
+        <div class="skeleton-line skeleton-meta-line"></div>
+        <div class="skeleton-line skeleton-meta-line short"></div>
+      </div>
     </div>
   </div>
 
+  <!-- ═══ EMPTY STATE ═══ -->
   <div class="saas-card saas-empty" *ngIf="!loading && !prescriptions.length">
     <div class="saas-empty-icon" aria-hidden="true">&#x1F48A;</div>
     <h2>No prescriptions</h2>
@@ -36,9 +50,15 @@
     </div>
   </div>
 
+  <!-- ═══ PRESCRIPTION TICKETS ═══ -->
   <div class="rx-cards" *ngIf="!loading && prescriptions.length">
-    <article class="rx-card" *ngFor="let p of prescriptions">
-      <div class="rx-header">
+    <article class="rx-ticket" *ngFor="let p of prescriptions">
+
+      <!-- Perforated separator -->
+      <div class="ticket-perforation"></div>
+
+      <!-- Top section: status + date -->
+      <div class="ticket-top">
         <span class="badge-pill" [ngClass]="{
           'badge-active': p.status === 'ACTIVE',
           'badge-completed': p.status === 'COMPLETED',
@@ -47,34 +67,44 @@
         <span class="rx-date">{{ p.createdAt | date:'mediumDate' }}</span>
       </div>
 
-      <div class="rx-body">
-        <div class="rx-main">
-          <div class="rx-name">Items ({{ p.items.length }})</div>
+      <!-- Body: medications as pill chips -->
+      <div class="ticket-body">
+        <div class="rx-section-label">💊 Medications ({{ p.items.length }})</div>
+
+        <div class="med-chips" *ngIf="p.items?.length">
+          <div class="med-chip" *ngFor="let item of p.items">
+            <span class="chip-icon">💊</span>
+            <div class="chip-info">
+              <span class="chip-name">{{ item.medicine.name }}</span>
+              <span class="chip-dosage">{{ item.dosage }}</span>
+            </div>
+          </div>
         </div>
-        <div class="rx-med-list" *ngIf="p.items?.length">
-          <div class="rx-med-item" *ngFor="let item of p.items">
-            <div class="rx-med-head">
-              <strong>{{ item.medicine.name }}</strong>
-            </div>
-            <div class="rx-meta">
-              <span class="meta-item"><span class="meta-label">Dosage</span><span class="meta-value">{{ item.dosage }}</span></span>
-              <span class="meta-sep" aria-hidden="true">&middot;</span>
-              <span class="meta-item"><span class="meta-label">Frequency</span><span class="meta-value">{{ item.frequency }}</span></span>
-              <span class="meta-sep" aria-hidden="true">&middot;</span>
-              <span class="meta-item"><span class="meta-label">Qty</span><span class="meta-value">{{ item.quantity }}</span></span>
-              <span class="meta-sep" aria-hidden="true">&middot;</span>
-              <span class="meta-item"><span class="meta-label">Start</span><span class="meta-value">{{ item.startDate }}</span></span>
-              <span class="meta-sep" aria-hidden="true">&middot;</span>
-              <span class="meta-item"><span class="meta-label">End</span><span class="meta-value">{{ item.endDate || '—' }}</span></span>
-            </div>
-            <div class="rx-instructions" *ngIf="item.instructions">
-              <span class="meta-label">Instructions:</span> {{ item.instructions }}
-            </div>
+
+        <!-- Details expandable per item -->
+        <div class="med-details" *ngFor="let item of p.items">
+          <div class="med-detail-name">{{ item.medicine.name }}</div>
+          <div class="rx-meta">
+            <span class="meta-item"><span class="meta-label">Frequency</span><span class="meta-value">{{ item.frequency }}</span></span>
+            <span class="meta-sep" aria-hidden="true">&middot;</span>
+            <span class="meta-item"><span class="meta-label">Qty</span><span class="meta-value">{{ item.quantity }}</span></span>
+            <span class="meta-sep" aria-hidden="true">&middot;</span>
+            <span class="meta-item"><span class="meta-label">Start</span><span class="meta-value">{{ item.startDate }}</span></span>
+            <span class="meta-sep" aria-hidden="true">&middot;</span>
+            <span class="meta-item"><span class="meta-label">End</span><span class="meta-value">{{ item.endDate || '—' }}</span></span>
+          </div>
+          <div class="rx-instructions" *ngIf="item.instructions">
+            <span class="meta-label">Instructions:</span> {{ item.instructions }}
           </div>
         </div>
       </div>
 
+      <!-- Actions footer -->
       <div class="rx-actions">
+        <button type="button" class="btn-pdf-shine" (click)="downloadPdf(p.id)">
+          <span class="pdf-icon">📄</span> PDF / QR Code
+          <span class="shine-effect"></span>
+        </button>
         <a [routerLink]="[p.id, 'edit']" class="btn btn-secondary btn-sm">Edit</a>
         <button type="button" class="btn btn-danger btn-sm" (click)="openDeletePrescription(p.id)">Delete</button>
       </div>

@@ -382,7 +382,7 @@
   font-family: inherit;
   font-size: 0.95rem;
   color: var(--text-dark);
-  background: var(--background);
+  background: #ffffff;
   transition: all 0.2s ease;
   box-sizing: border-box;
   margin-bottom: 0.5rem;
@@ -390,17 +390,19 @@
   &:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+    background: #ffffff;
   }
 
   &::placeholder {
-    color: var(--text-light);
+    color: #7a8a9a;
   }
 
   &.textarea {
     resize: vertical;
     min-height: 100px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #ffffff;
   }
 }
 

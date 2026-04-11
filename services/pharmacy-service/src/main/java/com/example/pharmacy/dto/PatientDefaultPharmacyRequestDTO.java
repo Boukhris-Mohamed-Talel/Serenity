@@ -1,6 +1,7 @@
 package com.example.pharmacy.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Getter
@@ -11,5 +12,6 @@ import lombok.*;
 public class PatientDefaultPharmacyRequestDTO {
 
     @NotNull(message = "Pharmacy id is required")
+    @Positive(message = "Pharmacy id must be positive")
     private Long pharmacyId;
 }

@@ -15,11 +15,38 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
-      <label class="field full">
-        <span>Diagnosis *</span>
-        <input type="text" formControlName="diagnosis" maxlength="255" />
+
+      <!-- ICD-10 Smart Diagnosis Field -->
+      <div class="field full icd-field">
+        <span>Diagnosis * <small class="icd-hint">🔍 ICD-10 autocomplete</small></span>
+        <input
+          type="text"
+          formControlName="diagnosis"
+          maxlength="255"
+          placeholder="Type a diagnosis (e.g. migraine, diabetes, asthma)..."
+          (input)="onDiagnosisInput($event)"
+          (blur)="hideIcdDropdown()"
+          autocomplete="off" />
         <small class="err" *ngIf="form.get('diagnosis')?.invalid && form.get('diagnosis')?.touched">Required (max 255 characters)</small>
-      </label>
+
+        <!-- ICD-10 Dropdown -->
+        <div class="icd-dropdown" *ngIf="showIcdDropdown || icdSearching">
+          <div class="icd-searching" *ngIf="icdSearching">
+            <span class="saas-spinner-sm"></span> Searching ICD-10 codes...
+          </div>
+          <div
+            class="icd-item"
+            *ngFor="let result of icdResults"
+            (mousedown)="selectDiagnosis(result)">
+            <span class="icd-code">{{ result.code }}</span>
+            <span class="icd-name">{{ result.name }}</span>
+          </div>
+          <div class="icd-empty" *ngIf="!icdSearching && icdResults.length === 0">
+            No ICD-10 codes found
+          </div>
+        </div>
+      </div>
+
       <label class="field">
         <span>Date *</span>
         <input type="date" formControlName="date" />

@@ -49,6 +49,16 @@ export class AppointmentService {
     return this.http.patch<AppointmentResponse>(`${this.API_URL}/${id}/complete`, {});
   }
 
+
+  /** Opens in browser or downloads — caller should revoke object URL after use. */
+  downloadCalendarIcs(id: number): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/${id}/calendar.ics`, { responseType: 'blob' });
+  }
+
+  getGoogleCalendarLink(id: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.API_URL}/${id}/google-calendar-link`);
+  }
+
   getMine(): Observable<AppointmentResponse[]> {
     const params = new HttpParams().set('scope', 'mine');
     return this.http.get<AppointmentResponse[]>(`${this.API_URL}/list`, { params });

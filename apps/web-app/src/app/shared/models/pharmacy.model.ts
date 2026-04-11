@@ -69,25 +69,6 @@ export interface PharmacyCandidateResponse {
   distanceKm?: number;
 }
 
-export interface PrescriptionCreateRequest {
-  pharmacyId?: number;
-  patientId: number;
-  patientName: string;
-  doctorName: string;
-  medicationName?: string;
-  dosage?: string;
-  quantity?: number;
-  instructions?: string;
-  medicineLines?: PrescriptionLineCreateRequest[];
-}
-
-export interface PrescriptionLineCreateRequest {
-  medicationName: string;
-  dosage: string;
-  quantity: number;
-  instructions?: string;
-}
-
 export interface PrescriptionStatusUpdateRequest {
   status: PrescriptionStatus;
   rejectionReason?: string;
@@ -167,35 +148,93 @@ export interface PrescriptionLineResponse {
   instructions?: string;
 }
 
-export type DoctorSuggestionStockStatus = 'IN_STOCK' | 'OUT_OF_STOCK' | 'UNRESOLVED';
-
-export interface DoctorMedicineSuggestionItem {
-  medicineName: string;
-  stockStatus: DoctorSuggestionStockStatus;
-  availableQuantity?: number;
-  guidanceMessage?: string;
-}
-
-export interface DoctorMedicineSuggestionResponse {
-  patientId: number;
-  hasDefaultPharmacy: boolean;
-  pharmacyId?: number;
-  pharmacyName?: string;
-  guidanceMessage?: string;
-  suggestions: DoctorMedicineSuggestionItem[];
-}
-
-export interface DoctorPatientSuggestionItem {
-  patientId: number;
-  displayName: string;
-  profilePictureUrl?: string;
-}
-
-export interface DoctorPatientSuggestionResponse {
-  suggestions: DoctorPatientSuggestionItem[];
-}
-
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';
+
+export type PharmacyApplicationStatus = 'SUBMITTED' | 'REJECTED' | 'APPROVED';
+
+export interface PharmacyApplicationSubmitRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface PharmacyApplicationResponse {
+  id: number;
+  userId: number;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedByAdminId?: number;
+  reviewComment?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+  cinDocumentUploaded: boolean;
+  cnoptProofUploaded: boolean;
+  legalDocumentUploaded: boolean;
+}
+
+export interface AdminPharmacyApplicationSummary {
+  id: number;
+  userId: number;
+  applicantName: string;
+  email: string;
+  pharmacyName: string;
+  city: string;
+  governorate: string;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+}
+
+export interface AdminPharmacyApplicationDetails {
+  id: number;
+  userId: number;
+  status: PharmacyApplicationStatus;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedByAdminId?: number;
+  reviewComment?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  cinNumber: string;
+  cnopNumber: string;
+  pharmacyName: string;
+  authorizationReferenceNumber: string;
+  phone?: string;
+  openingHours?: string;
+  addressLine: string;
+  city: string;
+  governorate: string;
+  latitude: number;
+  longitude: number;
+  cinDocumentUrl?: string;
+  cnoptProofUrl?: string;
+  legalDocumentUrl?: string;
+}
 
 export interface StockItemCreateRequest {
   medicineName: string;

@@ -7,6 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -16,6 +17,8 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String password;
     private final Boolean isActive;
+    private final Boolean isPermanentlyBanned;
+    private final Date bannedUntil;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(User user) {
@@ -23,6 +26,8 @@ public class CustomUserDetails implements UserDetails {
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.isActive = user.getIsActive();
+        this.isPermanentlyBanned = user.getIsPermanentlyBanned();
+        this.bannedUntil = user.getBannedUntil();
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
@@ -38,7 +43,10 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        if (Boolean.TRUE.equals(isPermanentlyBanned)) {
+            return false;
+        }
+        return bannedUntil == null || bannedUntil.before(new Date());
     }
 
     @Override

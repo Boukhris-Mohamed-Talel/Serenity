@@ -6,52 +6,56 @@
           <div class="welcome-icon">👋</div>
           <div class="welcome-text">
             <h1>Hello, {{ getDisplayName() }}!</h1>
-            <p>Let’s personalize your care journey.</p>
+            <p>{{ activePreset.greeting }}</p>
           </div>
         </div>
 
         <div class="cards-row">
           <section class="card dash-card">
             <div class="dash-head">
-              <h2>Daily Focus</h2>
+              <h2>{{ activePreset.focusTitle }}</h2>
               <span class="chev material-icons" aria-hidden="true">chevron_right</span>
             </div>
-            <div class="dash-subtitle">{{ dailyFocus.title }}</div>
+            <div class="dash-subtitle">{{ activePreset.focusSubtitle }}</div>
             <div class="dash-line"></div>
-            <div class="dash-kicker">{{ dailyFocus.today }}</div>
+            <div class="dash-kicker">{{ activePreset.focusTask }}</div>
             <label class="check">
               <input type="checkbox" />
-              <span>{{ dailyFocus.items[0] }}</span>
+              <span>{{ activePreset.focusChecklist }}</span>
             </label>
-            <div class="note">{{ dailyFocus.notePlaceholder }}</div>
+            <div class="note">{{ activePreset.focusNote }}</div>
           </section>
 
           <section class="card dash-card">
             <div class="dash-head">
-              <h2>My Vitals</h2>
+              <h2>{{ activePreset.metricsTitle }}</h2>
             </div>
             <div class="metric">
               <div class="metric-left">
-                <div class="metric-label">Heart Rate (last 24h)</div>
+                <div class="metric-label">{{ activePreset.metricRows[0].label }}</div>
                 <div class="sparkline"></div>
               </div>
-              <div class="metric-value">{{ vitals.heartRateBpm }} <span>bpm</span></div>
+              <div class="metric-value">
+                {{ activePreset.metricRows[0].value }} <span>{{ activePreset.metricRows[0].unit }}</span>
+              </div>
             </div>
             <div class="metric">
               <div class="metric-left">
-                <div class="metric-label">Sleep Quality</div>
-                <div class="sparkline alt"></div>
+                <div class="metric-label">{{ activePreset.metricRows[1].label }}</div>
+                <div class="sparkline" [class.alt]="activePreset.metricRows[1].alt"></div>
               </div>
-              <div class="metric-value">{{ vitals.sleepHours }} <span>hrs</span></div>
+              <div class="metric-value">
+                {{ activePreset.metricRows[1].value }} <span>{{ activePreset.metricRows[1].unit }}</span>
+              </div>
             </div>
           </section>
 
           <section class="card dash-card">
             <div class="dash-head">
-              <h2>Care Circle</h2>
+              <h2>{{ activePreset.circleTitle }}</h2>
             </div>
             <div class="care-mini">
-              <div class="care-mini-row" *ngFor="let p of careCircle">
+              <div class="care-mini-row" *ngFor="let p of activePreset.circleRows">
                 <div class="mini-avatar">{{ p.initials }}</div>
                 <div class="mini-meta">
                   <div class="mini-name">{{ p.name }}</div>
@@ -59,18 +63,18 @@
                 </div>
               </div>
             </div>
-            <button type="button" class="contact-btn" (click)="onContactCareCircle()">Contact</button>
+            <button type="button" class="contact-btn" (click)="onContactCareCircle()">{{ activePreset.contactLabel }}</button>
           </section>
         </div>
 
         <div class="wide-sections">
           <section class="card wide-card">
             <div class="wide-head">
-              <h2>Upcoming Appointments</h2>
+              <h2>{{ activePreset.timelineTitle }}</h2>
             </div>
-            <div class="wide-sub">Next appts</div>
+            <div class="wide-sub">{{ activePreset.timelineSubtitle }}</div>
             <div class="timeline">
-              <div class="timeline-row" *ngFor="let appt of upcomingAppointments">
+              <div class="timeline-row" *ngFor="let appt of activePreset.timelineRows">
                 <div class="bullet"></div>
                 <div class="timeline-main">
                   <div class="timeline-title">{{ appt.title }}</div>
@@ -82,11 +86,11 @@
 
           <section class="card wide-card">
             <div class="wide-head">
-              <h2>Current Medications</h2>
+              <h2>{{ activePreset.listTitle }}</h2>
             </div>
-            <div class="wide-sub">Prescribed meds</div>
+            <div class="wide-sub">{{ activePreset.listSubtitle }}</div>
             <div class="meds">
-              <div class="med-row" *ngFor="let med of currentMedications">
+              <div class="med-row" *ngFor="let med of activePreset.listRows">
                 <div class="med-name">{{ med.name }} <span class="med-muted">- {{ med.schedule }}</span></div>
               </div>
             </div>

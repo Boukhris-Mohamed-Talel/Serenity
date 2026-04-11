@@ -46,6 +46,14 @@
         <span class="label">Decision Reason</span>
         <span class="value">{{ claim.reason }}</span>
       </div>
+      <div class="detail-row" *ngIf="claim.infoRequestReason">
+        <span class="label">Info Request Reason</span>
+        <span class="value">{{ claim.infoRequestReason }}</span>
+      </div>
+      <div class="detail-row" *ngIf="claim.infoRequestDeadline">
+        <span class="label">Info Request Deadline</span>
+        <span class="value">{{ claim.infoRequestDeadline | date:'medium' }}</span>
+      </div>
 
       <div class="prescriptions-section" *ngIf="claim.filePaths && claim.filePaths.length > 0">
         <h3>Uploaded Prescriptions</h3>
@@ -79,27 +87,84 @@
       </div>
 
       <div *ngIf="isAdmin && claim.status === 'REJECTED'" class="admin-actions card" style="background:#fef2f2; border-color:#fecaca;">
+        <h3>Delete Rejected Claim</h3>
         <div class="action-buttons">
           <button class="btn btn-danger" (click)="deleteClaim()" [disabled]="processing">
-            Delete Rejected Claim
+            Delete Claim
           </button>
         </div>
       </div>
 
-      <div *ngIf="isAdmin && claim.status === 'PENDING'" class="admin-actions card">
-        <h3>Admin Actions</h3>
+      <div *ngIf="canPatientSubmitDocs()" class="admin-actions card reopen-edit-card">
+        <h3>Claim Reopened For Editing</h3>
+        <p class="reopen-subtitle">Update your claim details and attach missing documents before resubmitting.</p>
         <div class="form-group">
-          <label for="montant">Reimbursement Amount (TND)</label>
-          <input id="montant" type="number" [(ngModel)]="reimbursementAmount" step="0.01" min="0.01" [max]="claim.amount">
+          <label for="editDescription">Description</label>
+          <textarea
+            id="editDescription"
+            [(ngModel)]="editDescription"
+            placeholder="Update claim description..."
+          ></textarea>
+        </div>
+        <div class="inline-fields">
+          <div class="form-group">
+            <label for="editAmount">Amount (TND)</label>
+            <input id="editAmount" type="number" min="0.01" max="100000" step="0.01" [(ngModel)]="editAmount" />
+          </div>
+          <div class="form-group">
+            <label for="editGrade">Insurance Grade</label>
+            <input id="editGrade" type="number" min="1" max="5" step="1" [(ngModel)]="editInsuranceGrade" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="responseMessage">Message (optional)</label>
+          <textarea
+            id="responseMessage"
+            [(ngModel)]="responseMessage"
+            placeholder="Add a short note for the insurance reviewer..."
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label for="responseFiles">Attachments</label>
+          <div class="upload-box">
+            <input id="responseFiles" class="upload-input" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" (change)="onResponseFilesSelected($event)" />
+            <label class="upload-button" for="responseFiles">Add Missing Documents</label>
+            <span class="upload-help" *ngIf="responseFiles.length === 0">PDF, JPG, PNG - you can select multiple files</span>
+            <span class="upload-help" *ngIf="responseFiles.length > 0">{{ responseFiles.length }} file(s) selected</span>
+          </div>
+          <div class="selected-files" *ngIf="responseFiles.length > 0">
+            <span class="file-chip" *ngFor="let file of responseFiles">{{ file.name }}</span>
+          </div>
+          <small class="err" *ngIf="responseFileError">{{ responseFileError }}</small>
         </div>
         <div class="action-buttons">
-          <button class="btn btn-primary" (click)="approveClaim()" [disabled]="processing || !reimbursementAmount">
-            <span *ngIf="!processing">Approve & Reimburse</span>
-            <span *ngIf="processing" class="spinner spinner-sm"></span>
+          <button class="btn btn-primary" (click)="submitAdditionalDocuments()" [disabled]="processing">
+            Save And Resubmit
           </button>
-          <button class="btn btn-danger" (click)="rejectClaim()" [disabled]="processing">
-            Reject
-          </button>
+        </div>
+      </div>
+
+      <div class="reimbursement-section" *ngIf="timeline.length > 0">
+        <h3>Claim Timeline</h3>
+        <div *ngFor="let t of timeline" class="reimbursement-item">
+          <div class="detail-row">
+            <span class="label">Transition</span>
+            <span class="value">
+              {{ t.fromStatus || 'NONE' }} -> {{ t.toStatus }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Changed by</span>
+            <span class="value">{{ getTimelineActorDisplayName(t) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="t.reason">
+            <span class="label">Reason</span>
+            <span class="value">{{ t.reason }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Changed at</span>
+            <span class="value">{{ t.changedAt | date:'medium' }}</span>
+          </div>
         </div>
       </div>
     </div>

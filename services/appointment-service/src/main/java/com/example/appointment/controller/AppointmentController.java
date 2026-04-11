@@ -6,7 +6,9 @@ import com.example.appointment.service.AppointmentNotificationService;
 import com.example.appointment.service.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -79,12 +81,10 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.cancel(id, userId));
     }
 
-    /**
-     * PATCH and POST both accepted: some proxies/clients handle POST more reliably than PATCH.
-     */
-    @RequestMapping(value = "/{id:\\d+}/reschedule", method = { RequestMethod.PATCH, RequestMethod.POST })
+    @PatchMapping("/{id:\\d+}/reschedule")
     public ResponseEntity<AppointmentResponse> reschedule(
-            @PathVariable Long id, @Valid @RequestBody RescheduleAppointmentRequest request) {
+            @PathVariable Long id,
+            @Valid @RequestBody RescheduleAppointmentRequest request) {
         Long userId = AppointmentAuth.requireUserId();
         return ResponseEntity.ok(appointmentService.reschedule(id, userId, request));
     }
@@ -130,12 +130,10 @@ public class AppointmentController {
             if (doctorUserId == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "doctorUserId is required");
             }
-            return ResponseEntity.ok(
-                    appointmentService.calendarHintsForPatient(uid, doctorUserId, from, to, excludeAppointmentId));
+            return ResponseEntity.ok(appointmentService.calendarHintsForPatient(uid, doctorUserId, from, to, excludeAppointmentId));
         }
         if (AppointmentAuth.isDoctor()) {
-            return ResponseEntity.ok(
-                    appointmentService.calendarHintsForDoctor(uid, patientUserId, from, to, excludeAppointmentId));
+            return ResponseEntity.ok(appointmentService.calendarHintsForDoctor(uid, patientUserId, from, to, excludeAppointmentId));
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Calendar hints are only for patients and doctors");
     }
@@ -145,6 +143,24 @@ public class AppointmentController {
         Long userId = AppointmentAuth.requireUserId();
         boolean admin = AppointmentAuth.isAdmin();
         return ResponseEntity.ok(appointmentService.getById(id, userId, admin));
+    }
+
+    @GetMapping(value = "/{id:\\d+}/calendar.ics", produces = "text/calendar")
+    public ResponseEntity<byte[]> downloadCalendarIcs(@PathVariable Long id) {
+        Long userId = AppointmentAuth.requireUserId();
+        boolean admin = AppointmentAuth.isAdmin();
+        byte[] body = appointmentService.exportIcs(id, userId, admin);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"serenity-appointment-" + id + ".ics\"")
+                .contentType(MediaType.parseMediaType("text/calendar; charset=UTF-8"))
+                .body(body);
+    }
+
+    @GetMapping("/{id:\\d+}/google-calendar-link")
+    public ResponseEntity<GoogleCalendarLinkResponse> googleCalendarLink(@PathVariable Long id) {
+        Long userId = AppointmentAuth.requireUserId();
+        boolean admin = AppointmentAuth.isAdmin();
+        return ResponseEntity.ok(appointmentService.googleCalendarLink(id, userId, admin));
     }
 
     @GetMapping("/{id:\\d+}/teleconsultation")

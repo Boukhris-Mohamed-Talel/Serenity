@@ -28,18 +28,6 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
     @Query("""
         select m from MedicineStockItem m
         where m.archived = false
-          and m.pharmacy.id = :pharmacyId
-          and lower(m.medicineName) like lower(concat('%', :query, '%'))
-        order by m.medicineName asc, m.updatedAt desc
-        """)
-    List<MedicineStockItem> findForDoctorSuggestionInPharmacy(
-        @Param("pharmacyId") Long pharmacyId,
-        @Param("query") String query
-    );
-
-    @Query("""
-        select m from MedicineStockItem m
-        where m.archived = false
           and m.pharmacy.id in :pharmacyIds
           and lower(m.medicineName) in :medicineNames
         """)
@@ -49,4 +37,6 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
     );
 
     Optional<MedicineStockItem> findByIdAndPharmacyOwnerUserId(Long id, Long ownerUserId);
+
+    void deleteByPharmacyId(Long pharmacyId);
 }

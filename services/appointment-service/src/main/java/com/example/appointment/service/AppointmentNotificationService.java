@@ -12,7 +12,7 @@ public interface AppointmentNotificationService {
 
     void notifyConfirmed(Appointment appt);
 
-    void notifyRescheduled(Appointment appt, Long actorUserId);
+    void notifyRescheduled(Appointment appt);
 
     List<AppointmentNotificationResponse> getMyNotifications(Long userId);
 

@@ -3,16 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  DoctorMedicineSuggestionResponse,
-  DoctorPatientSuggestionResponse,
+  AdminPharmacyApplicationDetails,
+  AdminPharmacyApplicationSummary,
   PatientDefaultPharmacyRequest,
   PatientDefaultPharmacyResponse,
+  PharmacyApplicationResponse,
+  PharmacyApplicationStatus,
+  PharmacyApplicationSubmitRequest,
   PrescriptionAlternativeResponse,
   PrescriptionPharmacyReassignRequest,
   PharmacyCandidateResponse,
   PharmacyResponse,
   PharmacyUpsertRequest,
-  PrescriptionCreateRequest,
   PrescriptionResponse,
   PrescriptionStatusUpdateRequest,
   StockItemCreateRequest,
@@ -40,24 +42,6 @@ export class PharmacyService {
 
   deleteMyPharmacy(): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/me`);
-  }
-
-  createPrescription(payload: PrescriptionCreateRequest): Observable<PrescriptionResponse> {
-    return this.http.post<PrescriptionResponse>(`${this.API_URL}/prescriptions`, payload);
-  }
-
-  suggestDoctorMedicines(patientId: number, query: string): Observable<DoctorMedicineSuggestionResponse> {
-    const encodedQuery = encodeURIComponent(query.trim());
-    return this.http.get<DoctorMedicineSuggestionResponse>(
-      `${this.API_URL}/doctor/medicine-suggestions?patientId=${patientId}&query=${encodedQuery}`
-    );
-  }
-
-  suggestDoctorPatients(query: string): Observable<DoctorPatientSuggestionResponse> {
-    const encodedQuery = encodeURIComponent(query.trim());
-    return this.http.get<DoctorPatientSuggestionResponse>(
-      `${this.API_URL}/doctor/patient-suggestions?query=${encodedQuery}`
-    );
   }
 
   getInbox(): Observable<PrescriptionResponse[]> {
@@ -115,8 +99,8 @@ export class PharmacyService {
     longitude: number,
     radiusKm = 20
   ): Observable<PharmacyCandidateResponse[]> {
-    const q = `?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
-    return this.http.get<PharmacyCandidateResponse[]>(`${this.API_URL}/patient/pharmacies/nearest${q}`);
+    const query = `?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
+    return this.http.get<PharmacyCandidateResponse[]>(`${this.API_URL}/patient/pharmacies/nearest${query}`);
   }
 
   updatePrescriptionStatus(
@@ -166,5 +150,65 @@ export class PharmacyService {
 
   deleteArchivedStockItem(stockItemId: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/stock/${stockItemId}/permanent`);
+  }
+
+  getMyPharmacyApplication(): Observable<PharmacyApplicationResponse> {
+    return this.http.get<PharmacyApplicationResponse>(`${this.API_URL}/applications/me`);
+  }
+
+  submitMyPharmacyApplication(
+    payload: PharmacyApplicationSubmitRequest,
+    cinDocument?: File | null,
+    cnoptProofDocument?: File | null,
+    legalProofDocument?: File | null
+  ): Observable<PharmacyApplicationResponse> {
+    const formData = new FormData();
+    formData.append(
+      'application',
+      new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    );
+
+    if (cinDocument) {
+      formData.append('cinDocument', cinDocument);
+    }
+    if (cnoptProofDocument) {
+      formData.append('cnoptProofDocument', cnoptProofDocument);
+    }
+    if (legalProofDocument) {
+      formData.append('legalProofDocument', legalProofDocument);
+    }
+
+    return this.http.post<PharmacyApplicationResponse>(`${this.API_URL}/applications/me`, formData);
+  }
+
+  listAdminPharmacyApplications(status?: PharmacyApplicationStatus): Observable<AdminPharmacyApplicationSummary[]> {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return this.http.get<AdminPharmacyApplicationSummary[]>(`${this.API_URL}/admin/applications${query}`);
+  }
+
+  getAdminPharmacyApplicationDetails(applicationId: number): Observable<AdminPharmacyApplicationDetails> {
+    return this.http.get<AdminPharmacyApplicationDetails>(`${this.API_URL}/admin/applications/${applicationId}`);
+  }
+
+  approveAdminPharmacyApplication(applicationId: number): Observable<AdminPharmacyApplicationDetails> {
+    return this.http.post<AdminPharmacyApplicationDetails>(
+      `${this.API_URL}/admin/applications/${applicationId}/approve`,
+      {}
+    );
+  }
+
+  rejectAdminPharmacyApplication(
+    applicationId: number,
+    reviewComment: string
+  ): Observable<AdminPharmacyApplicationDetails> {
+    return this.http.post<AdminPharmacyApplicationDetails>(
+      `${this.API_URL}/admin/applications/${applicationId}/reject`,
+      { reviewComment }
+    );
+  }
+
+  fetchAdminApplicationDocument(path: string): Observable<Blob> {
+    const gatewayBaseUrl = environment.apiUrl.replace(/\/api$/, '');
+    return this.http.get(`${gatewayBaseUrl}${path}`, { responseType: 'blob' });
   }
 }

@@ -1,15 +1,17 @@
 package com.example.pharmacy.controller;
 
-import com.example.pharmacy.dto.PrescriptionCreateRequestDTO;
 import com.example.pharmacy.dto.PrescriptionAlternativeResponseDTO;
 import com.example.pharmacy.dto.PrescriptionPharmacyReassignRequestDTO;
 import com.example.pharmacy.dto.PrescriptionResponseDTO;
 import com.example.pharmacy.dto.PrescriptionStatusUpdateRequestDTO;
 import com.example.pharmacy.service.PrescriptionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,15 +19,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pharmacy/prescriptions")
 @RequiredArgsConstructor
+@Validated
 public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
-
-    @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<PrescriptionResponseDTO> createPrescription(@Valid @RequestBody PrescriptionCreateRequestDTO request) {
-        return ResponseEntity.ok(prescriptionService.createPrescription(request));
-    }
 
     @GetMapping("/inbox")
     @PreAuthorize("hasRole('PHARMACIST')")
@@ -40,17 +37,19 @@ public class PrescriptionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','PHARMACIST')")
-    public ResponseEntity<PrescriptionResponseDTO> getPrescription(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('PATIENT','PHARMACIST')")
+    public ResponseEntity<PrescriptionResponseDTO> getPrescription(
+        @PathVariable @Positive(message = "Prescription id must be positive") Long id
+    ) {
         return ResponseEntity.ok(prescriptionService.getPrescription(id));
     }
 
     @GetMapping("/{id}/alternatives")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<PrescriptionAlternativeResponseDTO> getAlternatives(
-        @PathVariable Long id,
-        @RequestParam Double latitude,
-        @RequestParam Double longitude
+        @PathVariable @Positive(message = "Prescription id must be positive") Long id,
+        @RequestParam @NotNull(message = "Latitude is required") Double latitude,
+        @RequestParam @NotNull(message = "Longitude is required") Double longitude
     ) {
         return ResponseEntity.ok(prescriptionService.getPatientAlternatives(id, latitude, longitude));
     }
@@ -58,7 +57,7 @@ public class PrescriptionController {
     @PutMapping("/{id}/pharmacy")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<PrescriptionResponseDTO> reassignPharmacy(
-        @PathVariable Long id,
+        @PathVariable @Positive(message = "Prescription id must be positive") Long id,
         @Valid @RequestBody PrescriptionPharmacyReassignRequestDTO request
     ) {
         return ResponseEntity.ok(prescriptionService.reassignPatientPrescriptionPharmacy(id, request));
@@ -67,7 +66,7 @@ public class PrescriptionController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('PHARMACIST')")
     public ResponseEntity<PrescriptionResponseDTO> updatePrescriptionStatus(
-        @PathVariable Long id,
+        @PathVariable @Positive(message = "Prescription id must be positive") Long id,
         @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
     ) {
         return handleStatusUpdate(id, request);
@@ -77,7 +76,7 @@ public class PrescriptionController {
     @PreAuthorize("hasRole('PHARMACIST')")
     // Backward-compatible alias for clients still using POST instead of PATCH.
     public ResponseEntity<PrescriptionResponseDTO> updatePrescriptionStatusPost(
-        @PathVariable Long id,
+        @PathVariable @Positive(message = "Prescription id must be positive") Long id,
         @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
     ) {
         return handleStatusUpdate(id, request);

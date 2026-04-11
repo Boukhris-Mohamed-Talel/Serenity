@@ -319,6 +319,16 @@ export class MoodListComponent implements OnInit, OnDestroy {
     });
   }
 
+  openDoctorDashboard(): void {
+    if (!this.isDoctorView) {
+      return;
+    }
+
+    this.router.navigate(['/monitoring/dashboard'], {
+      queryParams: this.selectedPatient ? { patientId: this.selectedPatient.id } : undefined
+    });
+  }
+
   get selectedPatientEntries(): MoodEntryResponse[] {
     if (!this.selectedPatient) {
       return [];
@@ -497,3 +507,5 @@ export class MoodListComponent implements OnInit, OnDestroy {
     return backendMessage || 'Failed to delete mood entry';
   }
 }
+
+

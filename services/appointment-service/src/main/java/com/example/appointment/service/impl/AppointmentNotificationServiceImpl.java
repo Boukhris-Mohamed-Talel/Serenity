@@ -3,6 +3,8 @@ package com.example.appointment.service.impl;
 import com.example.appointment.dto.AppointmentNotificationResponse;
 import com.example.appointment.dto.AppointmentUnreadCountResponse;
 import com.example.appointment.entity.*;
+import com.example.appointment.integration.AppointmentMailService;
+import com.example.appointment.integration.UserEmailClient;
 import com.example.appointment.repository.AppointmentRepository;
 import com.example.appointment.repository.AppointmentReminderDispatchRepository;
 import com.example.appointment.repository.AppointmentUserNotificationRepository;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,8 @@ public class AppointmentNotificationServiceImpl implements AppointmentNotificati
     private final AppointmentRepository appointmentRepository;
     private final AppointmentUserNotificationRepository notificationRepository;
     private final AppointmentReminderDispatchRepository dispatchRepository;
+    private final UserEmailClient userEmailClient;
+    private final AppointmentMailService appointmentMailService;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -52,24 +57,14 @@ public class AppointmentNotificationServiceImpl implements AppointmentNotificati
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void notifyRescheduled(Appointment appt, Long actorUserId) {
+    public void notifyRescheduled(Appointment appt) {
         String when = formatWhen(appt);
-        boolean patientActed = appt.getPatientUserId().equals(actorUserId);
-        if (patientActed) {
-            save(appt.getDoctorUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
-                    "Appointment rescheduled",
-                    "The patient moved appointment #" + appt.getId() + " to " + when + ".");
-            save(appt.getPatientUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
-                    "Appointment updated",
-                    "Your appointment is now on " + when + ".");
-        } else {
-            save(appt.getPatientUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
-                    "Appointment rescheduled",
-                    "Your appointment was moved to " + when + ".");
-            save(appt.getDoctorUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
-                    "Appointment updated",
-                    "You rescheduled appointment #" + appt.getId() + " to " + when + ".");
-        }
+        save(appt.getPatientUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
+                "Appointment rescheduled",
+                "Your appointment was moved to " + when + ".");
+        save(appt.getDoctorUserId(), appt.getId(), AppointmentNotificationType.RESCHEDULED,
+                "Appointment rescheduled",
+                "Appointment #" + appt.getId() + " was rescheduled to " + when + ".");
     }
 
     @Override
@@ -194,6 +189,12 @@ public class AppointmentNotificationServiceImpl implements AppointmentNotificati
 
         save(appt.getPatientUserId(), appt.getId(), nType, title, message);
         save(appt.getDoctorUserId(), appt.getId(), nType, title, message);
+
+        Map<Long, String> emails = userEmailClient.fetchEmailsByUserIds(List.of(appt.getPatientUserId()));
+        String patientEmail = emails.get(appt.getPatientUserId());
+        if (patientEmail != null) {
+            appointmentMailService.sendReminderEmail(patientEmail, title, message);
+        }
     }
 
     private static Instant appointmentStartInstant(LocalDate date, String timeSlot) {

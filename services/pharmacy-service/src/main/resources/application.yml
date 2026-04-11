@@ -15,20 +15,24 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 30MB
 
 app:
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
   derbel-db:
     url: ${DERBEL_DB_URL:jdbc:mysql://localhost:3306/medical_records_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${DERBEL_DB_USERNAME:root}
     password: ${DERBEL_DB_PASSWORD:}
-  user-db:
-    url: ${USER_DB_URL:jdbc:mysql://localhost:3306/healthcare_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${USER_DB_USERNAME:root}
-    password: ${USER_DB_PASSWORD:}
   user-service:
     base-url: ${USER_SERVICE_BASE_URL:http://localhost:8081}
+    internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:${INTERNAL_API_KEY:serenity-internal-key-dev}}
     me-url: ${USER_SERVICE_ME_URL:http://localhost:8081/api/users/me}
     admin-email: ${USER_SERVICE_ADMIN_EMAIL:}
     admin-password: ${USER_SERVICE_ADMIN_PASSWORD:}

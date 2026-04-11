@@ -10,24 +10,15 @@
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
       <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
-      <a routerLink="/statistics" routerLinkActive="active">Statistics</a>
-      <a routerLink="/patients" routerLinkActive="active">Patients</a>
+      <a routerLink="/statistics" routerLinkActive="active" *ngIf="authService.isDoctor()">Statistics</a>
+      <a routerLink="/patients" routerLinkActive="active" *ngIf="authService.isDoctor()">Patients</a>
       <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
       <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
-      <a routerLink="/pharmacy/doctor" routerLinkActive="active" *ngIf="authService.hasRole('DOCTOR')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
       <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/articles" routerLinkActive="active">Articles</a>
-      <a routerLink="/insurance" routerLinkActive="active">Insurance</a>
-      <a routerLink="/appointments" routerLinkActive="active" class="nav-link-appointments">
-        <svg class="nav-appt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        <span>Appointments</span>
-      </a>
+      <a routerLink="/insurance" routerLinkActive="active" *ngIf="authService.isPatient()">Insurance</a>
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
     </div>
 
@@ -61,6 +52,7 @@
         </div>
       </div>
 
+      <!-- Insurance + appointment notifications -->
       <div class="notification-menu">
         <button
           class="notification-btn"
@@ -136,7 +128,7 @@
         <div class="notif-dropdown" *ngIf="notifDropdownVisible" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
           <div class="notif-header">
             <span>Notifications</span>
-            <button class="clear-btn" (click)="clearNotifications()" *ngIf="messageNotifications.length > 0">Clear all</button>
+            <button class="clear-btn" (click)="clearNotifications()" *ngIf="notifications.length > 0">Clear all</button>
           </div>
 
           <div class="notif-empty" *ngIf="notifications.length === 0">
@@ -153,7 +145,7 @@
           >
             <div class="notif-content">
               <div class="notif-sender">💬 {{ notif.senderName }}</div>
-              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ (notif.text && notif.text.length > 40) ? '...' : '' }}</div>
+              <div class="notif-text">{{ notif.text | slice:0:40 }}{{ notif.text.length > 40 ? '...' : '' }}</div>
             </div>
             <div class="notif-time">{{ notif.time | date:'HH:mm' }}</div>
           </div>
@@ -184,13 +176,12 @@
     <div class="footer-links">
       <a routerLink="/">Dashboard</a>
       <a routerLink="/profile">Profile</a>
+      <a routerLink="/appointments">Appointments</a>
       <a routerLink="/monitoring" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/articles">Articles</a>
-      <a routerLink="/appointments">Appointments</a>
       <a routerLink="/pharmacy" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
-      <a routerLink="/pharmacy/doctor" *ngIf="authService.hasRole('DOCTOR')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
-      <a routerLink="/patients">Patients</a>
+      <a routerLink="/patients" *ngIf="authService.isDoctor()">Patients</a>
     </div>
     <div class="footer-divider"></div>
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>

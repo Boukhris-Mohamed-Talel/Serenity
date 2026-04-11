@@ -1,16 +1,18 @@
 package com.example.appointment.service.impl;
 
+import com.example.appointment.calendar.GoogleCalendarLinkBuilder;
+import com.example.appointment.calendar.IcsCalendarHelper;
 import com.example.appointment.dto.*;
 import com.example.appointment.entity.*;
 import com.example.appointment.integration.UserDirectoryClient;
 import com.example.appointment.integration.UserLookupSnippet;
 import com.example.appointment.security.AppointmentRequestAttributes;
+import com.example.appointment.repository.AppointmentReminderDispatchRepository;
 import com.example.appointment.repository.AppointmentRepository;
 import com.example.appointment.repository.TeleconsultationRepository;
 import com.example.appointment.service.AppointmentNotificationService;
 import com.example.appointment.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,6 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AppointmentServiceImpl implements AppointmentService {
 
     private static final EnumSet<AppointmentStatus> BLOCKING_STATUSES =
@@ -45,6 +46,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final TeleconsultationRepository teleconsultationRepository;
+    private final AppointmentReminderDispatchRepository reminderDispatchRepository;
     private final UserDirectoryClient userDirectoryClient;
     private final AppointmentNotificationService appointmentNotificationService;
 
@@ -62,7 +64,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         String slot = normalizeTimeSlot(request.getTimeSlot());
         assertSchedulingRules(request.getAppointmentDate(), slot);
-        assertNoOverlap(null, request.getDoctorUserId(), patientUserId, request.getAppointmentDate(), slot);
+        assertNoOverlapForBooking(request.getDoctorUserId(), patientUserId, request.getAppointmentDate(), slot);
 
         Appointment appt = Appointment.builder()
                 .patientUserId(patientUserId)
@@ -85,7 +87,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         String slot = normalizeTimeSlot(request.getTimeSlot());
         assertSchedulingRules(request.getAppointmentDate(), slot);
-        assertNoOverlap(null, doctorUserId, request.getPatientUserId(), request.getAppointmentDate(), slot);
+        assertNoOverlapForBooking(doctorUserId, request.getPatientUserId(), request.getAppointmentDate(), slot);
 
         Appointment appt = Appointment.builder()
                 .patientUserId(request.getPatientUserId())
@@ -172,40 +174,6 @@ public class AppointmentServiceImpl implements AppointmentService {
             teleconsultationRepository.save(t);
         });
         return toResponse(reload(appt.getId()));
-    }
-
-    @Override
-    @Transactional
-    public AppointmentResponse reschedule(Long appointmentId, Long currentUserId, RescheduleAppointmentRequest request) {
-        Appointment appt = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
-        if (!appt.getPatientUserId().equals(currentUserId) && !appt.getDoctorUserId().equals(currentUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not a participant of this appointment.");
-        }
-        if (appt.getStatus() != AppointmentStatus.PENDING && appt.getStatus() != AppointmentStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only pending or confirmed appointments can be rescheduled.");
-        }
-        teleconsultationRepository.findByAppointment_Id(appt.getId()).ifPresent(t -> {
-            if (t.getStatus() == TeleconsultationStatus.LIVE) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot reschedule during an active video session.");
-            }
-        });
-
-        String slot = normalizeTimeSlot(request.getTimeSlot());
-        assertSchedulingRules(request.getAppointmentDate(), slot);
-        assertNoOverlap(appointmentId, appt.getDoctorUserId(), appt.getPatientUserId(), request.getAppointmentDate(), slot);
-
-        appt.setAppointmentDate(request.getAppointmentDate());
-        appt.setTimeSlot(slot);
-        appointmentRepository.save(appt);
-
-        Appointment reloaded = reload(appointmentId);
-        try {
-            appointmentNotificationService.notifyRescheduled(reloaded, currentUserId);
-        } catch (Exception e) {
-            log.warn("Reschedule saved but notification failed for appointment {}", appointmentId, e);
-        }
-        return toResponse(reloaded);
     }
 
     @Override
@@ -304,16 +272,26 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     /**
      * Blocks overlapping 90-minute windows for the same doctor or the same patient on the same day.
-     * When {@code excludeAppointmentIdOrNull} is set (reschedule), that appointment is ignored so the current slot stays valid.
      */
-    private void assertNoOverlap(Long excludeAppointmentIdOrNull, Long doctorUserId, Long patientUserId, LocalDate date,
-                                 String timeSlotNormalized) {
+    private void assertNoOverlapForBooking(Long doctorUserId, Long patientUserId, LocalDate date, String timeSlotNormalized) {
+        assertNoOverlapExcluding(null, doctorUserId, patientUserId, date, timeSlotNormalized);
+    }
+
+    /**
+     * Same overlap rules as booking; {@code excludeAppointmentId} skips the appointment being moved (reschedule).
+     */
+    private void assertNoOverlapExcluding(
+            Long excludeAppointmentId,
+            Long doctorUserId,
+            Long patientUserId,
+            LocalDate date,
+            String timeSlotNormalized) {
         int newStart = slotToMinutes(timeSlotNormalized);
         int newEnd = newStart + SLOT_DURATION_MINUTES;
 
         for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
                 doctorUserId, date, date, BLOCKING_STATUSES)) {
-            if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+            if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
             }
             int s = slotToMinutes(a.getTimeSlot());
@@ -326,7 +304,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
                 patientUserId, date, date, BLOCKING_STATUSES)) {
-            if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+            if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
             }
             int s = slotToMinutes(a.getTimeSlot());
@@ -505,15 +483,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional(readOnly = true)
     public List<CalendarBusySlotResponse> calendarHintsForPatient(
-            Long patientUserId, Long doctorUserId, LocalDate from, LocalDate to, Long excludeAppointmentIdOrNull) {
+            Long patientUserId, Long doctorUserId, LocalDate from, LocalDate to, Long excludeAppointmentId) {
         validateCalendarRange(from, to);
-        if (excludeAppointmentIdOrNull != null) {
-            assertExcludeMatchesPatientCalendar(excludeAppointmentIdOrNull, patientUserId, doctorUserId);
-        }
         List<CalendarBusySlotResponse> out = new ArrayList<>();
         for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
                 doctorUserId, from, to, CALENDAR_BLOCKING)) {
-            if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+            if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
             }
             out.add(CalendarBusySlotResponse.builder()
@@ -524,7 +499,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
                 patientUserId, from, to, CALENDAR_BLOCKING)) {
-            if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+            if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
             }
             out.add(CalendarBusySlotResponse.builder()
@@ -539,15 +514,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional(readOnly = true)
     public List<CalendarBusySlotResponse> calendarHintsForDoctor(
-            Long doctorUserId, Long patientUserIdOrNull, LocalDate from, LocalDate to, Long excludeAppointmentIdOrNull) {
+            Long doctorUserId, Long patientUserIdOrNull, LocalDate from, LocalDate to, Long excludeAppointmentId) {
         validateCalendarRange(from, to);
-        if (excludeAppointmentIdOrNull != null) {
-            assertExcludeMatchesDoctorCalendar(excludeAppointmentIdOrNull, doctorUserId, patientUserIdOrNull);
-        }
         List<CalendarBusySlotResponse> out = new ArrayList<>();
         for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
                 doctorUserId, from, to, CALENDAR_BLOCKING)) {
-            if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+            if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
             }
             out.add(CalendarBusySlotResponse.builder()
@@ -559,7 +531,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (patientUserIdOrNull != null) {
             for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
                     patientUserIdOrNull, from, to, CALENDAR_BLOCKING)) {
-                if (excludeAppointmentIdOrNull != null && excludeAppointmentIdOrNull.equals(a.getId())) {
+                if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                     continue;
                 }
                 out.add(CalendarBusySlotResponse.builder()
@@ -572,25 +544,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         return out;
     }
 
-    private void assertExcludeMatchesPatientCalendar(Long excludeId, Long patientUserId, Long doctorUserId) {
-        Appointment ex = appointmentRepository.findById(excludeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid excludeAppointmentId"));
-        if (!ex.getPatientUserId().equals(patientUserId) || !ex.getDoctorUserId().equals(doctorUserId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "excludeAppointmentId does not match this doctor.");
-        }
-    }
-
-    private void assertExcludeMatchesDoctorCalendar(Long excludeId, Long doctorUserId, Long patientUserIdOrNull) {
-        Appointment ex = appointmentRepository.findById(excludeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid excludeAppointmentId"));
-        if (!ex.getDoctorUserId().equals(doctorUserId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "excludeAppointmentId is not your appointment.");
-        }
-        if (patientUserIdOrNull != null && !ex.getPatientUserId().equals(patientUserIdOrNull)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "excludeAppointmentId does not match the selected patient.");
-        }
-    }
-
     private static void validateCalendarRange(LocalDate from, LocalDate to) {
         if (from.isAfter(to)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "from must be on or before to");
@@ -598,5 +551,56 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (from.plusMonths(4).isBefore(to)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date range may not exceed 4 months.");
         }
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse reschedule(Long appointmentId, Long currentUserId, RescheduleAppointmentRequest request) {
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+        if (!appt.getPatientUserId().equals(currentUserId) && !appt.getDoctorUserId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the patient or doctor can reschedule.");
+        }
+        if (appt.getStatus() != AppointmentStatus.PENDING && appt.getStatus() != AppointmentStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only pending or confirmed appointments can be rescheduled.");
+        }
+        String slot = normalizeTimeSlot(request.getTimeSlot());
+        assertSchedulingRules(request.getAppointmentDate(), slot);
+        assertNoOverlapExcluding(appt.getId(), appt.getDoctorUserId(), appt.getPatientUserId(),
+                request.getAppointmentDate(), slot);
+
+        reminderDispatchRepository.deleteByAppointmentId(appt.getId());
+        appt.setAppointmentDate(request.getAppointmentDate());
+        appt.setTimeSlot(slot);
+        appointmentRepository.save(appt);
+
+        Appointment reloaded = reload(appt.getId());
+        appointmentNotificationService.notifyRescheduled(reloaded);
+        return toResponse(reloaded);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportIcs(Long appointmentId, Long userId, boolean admin) {
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+        assertCanAccess(appt, userId, admin);
+        if (appt.getStatus() == AppointmentStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cancelled appointments cannot be exported to calendar.");
+        }
+        return IcsCalendarHelper.build(appt, SLOT_DURATION_MINUTES, ZoneId.systemDefault());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GoogleCalendarLinkResponse googleCalendarLink(Long appointmentId, Long userId, boolean admin) {
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+        assertCanAccess(appt, userId, admin);
+        if (appt.getStatus() == AppointmentStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cancelled appointments cannot be added to Google Calendar.");
+        }
+        String url = GoogleCalendarLinkBuilder.build(appt, SLOT_DURATION_MINUTES, ZoneId.systemDefault());
+        return new GoogleCalendarLinkResponse(url);
     }
 }

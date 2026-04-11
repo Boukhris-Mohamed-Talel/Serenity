@@ -7,12 +7,14 @@ The repo is organized so each backend domain is a **separate service** under `se
 ```
 healthcare-system/
 ├── apps/
-│   └── web-app/                 # Angular SPA (calls user-service + insurance-service)
+│   └── web-app/                 # Angular SPA (calls API gateway)
 │
 ├── services/
 │   ├── user-service/            # Auth, user CRUD, profiles (port 8081)
-│   ├── insurance-service/      # Claims, reimbursements (port 8082)
-│   └── README.md
+│   ├── API_Gatewya/             # Spring Cloud Gateway (port 8082)
+│   ├── appointment-service/     # Appointments (port 8091)
+│   ├── insurance-service/       # Claims (port per service config)
+│   └── …                        # Other domain services (pharmacy, marketplace, etc.)
 │
 ├── docs/
 │   ├── ARCHITECTURE.md
@@ -20,20 +22,24 @@ healthcare-system/
 └── README.md
 ```
 
-## Services
+## Core services (gateway-routed)
 
-| Service             | Port | Role |
-|---------------------|------|------|
-| **user-service**    | 8081 | Login, register, user management, profiles. JWT auth. |
-| **insurance-service** | 8082 | Submit claims, list claims, approve/reject. Uses `X-User-Id` header for caller identity. |
+| Service | Port | Role |
+|---------|------|------|
+| **user-service** | 8081 | Login, register, user management, profiles. JWT auth. |
+| **API_Gatewya** | 8082 | Routes `/api/auth/**`, `/api/users/**`, `/api/appointments/**`, `/api/insurance/**`, and other configured paths to backends. |
+| **appointment-service** | 8091 | Appointments, calendar, notifications. |
 
-The web-app talks to both: user-service for auth and users, insurance-service for insurance endpoints (and passes the logged-in user id in `X-User-Id`).
+The web-app uses the gateway as its API base URL. Insurance and other domains are implemented as separate services behind the same gateway where configured.
 
-## Run order
+## Run order (minimal)
 
 1. MySQL up, database created.
 2. `cd services/user-service && mvn spring-boot:run`
-3. `cd services/insurance-service && mvn spring-boot:run`
-4. `cd apps/web-app && npm install && ng serve`
+3. `cd services/appointment-service && mvn spring-boot:run`
+4. `cd services/API_Gatewya && mvn spring-boot:run`
+5. `cd apps/web-app && npm install && ng serve`
+
+Add **insurance-service** and any other services your features require before testing those flows.
 
 See [README.md](../README.md) and [services/README.md](../services/README.md) for details.

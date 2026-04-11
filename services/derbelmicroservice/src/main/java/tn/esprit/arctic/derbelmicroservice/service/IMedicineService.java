@@ -18,4 +18,8 @@ public interface IMedicineService {
     MedicineResponseDTO updateMedicine(Long id, MedicineRequestDTO dto);
 
     void deleteMedicine(Long id);
+
+    List<tn.esprit.arctic.derbelmicroservice.dto.response.OpenFDAMedicineDTO> searchExternalFdaMedicines(String query);
+
+    MedicineResponseDTO getOrCreateMedicine(MedicineRequestDTO dto);
 }

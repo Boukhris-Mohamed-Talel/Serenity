@@ -75,6 +75,10 @@
             </p>
           </div>
           <div class="detail-item">
+            <p class="detail-label">Insurance Company</p>
+            <p class="detail-value">{{ user?.insuranceCompany || 'Not set' }}</p>
+          </div>
+          <div class="detail-item">
             <p class="detail-label">Role</p>
             <p class="detail-value">{{ user?.role }}</p>
           </div>
@@ -133,11 +137,24 @@
         <div class="form-row">
           <div class="form-group">
             <label for="phone">Phone</label>
-            <input id="phone" type="tel" formControlName="phone" placeholder="+1 234 567 8900" />
+            <input id="phone" type="tel" formControlName="phone" maxlength="8" inputmode="numeric" placeholder="8 digits" />
+            <div class="error-message"
+              *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.hasError('pattern')">
+              Phone must be exactly 8 digits
+            </div>
           </div>
           <div class="form-group">
             <label for="dateOfBirth">Date of Birth</label>
             <input id="dateOfBirth" type="date" formControlName="dateOfBirth" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="insuranceCompany">Insurance Company</label>
+            <select id="insuranceCompany" formControlName="insuranceCompany">
+              <option value="">Select insurance company</option>
+              <option *ngFor="let company of insuranceCompanies" [value]="company">{{ company }}</option>
+            </select>
           </div>
         </div>
       </div>

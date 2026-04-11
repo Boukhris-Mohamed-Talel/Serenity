@@ -1,12 +1,14 @@
 package com.example.healthcare.service.impl;
 
 import com.example.healthcare.dto.*;
+import com.example.healthcare.entity.BanDuration;
 import com.example.healthcare.entity.Role;
 import com.example.healthcare.entity.User;
 import com.example.healthcare.entity.UserProfile;
 import com.example.healthcare.exception.EmailAlreadyExistsException;
 import com.example.healthcare.exception.InvalidCredentialsException;
 import com.example.healthcare.exception.ResourceNotFoundException;
+import com.example.healthcare.exception.UserBannedException;
 import com.example.healthcare.mapper.UserMapper;
 import com.example.healthcare.repository.UserRepository;
 import com.example.healthcare.security.jwt.JwtTokenProvider;
@@ -17,10 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -28,19 +30,24 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Date;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService {
+    private static final DateTimeFormatter BAN_UNTIL_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -63,6 +70,8 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setIsActive(true);
+        user.setIsPermanentlyBanned(false);
+        user.setBannedUntil(null);
 
         if (request.getRole() != null && !request.getRole().isBlank()) {
             user.setRole(Role.valueOf(request.getRole()));
@@ -98,20 +107,36 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        user.setRole(Role.valueOf(role.toUpperCase()));
+        Role requestedRole = parseRole(role);
+        if (requestedRole == Role.PHARMACIST) {
+            throw new IllegalArgumentException("PHARMACIST role cannot be self-assigned");
+        }
+
+        user.setRole(requestedRole);
         userRepository.save(user);
 
         return userMapper.toResponseDTO(user);
     }
 
     @Override
+    public UserResponseDTO assignRoleInternally(Long userId, String role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        user.setRole(parseRole(role));
+        userRepository.save(user);
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(InvalidCredentialsException::new);
+            ensureNotBanned(user);
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
             String token = jwtTokenProvider.generateToken(authentication);
 
@@ -124,6 +149,8 @@ public class UserServiceImpl implements UserService {
                     .build();
         } catch (DisabledException e) {
             throw new InvalidCredentialsException("Your account has been deactivated. Please contact an administrator.");
+        } catch (LockedException e) {
+            throw new UserBannedException("Your account is currently banned.");
         } catch (BadCredentialsException e) {
             throw new InvalidCredentialsException();
         }
@@ -160,6 +187,7 @@ public class UserServiceImpl implements UserService {
         if (request.getLastName() != null) user.setLastName(request.getLastName());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
         if (request.getDateOfBirth() != null) user.setDateOfBirth(request.getDateOfBirth());
+        if (request.getInsuranceCompany() != null) user.setInsuranceCompany(request.getInsuranceCompany());
 
         UserProfile profile = user.getProfile();
         if (profile == null) {
@@ -252,14 +280,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void banUser(Long id, BanDuration duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Ban duration is required");
+        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        Date now = new Date();
+        user.setIsPermanentlyBanned(duration.isPermanent());
+        user.setBannedUntil(duration.resolveBannedUntil(now));
+        userRepository.save(user);
+    }
+
+    @Override
+    public void unbanUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        user.setIsPermanentlyBanned(false);
+        user.setBannedUntil(null);
+        userRepository.save(user);
+    }
+
+    @Override
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.delete(user);
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public List<UserDTO> searchUsers(String query) {
         return userRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(query, query)
@@ -268,56 +316,10 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public List<UserDTO> getUsersNamesByIds(List<Long> ids) {
         return userRepository.findAllById(ids).stream()
                 .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName()))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserLookupDTO> lookupDoctors() {
-        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.DOCTOR).stream()
-                .map(this::toLookupDto)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserLookupDTO> lookupPatients(String firstName, String lastName) {
-        String fn = firstName != null ? firstName.trim() : "";
-        String ln = lastName != null ? lastName.trim() : "";
-
-        if (fn.isEmpty() && ln.isEmpty()) {
-            return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.PATIENT).stream()
-                    .map(this::toLookupDto)
-                    .toList();
-        }
-
-        if (fn.length() < 2 && ln.length() < 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Enter at least 2 characters in first name and/or last name to search.");
-        }
-        Specification<User> spec = (root, query, cb) -> {
-            var p = cb.and(
-                    cb.equal(root.get("role"), Role.PATIENT),
-                    cb.isTrue(root.get("isActive"))
-            );
-            if (fn.length() >= 2) {
-                p = cb.and(p, cb.like(cb.lower(root.get("firstName")), "%" + fn.toLowerCase() + "%"));
-            }
-            if (ln.length() >= 2) {
-                p = cb.and(p, cb.like(cb.lower(root.get("lastName")), "%" + ln.toLowerCase() + "%"));
-            }
-            return p;
-        };
-        return userRepository.findAll(spec).stream()
-                .map(this::toLookupDto)
-                .sorted(Comparator.comparing(UserLookupDTO::getLastName, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(UserLookupDTO::getFirstName, String.CASE_INSENSITIVE_ORDER))
-                .toList();
     }
 
     @Override
@@ -336,19 +338,48 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupDoctors() {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.DOCTOR).stream()
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserLookupDTO> lookupPatients(String firstName, String lastName) {
+        return userRepository.findByRoleAndIsActiveTrueOrderByLastNameAscFirstNameAsc(Role.PATIENT).stream()
+                .filter(u -> matchesOptionalNameFilter(u.getFirstName(), firstName))
+                .filter(u -> matchesOptionalNameFilter(u.getLastName(), lastName))
+                .map(this::toLookupDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<UserLookupDTO> lookupUsersByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-        if (ids.size() > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most 100 user ids per request.");
-        }
+        List<User> found = userRepository.findAllById(ids);
+        Map<Long, User> byId = found.stream().collect(Collectors.toMap(User::getId, u -> u));
         return ids.stream()
-                .distinct()
-                .map(userRepository::findById)
-                .flatMap(Optional::stream)
+                .map(byId::get)
+                .filter(Objects::nonNull)
                 .map(this::toLookupDto)
                 .toList();
+    }
+
+    private boolean matchesOptionalNameFilter(String fieldValue, String query) {
+        if (query == null || query.isBlank()) {
+            return true;
+        }
+        if (query.length() < 2) {
+            return true;
+        }
+        if (fieldValue == null) {
+            return false;
+        }
+        return fieldValue.toLowerCase().contains(query.toLowerCase());
     }
 
     private UserLookupDTO toLookupDto(User user) {
@@ -358,5 +389,37 @@ public class UserServiceImpl implements UserService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .build();
+    }
+
+    private Role parseRole(String role) {
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("Role is required");
+        }
+        try {
+            return Role.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role value: " + role);
+        }
+    }
+
+    private void ensureNotBanned(User user) {
+        if (Boolean.TRUE.equals(user.getIsPermanentlyBanned())) {
+            throw new UserBannedException("Your account has been permanently banned.");
+        }
+
+        Date bannedUntil = user.getBannedUntil();
+        if (bannedUntil == null) {
+            return;
+        }
+
+        Date now = new Date();
+        if (bannedUntil.after(now)) {
+            String formatted = BAN_UNTIL_FORMATTER.format(bannedUntil.toInstant());
+            throw new UserBannedException("Your account is banned until " + formatted + ".");
+        }
+
+        user.setBannedUntil(null);
+        user.setIsPermanentlyBanned(false);
+        userRepository.save(user);
     }
 }

@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AppointmentReminderDispatchRepository extends JpaRepository<AppointmentReminderDispatch, Long> {
 
     boolean existsByAppointmentIdAndReminderKind(Long appointmentId, AppointmentReminderKind kind);
+
+    void deleteByAppointmentId(Long appointmentId);
 }

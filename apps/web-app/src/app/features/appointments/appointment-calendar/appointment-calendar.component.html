@@ -7,8 +7,8 @@
 
   <div class="legend">
     <span class="lg lg-doc"><i></i> {{ legendDoctor }}</span>
-    <span class="lg lg-pat"><i></i> {{ legendPatient }}</span>
-    <span class="duration-note">Times show start–end, assuming about {{ slotDurationLabel }} per visit.</span>
+    <span class="lg lg-pat" *ngIf="legendPatient?.trim()"><i></i> {{ legendPatient }}</span>
+    <span class="duration-note" *ngIf="showDurationNote">Times show start–end, assuming about {{ slotDurationLabel }} per visit.</span>
   </div>
 
   <div class="weekdays">

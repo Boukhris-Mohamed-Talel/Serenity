@@ -1,23 +1,30 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { InsuranceClaimResponse } from '../../../shared/models/insurance.model';
 import { UserService } from '../../../core/services/user.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-claim-list',
   templateUrl: './claim-list.component.html',
   styleUrls: ['./claim-list.component.scss']
 })
-export class ClaimListComponent implements OnInit {
+export class ClaimListComponent implements OnInit, OnDestroy {
+  private static readonly PAGE_SIZE = 12;
+
   claims: InsuranceClaimResponse[] = [];
+  currentPage = 0;
+  totalPages = 0;
+  totalElements = 0;
   loading = true;
   errorMessage = '';
   isAdmin = false;
   private readonly userLabelsByUserId = new Map<number, string>();
+  private queryParamsSub?: Subscription;
 
-  statusFilter: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' = 'ALL';
+  statusFilter: 'ALL' | 'PENDING' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFO' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'PAID' | 'REJECTED' = 'ALL';
   fromDate = '';
   toDate = '';
   userFilter = 'ALL';
@@ -29,7 +36,8 @@ export class ClaimListComponent implements OnInit {
     private readonly insuranceService: InsuranceService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -37,18 +45,44 @@ export class ClaimListComponent implements OnInit {
     if (this.isAdmin) {
       this.loadUsernames();
     }
-    this.loadClaims();
+    this.queryParamsSub = this.route.queryParamMap.subscribe((params) => {
+      this.applyQueryParams(params);
+      this.loadClaims();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamsSub?.unsubscribe();
   }
 
   loadClaims(): void {
     this.loading = true;
+    const selectedUserId =
+      this.isAdmin && this.userFilter !== 'ALL' ? Number(this.userFilter) : undefined;
+    const backendFilters = {
+      status: this.statusFilter === 'ALL' ? undefined : this.statusFilter,
+      fromDate: this.fromDate || undefined,
+      toDate: this.toDate || undefined,
+      sortBy: this.sortBy === 'DATE' ? 'claimDate' : 'reimbursementAmount',
+      sortDir: this.sortDirection.toLowerCase(),
+      userId: Number.isFinite(selectedUserId) ? selectedUserId : undefined,
+      page: this.currentPage,
+      size: ClaimListComponent.PAGE_SIZE
+    };
+
     const source$ = this.isAdmin
-      ? this.insuranceService.getAllClaims()
-      : this.insuranceService.getMyClaims();
+      ? this.insuranceService.getAllClaimsPaged(backendFilters)
+      : this.insuranceService.getMyClaimsPaged(backendFilters);
 
     source$.subscribe({
-      next: (claims) => {
-        this.claims = claims;
+      next: (response) => {
+        this.claims = response.content || [];
+        this.totalElements = response.totalElements || 0;
+        this.totalPages = response.totalPages || 0;
+        if (this.totalPages > 0 && this.currentPage >= this.totalPages) {
+          this.updateQueryParams({ page: this.totalPages - 1 });
+          return;
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -61,7 +95,9 @@ export class ClaimListComponent implements OnInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'APPROVED': return 'badge badge-success';
+      case 'PAID': return 'badge badge-success';
       case 'REJECTED': return 'badge badge-danger';
+      case 'NEEDS_INFO': return 'badge badge-warning';
       default: return 'badge badge-primary';
     }
   }
@@ -71,74 +107,49 @@ export class ClaimListComponent implements OnInit {
   }
 
   get filteredClaims(): InsuranceClaimResponse[] {
-    let list = [...this.claims];
-
-    if (this.statusFilter !== 'ALL') {
-      list = list.filter(c => c.status === this.statusFilter);
-    }
-
-    if (this.isAdmin && this.userFilter !== 'ALL') {
-      list = list.filter(c => this.getUserKey(c) === this.userFilter);
-    }
-
-    if (this.fromDate) {
-      const from = new Date(this.fromDate);
-      from.setHours(0, 0, 0, 0);
-      list = list.filter(c => new Date(c.claimDate) >= from);
-    }
-
-    if (this.toDate) {
-      const to = new Date(this.toDate);
-      to.setHours(23, 59, 59, 999);
-      list = list.filter(c => new Date(c.claimDate) <= to);
-    }
-
-    list.sort((a, b) => {
-      const factor = this.sortDirection === 'ASC' ? 1 : -1;
-      if (this.sortBy === 'DATE') {
-        const av = new Date(a.claimDate).getTime();
-        const bv = new Date(b.claimDate).getTime();
-        return (av - bv) * factor;
-      }
-      const av = a.reimbursementAmount ?? 0;
-      const bv = b.reimbursementAmount ?? 0;
-      return (av - bv) * factor;
-    });
-
-    return list;
+    return this.claims;
   }
 
   get availableUsers(): { key: string; label: string }[] {
-    const map = new Map<string, string>();
-    for (const claim of this.claims) {
-      const key = this.getUserKey(claim);
-      const label = this.getUserLabel(claim);
-      map.set(key, label);
-    }
-    return Array.from(map.entries())
-      .map(([key, label]) => ({ key, label }))
+    return Array.from(this.userLabelsByUserId.entries())
+      .map(([id, label]) => ({ key: String(id), label }))
+      .filter((user) => user.key.trim().length > 0)
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   clearFilters(): void {
-    this.statusFilter = 'ALL';
-    this.fromDate = '';
-    this.toDate = '';
     this.userFilter = 'ALL';
-    this.sortBy = 'DATE';
-    this.sortDirection = 'DESC';
+    this.updateQueryParams({
+      user: null,
+      status: null,
+      fromDate: null,
+      toDate: null,
+      sortBy: null,
+      sortDir: null,
+      page: null
+    });
   }
 
   onFromDateChange(): void {
     if (this.fromDate && this.toDate && this.toDate < this.fromDate) {
       this.toDate = this.fromDate;
     }
+    this.updateQueryParams({
+      fromDate: this.fromDate || null,
+      toDate: this.toDate || null,
+      page: 0
+    });
   }
 
   onToDateChange(): void {
     if (this.fromDate && this.toDate && this.toDate < this.fromDate) {
       this.toDate = this.fromDate;
     }
+    this.updateQueryParams({
+      fromDate: this.fromDate || null,
+      toDate: this.toDate || null,
+      page: 0
+    });
   }
 
   toggleDropdown(name: 'status' | 'user' | 'sortBy' | 'sortDirection', event: MouseEvent): void {
@@ -146,30 +157,51 @@ export class ClaimListComponent implements OnInit {
     this.openDropdown = this.openDropdown === name ? null : name;
   }
 
-  selectStatus(value: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'): void {
+  selectStatus(value: 'ALL' | 'PENDING' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_INFO' | 'APPROVED' | 'PARTIALLY_APPROVED' | 'PAID' | 'REJECTED'): void {
     this.statusFilter = value;
     this.openDropdown = null;
+    this.updateQueryParams({
+      status: value === 'ALL' ? null : value,
+      page: 0
+    });
   }
 
   selectUser(value: string): void {
     this.userFilter = value;
     this.openDropdown = null;
+    this.updateQueryParams({
+      user: value === 'ALL' ? null : value,
+      page: 0
+    });
   }
 
   selectSortBy(value: 'DATE' | 'REIMBURSEMENT'): void {
     this.sortBy = value;
     this.openDropdown = null;
+    this.updateQueryParams({
+      sortBy: value === 'DATE' ? 'claimDate' : 'reimbursementAmount',
+      page: 0
+    });
   }
 
   selectSortDirection(value: 'ASC' | 'DESC'): void {
     this.sortDirection = value;
     this.openDropdown = null;
+    this.updateQueryParams({
+      sortDir: value.toLowerCase(),
+      page: 0
+    });
   }
 
   get statusFilterLabel(): string {
     switch (this.statusFilter) {
       case 'PENDING': return 'Pending';
+      case 'SUBMITTED': return 'Submitted';
+      case 'UNDER_REVIEW': return 'Under review';
+      case 'NEEDS_INFO': return 'Needs info';
       case 'APPROVED': return 'Approved';
+      case 'PARTIALLY_APPROVED': return 'Partially approved';
+      case 'PAID': return 'Paid';
       case 'REJECTED': return 'Rejected';
       default: return 'All';
     }
@@ -187,7 +219,27 @@ export class ClaimListComponent implements OnInit {
     if (this.userFilter === 'ALL') {
       return 'All users';
     }
-    return this.availableUsers.find(u => u.key === this.userFilter)?.label || 'All users';
+    return this.userLabelsByUserId.get(Number(this.userFilter)) || 'All users';
+  }
+
+  get pageNumbers(): number[] {
+    if (this.totalPages <= 1) {
+      return [];
+    }
+    const start = Math.max(0, this.currentPage - 2);
+    const end = Math.min(this.totalPages - 1, this.currentPage + 2);
+    const pages: number[] = [];
+    for (let p = start; p <= end; p++) {
+      pages.push(p);
+    }
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages || page === this.currentPage) {
+      return;
+    }
+    this.updateQueryParams({ page });
   }
 
   @HostListener('document:click')
@@ -223,5 +275,53 @@ export class ClaimListComponent implements OnInit {
 
   private getUserKey(claim: InsuranceClaimResponse): string {
     return String(claim.userId);
+  }
+
+  private applyQueryParams(params: import('@angular/router').ParamMap): void {
+    const statusParam = params.get('status');
+    this.statusFilter =
+      statusParam === 'PENDING'
+      || statusParam === 'SUBMITTED'
+      || statusParam === 'UNDER_REVIEW'
+      || statusParam === 'NEEDS_INFO'
+      || statusParam === 'APPROVED'
+      || statusParam === 'PARTIALLY_APPROVED'
+      || statusParam === 'PAID'
+      || statusParam === 'REJECTED'
+        ? statusParam
+        : 'ALL';
+
+    const fromDate = params.get('fromDate') || '';
+    const toDate = params.get('toDate') || '';
+    this.fromDate = fromDate;
+    this.toDate = toDate;
+
+    const sortByParam = params.get('sortBy');
+    this.sortBy = sortByParam === 'reimbursementAmount' ? 'REIMBURSEMENT' : 'DATE';
+
+    const sortDirParam = params.get('sortDir');
+    this.sortDirection = sortDirParam === 'asc' ? 'ASC' : 'DESC';
+
+    const userParam = params.get('user');
+    this.userFilter = this.isAdmin && userParam ? userParam : 'ALL';
+
+    const pageParam = Number(params.get('page'));
+    this.currentPage = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
+  }
+
+  private updateQueryParams(queryParams: {
+    user?: string | null;
+    status?: string | null;
+    fromDate?: string | null;
+    toDate?: string | null;
+    sortBy?: string | null;
+    sortDir?: string | null;
+    page?: number | null;
+  }): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 }

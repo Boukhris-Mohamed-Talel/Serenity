@@ -1,0 +1,133 @@
+.application-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem 0 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.page-header h1 {
+  margin: 0 0 0.35rem;
+}
+
+.page-header p {
+  margin: 0;
+  max-width: 880px;
+  color: #4b6670;
+}
+
+.card,
+.status-card {
+  background: #f7fbfb;
+  border: 1px solid #c4dde0;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+
+.status-card h2 {
+  margin: 0 0 0.5rem;
+}
+
+.status-line {
+  margin: 0 0 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badge.submitted {
+  background: #fff3d6;
+  color: #8a6200;
+}
+
+.badge.rejected {
+  background: #fde8e8;
+  color: #9d1c1c;
+}
+
+.badge.approved {
+  background: #e3f7eb;
+  color: #0d6a36;
+}
+
+.review-comment {
+  margin: 0.4rem 0 0;
+  color: #9d1c1c;
+}
+
+.application-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.application-form h3 {
+  margin: 0.35rem 0 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.grid label,
+.documents label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #294956;
+  font-weight: 600;
+}
+
+.grid input,
+.documents input[type='file'] {
+  border: 1px solid #b9d7dc;
+  border-radius: 10px;
+  padding: 0.56rem 0.7rem;
+  font: inherit;
+  background: #fff;
+  color: #1f3d49;
+}
+
+.grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.documents {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.documents small {
+  color: #5f7881;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.success {
+  margin: 0;
+  color: #0f7a46;
+}
+
+.error {
+  margin: 0;
+  color: #b72020;
+}

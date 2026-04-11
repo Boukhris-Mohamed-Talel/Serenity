@@ -17,8 +17,6 @@ public interface AppointmentService {
 
     AppointmentResponse complete(Long appointmentId, Long doctorUserId);
 
-    AppointmentResponse reschedule(Long appointmentId, Long currentUserId, RescheduleAppointmentRequest request);
-
     List<AppointmentResponse> listMine(Long userId);
 
     List<AppointmentResponse> listAll();
@@ -33,8 +31,14 @@ public interface AppointmentService {
      * Busy slots for calendar UI: patient mode merges doctor + current patient; doctor mode merges doctor + optional patient.
      */
     List<CalendarBusySlotResponse> calendarHintsForPatient(
-            Long patientUserId, Long doctorUserId, LocalDate from, LocalDate to, Long excludeAppointmentIdOrNull);
+            Long patientUserId, Long doctorUserId, LocalDate from, LocalDate to, Long excludeAppointmentId);
 
     List<CalendarBusySlotResponse> calendarHintsForDoctor(
-            Long doctorUserId, Long patientUserIdOrNull, LocalDate from, LocalDate to, Long excludeAppointmentIdOrNull);
+            Long doctorUserId, Long patientUserIdOrNull, LocalDate from, LocalDate to, Long excludeAppointmentId);
+
+    AppointmentResponse reschedule(Long appointmentId, Long currentUserId, RescheduleAppointmentRequest request);
+
+    byte[] exportIcs(Long appointmentId, Long userId, boolean admin);
+
+    GoogleCalendarLinkResponse googleCalendarLink(Long appointmentId, Long userId, boolean admin);
 }

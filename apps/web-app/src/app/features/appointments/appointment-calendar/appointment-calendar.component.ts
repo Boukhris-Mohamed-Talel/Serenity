@@ -35,7 +35,9 @@ export class AppointmentCalendarComponent implements OnChanges {
   @Input() viewMonth = new Date().getMonth() + 1;
   @Input() viewYear = new Date().getFullYear();
   @Input() legendDoctor = 'Doctor already has a visit';
+  /** If empty, the second legend row is hidden (e.g. hub view shows only your bookings). */
   @Input() legendPatient = 'Patient / you already booked elsewhere';
+  @Input() showDurationNote = true;
   /** Block length used to show end time (e.g. 90 → 1h 30min). */
   @Input() slotDurationMinutes = 90;
   /** Max time rows shown inside each day cell before "+N". */

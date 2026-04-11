@@ -11,31 +11,12 @@ import {
   appointmentParticipantDisplayName
 } from '../../../shared/models/appointment.model';
 import {
+  APPOINTMENT_SLOT_DURATION_MINUTES,
   appointmentDateToYmd,
   hasAppointmentTimeOverlap,
   minDateInputYmd,
-  normalizeTimeHhMm,
   validateAppointmentScheduling
 } from '../../../shared/utils/appointment-scheduling.utils';
-
-function formatHttpError(err: unknown): string {
-  const e = err as {
-    error?: string | { error?: string; message?: string; path?: string };
-    message?: string;
-    status?: number;
-  };
-  if (typeof e?.error === 'string') {
-    return e.error;
-  }
-  const body = e?.error as { error?: string; message?: string; path?: string } | undefined;
-  if (body?.error) {
-    return body.error;
-  }
-  if (body?.message) {
-    return body.message;
-  }
-  return e?.message || 'Could not reschedule';
-}
 
 @Component({
   selector: 'app-appointment-detail',
@@ -50,17 +31,17 @@ export class AppointmentDetailComponent implements OnInit {
   /** Filled via POST /users/lookup/names (browser + gateway); avoids broken server-to-user-service calls. */
   private readonly nameByUserId = new Map<number, UserLookup>();
 
-  /** Reschedule (patient or doctor): new date/time with same calendar/busy rules as booking. */
-  reschedulePanelOpen = false;
+  /** Reschedule form (same rules as booking). */
   rescheduleDate = '';
   rescheduleTime = '';
-  rescheduleBusySlots: CalendarBusySlot[] = [];
+  rescheduleBusy: CalendarBusySlot[] = [];
   rescheduleCalMonth = new Date().getMonth() + 1;
   rescheduleCalYear = new Date().getFullYear();
-  rescheduleLoadingCalendar = false;
-  rescheduleCalendarError = '';
+  loadingRescheduleCal = false;
   rescheduleSubmitting = false;
-  rescheduleError = '';
+  calendarLoadError = '';
+  /** Reschedule form is shown only after clicking “Reschedule”. */
+  showReschedulePanel = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -81,6 +62,7 @@ export class AppointmentDetailComponent implements OnInit {
         this.appointment = a;
         this.tele = a.teleconsultation;
         this.loading = false;
+        this.seedRescheduleFields(a);
         this.refreshParticipantNames(a);
         if (a.type === 'TELECONSULTATION' && !this.tele) {
           this.refreshTele(id);
@@ -89,6 +71,162 @@ export class AppointmentDetailComponent implements OnInit {
       error: (err) => {
         this.errorMessage = err.error?.error || 'Not found';
         this.loading = false;
+      }
+    });
+  }
+
+  get minDateStr(): string {
+    return minDateInputYmd();
+  }
+
+  get canReschedule(): boolean {
+    const a = this.appointment;
+    if (!a || (a.status !== 'PENDING' && a.status !== 'CONFIRMED')) {
+      return false;
+    }
+    return this.isPatient || this.isDoctor;
+  }
+
+  get schedulingWindowError(): string | null {
+    return validateAppointmentScheduling(this.rescheduleDate, this.rescheduleTime);
+  }
+
+  /** Prefill date/time from the appointment (no calendar API until panel opens). */
+  private seedRescheduleFields(a: AppointmentResponse): void {
+    const ymd = appointmentDateToYmd(a.appointmentDate) ?? '';
+    this.rescheduleDate = ymd.length >= 10 ? ymd.slice(0, 10) : '';
+    this.rescheduleTime = a.timeSlot;
+    if (this.rescheduleDate.length >= 10) {
+      const y = +this.rescheduleDate.slice(0, 4);
+      const m = +this.rescheduleDate.slice(5, 7);
+      if (Number.isFinite(y) && m >= 1 && m <= 12) {
+        this.rescheduleCalYear = y;
+        this.rescheduleCalMonth = m;
+      }
+    }
+  }
+
+  openReschedulePanel(): void {
+    if (!this.appointment || !this.canReschedule) {
+      return;
+    }
+    this.showReschedulePanel = true;
+    this.calendarLoadError = '';
+    this.seedRescheduleFields(this.appointment);
+    this.loadRescheduleHints();
+  }
+
+  closeReschedulePanel(): void {
+    this.showReschedulePanel = false;
+  }
+
+  private pad(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+
+  private monthRange(y: number, m: number): { from: string; to: string } {
+    const from = new Date(y, m - 1, 1);
+    const to = new Date(y, m, 0);
+    const fmt = (d: Date): string =>
+      `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`;
+    return { from: fmt(from), to: fmt(to) };
+  }
+
+  loadRescheduleHints(): void {
+    const a = this.appointment;
+    if (!a) {
+      return;
+    }
+    const { from, to } = this.monthRange(this.rescheduleCalYear, this.rescheduleCalMonth);
+    this.loadingRescheduleCal = true;
+    this.calendarLoadError = '';
+    const opts: { doctorUserId?: number; patientUserId?: number; excludeAppointmentId?: number } = {
+      excludeAppointmentId: a.id
+    };
+    if (this.authService.hasRole('PATIENT')) {
+      opts.doctorUserId = a.doctorUserId;
+    } else if (this.authService.hasRole('DOCTOR')) {
+      opts.patientUserId = a.patientUserId;
+    }
+    this.appointmentService.getCalendarHints(from, to, opts).subscribe({
+      next: (rows) => {
+        this.rescheduleBusy = rows;
+        this.loadingRescheduleCal = false;
+      },
+      error: (err) => {
+        this.rescheduleBusy = [];
+        this.loadingRescheduleCal = false;
+        this.calendarLoadError =
+          err?.error?.message || err?.message || 'Could not load busy times.';
+      }
+    });
+  }
+
+  onRescheduleDateChange(value: string): void {
+    this.rescheduleDate = value;
+    if (value && value.length >= 10) {
+      const y = +value.slice(0, 4);
+      const m = +value.slice(5, 7);
+      if (y > 0 && m >= 1 && m <= 12) {
+        if (this.rescheduleCalYear !== y || this.rescheduleCalMonth !== m) {
+          this.rescheduleCalYear = y;
+          this.rescheduleCalMonth = m;
+        }
+        this.loadRescheduleHints();
+      }
+    }
+  }
+
+  onRescheduleCalMonthChange(ev: { year: number; month: number }): void {
+    this.rescheduleCalYear = ev.year;
+    this.rescheduleCalMonth = ev.month;
+    this.loadRescheduleHints();
+  }
+
+  hasRescheduleSlotConflict(): boolean {
+    if (this.schedulingWindowError || this.rescheduleDate.length < 10) {
+      return false;
+    }
+    return hasAppointmentTimeOverlap(
+      this.rescheduleDate,
+      this.rescheduleTime,
+      this.rescheduleBusy,
+      APPOINTMENT_SLOT_DURATION_MINUTES
+    );
+  }
+
+  submitReschedule(): void {
+    const a = this.appointment;
+    if (!a || !this.canReschedule) {
+      return;
+    }
+    const err = validateAppointmentScheduling(this.rescheduleDate, this.rescheduleTime);
+    if (err) {
+      this.errorMessage = err;
+      return;
+    }
+    if (this.hasRescheduleSlotConflict()) {
+      this.errorMessage = 'That time overlaps another visit. Pick a different slot.';
+      return;
+    }
+    this.rescheduleSubmitting = true;
+    this.errorMessage = '';
+    const body = {
+      appointmentDate: this.rescheduleDate.slice(0, 10),
+      timeSlot: this.rescheduleTime.trim()
+    };
+    this.appointmentService.reschedule(a.id, body).subscribe({
+      next: (updated) => {
+        this.appointment = updated;
+        this.tele = updated.teleconsultation;
+        this.rescheduleSubmitting = false;
+        this.seedRescheduleFields(updated);
+        this.showReschedulePanel = false;
+      },
+      error: (err) => {
+        this.rescheduleSubmitting = false;
+        this.errorMessage =
+          err.error?.message || err.error?.error || err.message || 'Failed to reschedule';
       }
     });
   }
@@ -150,194 +288,8 @@ export class AppointmentDetailComponent implements OnInit {
     return uid != null && this.appointment != null && this.appointment.patientUserId === uid;
   }
 
-  get canReschedule(): boolean {
-    if (!this.appointment || (!this.isPatient && !this.isDoctor)) {
-      return false;
-    }
-    const s = this.appointment.status;
-    return s === 'PENDING' || s === 'CONFIRMED';
-  }
-
-  get rescheduleLegendDoctor(): string {
-    return this.isPatient ? 'Doctor (already booked)' : 'Your appointments';
-  }
-
-  get rescheduleLegendPatient(): string {
-    return this.isPatient ? 'Your other visits' : "Patient's other visits";
-  }
-
-  get rescheduleBusyPanelSubheading(): string {
-    return this.isPatient
-      ? 'Avoid the same start time (HH:mm) as these rows — your current booking is excluded.'
-      : "Your bookings and this patient's other visits — current appointment excluded.";
-  }
-
-  /** Meeting URL must not be used after the visit is finished or the booking is cancelled. */
-  get isTeleMeetingUnavailable(): boolean {
-    const s = this.appointment?.status;
-    return s === 'COMPLETED' || s === 'CANCELLED';
-  }
-
-  get minDateStr(): string {
-    return minDateInputYmd();
-  }
-
-  openReschedulePanel(): void {
-    if (!this.appointment) {
-      return;
-    }
-    this.rescheduleError = '';
-    const d = this.ymdFromAppointment(this.appointment);
-    this.rescheduleDate = d;
-    this.rescheduleTime = normalizeTimeHhMm(String(this.appointment.timeSlot ?? ''));
-    const parts = d.split('-');
-    if (parts.length === 3) {
-      this.rescheduleCalYear = +parts[0];
-      this.rescheduleCalMonth = +parts[1];
-    }
-    this.reschedulePanelOpen = true;
-    this.loadRescheduleCalendarHints();
-  }
-
-  closeReschedulePanel(): void {
-    this.reschedulePanelOpen = false;
-    this.rescheduleError = '';
-  }
-
-  private ymdFromAppointment(a: AppointmentResponse): string {
-    const raw = appointmentDateToYmd(a.appointmentDate as unknown);
-    return raw ?? String(a.appointmentDate).slice(0, 10);
-  }
-
-  private pad(n: number): string {
-    return String(n).padStart(2, '0');
-  }
-
-  private rescheduleMonthRange(y: number, m: number): { from: string; to: string } {
-    const from = new Date(y, m - 1, 1);
-    const to = new Date(y, m, 0);
-    const fmt = (d: Date): string =>
-      `${d.getFullYear()}-${this.pad(d.getMonth() + 1)}-${this.pad(d.getDate())}`;
-    return { from: fmt(from), to: fmt(to) };
-  }
-
-  loadRescheduleCalendarHints(): void {
-    if (!this.appointment) {
-      return;
-    }
-    const { from, to } = this.rescheduleMonthRange(this.rescheduleCalYear, this.rescheduleCalMonth);
-    this.rescheduleLoadingCalendar = true;
-    this.rescheduleCalendarError = '';
-    const id = this.appointment.id;
-    const opts: { doctorUserId?: number; patientUserId?: number; excludeAppointmentId: number } = {
-      excludeAppointmentId: id
-    };
-    if (this.authService.hasRole('PATIENT')) {
-      opts.doctorUserId = this.appointment.doctorUserId;
-    }
-    if (this.authService.hasRole('DOCTOR')) {
-      opts.patientUserId = this.appointment.patientUserId;
-    }
-    this.appointmentService.getCalendarHints(from, to, opts).subscribe({
-      next: (rows) => {
-        this.rescheduleBusySlots = rows;
-        this.rescheduleLoadingCalendar = false;
-      },
-      error: (err) => {
-        this.rescheduleBusySlots = [];
-        this.rescheduleLoadingCalendar = false;
-        this.rescheduleCalendarError =
-          err?.error?.message || err?.error?.error || err?.message || 'Could not load busy times.';
-      }
-    });
-  }
-
-  onRescheduleCalMonthChange(ev: { year: number; month: number }): void {
-    this.rescheduleCalYear = ev.year;
-    this.rescheduleCalMonth = ev.month;
-    this.loadRescheduleCalendarHints();
-  }
-
-  onRescheduleDateChange(value: string): void {
-    this.rescheduleDate = value;
-    if (value && value.length >= 10) {
-      const y = +value.slice(0, 4);
-      const m = +value.slice(5, 7);
-      if (y > 0 && m >= 1 && m <= 12) {
-        if (this.rescheduleCalYear !== y || this.rescheduleCalMonth !== m) {
-          this.rescheduleCalYear = y;
-          this.rescheduleCalMonth = m;
-        }
-        this.loadRescheduleCalendarHints();
-      }
-    }
-  }
-
-  get rescheduleSchedulingError(): string | null {
-    if (!this.rescheduleDate || !this.rescheduleTime?.trim()) {
-      return null;
-    }
-    return validateAppointmentScheduling(this.rescheduleDate, this.rescheduleTime);
-  }
-
-  hasRescheduleSlotConflict(): boolean {
-    if (!this.rescheduleDate || !this.rescheduleTime?.trim()) {
-      return false;
-    }
-    return hasAppointmentTimeOverlap(
-      this.rescheduleDate,
-      this.rescheduleTime,
-      this.rescheduleBusySlots
-    );
-  }
-
-  submitReschedule(): void {
-    this.rescheduleError = '';
-    if (!this.appointment) {
-      return;
-    }
-    if (!this.rescheduleDate || !this.rescheduleTime?.trim()) {
-      this.rescheduleError = 'Date and time are required.';
-      return;
-    }
-    const schedErr = validateAppointmentScheduling(this.rescheduleDate, this.rescheduleTime);
-    if (schedErr) {
-      this.rescheduleError = schedErr;
-      return;
-    }
-    if (this.hasRescheduleSlotConflict()) {
-      this.rescheduleError =
-        'That time overlaps an existing appointment (each visit blocks about 1h30).';
-      return;
-    }
-    this.rescheduleSubmitting = true;
-    const slot = normalizeTimeHhMm(this.rescheduleTime);
-    const dateYmd =
-      appointmentDateToYmd(this.rescheduleDate as unknown) ??
-      String(this.rescheduleDate).slice(0, 10);
-    this.appointmentService
-      .reschedule(this.appointment.id, { appointmentDate: dateYmd, timeSlot: slot })
-      .subscribe({
-        next: (a) => {
-          this.appointment = a;
-          this.tele = a.teleconsultation;
-          this.refreshParticipantNames(a);
-          if (a.type === 'TELECONSULTATION' && !this.tele) {
-            this.refreshTele(a.id);
-          }
-          this.reschedulePanelOpen = false;
-          this.rescheduleSubmitting = false;
-          this.errorMessage = '';
-        },
-        error: (err) => {
-          this.rescheduleError = formatHttpError(err);
-          this.rescheduleSubmitting = false;
-        }
-      });
-  }
-
   startVideo(): void {
-    if (!this.appointment || this.isTeleMeetingUnavailable) {
+    if (!this.appointment || this.appointment.status === 'COMPLETED' || this.appointment.status === 'CANCELLED') {
       return;
     }
     this.appointmentService.startTeleconsultation(this.appointment.id).subscribe({
@@ -354,7 +306,11 @@ export class AppointmentDetailComponent implements OnInit {
   }
 
   openRoom(): void {
-    if (this.isTeleMeetingUnavailable || !this.tele?.meetingUrl) {
+    if (
+      this.appointment?.status === 'COMPLETED' ||
+      this.appointment?.status === 'CANCELLED' ||
+      !this.tele?.meetingUrl
+    ) {
       return;
     }
     window.open(this.tele.meetingUrl, '_blank', 'noopener,noreferrer');
@@ -380,6 +336,9 @@ export class AppointmentDetailComponent implements OnInit {
     const dest = this.router.url.split('?')[0].includes('/admin/appointments')
       ? '/admin/appointments'
       : '/appointments';
-    this.router.navigateByUrl(dest);
+    const qp = this.route.snapshot.queryParams;
+    this.router.navigate([dest], {
+      queryParams: Object.keys(qp).length ? qp : undefined
+    });
   }
 }

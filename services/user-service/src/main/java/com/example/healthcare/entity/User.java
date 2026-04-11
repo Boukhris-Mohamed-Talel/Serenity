@@ -42,8 +42,18 @@ public class User {
     @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
 
+    @Column(length = 100)
+    private InsuranceCompany insuranceCompany;
+
     @Builder.Default
     private Boolean isActive = true;
+
+    @Builder.Default
+    private Boolean isPermanentlyBanned = false;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
+    private Date bannedUntil;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(updatable = false)

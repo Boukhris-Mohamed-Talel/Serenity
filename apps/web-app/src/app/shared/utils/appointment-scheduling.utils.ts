@@ -1,4 +1,4 @@
-import { CalendarBusySlot } from '../models/appointment.model';
+import { AppointmentResponse, CalendarBusySlot } from '../models/appointment.model';
 
 /** Default visit length used for end-time display and validation (must match backend). */
 export const APPOINTMENT_SLOT_DURATION_MINUTES = 90;
@@ -193,43 +193,77 @@ export function minDateInputYmd(now: Date = new Date()): string {
   return localYmd(now);
 }
 
-/** Start instant (local) for an appointment row — used for sorting and countdowns. */
-export function appointmentResponseStartMs(a: {
-  appointmentDate: unknown;
-  timeSlot: string;
-}): number {
-  const ymd = appointmentDateToYmd(a.appointmentDate) ?? String(a.appointmentDate).slice(0, 10);
-  const mins = parseTimeToMinutes(normalizeTimeHhMm(a.timeSlot));
-  if (!ymd || ymd.length < 10) {
-    return 0;
+/** Local start instant for an appointment row (date + time slot). */
+export function parseAppointmentLocalStart(
+  appointmentDate: unknown,
+  timeSlot: string | null | undefined,
+  defaultHour = 9
+): Date | null {
+  const ymd = appointmentDateToYmd(appointmentDate);
+  if (!ymd) {
+    return null;
   }
-  const [y, mo, d] = ymd.split('-').map((x) => parseInt(x, 10));
-  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) {
-    return 0;
+  const raw = (timeSlot && String(timeSlot).trim()) || `${String(defaultHour).padStart(2, '0')}:00`;
+  const t = normalizeTimeHhMm(raw);
+  const p = t.split(':');
+  const hh = parseInt(p[0], 10);
+  const mm = parseInt(p[1], 10);
+  if (Number.isNaN(hh) || Number.isNaN(mm)) {
+    return null;
   }
-  const startMin = mins ?? 0;
-  const dt = new Date(y, mo - 1, d, Math.floor(startMin / 60), startMin % 60, 0, 0);
-  return dt.getTime();
+  const [y, mo, d] = ymd.split('-').map(Number);
+  return new Date(y, mo - 1, d, hh, mm, 0, 0);
 }
 
-/** Formats a positive millisecond delta as "2d 5h 30m 12s" (compact countdown). */
+/** Milliseconds timestamp for appointment start in local time (0 when invalid). */
+export function appointmentResponseStartMs(a: AppointmentResponse, defaultHour = 9): number {
+  const start = parseAppointmentLocalStart(a.appointmentDate, a.timeSlot, defaultHour);
+  return start ? start.getTime() : 0;
+}
+
+/** Human countdown label from remaining milliseconds. */
 export function formatCountdownMs(ms: number): string {
-  if (ms <= 0) {
-    return '0s';
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return 'Starting now';
   }
-  const sec = Math.floor(ms / 1000);
-  const days = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const parts: string[] = [];
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
   if (days > 0) {
-    parts.push(`${days}d`);
+    return `${days}d ${hours}h ${minutes}m`;
   }
-  if (h > 0 || days > 0) {
-    parts.push(`${h}h`);
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
   }
-  parts.push(`${m}m`);
-  parts.push(`${s}s`);
-  return parts.join(' ');
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
+
+/**
+ * Earliest upcoming or in-progress visit (pending/confirmed, end time still in the future).
+ */
+export function getNextRelevantAppointment(
+  appointments: AppointmentResponse[],
+  now: Date = new Date(),
+  durationMinutes: number = APPOINTMENT_SLOT_DURATION_MINUTES
+): AppointmentResponse | null {
+  const rows = appointments
+    .filter((a) => a.status === 'PENDING' || a.status === 'CONFIRMED')
+    .map((a) => {
+      const start = parseAppointmentLocalStart(a.appointmentDate, a.timeSlot);
+      if (!start) {
+        return null;
+      }
+      const endMs = start.getTime() + durationMinutes * 60_000;
+      return { a, start, endMs };
+    })
+    .filter((x): x is { a: AppointmentResponse; start: Date; endMs: number } => x != null && x.endMs > now.getTime())
+    .sort((x, y) => x.start.getTime() - y.start.getTime());
+  return rows[0]?.a ?? null;
 }

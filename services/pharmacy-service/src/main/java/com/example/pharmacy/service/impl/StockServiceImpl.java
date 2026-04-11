@@ -11,10 +11,8 @@ import com.example.pharmacy.repository.PharmacyRepository;
 import com.example.pharmacy.security.CurrentUserService;
 import com.example.pharmacy.service.StockService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -66,6 +64,21 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
+    public StockItemResponseDTO renameStockItem(Long stockItemId, String medicineName) {
+        MedicineStockItem item = getOwnedItem(stockItemId);
+        String normalizedName = medicineName == null ? "" : medicineName.trim();
+        if (normalizedName.isEmpty()) {
+            throw new IllegalArgumentException("Medicine name is required");
+        }
+        if (normalizedName.length() < 2 || normalizedName.length() > 80) {
+            throw new IllegalArgumentException("Medicine name must be between 2 and 80 characters");
+        }
+
+        item.setMedicineName(normalizedName);
+        return toResponse(medicineStockItemRepository.save(item));
+    }
+
+    @Override
     public StockItemResponseDTO incrementQuantity(Long stockItemId, Integer incrementBy) {
         MedicineStockItem item = getOwnedItem(stockItemId);
         item.setQuantity(item.getQuantity() + incrementBy);
@@ -99,17 +112,10 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public StockItemResponseDTO renameStockItem(Long stockItemId, String medicineName) {
-        MedicineStockItem item = getOwnedItem(stockItemId);
-        item.setMedicineName(medicineName.trim());
-        return toResponse(medicineStockItemRepository.save(item));
-    }
-
-    @Override
     public void deleteArchivedStockItem(Long stockItemId) {
         MedicineStockItem item = getOwnedItem(stockItemId);
         if (!Boolean.TRUE.equals(item.getArchived())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stock item must be archived before permanent delete");
+            throw new IllegalStateException("Only archived medicines can be deleted permanently");
         }
         medicineStockItemRepository.delete(item);
     }

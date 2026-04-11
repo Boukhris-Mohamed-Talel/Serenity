@@ -19,16 +19,27 @@ export interface InsuranceClaimResponse {
   filePaths: string[];
   userId: number;
   userFullName: string;
+  infoRequestReason?: string | null;
+  infoRequestDeadline?: string | null;
+  infoRequestedAt?: string | null;
+  infoRespondedAt?: string | null;
   remboursements: RemboursementResponse[];
 }
 
-export const INSURANCE_COMPANIES = [
-  'Insurance 1',
-  'Insurance 2',
-  'Insurance 3',
-  'Insurance 4',
-  'Insurance 5'
-];
+export interface InsuranceClaimTransition {
+  id: number;
+  fromStatus?: string | null;
+  toStatus: string;
+  changedByUserId: number;
+  changedByRole: string;
+  reason?: string | null;
+  changedAt: string;
+}
+
+export const INSURANCE_COMPANIES = Array.from(
+  { length: 10 },
+  (_, index) => `Insurance ${index + 1}`
+);
 
 export const INSURANCE_GRADES: { value: number; label: string; percentage: number }[] = [
   { value: 1, label: 'Grade 1', percentage: 10 },
@@ -50,7 +61,14 @@ export interface InsuranceNotification {
   id: number;
   userId: number;
   claimId: number | null;
-  type: 'CLAIM_SENT_TO_INSURER' | 'CLAIM_APPROVED' | 'CLAIM_REJECTED' | 'DOCUMENTS_REQUESTED';
+  type:
+    | 'CLAIM_SENT_TO_INSURER'
+    | 'CLAIM_APPROVED'
+    | 'CLAIM_REJECTED'
+    | 'DOCUMENTS_REQUESTED'
+    | 'DOCUMENTS_SUBMITTED'
+    | 'OCR_MINOR_MISMATCH'
+    | 'OCR_MAJOR_BLOCKED';
   title: string;
   message: string;
   isRead: boolean;

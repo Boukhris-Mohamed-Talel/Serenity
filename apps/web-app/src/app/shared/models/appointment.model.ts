@@ -73,7 +73,7 @@ export interface AppointmentUnreadCountResponse {
   unreadCount: number;
 }
 
-/** Merged bell dropdown: insurance + appointment notifications. */
+/** Navbar bell: merged insurance + appointment notifications. */
 export interface NavbarNotification {
   source: 'insurance' | 'appointment';
   id: number;

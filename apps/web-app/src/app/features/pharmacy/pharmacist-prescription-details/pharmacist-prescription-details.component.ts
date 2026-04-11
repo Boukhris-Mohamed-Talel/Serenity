@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
+  PrescriptionLineResponse,
   PrescriptionResponse,
   StockItemResponse,
   PrescriptionStatus,
@@ -16,6 +17,7 @@ import {
 export class PharmacistPrescriptionDetailsComponent implements OnInit {
   loading = true;
   errorMessage = '';
+  successMessage = '';
   prescription: PrescriptionResponse | null = null;
   private stockByMedicine = new Map<string, number>();
 
@@ -53,16 +55,29 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     if (!this.prescription) {
       return;
     }
+
+    const actionLabel = this.statusActionLabel(status);
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this prescription?`)) {
+      return;
+    }
+
     let rejectionReason = '';
     if (status === 'REJECTED') {
       rejectionReason = prompt('Please provide rejection reason') || '';
-      if (!rejectionReason.trim()) return;
+      if (!rejectionReason.trim()) {
+        this.errorMessage = 'Rejection reason is required.';
+        return;
+      }
     }
 
     const payload: PrescriptionStatusUpdateRequest = { status, rejectionReason };
+    this.errorMessage = '';
+    this.successMessage = '';
+
     this.pharmacyService.updatePrescriptionStatus(this.prescription.id, payload).subscribe({
       next: (updated) => {
         this.prescription = updated;
+        this.successMessage = `Prescription updated to ${updated.status}.`;
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to update prescription status';
@@ -74,7 +89,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     return status === 'PENDING' || status === 'ACCEPTED';
   }
 
-  medicineLines(): Array<{ medicationName: string; dosage: string; quantity: number; instructions?: string }> {
+  medicineLines(): PrescriptionLineResponse[] {
     const row = this.prescription;
     if (!row) return [];
     if (row.medicineLines && row.medicineLines.length > 0) {
@@ -83,6 +98,7 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
 
     return [
       {
+        id: row.id,
         medicationName: row.medicationName || '-',
         dosage: row.dosage || '-',
         quantity: row.quantity ?? 0,
@@ -142,5 +158,22 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
 
   private normalizeMedicineName(value?: string): string {
     return (value ?? '').trim().toLowerCase();
+  }
+
+  private statusActionLabel(status: PrescriptionStatus): string {
+    switch (status) {
+      case 'ACCEPTED':
+        return 'accept';
+      case 'REJECTED':
+        return 'reject';
+      case 'READY_FOR_PICKUP':
+        return 'mark as ready for pickup';
+      case 'COLLECTED':
+        return 'mark as collected';
+      case 'EXPIRED':
+        return 'mark as expired';
+      default:
+        return `set to ${status.toLowerCase().replace(/_/g, ' ')}`;
+    }
   }
 }

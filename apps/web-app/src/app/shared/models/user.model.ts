@@ -5,6 +5,7 @@ export interface UserRequest {
   lastName: string;
   phone?: string;
   dateOfBirth?: string;
+  insuranceCompany?: string;
   role?: string;
 }
 
@@ -15,11 +16,16 @@ export interface UserResponse {
   lastName: string;
   phone: string;
   dateOfBirth: string;
+  insuranceCompany?: string;
   isActive: boolean;
+  isPermanentlyBanned?: boolean;
+  bannedUntil?: string | null;
   createdAt: string;
   role: string;
   profile: UserProfile;
 }
+
+export type BanDuration = 'ONE_DAY' | 'THREE_DAYS' | 'ONE_WEEK' | 'ONE_MONTH' | 'PERMANENT';
 
 export interface UserProfile {
   id: number;
@@ -34,6 +40,7 @@ export interface ProfileUpdateRequest {
   lastName: string;
   phone?: string;
   dateOfBirth?: string;
+  insuranceCompany?: string;
   bio?: string;
   avatar?: string;
   preferredLanguage?: string;
