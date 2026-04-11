@@ -66,8 +66,8 @@
     </table>
   </div>
 
-  <div class="modal-backdrop" *ngIf="showBanModal" (click)="closeBanModal()">
-    <div class="ban-modal card" (click)="$event.stopPropagation()">
+  <div class="modal-backdrop" *ngIf="showBanModal" tabindex="0" role="button" aria-label="Close ban modal backdrop" (click)="closeBanModal()" (keydown)="onModalBackdropKeydown($event)">
+    <div class="ban-modal card" role="dialog" aria-modal="true" tabindex="0" (click)="$event.stopPropagation()" (keydown)="onBanModalKeydown($event)">
       <h3>Ban User</h3>
       <p *ngIf="banTargetUser">
         Choose ban period for <strong>{{ banTargetUser.firstName }} {{ banTargetUser.lastName }}</strong>.

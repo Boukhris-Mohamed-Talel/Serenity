@@ -88,6 +88,21 @@ export class UserListComponent implements OnInit {
     this.selectedBanDuration = 'ONE_DAY';
   }
 
+  onModalBackdropKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.closeBanModal();
+    }
+  }
+
+  onBanModalKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.closeBanModal();
+    }
+  }
+
   toggleBanDurationMenu(): void {
     this.showBanDurationMenu = !this.showBanDurationMenu;
   }
