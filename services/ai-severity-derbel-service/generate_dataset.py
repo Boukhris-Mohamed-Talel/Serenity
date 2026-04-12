@@ -189,6 +189,9 @@ def augment_diagnosis(code, name, severity):
             "minor condition, follow-up in 2 weeks",
             "no acute distress",
             "self-limiting condition",
+            "routine exam",
+            "slight discomfort reported",
+            "minor pain, prescribed rest",
         ],
         "MEDIUM": [
             "moderate symptoms, requires monitoring",
@@ -196,6 +199,9 @@ def augment_diagnosis(code, name, severity):
             "stable but requires medication adjustment",
             "needs specialist referral",
             "follow-up required in 1 week",
+            "recurring symptoms",
+            "flare-up event",
+            "uncomfortable episode, managing with meds",
         ],
         "HIGH": [
             "severe presentation, urgent care needed",
@@ -203,21 +209,35 @@ def augment_diagnosis(code, name, severity):
             "life-threatening, immediate intervention",
             "acute emergency, rapid response",
             "advanced stage, palliative care discussed",
+            "fatal prognosis risk",
+            "immediate surgery required",
+            "severe trauma protocol active",
         ],
     }
-    note = random.choice(notes[severity])
-    variants.append(f"{name} - {note}")
+    
+    # Add multiple randomly generated notes to ensure variety
+    random_notes = random.sample(notes[severity], k=3)
+    for note in random_notes:
+        variants.append(f"{name} - {note}")
+        variants.append(f"{code}: {name} ({note})")
+        variants.append(f"{note.capitalize()} due to {name}")
 
     # Format 5: Code with abbreviated name
     words = name.split()
     if len(words) > 2:
-        short = " ".join(words[:3])
+        short = " ".join(words[:2])
         variants.append(f"{code} {short}")
+        variants.append(f"{short.lower()} problem")
+
+    # Format 6: Patient scenarios (noise injection)
+    prefixes = ["Patient presents with ", "Suspected ", "Confirmed case of ", "History of ", "Assessment: "]
+    variants.append(random.choice(prefixes) + name)
+    variants.append(random.choice(prefixes).lower() + name.lower())
 
     return variants
 
 
-def generate_dataset(output_path, target_size=800):
+def generate_dataset(output_path, target_size=10000):
     """Generate the full training dataset CSV."""
     rows = []
 
@@ -253,4 +273,4 @@ def generate_dataset(output_path, target_size=800):
 
 
 if __name__ == "__main__":
-    generate_dataset("dataset/medical_severity.csv", target_size=900)
+    generate_dataset("dataset/medical_severity.csv", target_size=10000)

@@ -3,6 +3,7 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PrescriptionService } from '../../../core/services/prescription.service';
 import { MedicineService } from '../../../core/services/medicine.service';
+import { MedicalRecordService } from '../../../core/services/medical-record.service';
 import { PrescriptionItemRequest, PrescriptionRequest } from '../../../models/prescription.model';
 import { Medicine, OpenFDAMedicine } from '../../../models/medicine.model';
 import { Subject } from 'rxjs';
@@ -24,6 +25,9 @@ export class PrescriptionFormComponent implements OnInit {
   saving = false;
 
   medicines: Medicine[] = [];
+  aiRecommendations: string[] = []; // AI Drug Recs
+  recordDiagnosis: string | null = null;
+
   searchResults: { [index: number]: OpenFDAMedicine[] } = {};
   medicineWarnings: { [index: number]: string } = {};
   searchSubject = new Subject<{ index: number; query: string }>();
@@ -39,6 +43,7 @@ export class PrescriptionFormComponent implements OnInit {
     private readonly router: Router,
     private readonly prescriptionService: PrescriptionService,
     private readonly medicineService: MedicineService,
+    private readonly medicalRecordService: MedicalRecordService,
     private readonly notification: NotificationService
   ) {}
 
@@ -88,6 +93,7 @@ export class PrescriptionFormComponent implements OnInit {
     this.recordId = +rid;
 
     this.loadMedicines();
+    this.loadRecordForAi(this.recordId);
 
     const path = this.route.snapshot.routeConfig?.path;
     if (path === 'new') {
@@ -119,6 +125,40 @@ export class PrescriptionFormComponent implements OnInit {
       error: () => this.notification.error('Impossible de charger les médicaments')
     });
   }
+
+  private loadRecordForAi(recordId: number): void {
+    this.medicalRecordService.getRecordById(recordId).subscribe({
+      next: (record) => {
+        if (record.diagnosis) {
+          this.recordDiagnosis = record.diagnosis;
+          this.fetchAiRecommendations(record.diagnosis);
+        }
+      }
+    });
+  }
+
+  private fetchAiRecommendations(diagnosis: string): void {
+    this.prescriptionService.recommendDrugs(diagnosis).subscribe({
+      next: (res) => {
+        if (res.recommended_drugs && res.recommended_drugs.length > 0) {
+          this.aiRecommendations = res.recommended_drugs;
+        }
+      },
+      error: () => {
+        // Silently fail if AI is down
+        console.warn('AI Drug Recommender could not be reached.');
+      }
+    });
+  }
+
+  applyAiRecommendation(itemIndex: number, drug: string): void {
+    // Fill the visual input
+    this.itemsArray.at(itemIndex).patchValue({ medicineNameSearch: drug });
+    // Trigger OpenFDA search to get the official ID
+    this.searchSubject.next({ index: itemIndex, query: drug });
+    this.notification.info('Checking OpenFDA for ' + drug + '...');
+  }
+
 
   private loadPrescription(id: number): void {
     this.loading = true;

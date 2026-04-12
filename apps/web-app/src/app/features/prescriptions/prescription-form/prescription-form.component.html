@@ -15,6 +15,31 @@
 
   <div *ngIf="loading" class="state-muted">Loading…</div>
 
+  <!-- AI Recommendations Banner -->
+  <div *ngIf="!loading && aiRecommendations.length > 0" class="ai-banner" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #6b11ff;">
+    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+      <span style="font-size: 1.5rem; margin-right: 10px;">✨</span>
+      <strong style="color: #4a2377;">Smart AI Recommendation</strong>
+    </div>
+    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #333;">
+      Based on the patient's diagnosis <strong>"{{ recordDiagnosis }}"</strong>, the Artificial Intelligence recommends these psychotropic medications:
+    </p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button *ngFor="let drug of aiRecommendations" 
+              type="button"
+              class="btn btn-primary"
+              style="border-radius: 20px; padding: 5px 15px; font-size: 0.9rem; background-color: #6b11ff; border: none; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 5px rgba(107,17,255,0.3);"
+              onmouseover="this.style.transform='scale(1.05)'"
+              onmouseout="this.style.transform='scale(1)'"
+              (click)="applyAiRecommendation(0, drug)">
+        + {{ drug }}
+      </button>
+      <span style="font-size: 0.8rem; color: #666; align-self: flex-end; margin-left: auto;">
+        *Click a drug to auto-fill Item 1
+      </span>
+    </div>
+  </div>
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
       <label class="field">

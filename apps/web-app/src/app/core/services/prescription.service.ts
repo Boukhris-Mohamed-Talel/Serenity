@@ -70,6 +70,13 @@ export class PrescriptionService {
     );
   }
 
+  // ── AI Drug Recommendation ──
+  recommendDrugs(diagnosis: string): Observable<{recommended_drugs: string[], error?: string}> {
+    return unwrapApiResponse(
+      this.http.post<ApiResponseDTO<{recommended_drugs: string[], error?: string}>>(`${this.base}/records/ai-prescriptions/recommend-drugs`, { diagnosis })
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

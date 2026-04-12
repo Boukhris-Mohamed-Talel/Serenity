@@ -31,9 +31,20 @@ except FileNotFoundError:
     tfidf = None
     label_encoder = None
 
+try:
+    rec_model = joblib.load(os.path.join(MODEL_DIR, "recommender_model.pkl"))
+    rec_tfidf = joblib.load(os.path.join(MODEL_DIR, "recommender_tfidf.pkl"))
+    rec_mlb = joblib.load(os.path.join(MODEL_DIR, "recommender_mlb.pkl"))
+    print("Drug Recommender model, TF-IDF, and MLB loaded successfully.")
+except FileNotFoundError:
+    print("Drug Recommender files not found! Run 'python train_recommender.py' first.")
+    rec_model = None
+    rec_tfidf = None
+    rec_mlb = None
+
 
 # ═══════════════════════════════════════════════════════════
-#  PREDICTION ENDPOINT
+#  PREDICTION ENDPOINTS
 # ═══════════════════════════════════════════════════════════
 
 @app.route("/predict", methods=["POST"])
@@ -86,6 +97,64 @@ def predict():
         "probabilities": probabilities,
     })
 
+
+@app.route("/recommend-drugs", methods=["POST"])
+def recommend_drugs():
+    """
+    Recommend drugs based on a medical diagnosis.
+
+    Request body (JSON):
+        {"diagnosis": "Major depressive disorder"}
+
+    Response (JSON):
+        {
+            "recommended_drugs": ["Sertraline", "Fluoxetine", "Escitalopram"]
+        }
+    """
+    if rec_model is None:
+        return jsonify({"error": "Recommender model not loaded. Train it first."}), 503
+
+    data = request.get_json()
+    if not data or "diagnosis" not in data:
+        return jsonify({"error": "Missing 'diagnosis' field in request body."}), 400
+
+    diagnosis_text = data["diagnosis"].strip().lower()
+    if not diagnosis_text:
+        return jsonify({"error": "'diagnosis' field cannot be empty."}), 400
+
+    # Vectorize input
+    X = rec_tfidf.transform([diagnosis_text])
+
+    # Predict
+    # Since it's multi-output Random Forest, it outputs a binary matrix
+    prediction = rec_model.predict(X)
+    
+    # Inverse transform to get drug names
+    drugs = rec_mlb.inverse_transform(prediction)[0]
+
+    # If the model is not confident enough and returns empty, provide a fallback
+    drug_list = list(drugs)
+    if not drug_list:
+        try:
+            proba = rec_model.predict_proba(X)
+            # RF predict_proba returns a list of n_classes, each an array of shape (n_samples, 2)
+            class_probs = []
+            for i in range(len(rec_mlb.classes_)):
+                # Probability of being class 1 (True)
+                prob_true = proba[i][0][1]
+                class_probs.append((prob_true, rec_mlb.classes_[i]))
+            
+            # Sort by probability descending
+            class_probs.sort(key=lambda x: x[0], reverse=True)
+            
+            # Take top 3 drugs with highest probability (even if < 0.5)
+            drug_list = [c[1] for c in class_probs[:3] if c[0] > 0]
+        except Exception as e:
+            print("Fallback error:", str(e))
+
+    return jsonify({
+        "recommended_drugs": drug_list
+    })
 
 # ═══════════════════════════════════════════════════════════
 #  HEALTH CHECK
