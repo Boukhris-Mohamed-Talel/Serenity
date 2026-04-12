@@ -162,4 +162,20 @@ public class PrescriptionController {
                 .data(results)
                 .build());
     }
+
+    // ── Keywords Complexes: Prescriptions critiques ──
+    @GetMapping("/patient/{patientId}/critical")
+    public ResponseEntity<ApiResponseDTO<List<PrescriptionResponseDTO>>> getCriticalPrescriptions(
+            @PathVariable Long patientId) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<PrescriptionResponseDTO> results = prescriptionService.getCriticalPrescriptions(patientId, authenticatedUserId, isAdmin);
+        return ResponseEntity.ok(ApiResponseDTO.<List<PrescriptionResponseDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Prescriptions critiques (Keywords cross-table)")
+                .data(results)
+                .build());
+    }
 }

@@ -20,6 +20,18 @@
     <span class="current">Prescriptions</span>
   </nav>
 
+  <!-- ═══ Keywords Filter Toggle ═══ -->
+  <div class="filter-bar" *ngIf="patientId">
+    <button
+      type="button"
+      class="filter-toggle"
+      [class.active]="filterCriticalOnly"
+      (click)="toggleCriticalPrescriptions()">
+      🔴 {{ filterCriticalOnly ? 'Show all prescriptions' : 'Show critical only (HIGH severity)' }}
+    </button>
+    <span class="filter-hint" *ngIf="filterCriticalOnly">Filtered by Keywords cross-table — showing prescriptions linked to HIGH severity records</span>
+  </div>
+
   <!-- ═══ SKELETON LOADING ═══ -->
   <div class="rx-cards" *ngIf="loading">
     <div class="rx-ticket skeleton-ticket" *ngFor="let s of [1,2]">

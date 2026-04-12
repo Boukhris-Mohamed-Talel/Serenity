@@ -122,4 +122,25 @@ export class RecordListComponent implements OnInit {
       }
     });
   }
+
+  // ── JPQL Complexe: Filtre "Active Treatments" ──
+  filterActiveOnly = false;
+
+  toggleActiveTreatments(): void {
+    this.filterActiveOnly = !this.filterActiveOnly;
+    if (this.filterActiveOnly && this.patientId != null) {
+      this.loading = true;
+      this.recordService.getRecordsWithActiveTreatment(this.patientId).subscribe({
+        next: (list) => {
+          this.records = list;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        }
+      });
+    } else {
+      this.load();
+    }
+  }
 }

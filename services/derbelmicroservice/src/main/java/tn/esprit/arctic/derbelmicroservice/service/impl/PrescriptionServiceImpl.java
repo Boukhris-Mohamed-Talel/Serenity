@@ -120,4 +120,16 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
         }
         return authenticatedUserId;
     }
+
+    // ── Keywords Complexes: Prescriptions critiques (traverse 2 tables) ──
+    @Override
+    @Transactional(readOnly = true)
+    public List<PrescriptionResponseDTO> getCriticalPrescriptions(Long patientId, Long doctorId, boolean isAdmin) {
+        List<Prescription> results = isAdmin
+                ? prescriptionRepository.findByPatientIdAndMedicalRecord_Severity(patientId,
+                    tn.esprit.arctic.derbelmicroservice.entity.enums.Severity.HIGH)
+                : prescriptionRepository.findByPatientIdAndMedicalRecord_SeverityAndDoctorId(patientId,
+                    tn.esprit.arctic.derbelmicroservice.entity.enums.Severity.HIGH, doctorId);
+        return results.stream().map(prescriptionMapper::toResponseDTO).toList();
+    }
 }

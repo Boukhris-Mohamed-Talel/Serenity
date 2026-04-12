@@ -19,6 +19,18 @@
     <span class="current">Records</span>
   </nav>
 
+  <!-- ═══ JPQL Filter Toggle ═══ -->
+  <div class="filter-bar" *ngIf="patientId">
+    <button
+      type="button"
+      class="filter-toggle"
+      [class.active]="filterActiveOnly"
+      (click)="toggleActiveTreatments()">
+      🟢 {{ filterActiveOnly ? 'Show all records' : 'Show active treatments only' }}
+    </button>
+    <span class="filter-hint" *ngIf="filterActiveOnly">Filtered by JPQL JOIN — showing only records with active prescriptions</span>
+  </div>
+
   <!-- Search bar -->
   <div class="search-bar">
     <div class="search-inputs">

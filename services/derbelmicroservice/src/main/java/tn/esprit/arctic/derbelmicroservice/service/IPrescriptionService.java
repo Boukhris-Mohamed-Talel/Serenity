@@ -22,4 +22,7 @@ public interface IPrescriptionService {
     void deletePrescription(Long id, Long doctorId, boolean isAdmin);
 
     List<PrescriptionResponseDTO> searchPrescriptions(String medicationName, String status, Long doctorId, boolean isAdmin);
+
+    // ── Keywords Complexes: Prescriptions critiques ──
+    List<PrescriptionResponseDTO> getCriticalPrescriptions(Long patientId, Long doctorId, boolean isAdmin);
 }

@@ -60,6 +60,13 @@ export class MedicalRecordService {
     );
   }
 
+  // ── JPQL Complexe: Dossiers avec traitement actif ──
+  getRecordsWithActiveTreatment(patientId: number): Observable<MedicalRecord[]> {
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<MedicalRecord[]>>(`${this.base}/records/patient/${patientId}/active-treatments`)
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

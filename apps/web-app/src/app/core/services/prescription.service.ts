@@ -63,6 +63,13 @@ export class PrescriptionService {
     return this.http.get(`${this.base}/prescriptions/${id}/pdf`, { responseType: 'blob' });
   }
 
+  // ── Keywords Complexes: Prescriptions critiques ──
+  getCriticalPrescriptions(patientId: number): Observable<Prescription[]> {
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<Prescription[]>>(`${this.base}/prescriptions/patient/${patientId}/critical`)
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));
