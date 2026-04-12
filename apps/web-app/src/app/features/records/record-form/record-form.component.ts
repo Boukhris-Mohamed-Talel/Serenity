@@ -110,6 +110,30 @@ export class RecordFormComponent implements OnInit {
     }, 200);
   }
 
+  aiPredicting = false;
+  
+  autoPredictSeverity(): void {
+    const diagnosis = this.form.get('diagnosis')?.value;
+    if (!diagnosis || diagnosis.trim() === '') {
+      this.notification.error("Please enter a diagnosis first.");
+      return;
+    }
+
+    this.aiPredicting = true;
+    this.recordService.predictSeverity(diagnosis).subscribe({
+      next: (result) => {
+        this.form.patchValue({ severity: result.severity });
+        const confPercent = Math.round(result.confidence * 100);
+        this.notification.success(`AI predicted: ${result.severity} (${confPercent}% confidence)`);
+        this.aiPredicting = false;
+      },
+      error: () => {
+        this.notification.error("Failed to get AI prediction");
+        this.aiPredicting = false;
+      }
+    });
+  }
+
   private loadRecord(id: number): void {
     this.loading = true;
     this.recordService.getRecordById(id).subscribe({

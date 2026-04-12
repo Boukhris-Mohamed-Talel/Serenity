@@ -60,6 +60,15 @@ export class MedicalRecordService {
     );
   }
 
+  predictSeverity(diagnosis: string): Observable<{severity: string, confidence: number}> {
+    return unwrapApiResponse(
+      this.http.post<ApiResponseDTO<{severity: string, confidence: number}>>(
+        `${this.base}/records/ai-severity/predict`, 
+        { diagnosis }
+      )
+    );
+  }
+
   // ── JPQL Complexe: Dossiers avec traitement actif ──
   getRecordsWithActiveTreatment(patientId: number): Observable<MedicalRecord[]> {
     return unwrapApiResponse(

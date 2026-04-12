@@ -53,7 +53,15 @@
         <small class="err" *ngIf="form.get('date')?.invalid && form.get('date')?.touched">Date is required</small>
       </label>
       <label class="field">
-        <span>Severity *</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Severity *</span>
+          <button type="button" class="btn btn-sm" 
+                  style="background: linear-gradient(135deg, #6c63ff, #48c6ef); color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; transition: transform 0.2s;"
+                  (click)="autoPredictSeverity()"
+                  [disabled]="aiPredicting">
+            ✨ {{ aiPredicting ? 'Predicting...' : 'Auto-Detect via AI' }}
+          </button>
+        </div>
         <select formControlName="severity">
           <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
         </select>
