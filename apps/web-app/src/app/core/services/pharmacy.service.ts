@@ -113,6 +113,24 @@ export class PharmacyService {
     );
   }
 
+  uploadPrescriptionInsuranceDocument(
+    prescriptionId: number,
+    file: File
+  ): Observable<PrescriptionResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<PrescriptionResponse>(
+      `${this.API_URL}/prescriptions/${prescriptionId}/insurance-document`,
+      formData
+    );
+  }
+
+  downloadPrescriptionInsuranceDocument(prescriptionId: number): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/prescriptions/${prescriptionId}/insurance-document`, {
+      responseType: 'blob'
+    });
+  }
+
   listStock(query?: string, includeArchived = false): Observable<StockItemResponse[]> {
     const params: string[] = [`includeArchived=${includeArchived}`];
     if (query && query.trim()) {

@@ -17,6 +17,9 @@
           <p class="meta"><strong>Patient:</strong> {{ selected.patientName }}</p>
           <p class="meta"><strong>Doctor:</strong> {{ selected.doctorName }}</p>
           <p class="meta"><strong>Status:</strong> {{ selected.status }}</p>
+          <p class="meta" *ngIf="selected.insuranceDocumentAvailable">
+            <strong>Insurance Copy:</strong> Uploaded at {{ selected.insuranceDocumentUploadedAt | date:'medium' }}
+          </p>
         </div>
         <div class="actions">
           <button
@@ -40,8 +43,68 @@
             [disabled]="selected.status !== 'ACCEPTED'">
             Ready
           </button>
+          <button
+            *ngIf="selected.insuranceDocumentAvailable"
+            type="button"
+            class="btn btn-secondary"
+            (click)="downloadInsuranceDocument()"
+            [disabled]="downloadingInsuranceDocument">
+            {{ downloadingInsuranceDocument ? 'Downloading...' : 'Download Insurance Copy' }}
+          </button>
         </div>
       </div>
+
+      <section class="insurance-upload" *ngIf="canShowInsuranceUpload()">
+        <div class="insurance-upload-head">
+          <h3>Insurance Upload</h3>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="openInsuranceUploadPanel()"
+            *ngIf="!showInsuranceUploadPanel">
+            Upload Prescription For Insurance
+          </button>
+        </div>
+
+        <div class="insurance-panel" *ngIf="showInsuranceUploadPanel">
+          <div class="mode-buttons">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [class.active]="selectedInsuranceUploadMode === 'mobile'"
+              (click)="chooseInsuranceUploadMode('mobile')">
+              Use Mobile App
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [class.active]="selectedInsuranceUploadMode === 'pc'"
+              (click)="chooseInsuranceUploadMode('pc')">
+              Upload From This Computer
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="closeInsuranceUploadPanel()">
+              Close
+            </button>
+          </div>
+
+          <div *ngIf="selectedInsuranceUploadMode === 'mobile'" class="mode-card">
+            <p>Prescription ID: <strong>{{ selected.id }}</strong></p>
+            <p>Open the mobile app, login, pick this prescription, capture photo, and upload.</p>
+            <p class="hint" *ngIf="watchingMobileUpload">Waiting for mobile upload...</p>
+          </div>
+
+          <div *ngIf="selectedInsuranceUploadMode === 'pc'" class="mode-card">
+            <input type="file" accept=".jpg,.jpeg,.png,image/*" (change)="onInsuranceFileSelected($event)" />
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="uploadInsuranceDocumentFromComputer()"
+              [disabled]="uploadingInsuranceDocument || !insuranceUploadFile">
+              {{ uploadingInsuranceDocument ? 'Uploading...' : 'Upload Now' }}
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div class="line-items">
         <h3>Medicines</h3>

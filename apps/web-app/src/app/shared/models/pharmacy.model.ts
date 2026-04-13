@@ -92,6 +92,8 @@ export interface PrescriptionResponse {
   status: PrescriptionStatus;
   rejectionReason?: string;
   readyAt?: string;
+  insuranceDocumentAvailable?: boolean;
+  insuranceDocumentUploadedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

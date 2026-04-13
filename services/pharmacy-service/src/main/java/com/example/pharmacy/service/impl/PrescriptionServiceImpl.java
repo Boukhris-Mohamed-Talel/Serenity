@@ -11,11 +11,15 @@ import com.example.pharmacy.repository.MedicineStockItemRepository;
 import com.example.pharmacy.repository.PharmacyPrescriptionRepository;
 import com.example.pharmacy.repository.PharmacyRepository;
 import com.example.pharmacy.security.CurrentUserService;
+import com.example.pharmacy.service.PrescriptionInsuranceDocumentPayload;
 import com.example.pharmacy.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -42,6 +46,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final PrescriptionLineQueryService prescriptionLineQueryService;
     private final PrescriptionAlternativeService prescriptionAlternativeService;
     private final PrescriptionResponseMapper prescriptionResponseMapper;
+    private final PrescriptionInsuranceDocumentStorageService prescriptionInsuranceDocumentStorageService;
 
     @Override
     public List<PrescriptionResponseDTO> getMyInbox() {
@@ -172,6 +177,57 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         List<PrescriptionLineResponseDTO> lines =
             prescriptionLineQueryService.loadLinesForSource(saved.getSourcePrescriptionId());
         return prescriptionResponseMapper.toResponse(saved, lines);
+    }
+
+    @Override
+    public PrescriptionResponseDTO uploadInsuranceDocument(Long id, MultipartFile file) {
+        Long pharmacistId = currentUserService.getCurrentUserId();
+        PharmacyPrescription workflow = pharmacyPrescriptionRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
+
+        ensureAssignedToPharmacyOwner(workflow, pharmacistId);
+        if (workflow.getStatus() != PrescriptionStatus.READY_FOR_PICKUP) {
+            throw new IllegalStateException("Insurance document upload is allowed only when prescription is READY_FOR_PICKUP");
+        }
+
+        String storedPath = prescriptionInsuranceDocumentStorageService.storeDocument(
+            workflow.getId(),
+            file,
+            workflow.getInsuranceDocumentPath()
+        );
+
+        workflow.setInsuranceDocumentPath(storedPath);
+        workflow.setInsuranceDocumentUploadedAt(LocalDateTime.now());
+
+        PharmacyPrescription saved = pharmacyPrescriptionRepository.save(workflow);
+        List<PrescriptionLineResponseDTO> lines =
+            prescriptionLineQueryService.loadLinesForSource(saved.getSourcePrescriptionId());
+        return prescriptionResponseMapper.toResponse(saved, lines);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PrescriptionInsuranceDocumentPayload getInsuranceDocument(Long id) {
+        Long currentUserId = currentUserService.getCurrentUserId();
+        PharmacyPrescription workflow = pharmacyPrescriptionRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
+
+        boolean isOwnerPharmacist = isPharmacyOwner(workflow, currentUserId);
+        boolean isPatient = workflow.getPatientId().equals(currentUserId);
+        if (!(isOwnerPharmacist || isPatient || isAdmin())) {
+            throw new AccessDeniedException("You cannot access this prescription insurance document");
+        }
+
+        String storedPath = workflow.getInsuranceDocumentPath();
+        if (storedPath == null || storedPath.isBlank()) {
+            throw new ResourceNotFoundException("InsuranceDocument", "prescriptionId", id);
+        }
+
+        return new PrescriptionInsuranceDocumentPayload(
+            prescriptionInsuranceDocumentStorageService.loadDocument(storedPath),
+            prescriptionInsuranceDocumentStorageService.resolveContentType(storedPath),
+            prescriptionInsuranceDocumentStorageService.resolveFileName(storedPath, workflow.getId())
+        );
     }
 
     private List<PrescriptionResponseDTO> toResponses(List<PharmacyPrescription> workflows) {
@@ -327,5 +383,15 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
         String normalized = medicineName.trim().toLowerCase(Locale.ROOT);
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private boolean isAdmin() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return false;
+        }
+
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_ADMIN"::equals);
     }
 }

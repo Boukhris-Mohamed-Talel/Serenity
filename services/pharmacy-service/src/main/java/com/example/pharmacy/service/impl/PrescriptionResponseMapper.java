@@ -36,6 +36,12 @@ public class PrescriptionResponseMapper {
             .status(workflow.getStatus())
             .rejectionReason(workflow.getRejectionReason())
             .readyAt(workflow.getReadyAt() != null ? workflow.getReadyAt().toString() : null)
+            .insuranceDocumentAvailable(workflow.getInsuranceDocumentPath() != null)
+            .insuranceDocumentUploadedAt(
+                workflow.getInsuranceDocumentUploadedAt() != null
+                    ? workflow.getInsuranceDocumentUploadedAt().toString()
+                    : null
+            )
             .createdAt(workflow.getCreatedAt() != null ? workflow.getCreatedAt().toString() : null)
             .updatedAt(updatedAt)
             .build();

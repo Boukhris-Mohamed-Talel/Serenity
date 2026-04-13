@@ -43,6 +43,12 @@ public class PharmacyPrescription {
 
     private LocalDateTime readyAt;
 
+    @Column(name = "insurance_document_path")
+    private String insuranceDocumentPath;
+
+    @Column(name = "insurance_document_uploaded_at")
+    private LocalDateTime insuranceDocumentUploadedAt;
+
     @Column(nullable = false)
     private String patientNameSnapshot;
 

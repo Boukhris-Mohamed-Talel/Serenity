@@ -20,6 +20,7 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
   loading = true;
   alternativesLoading = false;
   assigning = false;
+  downloadingInsuranceDocument = false;
 
   errorMessage = '';
   alternativesErrorMessage = '';
@@ -59,6 +60,28 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
 
   backToPatientPharmacy(): void {
     this.router.navigate(['/pharmacy/patient']);
+  }
+
+  downloadInsuranceDocument(): void {
+    if (!this.prescription) {
+      return;
+    }
+
+    this.downloadingInsuranceDocument = true;
+    this.errorMessage = '';
+
+    this.pharmacyService.downloadPrescriptionInsuranceDocument(this.prescription.id).subscribe({
+      next: (blob) => {
+        this.downloadingInsuranceDocument = false;
+        const extension = this.resolveExtensionFromBlob(blob);
+        const fileName = `prescription-${this.prescription?.id ?? 'document'}-insurance.${extension}`;
+        this.triggerBrowserDownload(blob, fileName);
+      },
+      error: (err) => {
+        this.downloadingInsuranceDocument = false;
+        this.errorMessage = err.error?.message || 'Failed to download stamped prescription document.';
+      }
+    });
   }
 
   useAlternativePharmacy(option: AlternativePharmacyOption): void {
@@ -290,5 +313,22 @@ export class PatientPrescriptionDetailsComponent implements OnInit {
     }
 
     return null;
+  }
+
+  private resolveExtensionFromBlob(blob: Blob): string {
+    const type = (blob.type || '').toLowerCase();
+    if (type.includes('png')) {
+      return 'png';
+    }
+    return 'jpg';
+  }
+
+  private triggerBrowserDownload(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   }
 }

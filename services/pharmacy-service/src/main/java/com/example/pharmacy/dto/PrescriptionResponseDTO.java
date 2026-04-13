@@ -37,6 +37,8 @@ public class PrescriptionResponseDTO {
     private PrescriptionStatus status;
     private String rejectionReason;
     private String readyAt;
+    private Boolean insuranceDocumentAvailable;
+    private String insuranceDocumentUploadedAt;
     private String createdAt;
     private String updatedAt;
 }

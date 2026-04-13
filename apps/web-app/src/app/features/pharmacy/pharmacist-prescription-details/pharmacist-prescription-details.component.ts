@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
@@ -14,11 +14,19 @@ import {
   templateUrl: './pharmacist-prescription-details.component.html',
   styleUrls: ['./pharmacist-prescription-details.component.scss']
 })
-export class PharmacistPrescriptionDetailsComponent implements OnInit {
+export class PharmacistPrescriptionDetailsComponent implements OnInit, OnDestroy {
   loading = true;
   errorMessage = '';
   successMessage = '';
   prescription: PrescriptionResponse | null = null;
+  showInsuranceUploadPanel = false;
+  selectedInsuranceUploadMode: 'mobile' | 'pc' | null = null;
+  insuranceUploadFile: File | null = null;
+  uploadingInsuranceDocument = false;
+  watchingMobileUpload = false;
+  downloadingInsuranceDocument = false;
+  private mobileWatchIntervalId: ReturnType<typeof setInterval> | null = null;
+  private mobileWatchBaselineUploadedAt: string | null = null;
   private stockByMedicine = new Map<string, number>();
 
   constructor(
@@ -37,11 +45,19 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     this.load(id);
   }
 
+  ngOnDestroy(): void {
+    this.stopMobileUploadWatch();
+  }
+
   load(id: number): void {
     this.loading = true;
     this.pharmacyService.getPrescriptionById(id).subscribe({
       next: (item) => {
         this.prescription = item;
+        if (this.watchingMobileUpload && this.didMobileUploadComplete(item)) {
+          this.successMessage = `Insurance prescription uploaded at ${this.formatDate(item.insuranceDocumentUploadedAt)}.`;
+          this.stopMobileUploadWatch();
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -119,6 +135,105 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
     this.router.navigate(['/pharmacy/inbox']);
   }
 
+  canShowInsuranceUpload(): boolean {
+    return this.prescription?.status === 'READY_FOR_PICKUP';
+  }
+
+  openInsuranceUploadPanel(): void {
+    this.showInsuranceUploadPanel = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  closeInsuranceUploadPanel(): void {
+    this.showInsuranceUploadPanel = false;
+    this.selectedInsuranceUploadMode = null;
+    this.insuranceUploadFile = null;
+    this.stopMobileUploadWatch();
+  }
+
+  chooseInsuranceUploadMode(mode: 'mobile' | 'pc'): void {
+    this.selectedInsuranceUploadMode = mode;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.insuranceUploadFile = null;
+
+    if (mode === 'mobile') {
+      this.startMobileUploadWatch();
+    } else {
+      this.stopMobileUploadWatch();
+    }
+  }
+
+  onInsuranceFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    if (!file) {
+      this.insuranceUploadFile = null;
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage = 'Please choose an image file (JPG, JPEG, PNG).';
+      this.insuranceUploadFile = null;
+      input.value = '';
+      return;
+    }
+
+    this.insuranceUploadFile = file;
+  }
+
+  uploadInsuranceDocumentFromComputer(): void {
+    if (!this.prescription) {
+      return;
+    }
+
+    if (!this.insuranceUploadFile) {
+      this.errorMessage = 'Please choose a prescription image first.';
+      return;
+    }
+
+    this.uploadingInsuranceDocument = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.pharmacyService.uploadPrescriptionInsuranceDocument(this.prescription.id, this.insuranceUploadFile).subscribe({
+      next: (updated) => {
+        this.prescription = updated;
+        this.uploadingInsuranceDocument = false;
+        this.insuranceUploadFile = null;
+        this.successMessage = `Insurance prescription uploaded at ${this.formatDate(updated.insuranceDocumentUploadedAt)}.`;
+      },
+      error: (err) => {
+        this.uploadingInsuranceDocument = false;
+        this.errorMessage = err.error?.message || 'Failed to upload insurance prescription document';
+      }
+    });
+  }
+
+  downloadInsuranceDocument(): void {
+    if (!this.prescription) {
+      return;
+    }
+
+    this.downloadingInsuranceDocument = true;
+    this.errorMessage = '';
+
+    this.pharmacyService.downloadPrescriptionInsuranceDocument(this.prescription.id).subscribe({
+      next: (blob) => {
+        this.downloadingInsuranceDocument = false;
+        const extension = this.resolveExtensionFromBlob(blob);
+        const fileName = `prescription-${this.prescription?.id ?? 'document'}-insurance.${extension}`;
+        this.triggerBrowserDownload(blob, fileName);
+      },
+      error: (err) => {
+        this.downloadingInsuranceDocument = false;
+        this.errorMessage = err.error?.message || 'Failed to download insurance prescription document';
+      }
+    });
+  }
+
   private loadStockSnapshot(): void {
     this.pharmacyService.listStock(undefined, false).subscribe({
       next: (items) => {
@@ -175,5 +290,84 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit {
       default:
         return `set to ${status.toLowerCase().replace(/_/g, ' ')}`;
     }
+  }
+
+  private startMobileUploadWatch(): void {
+    if (!this.prescription) {
+      return;
+    }
+
+    this.mobileWatchBaselineUploadedAt = this.prescription.insuranceDocumentUploadedAt ?? null;
+    this.watchingMobileUpload = true;
+
+    if (this.mobileWatchIntervalId != null) {
+      return;
+    }
+
+    this.mobileWatchIntervalId = setInterval(() => {
+      if (!this.prescription) {
+        return;
+      }
+
+      this.pharmacyService.getPrescriptionById(this.prescription.id).subscribe({
+        next: (updated) => {
+          this.prescription = updated;
+          if (this.didMobileUploadComplete(updated)) {
+            this.successMessage = `Insurance prescription uploaded at ${this.formatDate(updated.insuranceDocumentUploadedAt)}.`;
+            this.stopMobileUploadWatch();
+          }
+        },
+        error: () => {
+          // Ignore polling failures and keep trying.
+        }
+      });
+    }, 2500);
+  }
+
+  private stopMobileUploadWatch(): void {
+    this.watchingMobileUpload = false;
+    this.mobileWatchBaselineUploadedAt = null;
+    if (this.mobileWatchIntervalId != null) {
+      clearInterval(this.mobileWatchIntervalId);
+      this.mobileWatchIntervalId = null;
+    }
+  }
+
+  private didMobileUploadComplete(prescription: PrescriptionResponse): boolean {
+    if (!prescription.insuranceDocumentAvailable || !prescription.insuranceDocumentUploadedAt) {
+      return false;
+    }
+
+    return this.mobileWatchBaselineUploadedAt == null
+      || prescription.insuranceDocumentUploadedAt !== this.mobileWatchBaselineUploadedAt;
+  }
+
+  private formatDate(raw?: string): string {
+    if (!raw) {
+      return '-';
+    }
+
+    const value = new Date(raw);
+    if (Number.isNaN(value.getTime())) {
+      return raw;
+    }
+    return value.toLocaleString();
+  }
+
+  private resolveExtensionFromBlob(blob: Blob): string {
+    const type = (blob.type || '').toLowerCase();
+    if (type.includes('png')) {
+      return 'png';
+    }
+    return 'jpg';
+  }
+
+  private triggerBrowserDownload(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   }
 }

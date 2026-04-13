@@ -37,6 +37,20 @@
 
           <p class="rejection-note" *ngIf="item.rejectionReason">Rejection reason: {{ item.rejectionReason }}</p>
           <span [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span>
+
+          <div class="insurance-download" *ngIf="item.insuranceDocumentAvailable">
+            <p class="label">Stamped Prescription</p>
+            <p class="value" *ngIf="item.insuranceDocumentUploadedAt">
+              Uploaded {{ item.insuranceDocumentUploadedAt | date:'medium' }}
+            </p>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="downloadInsuranceDocument()"
+              [disabled]="downloadingInsuranceDocument">
+              {{ downloadingInsuranceDocument ? 'Downloading...' : 'Download Stamped Prescription' }}
+            </button>
+          </div>
         </section>
 
         <section class="card meds-card">

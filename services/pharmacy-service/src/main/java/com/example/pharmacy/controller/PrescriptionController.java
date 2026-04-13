@@ -4,12 +4,18 @@ import com.example.pharmacy.dto.PrescriptionAlternativeResponseDTO;
 import com.example.pharmacy.dto.PrescriptionPharmacyReassignRequestDTO;
 import com.example.pharmacy.dto.PrescriptionResponseDTO;
 import com.example.pharmacy.dto.PrescriptionStatusUpdateRequestDTO;
+import com.example.pharmacy.service.PrescriptionInsuranceDocumentPayload;
 import com.example.pharmacy.service.PrescriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -74,6 +80,29 @@ public class PrescriptionController {
         @Valid @RequestBody PrescriptionStatusUpdateRequestDTO request
     ) {
         return handleStatusUpdate(id, request);
+    }
+
+    @PostMapping(value = "/{id}/insurance-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('PHARMACIST')")
+    public ResponseEntity<PrescriptionResponseDTO> uploadInsuranceDocument(
+        @PathVariable Long id,
+        @RequestPart("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(prescriptionService.uploadInsuranceDocument(id, file));
+    }
+
+    @GetMapping("/{id}/insurance-document")
+    @PreAuthorize("hasAnyRole('PATIENT','PHARMACIST','ADMIN')")
+    public ResponseEntity<Resource> downloadInsuranceDocument(@PathVariable Long id) {
+        PrescriptionInsuranceDocumentPayload payload = prescriptionService.getInsuranceDocument(id);
+
+        MediaType mediaType = MediaType.parseMediaType(payload.contentType());
+        ContentDisposition disposition = ContentDisposition.attachment().filename(payload.fileName()).build();
+
+        return ResponseEntity.ok()
+            .contentType(mediaType)
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+            .body(payload.resource());
     }
 
     private ResponseEntity<PrescriptionResponseDTO> handleStatusUpdate(
