@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import html2canvas from 'html2canvas';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PrescriptionService } from '../../../core/services/prescription.service';
@@ -222,7 +223,7 @@ export class PrescriptionFormComponent implements OnInit {
     });
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid || this.patientId == null || this.recordId == null) {
       this.form.markAllAsTouched();
       return;
@@ -247,14 +248,34 @@ export class PrescriptionFormComponent implements OnInit {
       return;
     }
 
+    this.saving = true;
+
+    // Cloudinary Image Capture
+    let imageBase64 = '';
+    try {
+      // Pour éviter les coupures, on force la hauteur au maximum
+      const captureElem = document.getElementById('capture-ticket') as HTMLElement;
+      if (captureElem) {
+        
+        const canvas = await html2canvas(captureElem, { 
+          scale: 2, // Haute résolution
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+        imageBase64 = canvas.toDataURL('image/png');
+      }
+    } catch (e) {
+      console.warn('UI Capture failed. The prescription will save without an image.', e);
+    }
+
     const body: PrescriptionRequest = {
       items,
       status: String(v.status ?? 'ACTIVE'),
       medicalRecordId: this.recordId,
-      patientId: this.patientId
+      patientId: this.patientId,
+      imageBase64: imageBase64 || undefined
     };
 
-    this.saving = true;
     const req$ = this.isEdit && this.prescriptionId
       ? this.prescriptionService.updatePrescription(this.prescriptionId, body)
       : this.prescriptionService.createPrescription(body);

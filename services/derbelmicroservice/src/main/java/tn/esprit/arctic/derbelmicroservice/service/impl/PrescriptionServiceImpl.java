@@ -14,6 +14,7 @@ import tn.esprit.arctic.derbelmicroservice.mapper.PrescriptionMapper;
 import tn.esprit.arctic.derbelmicroservice.repository.MedicalRecordRepository;
 import tn.esprit.arctic.derbelmicroservice.repository.PrescriptionRepository;
 import tn.esprit.arctic.derbelmicroservice.service.IPrescriptionService;
+import tn.esprit.arctic.derbelmicroservice.service.CloudinaryService;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
     private final PrescriptionRepository prescriptionRepository;
     private final MedicalRecordRepository medicalRecordRepository;
     private final PrescriptionMapper prescriptionMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,6 +68,16 @@ public class PrescriptionServiceImpl implements IPrescriptionService {
 
         Prescription prescription = prescriptionMapper.toEntity(requestDTO, record);
         prescription.setDoctorId(resolveDoctorId(requestDTO.getDoctorId(), doctorId, isAdmin));
+
+        if (requestDTO.getImageBase64() != null && !requestDTO.getImageBase64().trim().isEmpty()) {
+            try {
+                String url = cloudinaryService.uploadBase64Image(requestDTO.getImageBase64());
+                prescription.setImageUrl(url);
+            } catch (Exception e) {
+                // Log and continue, do not block prescription creation if image fails
+                System.err.println("Warning: Cloudinary upload failed: " + e.getMessage());
+            }
+        }
 
         Prescription saved = prescriptionRepository.save(prescription);
         return prescriptionMapper.toResponseDTO(

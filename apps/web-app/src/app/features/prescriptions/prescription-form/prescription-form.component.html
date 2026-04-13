@@ -40,6 +40,44 @@
     </div>
   </div>
 
+  <!-- Hidden Beautiful Ticket for Cloudinary Capture -->
+  <div id="capture-ticket" style="position: fixed; top: 0; left: -9999px; width: 750px; background: #ffffff; padding: 40px; border-radius: 12px; font-family: 'Inter', sans-serif; box-sizing: border-box; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+    <div style="border-bottom: 2px solid #6b11ff; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h2 style="color: #333; margin: 0; font-size: 1.8rem; letter-spacing: -0.5px;">Medical Prescription</h2>
+        <p style="color: #666; margin: 5px 0 0 0; font-size: 0.95rem;">Issued automatically via Smart AI System</p>
+      </div>
+      <div style="text-align: right; color: #888; font-size: 0.9rem;">
+        <strong style="color: #6b11ff;">Status:</strong> {{ form.value.status }}<br>
+        <strong>Items:</strong> {{ form.value.items?.length }}
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;">
+        <span *ngFor="let item of form.value.items" style="background: #eef2ff; color: #4338ca; padding: 8px 16px; border-radius: 30px; font-size: 0.95rem; font-weight: 500; border: 1px solid #c7d2fe;">
+          💊 {{ item.medicineNameSearch || 'Unknown Medicine' }}
+        </span>
+      </div>
+
+      <div *ngFor="let item of form.value.items" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0;">
+        <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 1.25rem;">{{ item.medicineNameSearch || 'Unknown Medicine' }}</h3>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; background: #f9fafb; padding: 10px; border-radius: 6px;">
+          <span>Freq: <span style="color: #111827;">{{ item.frequency }}</span></span>
+          <span>Qty: <span style="color: #111827;">{{ item.quantity }}</span></span>
+          <span>Start: <span style="color: #111827;">{{ item.startDate }}</span></span>
+          <span>End: <span style="color: #111827;">{{ item.endDate || '—' }}</span></span>
+        </div>
+        
+        <div *ngIf="item.instructions" style="font-size: 0.95rem; color: #4b5563; line-height: 1.5; background: #fffbeb; padding: 12px; border-left: 4px solid #f59e0b; border-radius: 4px;">
+          <strong style="color: #b45309; text-transform: uppercase; font-size: 0.8rem;">Instructions</strong><br>
+          {{ item.instructions }}
+        </div>
+      </div>
+    </div>
+  </div>
+
   <form [formGroup]="form" (ngSubmit)="submit()" class="card-form" *ngIf="!loading">
     <div class="form-grid">
       <label class="field">

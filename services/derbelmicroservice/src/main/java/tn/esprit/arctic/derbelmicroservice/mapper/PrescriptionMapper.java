@@ -32,6 +32,7 @@ public class PrescriptionMapper {
                 .items(toItemResponses(p.getItems()))
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
+                .imageUrl(p.getImageUrl())
                 .build();
     }
 

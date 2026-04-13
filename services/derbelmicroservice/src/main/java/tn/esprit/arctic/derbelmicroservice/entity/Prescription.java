@@ -45,6 +45,9 @@ public class Prescription {
     @Builder.Default
     private List<PrescriptionItem> items = new ArrayList<>();
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
