@@ -602,5 +602,43 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F2%2Fc056f4dc-05d3-479a-acb8-0a02c8d3bf6c_mental-health-record-boussaidi-rayen-1774709880557.pdf"
     ]
+  },
+  {
+    "ref": "887763e1-fe23-4fd6-84b0-b6113e96e3e5",
+    "patientName": "11",
+    "description": "KFHJFFHGFHG",
+    "amount": 199.96,
+    "insuranceCompany": "Insurance 1",
+    "insuranceGrade": 2,
+    "status": "REJECTED",
+    "reimbursementAmount": null,
+    "receivedAt": "2026-04-14T12:07:52.406Z",
+    "processedAt": "2026-04-14T12:10:26.409Z",
+    "rejectReason": "f off",
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": []
+  },
+  {
+    "ref": "1220e48e-edcf-4f7e-88d0-6e3c15117426",
+    "patientName": "11",
+    "description": "hhjfhgjhnbhc",
+    "amount": 128,
+    "insuranceCompany": "Insurance 4",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 15.36,
+    "receivedAt": "2026-04-14T12:10:58.860Z",
+    "processedAt": "2026-04-14T12:11:20.400Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F11%2Fd5d1866d-0c86-478e-8355-dc8df8bc8bd5_medical_invoice_insurance4.pdf"
+    ]
   }
 ]
