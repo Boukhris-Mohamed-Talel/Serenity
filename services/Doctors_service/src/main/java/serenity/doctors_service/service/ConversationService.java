@@ -1,20 +1,32 @@
 package serenity.doctors_service.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import serenity.doctors_service.dto.ConversationDTO;
+import serenity.doctors_service.dto.MessagesRequest;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.mapper.ConversationMapper;
 import serenity.doctors_service.repository.ConversationRepository;
+import serenity.doctors_service.repository.MessageRepository;
+import serenity.doctors_service.entity.Message;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Service
 public class ConversationService implements IConversationService {
 
     private final ConversationRepository conversationRepository;
     private final ConversationMapper conversationMapper;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     public ConversationService(ConversationRepository conversationRepository, ConversationMapper conversationMapper) {
         this.conversationRepository = conversationRepository;
@@ -61,5 +73,23 @@ public class ConversationService implements IConversationService {
         conversation.setUser1Id(user1Id);
         conversation.setUser2Id(user2Id);
         return conversationRepository.save(conversation);
+    }
+
+    public List<String> getMessagesText(Long conversationId) {
+        return messageRepository.findByConversationId(conversationId)
+                .stream()
+                .map(Message::getContent)
+                .toList();
+    }
+
+    @Override
+    public String analyzeConversation(Long conversationId) {
+        List<String> messages = getMessagesText(conversationId);
+
+        String url = "http://localhost:8000/predict-conversation";
+
+        MessagesRequest request = new MessagesRequest(messages);
+
+        return restTemplate.postForObject(url, request, String.class);
     }
 }

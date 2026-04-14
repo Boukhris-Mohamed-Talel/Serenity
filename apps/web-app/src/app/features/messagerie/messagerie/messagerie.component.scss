@@ -270,3 +270,216 @@
   font-size: 0.85rem;
   outline: none;
 }
+
+/* Analysis Container */
+.analysis-container {
+  padding: 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.analysis-result {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.analysis-header {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.analysis-content {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.analysis-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.analysis-content::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 2px;
+}
+
+.analysis-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.analysis-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Prediction Badge Styles */
+.analysis-prediction {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.prediction-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.confidence-score {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.analyze-btn {
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  margin-left: auto;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.analyze-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.analysis-message {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* Badge Type Colors */
+.badge-suicidal .prediction-badge {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.badge-suicidal {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(153, 27, 27, 0.1));
+  border: 1.5px solid rgba(220, 38, 38, 0.3);
+}
+
+.badge-suicidal .analysis-message {
+  color: #7f1d1d;
+}
+
+.badge-depression .prediction-badge {
+  background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+}
+
+.badge-depression {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(107, 33, 168, 0.1));
+  border: 1.5px solid rgba(147, 51, 234, 0.3);
+}
+
+.badge-depression .analysis-message {
+  color: #581c87;
+}
+
+.badge-anxiety .prediction-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.badge-anxiety {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-anxiety .analysis-message {
+  color: #92400e;
+}
+
+.badge-normal .prediction-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.badge-normal {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  border: 1.5px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-normal .analysis-message {
+  color: #065f46;
+}
+
+.badge-unknown .prediction-badge {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.badge-unknown {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.1));
+  border: 1.5px solid rgba(107, 114, 128, 0.3);
+}
+
+.badge-unknown .analysis-message {
+  color: #374151;
+}

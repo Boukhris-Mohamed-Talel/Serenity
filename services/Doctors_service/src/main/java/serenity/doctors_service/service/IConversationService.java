@@ -16,4 +16,6 @@ public interface IConversationService {
     void deleteConversation(Long id);
 
     Conversation createOrGetConversation(Long user1Id, Long user2Id);
+
+    String analyzeConversation(Long conversationId);
 }

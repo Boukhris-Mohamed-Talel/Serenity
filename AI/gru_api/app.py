@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 import torch
 import torch.nn as nn
 import json
 import nltk
 import re
+
+
+class MessagesInput(BaseModel):
+    messages: List[str]
+
+    
 nltk.download('punkt_tab', quiet=True)
 
 app = FastAPI(title="Mental Health Text Classifier")
@@ -85,3 +92,25 @@ def predict(input: TextInput):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/predict-conversation")
+def predict_conversation(input: MessagesInput):
+    full_text = " ".join(input.messages)
+
+    tokens = preprocess(full_text)
+    tensor = torch.tensor([tokens], dtype=torch.long).to(device)
+    length = torch.tensor(
+        [sum(1 for t in tokens if t != word2idx.get("<PAD>", 0))],
+        dtype=torch.long
+    )
+
+    with torch.no_grad():
+        output = model(tensor, length)
+        probs = torch.softmax(output, dim=1)[0]
+        pred = torch.argmax(probs).item()
+
+    return {
+        "prediction": LABELS[pred],
+        "confidence": round(probs[pred].item(), 4)
+    }

@@ -76,4 +76,12 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  analyseConversation(conversationId: number): Observable<any> {
+    const token = this.authService.getToken();
+    return this.http.get<any>(
+      `http://localhost:8082/api/conversations/${conversationId}/analyze_conversation`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }

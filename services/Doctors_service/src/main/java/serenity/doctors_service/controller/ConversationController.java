@@ -58,4 +58,9 @@ public class ConversationController {
         Conversation conversation = conversationService.createOrGetConversation(user1Id, user2Id);
         return ResponseEntity.ok(conversationMapper.toDTO(conversation));
     }
+
+    @GetMapping("/{id}/analyze_conversation")
+    public String analyzeConversation(@PathVariable("id") Long conversationId) {
+        return conversationService.analyzeConversation(conversationId);
+    }
 }

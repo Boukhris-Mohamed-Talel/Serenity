@@ -42,6 +42,11 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   conversationMenuY = 0;
   selectedConversation: any = null;
 
+  conversationAnalysis: any = null;
+  analysisLoading = false;
+  analysisMessage: string = '';
+  analysisBadgeClass: string = '';
+
   private wsSubscription: Subscription | null = null;
   private clickListener!: () => void;
 
@@ -169,6 +174,9 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         this.activeConversationId = conversation.id;
         this.activeConversationName = `${user.firstName} ${user.lastName}`;
 
+        // Load analysis for this conversation
+        this.loadConversationAnalysis(conversation.id);
+
         // Load messages for this conversation
         this.messagerieService.getConversationMessages(conversation.id).subscribe({
           next: (msgs) => {
@@ -211,6 +219,9 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   selectConversation(convo: any) {
     this.activeConversationId = convo.id;
     this.activeConversationName = convo.otherUserName;
+
+    // Load analysis for this conversation
+    this.loadConversationAnalysis(convo.id);
 
     this.messagerieService.getConversationMessages(convo.id).subscribe({
       next: (msgs) => {
@@ -330,6 +341,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
           this.activeConversationId = null;
           this.activeConversationName = '';
           this.messages = [];
+          this.conversationAnalysis = null;
         }
 
         this.conversationMenuVisible = false;
@@ -337,5 +349,52 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       },
       error: (err) => console.error('Erreur suppression conversation:', err)
     });
+  }
+
+  loadConversationAnalysis(conversationId: number) {
+    this.analysisLoading = true;
+    this.conversationAnalysis = null;
+    this.analysisMessage = '';
+    this.analysisBadgeClass = '';
+    this.messagerieService.analyseConversation(conversationId).subscribe({
+      next: (analysis) => {
+        this.conversationAnalysis = analysis;
+        this.updateAnalysisMessage(analysis);
+        this.analysisLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur analyse conversation:', err);
+        this.analysisLoading = false;
+        this.conversationAnalysis = null;
+      }
+    });
+  }
+
+  updateAnalysisMessage(analysis: any) {
+    const prediction = analysis?.prediction || 'Unknown';
+    const confidence = analysis?.confidence || 0;
+    const confidencePercent = (confidence * 100).toFixed(1);
+
+    switch (prediction.toLowerCase()) {
+      case 'suicidal':
+        this.analysisBadgeClass = 'badge-suicidal';
+        this.analysisMessage = `⚠️ SUICIDAL RISK DETECTED (${confidencePercent}% confidence) - This conversation shows indicators of suicidal ideation. Professional intervention may be necessary.`;
+        break;
+      case 'depression':
+        this.analysisBadgeClass = 'badge-depression';
+        this.analysisMessage = `😔 DEPRESSION INDICATORS (${confidencePercent}% confidence) - The conversation contains signs of depression. Consider providing mental health resources.`;
+        break;
+      case 'anxiety':
+        this.analysisBadgeClass = 'badge-anxiety';
+        this.analysisMessage = `😰 ANXIETY DETECTED (${confidencePercent}% confidence) - The conversation shows anxiety-related patterns. Support and reassurance may be helpful.`;
+        break;
+      case 'normal':
+        this.analysisBadgeClass = 'badge-normal';
+        this.analysisMessage = `✅ NORMAL (${confidencePercent}% confidence) - The conversation appears to be healthy and positive. No concerning patterns detected.`;
+        break;
+      default:
+        this.analysisBadgeClass = 'badge-unknown';
+        this.analysisMessage = `❓ ANALYSIS UNKNOWN - Unable to determine conversation status.`;
+    }
   }
 }
