@@ -43,4 +43,4 @@ def score_claim(request: ClaimScoreRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=PORT, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=PORT, reload=True)

@@ -1,6 +1,13 @@
 __pycache__/
 *.pyc
 .git/
+.gitignore
 .env
-notebooks/.ipynb_checkpoints/
+.env.*
+venv/
+notebooks/
+data/
 *.egg-info/
+*.md
+*.csv
+*.ipynb
