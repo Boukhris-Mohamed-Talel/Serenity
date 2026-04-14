@@ -224,6 +224,13 @@ export class PatientAppointmentsHubComponent implements OnInit, OnDestroy {
     this.router.navigate(['/appointments', a.id]);
   }
 
+  onAppointmentItemKeydown(event: KeyboardEvent, a: AppointmentResponse): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openAppointment(a);
+    }
+  }
+
   goBook(): void {
     this.router.navigate(['/appointments', 'book']);
   }

@@ -127,6 +127,13 @@ export class MoodDashboardComponent implements OnInit {
     this.selectedPatient = patient;
   }
 
+  onPatientDotKeydown(event: KeyboardEvent, point: PatientDot): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.selectPatient(point);
+    }
+  }
+
   getTrendLabel(value: number): string {
     if (value > 0.15) return `+${value.toFixed(2)} improving`;
     if (value < -0.15) return `${value.toFixed(2)} declining`;

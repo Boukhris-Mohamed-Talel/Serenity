@@ -80,10 +80,13 @@
             [attr.cy]="point.y"
             r="7"
             class="curve-dot"
+            role="button"
+            tabindex="0"
             [class.active]="selectedPatient?.patientId === point.patientId"
             [ngClass]="getRiskClass(point.riskScore)"
             (mouseenter)="hoveredPatient = point"
             (mouseleave)="hoveredPatient = null"
+            (keydown)="onPatientDotKeydown($event, point)"
             (click)="selectPatient(point)">
           </circle>
         </g>

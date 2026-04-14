@@ -131,7 +131,13 @@
             <h3 class="hub-h3">{{ selectedDate }}</h3>
             <p class="hub-body hub-body--small" *ngIf="appointmentsOnSelectedDay.length === 0">Nothing scheduled this day.</p>
             <ul class="hub-day-list" *ngIf="appointmentsOnSelectedDay.length > 0">
-              <li *ngFor="let a of appointmentsOnSelectedDay" (click)="openAppointment(a)" class="hub-day-item">
+              <li
+                *ngFor="let a of appointmentsOnSelectedDay"
+                class="hub-day-item"
+                role="button"
+                tabindex="0"
+                (click)="openAppointment(a)"
+                (keydown)="onAppointmentItemKeydown($event, a)">
                 <div class="hub-day-item__row">
                   <span class="hub-visit-type__icon hub-visit-type__icon--sm" *ngIf="a.type === 'TELECONSULTATION'" aria-hidden="true">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
