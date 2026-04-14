@@ -32,6 +32,12 @@ public class PrescriptionController {
         return ResponseEntity.ok(prescriptionService.getMyInbox());
     }
 
+    @GetMapping("/inbox/insurance-missing")
+    @PreAuthorize("hasRole('PHARMACIST')")
+    public ResponseEntity<List<PrescriptionResponseDTO>> getMyInsuranceMissingInbox() {
+        return ResponseEntity.ok(prescriptionService.getMyInsuranceMissingInbox());
+    }
+
     @GetMapping("/mine")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<PrescriptionResponseDTO>> getMineForPatient() {

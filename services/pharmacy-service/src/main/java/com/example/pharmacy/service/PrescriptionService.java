@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface PrescriptionService {
     List<PrescriptionResponseDTO> getMyInbox();
+    List<PrescriptionResponseDTO> getMyInsuranceMissingInbox();
     List<PrescriptionResponseDTO> getMyPatientPrescriptions();
     PrescriptionResponseDTO getPrescription(Long id);
     PrescriptionAlternativeResponseDTO getPatientAlternatives(Long id, Double latitude, Double longitude);

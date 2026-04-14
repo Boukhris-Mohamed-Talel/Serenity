@@ -73,6 +73,10 @@ export class PharmacyService {
     return this.http.put<PrescriptionResponse>(`${this.API_URL}/prescriptions/${prescriptionId}/pharmacy`, payload);
   }
 
+  getInsuranceMissingInbox(): Observable<PrescriptionResponse[]> {
+    return this.http.get<PrescriptionResponse[]>(`${this.API_URL}/prescriptions/inbox/insurance-missing`);
+  }
+
   getMyDefaultPharmacy(): Observable<PatientDefaultPharmacyResponse> {
     return this.http.get<PatientDefaultPharmacyResponse>(`${this.API_URL}/patient/default`);
   }

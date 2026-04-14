@@ -23,6 +23,7 @@ export class PharmacistDashboardComponent implements OnInit {
   allPrescriptions: PrescriptionResponse[] = [];
   filteredPrescriptions: PrescriptionResponse[] = [];
   lowStockItems: StockItemResponse[] = [];
+  insuranceMissingItems: PrescriptionResponse[] = [];
 
   search = '';
   statusFilter: DashboardStatusFilter = 'ALL';
@@ -108,11 +109,13 @@ export class PharmacistDashboardComponent implements OnInit {
 
     forkJoin({
       prescriptions: this.pharmacyService.getInbox(),
-      stockItems: this.pharmacyService.listStock('', false)
+      stockItems: this.pharmacyService.listStock('', false),
+      insuranceMissing: this.pharmacyService.getInsuranceMissingInbox()
     }).subscribe({
-      next: ({ prescriptions, stockItems }) => {
+      next: ({ prescriptions, stockItems, insuranceMissing }) => {
         this.allPrescriptions = prescriptions;
         this.lowStockItems = this.buildLowStockList(stockItems);
+        this.insuranceMissingItems = insuranceMissing;
         this.applyPrescriptionFilters();
         this.loading = false;
       },

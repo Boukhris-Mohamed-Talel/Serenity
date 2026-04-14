@@ -29,17 +29,12 @@ public class StockServiceImpl implements StockService {
     @Transactional(readOnly = true)
     public List<StockItemResponseDTO> listMyStock(String query, boolean includeArchived) {
         Long userId = currentUserService.getCurrentUserId();
-        List<MedicineStockItem> items;
-
-        if (query != null && !query.isBlank()) {
-            items = includeArchived
-                ? medicineStockItemRepository.findByPharmacyOwnerUserIdAndArchivedTrueAndMedicineNameContainingIgnoreCaseOrderByUpdatedAtDesc(userId, query.trim())
-                : medicineStockItemRepository.findByPharmacyOwnerUserIdAndArchivedFalseAndMedicineNameContainingIgnoreCaseOrderByUpdatedAtDesc(userId, query.trim());
-        } else {
-            items = includeArchived
-                ? medicineStockItemRepository.findByPharmacyOwnerUserIdAndArchivedTrueOrderByUpdatedAtDesc(userId)
-                : medicineStockItemRepository.findByPharmacyOwnerUserIdAndArchivedFalseOrderByUpdatedAtDesc(userId);
-        }
+        String normalizedQuery = (query == null || query.isBlank()) ? null : query.trim();
+        List<MedicineStockItem> items = medicineStockItemRepository.findByOwnerUserIdWithSearch(
+            userId,
+            includeArchived,
+            normalizedQuery
+        );
 
         return items.stream().map(this::toResponse).toList();
     }

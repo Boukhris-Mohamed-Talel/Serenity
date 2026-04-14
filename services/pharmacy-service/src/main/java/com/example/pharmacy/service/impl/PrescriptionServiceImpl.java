@@ -58,6 +58,18 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     }
 
     @Override
+    public List<PrescriptionResponseDTO> getMyInsuranceMissingInbox() {
+        Long pharmacistId = currentUserService.getCurrentUserId();
+        List<PharmacyPrescription> workflows = pharmacyPrescriptionRepository
+            .findByAssignedPharmacyOwnerUserIdAndStatusAndInsuranceDocumentPathIsNullOrderByReadyAtAsc(
+                pharmacistId,
+                PrescriptionStatus.READY_FOR_PICKUP
+            );
+
+        return toResponses(workflows);
+    }
+
+    @Override
     public List<PrescriptionResponseDTO> getMyPatientPrescriptions() {
         Long patientId = currentUserService.getCurrentUserId();
         List<PharmacyPrescription> workflows = pharmacyPrescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId);

@@ -36,6 +36,20 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
         @Param("medicineNames") Set<String> medicineNames
     );
 
+    @Query("""
+        select m from MedicineStockItem m
+        join m.pharmacy p
+        where p.ownerUserId = :ownerUserId
+          and m.archived = :includeArchived
+          and (:query is null or lower(m.medicineName) like lower(concat('%', :query, '%')))
+        order by m.updatedAt desc
+        """)
+    List<MedicineStockItem> findByOwnerUserIdWithSearch(
+        @Param("ownerUserId") Long ownerUserId,
+        @Param("includeArchived") boolean includeArchived,
+        @Param("query") String query
+    );
+
     Optional<MedicineStockItem> findByIdAndPharmacyOwnerUserId(Long id, Long ownerUserId);
 
     void deleteByPharmacyId(Long pharmacyId);

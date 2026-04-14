@@ -128,6 +128,28 @@
         <ng-template #emptyStock>
           <p class="empty">No medicines are currently in low stock.</p>
         </ng-template>
+
+        <div class="sub-section">
+          <div class="panel-head compact">
+            <h2>Needs Insurance Upload</h2>
+            <span class="count-pill">{{ insuranceMissingItems.length }}</span>
+          </div>
+
+          <div class="stock-list" *ngIf="insuranceMissingItems.length > 0; else emptyInsuranceMissing">
+            <button
+              type="button"
+              class="stock-row"
+              *ngFor="let item of insuranceMissingItems"
+              (click)="openPrescription(item)">
+              <span class="name">{{ medicineSummary(item) }} - {{ item.patientName }}</span>
+              <span class="qty">{{ item.readyAt | date:'shortTime' }}</span>
+            </button>
+          </div>
+
+          <ng-template #emptyInsuranceMissing>
+            <p class="empty">No overdue ready prescriptions are missing insurance upload.</p>
+          </ng-template>
+        </div>
       </article>
     </section>
   </section>

@@ -179,6 +179,15 @@
   font-size: 1.02rem;
 }
 
+.panel-head.compact {
+  margin-top: 0.9rem;
+  margin-bottom: 0.55rem;
+}
+
+.panel-head.compact h2 {
+  font-size: 0.95rem;
+}
+
 .count-pill {
   min-width: 30px;
   text-align: center;
@@ -333,6 +342,12 @@
 
 .stock-cta:hover {
   filter: brightness(0.96);
+}
+
+.sub-section {
+  margin-top: 0.8rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed #c8ddda;
 }
 
 .empty,
