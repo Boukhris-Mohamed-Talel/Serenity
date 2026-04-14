@@ -22,4 +22,7 @@ public interface IMedicalRecordService {
     void deleteRecord(Long id, Long doctorId, boolean isAdmin);
 
     List<MedicalRecordResponseDTO> searchRecords(String diagnosis, String status, String severity, Long doctorId, boolean isAdmin);
+
+    // ── JPQL Complexe: Dossiers avec traitement actif ──
+    List<MedicalRecordResponseDTO> getRecordsWithActiveTreatment(Long patientId, Long doctorId, boolean isAdmin);
 }

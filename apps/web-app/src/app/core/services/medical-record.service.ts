@@ -60,6 +60,22 @@ export class MedicalRecordService {
     );
   }
 
+  predictSeverity(diagnosis: string): Observable<{severity: string, confidence: number}> {
+    return unwrapApiResponse(
+      this.http.post<ApiResponseDTO<{severity: string, confidence: number}>>(
+        `${this.base}/records/ai-severity/predict`, 
+        { diagnosis }
+      )
+    );
+  }
+
+  // ── JPQL Complexe: Dossiers avec traitement actif ──
+  getRecordsWithActiveTreatment(patientId: number): Observable<MedicalRecord[]> {
+    return unwrapApiResponse(
+      this.http.get<ApiResponseDTO<MedicalRecord[]>>(`${this.base}/records/patient/${patientId}/active-treatments`)
+    );
+  }
+
   private buildPageParams(q: PageQuery): HttpParams {
     let p = new HttpParams();
     if (q.page !== undefined) p = p.set('page', String(q.page));

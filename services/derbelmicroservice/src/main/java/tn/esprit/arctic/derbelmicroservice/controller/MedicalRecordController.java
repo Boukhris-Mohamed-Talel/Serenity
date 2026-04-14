@@ -121,6 +121,21 @@ public class MedicalRecordController {
                 .build());
     }
 
+    @GetMapping("/patient/{patientId}/active-treatments")
+    public ResponseEntity<ApiResponseDTO<List<MedicalRecordResponseDTO>>> getRecordsWithActiveTreatment(
+            @PathVariable Long patientId) {
+        DerbelAuth.requireDoctorOrAdmin();
+        Long authenticatedUserId = DerbelAuth.requireUserId();
+        boolean isAdmin = DerbelAuth.isAdmin();
+
+        List<MedicalRecordResponseDTO> records = medicalRecordService.getRecordsWithActiveTreatment(patientId, authenticatedUserId, isAdmin);
+        return ResponseEntity.ok(ApiResponseDTO.<List<MedicalRecordResponseDTO>>builder()
+                .status(HttpStatus.OK.value())
+                .message("Dossiers avec traitement actif (JPQL JOIN)")
+                .data(records)
+                .build());
+    }
+
     @GetMapping("/search")
     public ResponseEntity<ApiResponseDTO<List<MedicalRecordResponseDTO>>> searchRecords(
             @RequestParam(required = false) String diagnosis,

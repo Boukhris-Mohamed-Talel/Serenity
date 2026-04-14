@@ -28,6 +28,7 @@ export interface Prescription {
   doctorId: number;
   status: string;
   items: PrescriptionItem[];
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,4 +39,5 @@ export interface PrescriptionRequest {
   doctorId?: number;
   status?: string;
   items: PrescriptionItemRequest[];
+  imageBase64?: string;
 }

@@ -24,4 +24,7 @@ public class PrescriptionRequestDTO {
 
     @NotEmpty(message = "Au moins un item est obligatoire")
     private List<@Valid PrescriptionItemRequestDTO> items;
+
+    // Optional field for Cloudinary image upload from the frontend
+    private String imageBase64;
 }

@@ -1,5 +1,48 @@
 @import '../../../shared/styles/saas-dashboard';
 
+/* ── Keywords Filter Toggle ────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #9b1c1c;
+  background: #fde8e8;
+  border: 2px solid #fca5a5;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #fecaca;
+    border-color: #f87171;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+  }
+}
+
+.filter-hint {
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 600;
+  font-style: italic;
+}
+
 /* ══════════════════════════════════════════════════════════
    PRESCRIPTION "TICKET" LAYOUT
    ══════════════════════════════════════════════════════════ */

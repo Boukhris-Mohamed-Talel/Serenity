@@ -110,5 +110,15 @@ public class MedicalRecordServiceImpl implements IMedicalRecordService {
                 : medicalRecordRepository.searchByDoctor(doctorId, diagParam, statusParam, sev);
         return results.stream().map(medicalRecordMapper::toResponseDTO).toList();
     }
+
+    // ── JPQL Complexe: Dossiers avec traitement actif ──
+    @Override
+    @Transactional(readOnly = true)
+    public List<MedicalRecordResponseDTO> getRecordsWithActiveTreatment(Long patientId, Long doctorId, boolean isAdmin) {
+        List<MedicalRecord> records = isAdmin
+                ? medicalRecordRepository.findRecordsWithActiveTreatment(patientId)
+                : medicalRecordRepository.findRecordsWithActiveTreatmentByDoctor(patientId, doctorId);
+        return records.stream().map(medicalRecordMapper::toResponseDTO).toList();
+    }
 }
 

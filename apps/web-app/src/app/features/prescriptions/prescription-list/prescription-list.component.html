@@ -20,6 +20,18 @@
     <span class="current">Prescriptions</span>
   </nav>
 
+  <!-- ═══ Keywords Filter Toggle ═══ -->
+  <div class="filter-bar" *ngIf="patientId">
+    <button
+      type="button"
+      class="filter-toggle"
+      [class.active]="filterCriticalOnly"
+      (click)="toggleCriticalPrescriptions()">
+      🔴 {{ filterCriticalOnly ? 'Show all prescriptions' : 'Show critical only (HIGH severity)' }}
+    </button>
+    <span class="filter-hint" *ngIf="filterCriticalOnly">Filtered by Keywords cross-table — showing prescriptions linked to HIGH severity records</span>
+  </div>
+
   <!-- ═══ SKELETON LOADING ═══ -->
   <div class="rx-cards" *ngIf="loading">
     <div class="rx-ticket skeleton-ticket" *ngFor="let s of [1,2]">
@@ -96,6 +108,14 @@
           <div class="rx-instructions" *ngIf="item.instructions">
             <span class="meta-label">Instructions:</span> {{ item.instructions }}
           </div>
+        </div>
+
+        <!-- Cloudinary Image Preview -->
+        <div class="rx-image-preview" *ngIf="p.imageUrl" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
+          <div class="rx-section-label">📸 Original Prescription Image</div>
+          <a [href]="p.imageUrl" target="_blank" style="display: block; margin-top: 10px;">
+            <img [src]="p.imageUrl" alt="Prescription Image" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"/>
+          </a>
         </div>
       </div>
 
