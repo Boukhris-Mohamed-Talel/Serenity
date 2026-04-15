@@ -640,5 +640,25 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F11%2Fd5d1866d-0c86-478e-8355-dc8df8bc8bd5_medical_invoice_insurance4.pdf"
     ]
+  },
+  {
+    "ref": "4bd4c7c9-e326-45aa-9262-ef1c7da44cec",
+    "patientName": "23",
+    "description": "this is a test for the model accuraccy",
+    "amount": 127.95,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 4,
+    "status": "APPROVED",
+    "reimbursementAmount": 31.99,
+    "receivedAt": "2026-04-15T07:44:47.709Z",
+    "processedAt": "2026-04-15T07:45:16.192Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F23%2Fccc547ed-5916-449e-a979-2bb661b7f2bd_medical_invoice+%281%29.pdf"
+    ]
   }
 ]
