@@ -198,7 +198,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     }
 
     //@Scheduled(fixedRate = 3600000) // chaque heure
-    @Scheduled(fixedRate = 10000)
+    /*@Scheduled(fixedRate = 10000)
     public void cleanRejected() {
 
         System.out.println("Scheduler running...");
@@ -232,6 +232,13 @@ public class DoctorVerificationService implements IDoctorVerificationService {
                 repository.deleteById(v.getVerification_id());
             }
         }
+    }*/
+
+    @Override
+    public List<DoctorVerification> getRejected() {
+        return repository.findByStatusAndRejectionDateIsNotNullOrderByRejectionDateDesc(
+                DoctorVerification.Status.REJECTED
+        );
     }
 
 

@@ -187,4 +187,10 @@ public class DoctorVerificationController {
         }
         return null;
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/rejected-keywords")
+    public List<DoctorVerification> getRejectedKeywords() {
+        return service.getRejected();
+    }
 }

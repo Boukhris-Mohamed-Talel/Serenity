@@ -2,6 +2,7 @@ package serenity.doctors_service.service;
 
 import serenity.doctors_service.dto.ConversationDTO;
 import serenity.doctors_service.dto.ConversationDTO2;
+import serenity.doctors_service.dto.ConversationKeywordResultDTO;
 import serenity.doctors_service.entity.Conversation;
 
 import java.util.List;
@@ -21,4 +22,6 @@ public interface IConversationService {
     String analyzeConversation(Long conversationId);
 
     List<ConversationDTO2> getConversations();
+
+    List<ConversationKeywordResultDTO> searchConversationsByKeyword(String keyword);
 }

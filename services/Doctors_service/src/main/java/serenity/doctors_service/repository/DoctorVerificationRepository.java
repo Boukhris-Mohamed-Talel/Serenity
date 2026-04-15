@@ -10,4 +10,8 @@ public interface DoctorVerificationRepository  extends JpaRepository<DoctorVerif
     List<DoctorVerification> findByDoctorId(Long id);
 
     Optional<DoctorVerification> findByApprovalToken(String token);
+
+    List<DoctorVerification> findByStatusAndRejectionDateIsNotNullOrderByRejectionDateDesc(
+            DoctorVerification.Status status
+    );
 }

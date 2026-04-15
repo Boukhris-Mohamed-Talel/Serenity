@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import serenity.doctors_service.dto.ConversationDTO;
 import serenity.doctors_service.dto.ConversationDTO2;
+import serenity.doctors_service.dto.ConversationKeywordResultDTO;
 import serenity.doctors_service.dto.MessagesRequest;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.mapper.ConversationMapper;
@@ -107,6 +108,30 @@ public class ConversationService implements IConversationService {
                     c.getId(),
                     m != null ? m.getContent() : null,
                     m != null ? m.getCreatedAt() : null
+            );
+        }).toList();
+    }
+
+    @Override
+    public List<ConversationKeywordResultDTO> searchConversationsByKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+
+        List<Object[]> rows = conversationRepository.searchConversationsByKeyword(keyword.trim());
+
+        return rows.stream().map(row -> {
+            Conversation conversation = (Conversation) row[0];
+            Message lastMatchedMessage = (Message) row[1];
+            Long matchedCount = row[2] instanceof Number n ? n.longValue() : 0L;
+
+            return new ConversationKeywordResultDTO(
+                    conversation.getId(),
+                    conversation.getUser1Id(),
+                    conversation.getUser2Id(),
+                    matchedCount,
+                    lastMatchedMessage.getContent(),
+                    lastMatchedMessage.getCreatedAt()
             );
         }).toList();
     }

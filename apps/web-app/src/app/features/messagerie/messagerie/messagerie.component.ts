@@ -33,6 +33,13 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   filteredUsers: any[] = [];
   private searchSubject = new Subject<string>();
 
+  // Keyword search
+  keywordSearchTerm: string = '';
+  keywordSearchResults: any[] = [];
+  keywordSearchActive: boolean = false;
+  keywordSearchLoading: boolean = false;
+  private keywordSearchSubject = new Subject<string>();
+
   searchActive: boolean = false;
   messageContent: string = '';
   currentUserId: number | null = null;
@@ -67,6 +74,60 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         return this.messagerieService.searchUsers(term);
       })
     ).subscribe(users => this.filteredUsers = users);
+
+    // Keyword search subscription
+    this.keywordSearchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (!term.trim()) {
+          this.keywordSearchResults = [];
+          return [];
+        }
+        if (this.activeConversationId === null) {
+          this.keywordSearchResults = [];
+          return [];
+        }
+        this.keywordSearchLoading = true;
+        return this.messagerieService.searchKeyword(term);
+      })
+    ).subscribe({
+      next: (results) => {
+        this.keywordSearchResults = (results || [])
+          .map((result: any) => {
+            const conversationId =
+              result.conversationId ?? result.conversation_id ?? result.id ?? null;
+            const participants =
+              result.participants ??
+              result.participantNames ??
+              result.conversationName ??
+              this.activeConversationName;
+            const matchCount =
+              result.matchCount ?? result.matches ?? result.count ?? 0;
+            const lastMatchingMessage =
+              result.lastMatchingMessage ??
+              result.lastMessageContainingKeyword ??
+              result.lastMatchedMessage ??
+              result.lastMessage ??
+              result.preview ??
+              '';
+
+            return {
+              ...result,
+              conversationId,
+              participants,
+              matchCount,
+              lastMatchingMessage
+            };
+          })
+          .filter((result: any) => result.conversationId === this.activeConversationId);
+        this.keywordSearchLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur recherche par mot-clé:', err);
+        this.keywordSearchLoading = false;
+      }
+    });
   }
 
   ngOnInit() {
@@ -178,6 +239,51 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     this.filteredUsers = [];
   }
 
+  onKeywordSearch() {
+    if (this.activeConversationId === null) {
+      this.keywordSearchActive = false;
+      this.keywordSearchResults = [];
+      return;
+    }
+    this.keywordSearchSubject.next(this.keywordSearchTerm);
+  }
+
+  onKeywordSearchFocus() {
+    if (this.activeConversationId === null) {
+      return;
+    }
+    this.keywordSearchActive = true;
+  }
+
+  cancelKeywordSearch() {
+    this.keywordSearchActive = false;
+    this.keywordSearchTerm = '';
+    this.keywordSearchResults = [];
+  }
+
+  selectSearchResult(result: any) {
+    if (this.activeConversationId === null || result.conversationId !== this.activeConversationId) {
+      return;
+    }
+
+    setTimeout(() => {
+      const targetMessage = this.messages.find(m =>
+        m.text.toLowerCase().includes(this.keywordSearchTerm.toLowerCase())
+      );
+      if (targetMessage) {
+        const messageIndex = this.messages.indexOf(targetMessage);
+        const messageElements = document.querySelectorAll('.message');
+        if (messageElements[messageIndex]) {
+          messageElements[messageIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (messageElements[messageIndex] as HTMLElement).classList.add('highlight-search');
+          setTimeout(() => {
+            (messageElements[messageIndex] as HTMLElement).classList.remove('highlight-search');
+          }, 2000);
+        }
+      }
+    }, 100);
+  }
+
   selectUser(user: any) {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.userId) return;
@@ -224,6 +330,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         // ✅ Always sync filteredConversations BEFORE cancelSearch
         this.filteredConversations = [...this.conversations];
         this.cancelSearch();
+        this.cancelKeywordSearch();
 
         // Load summary to populate lastMessage
         this.messagerieService.conversationSummary().subscribe({
@@ -245,6 +352,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   selectConversation(convo: any) {
     this.activeConversationId = convo.id;
     this.activeConversationName = convo.otherUserName;
+    this.cancelKeywordSearch();
 
     // Load analysis for this conversation
     this.loadConversationAnalysis(convo.id);

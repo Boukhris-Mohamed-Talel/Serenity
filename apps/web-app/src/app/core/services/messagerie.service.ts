@@ -92,4 +92,20 @@ export class MessagerieService {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   }
+
+  searchKeywrod(keyword: string): Observable<any> {
+    const token = this.authService.getToken();
+    return this.http.get<any>(
+      `http://localhost:8082/api/conversations/search?keyword=${encodeURIComponent(keyword)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
+
+  searchKeyword(keyword: string): Observable<any> {
+    const token = this.authService.getToken();
+    return this.http.get<any>(
+      `http://localhost:8082/api/conversations/search?keyword=${encodeURIComponent(keyword)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  }
 }

@@ -83,4 +83,12 @@ export class DoctorVerificationService {
   approveContract(token: string): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/approve-contract`, null, { params: { token } });
   }
+
+  getRejected() {
+  const token = this.authService.getToken();
+  return this.http.get<any[]>(
+    `${this.API_URL}/rejected-keywords`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+}
 }

@@ -29,4 +29,6 @@ public interface IDoctorVerificationService {
     void testEmail();
 
     void approveContract(String token);
+
+    List<DoctorVerification> getRejected();
 }
