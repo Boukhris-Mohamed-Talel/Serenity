@@ -114,7 +114,15 @@
         <div class="rx-image-preview" *ngIf="p.imageUrl" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
           <div class="rx-section-label">📸 Original Prescription Image</div>
           <a [href]="p.imageUrl" target="_blank" style="display: block; margin-top: 10px;">
-            <img [src]="p.imageUrl" alt="Prescription Image" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"/>
+            <img
+              [src]="p.imageUrl"
+              alt="Prescription Image"
+              style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;"
+              onmouseover="this.style.transform='scale(1.02)'"
+              onmouseout="this.style.transform='scale(1)'"
+              onfocus="this.style.transform='scale(1.02)'"
+              onblur="this.style.transform='scale(1)'"
+            />
           </a>
         </div>
       </div>

@@ -212,6 +212,7 @@
     aria-modal="true"
     tabindex="0"
     (click)="$event.stopPropagation()"
+    (keydown.escape)="closeRiskModal()"
   >
     <div class="risk-modal-header">
       <div>

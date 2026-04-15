@@ -175,4 +175,7 @@ def health():
 
 if __name__ == "__main__":
     print("\nAI Severity Prediction Service starting on port 5001...")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "5001"))
+    debug = os.getenv("DEBUG", "true").lower() in {"1", "true", "yes", "y"}
+    app.run(host=host, port=port, debug=debug)
