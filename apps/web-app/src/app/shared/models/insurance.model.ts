@@ -63,6 +63,21 @@ export interface RemboursementResponse {
   claimId: number;
 }
 
+/** Backend JPQL report: claim + joined remboursement totals + OCR audit count. */
+export interface ClaimRemittanceOcrSummary {
+  claimId: number;
+  externalRef?: string | null;
+  userId: number;
+  status: string;
+  amount: number;
+  reimbursementAmount: number;
+  insuranceCompany: string;
+  claimDate: string;
+  totalRemboursementPaid: number;
+  remboursementCount: number;
+  ocrAuditCount: number;
+}
+
 export interface InsuranceNotification {
   id: number;
   userId: number;

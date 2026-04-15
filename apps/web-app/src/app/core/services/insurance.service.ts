@@ -8,6 +8,7 @@ import {
   InsuranceClaimResponse,
   InsuranceClaimTransition,
   ClaimRiskScoreResponse,
+  ClaimRemittanceOcrSummary,
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
@@ -133,6 +134,10 @@ export class InsuranceService {
 
   getClaimRiskScore(id: number): Observable<ClaimRiskScoreResponse> {
     return this.http.get<ClaimRiskScoreResponse>(`${this.API_URL}/claims/${id}/risk-score`);
+  }
+
+  getRemittanceOcrSummaryReport(): Observable<ClaimRemittanceOcrSummary[]> {
+    return this.http.get<ClaimRemittanceOcrSummary[]>(`${this.API_URL}/reports/remittance-ocr-summary`);
   }
 
   deleteClaim(id: number): Observable<void> {

@@ -7,6 +7,7 @@ import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RequestAdditionalDocumentsDTO;
 import com.example.insurance.dto.SubmitAdditionalDocumentsDTO;
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
 import com.example.insurance.dto.ClaimRiskScoreResponseDTO;
 import com.example.insurance.security.InsuranceAuth;
 import com.example.insurance.service.ClaimRiskScoringService;
@@ -94,6 +95,12 @@ public class InsuranceClaimController {
         return ResponseEntity.ok(insuranceClaimService.getAllClaims(
                 status, insuranceCompany, fromDate, toDate, sortBy, sortDir
         ));
+    }
+
+    @GetMapping("/reports/remittance-ocr-summary")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ClaimRemittanceOcrSummaryDTO>> getRemittanceOcrSummaryReport() {
+        return ResponseEntity.ok(insuranceClaimService.getRemittanceOcrSummaryReport());
     }
 
     @GetMapping("/claims/paged")
