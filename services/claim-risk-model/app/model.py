@@ -47,6 +47,10 @@ def _top_reasons(row: dict) -> list[str]:
     w = _importance_weights or {k: 0.1 for k in row}
     reasons: list[tuple[str, float]] = []
 
+    days_since_last_claim = row.get("days_since_last_claim")
+    if days_since_last_claim is None:
+        days_since_last_claim = 999
+
     if row.get("ocr_severity", 0) >= 3:
         reasons.append(("Major OCR mismatches detected", w.get("ocr_severity", 0.1) * row["ocr_severity"]))
     if row.get("ocr_mismatch_count", 0) >= 2:
@@ -57,8 +61,8 @@ def _top_reasons(row: dict) -> list[str]:
         reasons.append(("High claim frequency (30d)", w.get("user_claims_30d", 0.1) * row["user_claims_30d"]))
     if row.get("user_rejected_claims", 0) > 2:
         reasons.append(("History of rejected claims", w.get("user_rejected_claims", 0.1) * row["user_rejected_claims"]))
-    if row.get("days_since_last_claim", 999) < 3:
-        reasons.append(("Very recent previous claim", w.get("days_since_last_claim", 0.1) * (5 - row["days_since_last_claim"])))
+    if days_since_last_claim < 3:
+        reasons.append(("Very recent previous claim", w.get("days_since_last_claim", 0.1) * (5 - days_since_last_claim)))
     if row.get("high_amount_flag", 0) == 1:
         reasons.append(("Unusually high claim amount", w.get("high_amount_flag", 0.1)))
     if row.get("reimbursement_ratio", 0) > 0.95:

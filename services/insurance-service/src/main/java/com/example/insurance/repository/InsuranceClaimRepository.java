@@ -5,6 +5,7 @@ import com.example.insurance.entity.ClaimStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.Date;
 import java.util.List;
 
 public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, Long>, JpaSpecificationExecutor<InsuranceClaim> {
@@ -16,4 +17,10 @@ public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, 
     List<InsuranceClaim> findByStatusOrderByClaimDateDesc(ClaimStatus status);
 
     List<InsuranceClaim> findByStatusInOrderByClaimDateDesc(List<ClaimStatus> statuses);
+
+    long countByUserId(Long userId);
+
+    long countByUserIdAndStatus(Long userId, ClaimStatus status);
+
+    long countByUserIdAndClaimDateAfter(Long userId, Date since);
 }

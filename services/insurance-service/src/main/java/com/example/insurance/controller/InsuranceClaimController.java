@@ -7,7 +7,9 @@ import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RequestAdditionalDocumentsDTO;
 import com.example.insurance.dto.SubmitAdditionalDocumentsDTO;
+import com.example.insurance.dto.ClaimRiskScoreResponseDTO;
 import com.example.insurance.security.InsuranceAuth;
+import com.example.insurance.service.ClaimRiskScoringService;
 import com.example.insurance.service.InsuranceClaimService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -34,6 +36,7 @@ import java.util.List;
 public class InsuranceClaimController {
 
     private final InsuranceClaimService insuranceClaimService;
+    private final ClaimRiskScoringService claimRiskScoringService;
 
     @PostMapping(value = "/claims", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -133,6 +136,12 @@ public class InsuranceClaimController {
         Long userId = InsuranceAuth.requireUserId();
         boolean admin = InsuranceAuth.isAdmin();
         return ResponseEntity.ok(insuranceClaimService.getClaimOcrAudit(id, userId, admin));
+    }
+
+    @GetMapping("/claims/{id}/risk-score")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClaimRiskScoreResponseDTO> getRiskScore(@PathVariable Long id) {
+        return ResponseEntity.ok(claimRiskScoringService.scoreClaim(id));
     }
 
     @PostMapping("/claims/{id}/request-documents")

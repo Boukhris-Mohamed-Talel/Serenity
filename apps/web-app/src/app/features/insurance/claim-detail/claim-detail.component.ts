@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { InsuranceClaimResponse, InsuranceClaimTransition } from '../../../shared/models/insurance.model';
+import { ClaimRiskScoreResponse, InsuranceClaimResponse, InsuranceClaimTransition } from '../../../shared/models/insurance.model';
 import { environment } from '../../../../environments/environment';
 import { UserService } from '../../../core/services/user.service';
 import { UserResponse } from '../../../shared/models/user.model';
@@ -30,6 +30,9 @@ export class ClaimDetailComponent implements OnInit, OnDestroy {
   responseFiles: File[] = [];
   responseFileError = '';
   currentUserDisplayName = '';
+  riskLoading = false;
+  riskError = '';
+  riskResult: ClaimRiskScoreResponse | null = null;
   private routeSub?: Subscription;
 
   constructor(
@@ -86,6 +89,32 @@ export class ClaimDetailComponent implements OnInit, OnDestroy {
         this.timeline = [];
       }
     });
+  }
+
+  fetchRiskScore(): void {
+    if (!this.isAdmin || !this.claim) return;
+    this.riskLoading = true;
+    this.riskError = '';
+    this.riskResult = null;
+    this.insuranceService.getClaimRiskScore(this.claim.id).subscribe({
+      next: (res) => {
+        this.riskResult = res;
+        this.riskLoading = false;
+      },
+      error: (err) => {
+        this.riskError = err.error?.message || err.error?.detail || 'Failed to fetch risk score';
+        this.riskLoading = false;
+      }
+    });
+  }
+
+  getRiskBandClass(band?: string | null): string {
+    switch ((band || '').toUpperCase()) {
+      case 'HIGH': return 'risk-badge risk-high';
+      case 'MEDIUM': return 'risk-badge risk-medium';
+      case 'LOW': return 'risk-badge risk-low';
+      default: return 'risk-badge';
+    }
   }
 
   approveClaim(): void {

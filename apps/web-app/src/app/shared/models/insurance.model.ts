@@ -36,6 +36,12 @@ export interface InsuranceClaimTransition {
   changedAt: string;
 }
 
+export interface ClaimRiskScoreResponse {
+  riskScore: number;
+  riskBand: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  topReasons: string[];
+}
+
 export const INSURANCE_COMPANIES = Array.from(
   { length: 10 },
   (_, index) => `Insurance ${index + 1}`

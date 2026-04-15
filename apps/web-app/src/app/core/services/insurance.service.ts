@@ -7,6 +7,7 @@ import {
   InsuranceClaimRequest,
   InsuranceClaimResponse,
   InsuranceClaimTransition,
+  ClaimRiskScoreResponse,
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
@@ -128,6 +129,10 @@ export class InsuranceService {
 
   getClaimTimeline(id: number): Observable<InsuranceClaimTransition[]> {
     return this.http.get<InsuranceClaimTransition[]>(`${this.API_URL}/claims/${id}/timeline`);
+  }
+
+  getClaimRiskScore(id: number): Observable<ClaimRiskScoreResponse> {
+    return this.http.get<ClaimRiskScoreResponse>(`${this.API_URL}/claims/${id}/risk-score`);
   }
 
   deleteClaim(id: number): Observable<void> {

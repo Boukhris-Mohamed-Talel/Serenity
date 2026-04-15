@@ -158,7 +158,17 @@
           <span class="detail-value">{{ claim.reason }}</span>
         </div>
       </div>
-      <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm" style="margin-top: 1rem;">View Details</a>
+      <div class="claim-actions">
+        <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm">View Details</a>
+        <button
+          *ngIf="isAdmin"
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="openRiskModal(claim, $event)"
+        >
+          Risk score
+        </button>
+      </div>
     </div>
   </div>
 
@@ -182,5 +192,60 @@
     <button class="btn btn-secondary btn-sm" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
       Next
     </button>
+  </div>
+</div>
+
+<!-- Admin-only Risk Score Modal -->
+<div
+  class="modal-backdrop"
+  *ngIf="showRiskModal"
+  role="button"
+  tabindex="0"
+  aria-label="Close risk score modal backdrop"
+  (click)="closeRiskModal()"
+  (keydown.enter)="closeRiskModal()"
+  (keydown.space)="closeRiskModal()"
+>
+  <div
+    class="risk-modal card"
+    role="dialog"
+    aria-modal="true"
+    tabindex="0"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="risk-modal-header">
+      <div>
+        <h3>Claim risk score</h3>
+        <p *ngIf="riskTargetClaim" class="risk-subtitle">
+          Claim #{{ riskTargetClaim.id }} · {{ riskTargetClaim.insuranceCompany }} · {{ riskTargetClaim.amount | currency:'TND':'symbol':'1.2-2' }}
+        </p>
+      </div>
+      <button type="button" class="risk-close" (click)="closeRiskModal()" aria-label="Close risk modal">×</button>
+    </div>
+
+    <div *ngIf="riskLoading" class="risk-loading">
+      <span class="spinner"></span>
+      <p>Scoring claim…</p>
+    </div>
+
+    <div *ngIf="!riskLoading && riskError" class="alert alert-error">{{ riskError }}</div>
+
+    <div *ngIf="!riskLoading && riskResult" class="risk-body">
+      <div class="risk-summary">
+        <span class="risk-score">{{ riskResult.riskScore | number:'1.0-1' }}</span>
+        <span [class]="getRiskBandClass(riskResult.riskBand)">{{ riskResult.riskBand }}</span>
+      </div>
+
+      <div class="risk-reasons">
+        <h4>Top reasons</h4>
+        <ul>
+          <li *ngFor="let reason of riskResult.topReasons">{{ reason }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="risk-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeRiskModal()">Close</button>
+    </div>
   </div>
 </div>

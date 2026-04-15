@@ -43,4 +43,5 @@ def score_claim(request: ClaimScoreRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=PORT, reload=True)
+    # Bind to "localhost" so Windows IPv4/IPv6 resolution doesn't break local calls.
+    uvicorn.run("app.main:app", host="localhost", port=PORT, reload=True)

@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { InsuranceClaimResponse } from '../../../shared/models/insurance.model';
+import { ClaimRiskScoreResponse, InsuranceClaimResponse } from '../../../shared/models/insurance.model';
 import { UserService } from '../../../core/services/user.service';
 import { Subscription } from 'rxjs';
 
@@ -31,6 +31,12 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   sortBy: 'DATE' | 'REIMBURSEMENT' = 'DATE';
   sortDirection: 'ASC' | 'DESC' = 'DESC';
   openDropdown: 'status' | 'user' | 'sortBy' | 'sortDirection' | null = null;
+
+  showRiskModal = false;
+  riskLoading = false;
+  riskError = '';
+  riskTargetClaim: InsuranceClaimResponse | null = null;
+  riskResult: ClaimRiskScoreResponse | null = null;
 
   constructor(
     private readonly insuranceService: InsuranceService,
@@ -245,6 +251,44 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   @HostListener('document:click')
   onDocumentClick(): void {
     this.openDropdown = null;
+  }
+
+  openRiskModal(claim: InsuranceClaimResponse, event?: Event): void {
+    event?.stopPropagation();
+    if (!this.isAdmin) return;
+    this.showRiskModal = true;
+    this.riskTargetClaim = claim;
+    this.riskResult = null;
+    this.riskError = '';
+    this.riskLoading = true;
+
+    this.insuranceService.getClaimRiskScore(claim.id).subscribe({
+      next: (res) => {
+        this.riskResult = res;
+        this.riskLoading = false;
+      },
+      error: (err) => {
+        this.riskError = err.error?.message || err.error?.detail || 'Failed to fetch risk score';
+        this.riskLoading = false;
+      }
+    });
+  }
+
+  closeRiskModal(): void {
+    this.showRiskModal = false;
+    this.riskTargetClaim = null;
+    this.riskResult = null;
+    this.riskError = '';
+    this.riskLoading = false;
+  }
+
+  getRiskBandClass(band?: string | null): string {
+    switch ((band || '').toUpperCase()) {
+      case 'HIGH': return 'risk-badge risk-high';
+      case 'MEDIUM': return 'risk-badge risk-medium';
+      case 'LOW': return 'risk-badge risk-low';
+      default: return 'risk-badge';
+    }
   }
 
   private loadUsernames(): void {
