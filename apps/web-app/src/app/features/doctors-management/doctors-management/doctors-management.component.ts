@@ -361,12 +361,12 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     const doctorId = this.selectedDoctor.id;
 
     // Step 1: Delete the verification record
-    this.doctorVerificationService.deleteVerification(verificationId).subscribe({
+    this.doctorVerificationService.rejectVerification(verificationId).subscribe({
       next: () => {
-        console.log('Verification record deleted successfully');
+        console.log('Verification record rejected successfully');
         
         // Step 2: Delete the doctor
-        this.doctorService.deleteDoctor(doctorId).subscribe({
+        /*this.doctorService.deleteDoctor(doctorId).subscribe({
           next: () => {
             console.log('Doctor deleted successfully');
             this.showToast('Doctor rejected and deleted', 'success');
@@ -383,7 +383,7 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
               this.loadDoctors();
             }, 1500);
           }
-        });
+        });*/
       },
       error: (err) => {
         console.error('Error deleting verification:', err);

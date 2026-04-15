@@ -34,7 +34,10 @@ public class DoctorVerification {
 
     private String approvalToken;
 
+    private LocalDateTime rejectionDate;
+
     private boolean contractApproved;
+
 
     public boolean isContractApproved() {
         return contractApproved;
@@ -141,5 +144,13 @@ public class DoctorVerification {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public LocalDateTime getRejectionDate() {
+        return rejectionDate;
+    }
+
+    public void setRejectionDate(LocalDateTime rejectionDate) {
+        this.rejectionDate = rejectionDate;
     }
 }

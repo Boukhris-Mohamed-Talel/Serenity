@@ -24,7 +24,7 @@ public interface IDoctorVerificationService {
 
     void Approve(Long verification_id, @RequestHeader("Authorization") String authHeader);
 
-    void Reject(Long verification_id);
+    void Reject(Long verification_id, @RequestHeader("Authorization") String authHeader);
 
     void testEmail();
 
