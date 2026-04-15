@@ -91,22 +91,35 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         return this.userService.getUsersNamesById(otherUserIds).pipe(
           map(users => ({ convos, users }))
         );
+      }),
+      switchMap(({ convos, users }) => {
+        // Fetch conversation summaries to get last messages
+        return this.messagerieService.conversationSummary().pipe(
+          map(summaries => ({ convos, users, summaries }))
+        );
       })
     ).subscribe({
-      next: ({ convos, users }) => {
+      next: ({ convos, users, summaries }) => {
         console.log('✅ Convos:', convos);
         console.log('👤 Users:', users);
+        console.log('💬 Summaries:', summaries);
 
         // Try both 'id' and 'userId' field names to be safe
         const usersMap = new Map(
           users.map((u: any) => [u.id ?? u.userId, `${u.firstName} ${u.lastName}`])
         );
 
+        // Create a map of conversation summaries by conversation ID
+        const summaryMap = new Map(
+          summaries.map((summary: any) => [summary.conversationId, summary.lastMessage])
+        );
+
         this.conversations = convos.map((c: any) => ({
           ...c,
           otherUserName: usersMap.get(
             c.user1Id === this.currentUserId ? c.user2Id : c.user1Id
-          ) ?? 'Unknown'
+          ) ?? 'Unknown',
+          lastMessage: summaryMap.get(c.id) || ''
         }));
 
         this.filteredConversations = [...this.conversations];
@@ -211,6 +224,19 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         // ✅ Always sync filteredConversations BEFORE cancelSearch
         this.filteredConversations = [...this.conversations];
         this.cancelSearch();
+
+        // Load summary to populate lastMessage
+        this.messagerieService.conversationSummary().subscribe({
+          next: (summaries) => {
+            const lastMsg = summaries.find((s: any) => s.conversationId === conversation.id)?.lastMessage || '';
+            const convoToUpdate = this.conversations.find(c => c.id === conversation.id);
+            if (convoToUpdate) {
+              convoToUpdate.lastMessage = lastMsg;
+              this.filteredConversations = [...this.conversations];
+            }
+          },
+          error: (err) => console.error('Erreur chargement summary:', err)
+        });
       },
       error: (err) => console.error('Erreur démarrage conversation:', err)
     });

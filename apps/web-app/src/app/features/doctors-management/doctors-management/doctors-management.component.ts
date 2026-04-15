@@ -364,29 +364,10 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     this.doctorVerificationService.rejectVerification(verificationId).subscribe({
       next: () => {
         console.log('Verification record rejected successfully');
-        
-        // Step 2: Delete the doctor
-        /*this.doctorService.deleteDoctor(doctorId).subscribe({
-          next: () => {
-            console.log('Doctor deleted successfully');
-            this.showToast('Doctor rejected and deleted', 'success');
-            setTimeout(() => {
-              this.closeVerificationModal();
-              this.loadDoctors();
-            }, 1500);
-          },
-          error: (err) => {
-            console.error('Error deleting doctor:', err);
-            this.showToast('Verification deleted but failed to delete doctor', 'error');
-            setTimeout(() => {
-              this.closeVerificationModal();
-              this.loadDoctors();
-            }, 1500);
-          }
-        });*/
+        this.showToast('Doctor rejected', 'success');
       },
       error: (err) => {
-        console.error('Error deleting verification:', err);
+        console.error('Error rejecting verification:', err);
         this.showToast('Failed to reject doctor', 'error');
       }
     });

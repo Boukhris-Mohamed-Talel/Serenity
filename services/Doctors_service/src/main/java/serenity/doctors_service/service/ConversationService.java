@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import serenity.doctors_service.dto.ConversationDTO;
+import serenity.doctors_service.dto.ConversationDTO2;
 import serenity.doctors_service.dto.MessagesRequest;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.mapper.ConversationMapper;
@@ -91,5 +92,22 @@ public class ConversationService implements IConversationService {
         MessagesRequest request = new MessagesRequest(messages);
 
         return restTemplate.postForObject(url, request, String.class);
+    }
+
+    @Override
+    public List<ConversationDTO2> getConversations() {
+
+        List<Object[]> results = conversationRepository.findConversationsWithLastMessage();
+
+        return results.stream().map(r -> {
+            Conversation c = (Conversation) r[0];
+            Message m = (Message) r[1];
+
+            return new ConversationDTO2(
+                    c.getId(),
+                    m != null ? m.getContent() : null,
+                    m != null ? m.getCreatedAt() : null
+            );
+        }).toList();
     }
 }

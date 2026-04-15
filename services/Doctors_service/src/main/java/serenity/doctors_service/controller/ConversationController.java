@@ -3,6 +3,7 @@ package serenity.doctors_service.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import serenity.doctors_service.dto.ConversationDTO;
+import serenity.doctors_service.dto.ConversationDTO2;
 import serenity.doctors_service.entity.Conversation;
 import serenity.doctors_service.mapper.ConversationMapper;
 import serenity.doctors_service.service.IConversationService;
@@ -62,5 +63,10 @@ public class ConversationController {
     @GetMapping("/{id}/analyze_conversation")
     public String analyzeConversation(@PathVariable("id") Long conversationId) {
         return conversationService.analyzeConversation(conversationId);
+    }
+
+    @GetMapping("/conversations-summary")
+    public ResponseEntity<List<ConversationDTO2>> getConversations() {
+        return ResponseEntity.ok(conversationService.getConversations());
     }
 }

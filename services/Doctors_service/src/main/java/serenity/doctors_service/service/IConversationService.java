@@ -1,6 +1,7 @@
 package serenity.doctors_service.service;
 
 import serenity.doctors_service.dto.ConversationDTO;
+import serenity.doctors_service.dto.ConversationDTO2;
 import serenity.doctors_service.entity.Conversation;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface IConversationService {
     Conversation createOrGetConversation(Long user1Id, Long user2Id);
 
     String analyzeConversation(Long conversationId);
+
+    List<ConversationDTO2> getConversations();
 }
