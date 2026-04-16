@@ -103,4 +103,63 @@
       </div>
     </div>
   </div>
+
+  <!-- AI Recommendation Statistics -->
+  <div class="chart-section" *ngIf="!loading && stats" style="margin-top: 30px;">
+    <div class="chart-card" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe;">
+      <h2 class="chart-title" style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: linear-gradient(135deg, #6b11ff, #8ec5fc); color: #fff; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem;">🤖 AI</span>
+        AI Drug Recommendation Statistics
+      </h2>
+      <p class="chart-subtitle">Tracking how often doctors accept AI-suggested medications</p>
+
+      <div class="stats-grid" style="margin-top: 20px;">
+        <div class="stat-card" style="border-left: 4px solid #6b11ff;">
+          <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #6b11ff, #a78bfa);">
+            <span class="material-icons" style="color: #fff;">smart_toy</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ stats.aiRecommendedCount }}</span>
+            <span class="stat-label">AI-Recommended Items</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+          <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+            <span class="material-icons" style="color: #fff;">medication</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ stats.totalPrescriptionItems }}</span>
+            <span class="stat-label">Total Prescription Items</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="border-left: 4px solid #10b981;">
+          <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #10b981, #34d399);">
+            <span class="material-icons" style="color: #fff;">trending_up</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ stats.aiAcceptanceRate }}%</span>
+            <span class="stat-label">AI Acceptance Rate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top AI Medicines -->
+    <div class="quick-links-card" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe;">
+      <h2 class="chart-title">🏆 Top AI-Recommended Medicines</h2>
+      <p class="chart-subtitle">Most frequently accepted AI suggestions by doctors</p>
+      <div style="margin-top: 15px;" *ngIf="stats.topAiMedicines?.length; else noAiData">
+        <div *ngFor="let med of stats.topAiMedicines; let i = index" style="display: flex; align-items: center; padding: 12px 15px; margin-bottom: 8px; background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+          <span style="font-size: 1.4rem; font-weight: 800; color: #6b11ff; min-width: 35px;">#{{ i + 1 }}</span>
+          <span style="flex: 1; font-weight: 600; color: #1f2937;">{{ med.name }}</span>
+          <span style="background: linear-gradient(135deg, #6b11ff, #8ec5fc); color: #fff; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">{{ med.count }}x</span>
+        </div>
+      </div>
+      <ng-template #noAiData>
+        <p style="color: #9ca3af; text-align: center; padding: 20px 0;">No AI recommendations yet. Create prescriptions using AI suggestions to see data here.</p>
+      </ng-template>
+    </div>
+  </div>
 </div>

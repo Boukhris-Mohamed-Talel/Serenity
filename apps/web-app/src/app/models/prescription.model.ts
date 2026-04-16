@@ -9,6 +9,7 @@ export interface PrescriptionItem {
   startDate: string;
   endDate: string | null;
   instructions: string | null;
+  isAiRecommended?: boolean;
 }
 
 export interface PrescriptionItemRequest {
@@ -19,6 +20,7 @@ export interface PrescriptionItemRequest {
   startDate: string;
   endDate?: string | null;
   instructions?: string | null;
+  isAiRecommended?: boolean;
 }
 
 export interface Prescription {

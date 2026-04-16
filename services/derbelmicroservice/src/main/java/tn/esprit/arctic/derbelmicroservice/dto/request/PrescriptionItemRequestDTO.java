@@ -32,4 +32,7 @@ public class PrescriptionItemRequestDTO {
 
     @Size(max = 500)
     private String instructions;
+
+    // Tracks if this medication was suggested by the AI recommender
+    private Boolean isAiRecommended;
 }

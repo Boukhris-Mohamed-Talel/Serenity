@@ -13,7 +13,13 @@ import tn.esprit.arctic.derbelmicroservice.dto.response.DashboardDTO;
 import tn.esprit.arctic.derbelmicroservice.entity.enums.Severity;
 import tn.esprit.arctic.derbelmicroservice.repository.MedicalRecordRepository;
 import tn.esprit.arctic.derbelmicroservice.repository.PrescriptionRepository;
+import tn.esprit.arctic.derbelmicroservice.repository.PrescriptionItemRepository;
 import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/dashboard")
@@ -22,6 +28,7 @@ public class DashboardController {
 
     private final MedicalRecordRepository medicalRecordRepository;
     private final PrescriptionRepository prescriptionRepository;
+    private final PrescriptionItemRepository prescriptionItemRepository;
     private final JdbcTemplate jdbcTemplate;
 
     @PostConstruct
@@ -64,6 +71,27 @@ public class DashboardController {
                     .severityHigh(medicalRecordRepository.countByDoctorIdAndSeverity(userId, Severity.HIGH))
                     .build();
         }
+
+        // AI Recommendation Statistics (global, shared for all roles)
+        long aiCount = prescriptionItemRepository.countByIsAiRecommended(true);
+        long totalItems = prescriptionItemRepository.count();
+        double rate = totalItems > 0 ? Math.round((double) aiCount / totalItems * 10000.0) / 100.0 : 0.0;
+
+        List<Object[]> topRaw = prescriptionItemRepository.findTopAiRecommendedMedicines();
+        List<Map<String, Object>> topAiMedicines = topRaw.stream()
+                .limit(5)
+                .map(row -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("name", row[0]);
+                    m.put("count", row[1]);
+                    return m;
+                })
+                .collect(Collectors.toList());
+
+        dto.setAiRecommendedCount(aiCount);
+        dto.setTotalPrescriptionItems(totalItems);
+        dto.setAiAcceptanceRate(rate);
+        dto.setTopAiMedicines(topAiMedicines);
 
         return ResponseEntity.ok(ApiResponseDTO.<DashboardDTO>builder()
                 .status(HttpStatus.OK.value())
