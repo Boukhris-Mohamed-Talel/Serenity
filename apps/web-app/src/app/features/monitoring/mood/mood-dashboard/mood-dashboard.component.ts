@@ -18,8 +18,27 @@ interface PatientDot {
   triggerLoad: number;
   crisisRate: number;
   riskScore: number;
+}
+
+interface ChartPoint {
   x: number;
   y: number;
+  /** Averaged mood when several entries share the same time bucket. */
+  mood: number;
+  at: Date;
+  /** Representative entry id (first in bucket). */
+  entryId: number;
+  /** How many raw entries were averaged into this point (same calendar second). */
+  aggregatedCount: number;
+}
+
+interface PatientSeries {
+  patientId: number;
+  patientName: string;
+  color: string;
+  path: string;
+  points: ChartPoint[];
+  xTicks: { x: number; label: string }[];
 }
 
 @Component({
@@ -31,18 +50,40 @@ export class MoodDashboardComponent implements OnInit {
   loading = true;
   errorMessage = '';
 
-  chartWidth = 1100;
-  chartHeight = 380;
-  padding = 52;
+  chartWidth = 960;
+  chartHeight = 300;
+  padding = 48;
+
+  /** Y-axis top of scale (baseline is 0). Mood entries remain 1–10. */
+  readonly axisMoodMax = 10;
 
   doctorId: number | null = null;
   patientDots: PatientDot[] = [];
+  patientSeries: PatientSeries[] = [];
   selectedPatient: PatientDot | null = null;
-  hoveredPatient: PatientDot | null = null;
+  hoveredTooltip: {
+    patientId: number;
+    patientName: string;
+    mood: number;
+    at: Date;
+    riskScore: number;
+    moodTrend: number;
+    aggregatedCount: number;
+  } | null = null;
 
   private triggerByMoodEntryId: Record<number, EmotionalTriggerResponse[]> = {};
   private readonly moodMin = 1;
   private readonly moodMax = 10;
+  private readonly seriesPalette = [
+    '#0d9488',
+    '#2563eb',
+    '#d97706',
+    '#7c3aed',
+    '#db2777',
+    '#059669',
+    '#ea580c',
+    '#0891b2'
+  ];
 
   constructor(
     private readonly monitoringService: MonitoringService,
@@ -70,30 +111,8 @@ export class MoodDashboardComponent implements OnInit {
     return this.padding;
   }
 
-  get linePath(): string {
-    if (this.patientDots.length === 0) {
-      return '';
-    }
-
-    const pts = this.patientDots;
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      d += ` L ${pts[i].x} ${pts[i].y}`;
-    }
-    return d;
-  }
-
-  get areaPath(): string {
-    if (!this.linePath || this.patientDots.length === 0) {
-      return '';
-    }
-    const first = this.patientDots[0];
-    const last = this.patientDots[this.patientDots.length - 1];
-    return `${this.linePath} L ${last.x} ${this.xAxisY} L ${first.x} ${this.xAxisY} Z`;
-  }
-
   get yTicks(): number[] {
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   }
 
   get portfolioAverageMood(): number {
@@ -127,11 +146,32 @@ export class MoodDashboardComponent implements OnInit {
     this.selectedPatient = patient;
   }
 
-  onPatientDotKeydown(event: KeyboardEvent, point: PatientDot): void {
+  onChartPointKeydown(event: KeyboardEvent, patient: PatientDot): void {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      this.selectPatient(point);
+      this.selectPatient(patient);
     }
+  }
+
+  onChartPointEnter(
+    patient: PatientDot,
+    mood: number,
+    at: Date,
+    aggregatedCount = 1
+  ): void {
+    this.hoveredTooltip = {
+      patientId: patient.patientId,
+      patientName: patient.patientName,
+      mood,
+      at,
+      riskScore: patient.riskScore,
+      moodTrend: patient.moodTrend,
+      aggregatedCount
+    };
+  }
+
+  onChartPointLeave(): void {
+    this.hoveredTooltip = null;
   }
 
   getTrendLabel(value: number): string {
@@ -154,22 +194,6 @@ export class MoodDashboardComponent implements OnInit {
     if (risk >= 70) return 'risk-high';
     if (risk >= 40) return 'risk-medium';
     return 'risk-low';
-  }
-
-  get hoveredPatientSnapshot(): {
-    patientName: string;
-    latestMood: number;
-    averageMood: number;
-    riskScore: number;
-    moodTrend: number;
-  } {
-    return {
-      patientName: this.hoveredPatient?.patientName || 'Unknown patient',
-      latestMood: this.hoveredPatient?.latestMood ?? 0,
-      averageMood: this.hoveredPatient?.averageMood ?? 0,
-      riskScore: this.hoveredPatient?.riskScore ?? 0,
-      moodTrend: this.hoveredPatient?.moodTrend ?? 0
-    };
   }
 
   getEntryTriggers(entryId: number): EmotionalTriggerResponse[] {
@@ -207,6 +231,7 @@ export class MoodDashboardComponent implements OnInit {
       next: ({ entries, triggersByEntry }) => {
         this.triggerByMoodEntryId = triggersByEntry;
         this.patientDots = this.buildPatientDots(entries, triggersByEntry);
+        this.patientSeries = this.buildPatientSeries(this.patientDots);
 
         const requestedPatientIdRaw = this.route.snapshot.queryParamMap.get('patientId');
         const requestedPatientId = requestedPatientIdRaw ? Number(requestedPatientIdRaw) : NaN;
@@ -238,13 +263,8 @@ export class MoodDashboardComponent implements OnInit {
       grouped.get(entry.patientId)!.push(entry);
     });
 
-    const minDateMs = Math.min(...entries.map((e) => +new Date(e.createdAt)));
-    const maxDateMs = Math.max(...entries.map((e) => +new Date(e.createdAt)));
-    const rangeMs = Math.max(1, maxDateMs - minDateMs);
-
     const dots = Array.from(grouped.entries()).map(([patientId, patientEntries]) => {
       const sorted = [...patientEntries].sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
-      // Requirement: each dot Y is the average mood score for that patient over all their entries.
       const moods = sorted.map((e) => this.normalizeMood(e.moodScore));
       const averageMood = this.average(moods);
       const moodTrend = moods.length > 1 ? moods[moods.length - 1] - moods[0] : 0;
@@ -265,10 +285,6 @@ export class MoodDashboardComponent implements OnInit {
         100
       );
 
-      const x = this.padding + ((+latestDate - minDateMs) / rangeMs) * (this.chartWidth - this.padding * 2);
-      const normalizedY = (averageMood - this.moodMin) / (this.moodMax - this.moodMin);
-      const y = this.chartHeight - this.padding - normalizedY * (this.chartHeight - this.padding * 2);
-
       return {
         patientId,
         patientName: patientEntries[patientEntries.length - 1].patientName || `Patient #${patientId}`,
@@ -280,13 +296,218 @@ export class MoodDashboardComponent implements OnInit {
         moodTrend,
         triggerLoad,
         riskScore,
-        entries: sorted,
-        x,
-        y
+        entries: sorted
       } as PatientDot;
     });
 
     return dots.sort((a, b) => +a.latestDate - +b.latestDate);
+  }
+
+  private buildPatientSeries(dots: PatientDot[]): PatientSeries[] {
+    if (!dots.length) {
+      return [];
+    }
+
+    const plotW = this.chartWidth - this.padding * 2;
+    const plotH = this.chartHeight - this.padding * 2;
+
+    const toY = (moodScore: number) => {
+      const n = this.normalizeMood(moodScore);
+      const normalized = n / this.axisMoodMax;
+      return this.chartHeight - this.padding - normalized * plotH;
+    };
+
+    return dots.map((d, i) => {
+      const color = this.seriesPalette[i % this.seriesPalette.length];
+      const aggregated = this.aggregateMoodsByLocalCalendarDay(d.entries);
+      if (aggregated.length === 0) {
+        return {
+          patientId: d.patientId,
+          patientName: d.patientName,
+          color,
+          path: '',
+          points: [],
+          xTicks: []
+        };
+      }
+
+      let minPlot = aggregated[0].plotMs;
+      let maxPlot = aggregated[aggregated.length - 1].plotMs;
+      if (minPlot === maxPlot) {
+        minPlot -= 60 * 60 * 1000;
+        maxPlot += 60 * 60 * 1000;
+      }
+      const plotRange = Math.max(1, maxPlot - minPlot);
+      const toX = (plotMs: number) => this.padding + ((plotMs - minPlot) / plotRange) * plotW;
+
+      const xTicks = this.buildXTimeTicks(minPlot, plotRange, plotW);
+
+      const rawPoints: ChartPoint[] = aggregated.map((row) => ({
+        x: toX(row.plotMs),
+        y: toY(row.avgMood),
+        mood: this.normalizeMood(row.avgMood),
+        at: row.at,
+        entryId: row.representativeEntryId,
+        aggregatedCount: row.aggregatedCount
+      }));
+      const points = this.mergePointsWithDuplicatePlotX(rawPoints, toY);
+
+      const xy = points.map((p) => ({ x: p.x, y: p.y }));
+      let path = '';
+      if (points.length === 1) {
+        path = `M ${points[0].x} ${points[0].y}`;
+      } else {
+        path = this.catmullRomBezierPath(xy, 10);
+      }
+
+      return {
+        patientId: d.patientId,
+        patientName: d.patientName,
+        color,
+        path,
+        points,
+        xTicks
+      };
+    });
+  }
+
+  /**
+   * Start of local calendar day (00:00) in ms for the given instant.
+   */
+  private startOfLocalDayMs(ms: number): number {
+    const d = new Date(ms);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  /**
+   * Exactly one (x, y) per calendar day: all mood entries on the same local date are averaged.
+   * X uses local noon on that day so each day maps to a single abscissa (strict f: time → mood).
+   */
+  private aggregateMoodsByLocalCalendarDay(
+    entries: MoodEntryResponse[]
+  ): {
+    plotMs: number;
+    avgMood: number;
+    at: Date;
+    representativeEntryId: number;
+    aggregatedCount: number;
+  }[] {
+    const sorted = [...entries].sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
+    type Bucket = {
+      moodSum: number;
+      count: number;
+      representativeEntryId: number;
+    };
+    const buckets = new Map<number, Bucket>();
+
+    for (const e of sorted) {
+      const ms = +new Date(e.createdAt);
+      const dayStart = this.startOfLocalDayMs(ms);
+      const mood = this.normalizeMood(e.moodScore);
+      const existing = buckets.get(dayStart);
+      if (!existing) {
+        buckets.set(dayStart, {
+          moodSum: mood,
+          count: 1,
+          representativeEntryId: e.id
+        });
+      } else {
+        existing.moodSum += mood;
+        existing.count += 1;
+      }
+    }
+
+    const noonMs = 12 * 60 * 60 * 1000;
+    const keys = Array.from(buckets.keys()).sort((a, b) => a - b);
+    return keys.map((dayStart) => {
+      const b = buckets.get(dayStart)!;
+      const avgMood = b.moodSum / b.count;
+      const plotMs = dayStart + noonMs;
+      return {
+        plotMs,
+        avgMood,
+        at: new Date(plotMs),
+        representativeEntryId: b.representativeEntryId,
+        aggregatedCount: b.count
+      };
+    });
+  }
+
+  /**
+   * Safety net: if two buckets still map to the same pixel x, merge into one weighted average.
+   */
+  private mergePointsWithDuplicatePlotX(
+    points: ChartPoint[],
+    toY: (mood: number) => number
+  ): ChartPoint[] {
+    if (points.length <= 1) {
+      return points;
+    }
+    const merged: ChartPoint[] = [];
+    for (const p of points) {
+      const last = merged[merged.length - 1];
+      if (last && Math.abs(p.x - last.x) < 0.75) {
+        const n = last.aggregatedCount + p.aggregatedCount;
+        const wMood =
+          (last.mood * last.aggregatedCount + p.mood * p.aggregatedCount) / n;
+        last.mood = this.normalizeMood(wMood);
+        last.y = toY(wMood);
+        last.aggregatedCount = n;
+      } else {
+        merged.push({ ...p });
+      }
+    }
+    return merged;
+  }
+
+  /**
+   * Catmull–Rom spline as cubic Bézier segments (C¹ continuous, sinus-like smooth turns).
+   * Larger `tension` → gentler bends and less overshoot past data points.
+   */
+  private catmullRomBezierPath(pts: { x: number; y: number }[], tension = 8): string {
+    if (pts.length === 0) {
+      return '';
+    }
+    if (pts.length === 1) {
+      return `M ${pts[0].x} ${pts[0].y}`;
+    }
+    const n = pts.length;
+    const get = (idx: number) => pts[Math.max(0, Math.min(n - 1, idx))];
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = get(i - 1);
+      const p1 = get(i);
+      const p2 = get(i + 1);
+      const p3 = get(i + 2);
+      const cp1x = p1.x + (p2.x - p0.x) / tension;
+      const cp1y = p1.y + (p2.y - p0.y) / tension;
+      const cp2x = p2.x - (p3.x - p1.x) / tension;
+      const cp2y = p2.y - (p3.y - p1.y) / tension;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+    return d;
+  }
+
+  private buildXTimeTicks(
+    minMs: number,
+    rangeMs: number,
+    plotW: number
+  ): { x: number; label: string }[] {
+    const segments = 4;
+    const ticks: { x: number; label: string }[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = minMs + (rangeMs * i) / segments;
+      const x = this.padding + (plotW * i) / segments;
+      const d = new Date(t);
+      const label = d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      ticks.push({ x, label });
+    }
+    return ticks;
   }
 
   private average(values: number[]): number {
@@ -298,6 +519,10 @@ export class MoodDashboardComponent implements OnInit {
 
   private normalizeMood(rawMoodScore: number): number {
     return this.clamp(rawMoodScore, this.moodMin, this.moodMax);
+  }
+
+  patientDotById(patientId: number): PatientDot | undefined {
+    return this.patientDots.find((p) => p.patientId === patientId);
   }
 
   private getTriggerPenalty(triggers: EmotionalTriggerResponse[]): number {

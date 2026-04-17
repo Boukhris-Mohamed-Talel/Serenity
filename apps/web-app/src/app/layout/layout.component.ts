@@ -9,7 +9,7 @@ import { InsuranceService } from '../core/services/insurance.service';
 import { AppointmentService } from '../core/services/appointment.service';
 import { InsuranceNotification } from '../shared/models/insurance.model';
 import { AppointmentNotification, NavbarNotification } from '../shared/models/appointment.model';
-import { CrisisAlertPayload } from '../shared/models/mood.model';
+import { DoctorRealtimeNotification } from '../shared/models/mood.model';
 import { UserResponse } from '../shared/models/user.model';
 import { WebSocketService } from '../core/services/web-socket.service';
 
@@ -27,7 +27,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   notificationsOpen = false;
   notificationsLoading = false;
   private readonly locallyReadNotificationIds = new Set<string>();
-  alerts: CrisisAlertPayload[] = [];
+  alerts: DoctorRealtimeNotification[] = [];
   notificationPanelOpen = false;
   private peekInterval: ReturnType<typeof setInterval> | undefined;
   private userSub!: Subscription;
@@ -190,6 +190,32 @@ export class LayoutComponent implements OnInit, OnDestroy {
   clearAllAlerts(): void {
     this.crisisAlertService.clearAlerts();
     this.notificationPanelOpen = false;
+  }
+
+  getAlertTitle(alert: DoctorRealtimeNotification): string {
+    return alert.type === 'WEEKLY_DIGEST' ? 'Weekly Digest' : 'Crisis Alert';
+  }
+
+  getAlertIcon(alert: DoctorRealtimeNotification): string {
+    return alert.type === 'WEEKLY_DIGEST' ? '📊' : '🚨';
+  }
+
+  hasMoodBadge(alert: DoctorRealtimeNotification): boolean {
+    return alert.type === 'CRISIS' && typeof alert.moodLevel === 'number';
+  }
+
+  getMoodBadgeText(alert: DoctorRealtimeNotification): string {
+    if (!this.hasMoodBadge(alert)) {
+      return '';
+    }
+    return `${alert.moodLevel}/10`;
+  }
+
+  getDigestMeta(alert: DoctorRealtimeNotification): string {
+    if (alert.type !== 'WEEKLY_DIGEST') {
+      return '';
+    }
+    return `Crisis: ${alert.crisisCount ?? 0} • Worsening: ${alert.worseningPatients ?? 0} • No check-in: ${alert.noCheckinPatients ?? 0}`;
   }
 
   getDisplayName(): string {

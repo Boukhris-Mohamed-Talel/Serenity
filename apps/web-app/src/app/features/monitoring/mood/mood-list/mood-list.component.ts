@@ -6,6 +6,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { CrisisAlertService } from '../../../../core/services/crisis-alert.service';
 import {
   CrisisAlertPayload,
+  DoctorRealtimeNotification,
   EmotionalTriggerRequest,
   EmotionalTriggerResponse,
   MoodEntryResponse
@@ -79,6 +80,27 @@ export class MoodListComponent implements OnInit, OnDestroy {
     10: 'Perfect'
   };
 
+  private readonly highRiskTextPatterns: RegExp[] = [
+    /\bkill\s+myself\b/i,
+    /\bend\s+my\s+life\b/i,
+    /\bwant\s+to\s+die\b/i,
+    /\bsuicid(?:e|al)\b/i,
+    /\bself\s*harm\b/i
+  ];
+
+  private readonly mediumRiskTextPatterns: RegExp[] = [
+    /\b(feel(?:ing)?\s+)?tired\b/i,
+    /\bno\s+energy\b/i,
+    /\bexhausted\b/i,
+    /\bdon[' ]?t\s+want\s+to\s+do\s+(?:anything|nothing)\b/i,
+    /\bhopeless\b/i,
+    /\bvery\s+sad\b/i,
+    /\bstress\b/i,
+    /\bbullying\b/i,
+    /\bfight\b/i,
+    /\btrauma\b/i
+  ];
+
   readonly triggerTypes: string[] = [
     'WORK_STRESS',
     'SLEEP_DEPRIVATION',
@@ -101,7 +123,16 @@ export class MoodListComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     if (this.authService.isDoctor() && currentUser?.userId) {
       this.alertSubscription = this.crisisAlertService.newAlert$.subscribe((alert) => {
-        this.showCrisisToast(alert);
+        if (this.isCrisisNotification(alert)) {
+          this.showCrisisToast({
+            doctorId: alert.doctorId,
+            patientId: alert.patientId!,
+            patientFullName: alert.patientFullName || 'Patient',
+            moodLevel: alert.moodLevel!,
+            message: alert.message,
+            timestamp: alert.timestamp
+          });
+        }
       });
     }
 
@@ -167,6 +198,77 @@ export class MoodListComponent implements OnInit, OnDestroy {
     if (score <= 6) return '😐';
     if (score <= 8) return '🙂';
     return '😄';
+  }
+
+  getEntryRiskLevel(entry: MoodEntryResponse): 'HIGH_RISK' | 'MEDIUM_RISK' | 'LOW_RISK' {
+    const level = (entry.aiRiskLevel || '').trim().toUpperCase();
+    if (level === 'HIGH_RISK' || level === 'MEDIUM_RISK' || level === 'LOW_RISK') {
+      return level;
+    }
+
+    const text = `${entry.moodDescription || ''} ${entry.triggers || ''}`.trim();
+    if (this.matchesAny(text, this.highRiskTextPatterns)) {
+      return 'HIGH_RISK';
+    }
+    if (this.matchesAny(text, this.mediumRiskTextPatterns)) {
+      return 'MEDIUM_RISK';
+    }
+
+    // Fallback keeps doctor UX informative if AI service is temporarily unavailable.
+    if (entry.moodScore <= 3) return 'HIGH_RISK';
+    if (entry.moodScore <= 6) return 'MEDIUM_RISK';
+    return 'LOW_RISK';
+  }
+
+  getEntryRiskLabel(entry: MoodEntryResponse): string {
+    const level = this.getEntryRiskLevel(entry);
+    if (level === 'HIGH_RISK') return 'High risk';
+    if (level === 'MEDIUM_RISK') return 'Medium risk';
+    return 'Low risk';
+  }
+
+  getEntryRiskClass(entry: MoodEntryResponse): string {
+    const level = this.getEntryRiskLevel(entry);
+    if (level === 'HIGH_RISK') return 'risk-chip--high';
+    if (level === 'MEDIUM_RISK') return 'risk-chip--medium';
+    return 'risk-chip--low';
+  }
+
+  getEntryRiskConfidence(entry: MoodEntryResponse): string {
+    const confidence = entry.aiRiskConfidence;
+    if (typeof confidence !== 'number' || Number.isNaN(confidence)) {
+      const hasAiLabel = !!(entry.aiRiskLevel && entry.aiRiskLevel.trim());
+      if (!hasAiLabel) {
+        const fallbackLevel = this.getEntryRiskLevel(entry);
+        if (fallbackLevel === 'HIGH_RISK' || fallbackLevel === 'MEDIUM_RISK') {
+          return 'LOCAL';
+        }
+      }
+      return 'N/A';
+    }
+    return `${Math.round(confidence * 100)}%`;
+  }
+
+  getEntryRiskTypeLabel(entry: MoodEntryResponse): string | null {
+    const level = this.getEntryRiskLevel(entry);
+    if (level === 'LOW_RISK') {
+      return null;
+    }
+    const raw = (entry.aiRiskType || entry.aiMediumRiskType || '').trim();
+    if (!raw) {
+      return null;
+    }
+    return raw
+      .split('_')
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private matchesAny(text: string, patterns: RegExp[]): boolean {
+    if (!text) {
+      return false;
+    }
+    return patterns.some((pattern) => pattern.test(text));
   }
 
   createNewEntry(): void {
@@ -489,6 +591,12 @@ export class MoodListComponent implements OnInit, OnDestroy {
       this.toastAlert = null;
       this.toastTimer = null;
     }, 8000);
+  }
+
+  private isCrisisNotification(alert: DoctorRealtimeNotification): boolean {
+    return alert.type === 'CRISIS'
+      && typeof alert.patientId === 'number'
+      && typeof alert.moodLevel === 'number';
   }
 
   private resolveDeleteMoodError(err: any): string {

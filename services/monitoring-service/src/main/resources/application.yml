@@ -32,3 +32,11 @@ app:
   digest:
     cron: ${MONITORING_WEEKLY_DIGEST_CRON:0 0 8 ? * MON}
     timezone: ${MONITORING_WEEKLY_DIGEST_TIMEZONE:Africa/Tunis}
+  cleanup:
+    cron: ${MONITORING_CLEANUP_CRON:0 0 3 * * ?}
+    timezone: ${MONITORING_CLEANUP_TIMEZONE:Africa/Tunis}
+    retention-days: ${MONITORING_CLEANUP_RETENTION_DAYS:90}
+  # Python FastAPI in Serenity/services/monitoring -ai (default port 5150)
+  monitoring-ai:
+    enabled: ${MONITORING_AI_ENABLED:true}
+    url: ${MONITORING_AI_URL:http://localhost:5150}

@@ -2,10 +2,12 @@ package com.serenity.monitoring.repository;
 
 import com.serenity.monitoring.entity.MoodEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,4 +58,23 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
      */
     @Query("SELECT COUNT(DISTINCT m.patientId) FROM MoodEntry m WHERE m.doctorId = :doctorId")
     long countDistinctPatientsByDoctorId(@Param("doctorId") Long doctorId);
+
+    @Query("""
+            SELECT COUNT(m) FROM MoodEntry m
+            WHERE m.createdAt < :cutoff
+              AND NOT EXISTS (
+                SELECT t.id FROM EmotionalTrigger t WHERE t.moodEntry.id = m.id
+              )
+            """)
+    long countOldEntriesWithoutClinicalTriggers(@Param("cutoff") Date cutoff);
+
+    @Modifying
+    @Query("""
+            DELETE FROM MoodEntry m
+            WHERE m.createdAt < :cutoff
+              AND NOT EXISTS (
+                SELECT t.id FROM EmotionalTrigger t WHERE t.moodEntry.id = m.id
+              )
+            """)
+    int deleteOldEntriesWithoutClinicalTriggers(@Param("cutoff") Date cutoff);
 }
