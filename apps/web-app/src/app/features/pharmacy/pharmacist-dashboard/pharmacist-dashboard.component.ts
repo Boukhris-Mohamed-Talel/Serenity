@@ -5,6 +5,7 @@ import { PharmacyService } from '../../../core/services/pharmacy.service';
 import {
   PrescriptionResponse,
   PrescriptionStatus,
+  ReorderSuggestion,
   StockItemResponse
 } from '../../../shared/models/pharmacy.model';
 
@@ -24,6 +25,8 @@ export class PharmacistDashboardComponent implements OnInit {
   filteredPrescriptions: PrescriptionResponse[] = [];
   lowStockItems: StockItemResponse[] = [];
   insuranceMissingItems: PrescriptionResponse[] = [];
+  reorderSuggestions: ReorderSuggestion[] = [];
+  refreshingReorderSuggestions = false;
 
   search = '';
   statusFilter: DashboardStatusFilter = 'ALL';
@@ -110,12 +113,14 @@ export class PharmacistDashboardComponent implements OnInit {
     forkJoin({
       prescriptions: this.pharmacyService.getInbox(),
       stockItems: this.pharmacyService.listStock('', false),
-      insuranceMissing: this.pharmacyService.getInsuranceMissingInbox()
+      insuranceMissing: this.pharmacyService.getInsuranceMissingInbox(),
+      reorderSuggestions: this.pharmacyService.getReorderSuggestions(5)
     }).subscribe({
-      next: ({ prescriptions, stockItems, insuranceMissing }) => {
+      next: ({ prescriptions, stockItems, insuranceMissing, reorderSuggestions }) => {
         this.allPrescriptions = prescriptions;
         this.lowStockItems = this.buildLowStockList(stockItems);
         this.insuranceMissingItems = insuranceMissing;
+        this.reorderSuggestions = reorderSuggestions;
         this.applyPrescriptionFilters();
         this.loading = false;
       },
@@ -124,6 +129,34 @@ export class PharmacistDashboardComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  refreshReorderSuggestions(): void {
+    this.refreshingReorderSuggestions = true;
+    this.errorMessage = '';
+
+    this.pharmacyService.refreshReorderSuggestions().subscribe({
+      next: () => {
+        this.pharmacyService.getReorderSuggestions(5).subscribe({
+          next: (suggestions) => {
+            this.reorderSuggestions = suggestions;
+            this.refreshingReorderSuggestions = false;
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message || 'Failed to refresh AI reorder suggestions';
+            this.refreshingReorderSuggestions = false;
+          }
+        });
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to trigger AI reorder refresh';
+        this.refreshingReorderSuggestions = false;
+      }
+    });
+  }
+
+  riskClass(risk: string): string {
+    return `risk-pill ${risk.toLowerCase()}`;
   }
 
   private applyPrescriptionFilters(): void {

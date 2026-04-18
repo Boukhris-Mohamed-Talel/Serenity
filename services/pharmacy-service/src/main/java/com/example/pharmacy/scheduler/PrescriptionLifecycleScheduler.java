@@ -19,8 +19,8 @@ public class PrescriptionLifecycleScheduler {
 
     private final PharmacyPrescriptionRepository pharmacyPrescriptionRepository;
 
-    // Runs every 15 minutes.
-    @Scheduled(fixedRate = 900000)
+    // Runs every day at 03:00.
+    @Scheduled(cron = "0 0 3 * * *", zone = "Africa/Tunis")
     @Transactional
     public void expireOldReadyForPickupPrescriptions() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(72);

@@ -2,19 +2,27 @@ package com.example.pharmacy.service.impl;
 
 import com.example.pharmacy.dto.StockItemCreateRequestDTO;
 import com.example.pharmacy.dto.StockItemResponseDTO;
+import com.example.pharmacy.dto.StockReorderSuggestionDTO;
 import com.example.pharmacy.entity.MedicineStockItem;
 import com.example.pharmacy.entity.Pharmacy;
+import com.example.pharmacy.entity.StockForecastPrediction;
 import com.example.pharmacy.entity.StockState;
+import com.example.pharmacy.entity.StockoutRisk;
 import com.example.pharmacy.exception.ResourceNotFoundException;
 import com.example.pharmacy.repository.MedicineStockItemRepository;
 import com.example.pharmacy.repository.PharmacyRepository;
+import com.example.pharmacy.repository.StockForecastPredictionRepository;
 import com.example.pharmacy.security.CurrentUserService;
 import com.example.pharmacy.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +31,8 @@ public class StockServiceImpl implements StockService {
 
     private final MedicineStockItemRepository medicineStockItemRepository;
     private final PharmacyRepository pharmacyRepository;
+    private final StockForecastPredictionRepository stockForecastPredictionRepository;
+    private final StockForecastAiClient stockForecastAiClient;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -115,10 +125,108 @@ public class StockServiceImpl implements StockService {
         medicineStockItemRepository.delete(item);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<StockReorderSuggestionDTO> getMyReorderSuggestions(int limit) {
+        Pharmacy pharmacy = getMyPharmacy();
+        List<StockForecastPrediction> predictionRows = stockForecastPredictionRepository
+            .findLatestRunRowsByPharmacyId(pharmacy.getId());
+        if (predictionRows.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Integer> currentQtyByMedicine = medicineStockItemRepository
+            .sumActiveQuantitiesByPharmacyId(pharmacy.getId())
+            .stream()
+            .collect(Collectors.toMap(
+                row -> row.getMedicineName() == null ? "" : row.getMedicineName(),
+                row -> row.getTotalQuantity() == null ? 0 : row.getTotalQuantity().intValue()
+            ));
+
+        return predictionRows.stream()
+            .collect(Collectors.groupingBy(
+                row -> normalizeMedicineName(row.getMedicineName()),
+                Collectors.toList()
+            ))
+            .values()
+            .stream()
+            .map(rows -> toSuggestion(rows, currentQtyByMedicine))
+            .sorted(Comparator
+                .comparingInt((StockReorderSuggestionDTO dto) -> riskRank(dto.getStockoutRisk()))
+                .reversed()
+                .thenComparing(StockReorderSuggestionDTO::getSuggestedReorderQty, Comparator.reverseOrder())
+                .thenComparing(StockReorderSuggestionDTO::getDemand14, Comparator.reverseOrder())
+            )
+            .limit(limit)
+            .toList();
+    }
+
+    @Override
+    public void refreshMyReorderSuggestions() {
+        Pharmacy pharmacy = getMyPharmacy();
+        stockForecastAiClient.runForecast(pharmacy.getId());
+    }
+
     private MedicineStockItem getOwnedItem(Long stockItemId) {
         Long userId = currentUserService.getCurrentUserId();
         return medicineStockItemRepository.findByIdAndPharmacyOwnerUserId(stockItemId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("StockItem", "id", stockItemId));
+    }
+
+    private Pharmacy getMyPharmacy() {
+        Long userId = currentUserService.getCurrentUserId();
+        return pharmacyRepository.findByOwnerUserId(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Pharmacy", "ownerUserId", userId));
+    }
+
+    private StockReorderSuggestionDTO toSuggestion(
+        List<StockForecastPrediction> rows,
+        Map<String, Integer> currentQtyByMedicine
+    ) {
+        StockForecastPrediction first = rows.get(0);
+        String normalizedName = normalizeMedicineName(first.getMedicineName());
+        int currentQty = currentQtyByMedicine.getOrDefault(normalizedName, 0);
+        double demand14 = rows.stream()
+            .map(StockForecastPrediction::getPredictedDemand)
+            .filter(value -> value != null)
+            .mapToDouble(Double::doubleValue)
+            .sum();
+        int suggestedReorderQty = rows.stream()
+            .map(StockForecastPrediction::getSuggestedReorderQty)
+            .filter(value -> value != null)
+            .max(Integer::compareTo)
+            .orElse(0);
+        StockoutRisk highestRisk = rows.stream()
+            .map(StockForecastPrediction::getStockoutRisk)
+            .max(Comparator.comparingInt(this::riskRank))
+            .orElse(StockoutRisk.LOW);
+
+        return StockReorderSuggestionDTO.builder()
+            .medicineName(first.getMedicineName())
+            .currentQty(currentQty)
+            .demand14(demand14)
+            .suggestedReorderQty(suggestedReorderQty)
+            .stockoutRisk(highestRisk)
+            .generatedAt(first.getRunAt() != null ? first.getRunAt().toString() : null)
+            .build();
+    }
+
+    private int riskRank(StockoutRisk risk) {
+        if (risk == null) {
+            return 0;
+        }
+        return switch (risk) {
+            case LOW -> 1;
+            case MEDIUM -> 2;
+            case HIGH -> 3;
+        };
+    }
+
+    private String normalizeMedicineName(String medicineName) {
+        if (medicineName == null) {
+            return "";
+        }
+        return medicineName.trim().toLowerCase(Locale.ROOT);
     }
 
     private StockItemResponseDTO toResponse(MedicineStockItem item) {

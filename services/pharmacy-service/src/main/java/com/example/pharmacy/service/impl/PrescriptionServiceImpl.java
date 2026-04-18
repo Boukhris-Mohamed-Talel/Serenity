@@ -5,11 +5,13 @@ import com.example.pharmacy.entity.MedicineStockItem;
 import com.example.pharmacy.entity.Pharmacy;
 import com.example.pharmacy.entity.PharmacyPrescription;
 import com.example.pharmacy.entity.PrescriptionStatus;
+import com.example.pharmacy.entity.StockConsumptionEvent;
 import com.example.pharmacy.entity.StockState;
 import com.example.pharmacy.exception.ResourceNotFoundException;
 import com.example.pharmacy.repository.MedicineStockItemRepository;
 import com.example.pharmacy.repository.PharmacyPrescriptionRepository;
 import com.example.pharmacy.repository.PharmacyRepository;
+import com.example.pharmacy.repository.StockConsumptionEventRepository;
 import com.example.pharmacy.security.CurrentUserService;
 import com.example.pharmacy.service.PrescriptionInsuranceDocumentPayload;
 import com.example.pharmacy.service.PrescriptionService;
@@ -47,6 +49,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final PrescriptionAlternativeService prescriptionAlternativeService;
     private final PrescriptionResponseMapper prescriptionResponseMapper;
     private final PrescriptionInsuranceDocumentStorageService prescriptionInsuranceDocumentStorageService;
+    private final StockConsumptionEventRepository stockConsumptionEventRepository;
 
     @Override
     public List<PrescriptionResponseDTO> getMyInbox() {
@@ -321,12 +324,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
         Map<String, Integer> requiredByMedicine = new LinkedHashMap<>();
+        Map<String, String> displayNameByNormalizedMedicine = new LinkedHashMap<>();
         for (PrescriptionLineQueryService.RequiredLine line : requiredLines) {
             String normalizedName = line.normalizedName();
             if (normalizedName == null) {
                 continue;
             }
             requiredByMedicine.merge(normalizedName, line.requiredQuantity(), Integer::sum);
+            displayNameByNormalizedMedicine.putIfAbsent(normalizedName, line.displayName());
         }
 
         Set<String> normalizedMedicineNames = requiredByMedicine.keySet();
@@ -343,14 +348,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             ));
 
         List<MedicineStockItem> changedItems = new ArrayList<>();
+        Map<String, Integer> consumedByMedicine = new LinkedHashMap<>();
         for (Map.Entry<String, Integer> requiredEntry : requiredByMedicine.entrySet()) {
             String normalizedMedicine = requiredEntry.getKey();
             int requiredQuantity = requiredEntry.getValue();
-            String displayName = requiredLines.stream()
-                .filter(line -> normalizedMedicine.equals(line.normalizedName()))
-                .map(PrescriptionLineQueryService.RequiredLine::displayName)
-                .findFirst()
-                .orElse(normalizedMedicine);
+            String displayName = displayNameByNormalizedMedicine.getOrDefault(normalizedMedicine, normalizedMedicine);
 
             List<MedicineStockItem> candidates = stockByMedicine.getOrDefault(normalizedMedicine, List.of()).stream()
                 .filter(item -> item.getQuantity() != null && item.getQuantity() > 0)
@@ -372,6 +374,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 item.setQuantity(nextQuantity);
                 item.setState(nextQuantity > 0 ? StockState.IN_STOCK : StockState.OUT_OF_STOCK);
                 changedItems.add(item);
+                consumedByMedicine.merge(normalizedMedicine, take, Integer::sum);
                 remaining -= take;
             }
 
@@ -386,6 +389,17 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         if (!changedItems.isEmpty()) {
             medicineStockItemRepository.saveAll(changedItems);
+            LocalDateTime eventTime = LocalDateTime.now();
+            List<StockConsumptionEvent> events = consumedByMedicine.entrySet().stream()
+                .map(entry -> StockConsumptionEvent.builder()
+                    .pharmacy(workflow.getAssignedPharmacy())
+                    .medicineName(displayNameByNormalizedMedicine.getOrDefault(entry.getKey(), entry.getKey()))
+                    .consumedQty(entry.getValue())
+                    .eventAt(eventTime)
+                    .sourcePrescriptionId(workflow.getSourcePrescriptionId())
+                    .build())
+                .toList();
+            stockConsumptionEventRepository.saveAll(events);
         }
     }
 

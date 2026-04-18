@@ -36,3 +36,8 @@ app:
     me-url: ${USER_SERVICE_ME_URL:http://localhost:8081/api/users/me}
     admin-email: ${USER_SERVICE_ADMIN_EMAIL:}
     admin-password: ${USER_SERVICE_ADMIN_PASSWORD:}
+  ai-service:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8096}
+    internal-api-key: ${AI_SERVICE_INTERNAL_API_KEY:${INTERNAL_API_KEY:serenity-internal-key-dev}}
+    daily-cron: ${AI_SERVICE_DAILY_CRON:0 0 2 * * *}
+    daily-zone: ${AI_SERVICE_DAILY_ZONE:Africa/Tunis}

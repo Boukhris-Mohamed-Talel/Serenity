@@ -11,6 +11,11 @@ import java.util.Set;
 
 public interface MedicineStockItemRepository extends JpaRepository<MedicineStockItem, Long> {
 
+    interface MedicineQuantityAggregate {
+        String getMedicineName();
+        Long getTotalQuantity();
+    }
+
     List<MedicineStockItem> findByPharmacyOwnerUserIdAndArchivedFalseOrderByUpdatedAtDesc(Long ownerUserId);
 
     List<MedicineStockItem> findByPharmacyOwnerUserIdAndArchivedTrueOrderByUpdatedAtDesc(Long ownerUserId);
@@ -48,6 +53,18 @@ public interface MedicineStockItemRepository extends JpaRepository<MedicineStock
         @Param("ownerUserId") Long ownerUserId,
         @Param("includeArchived") boolean includeArchived,
         @Param("query") String query
+    );
+
+    @Query("""
+        select lower(m.medicineName) as medicineName,
+               coalesce(sum(coalesce(m.quantity, 0)), 0) as totalQuantity
+        from MedicineStockItem m
+        where m.pharmacy.id = :pharmacyId
+          and m.archived = false
+        group by lower(m.medicineName)
+        """)
+    List<MedicineQuantityAggregate> sumActiveQuantitiesByPharmacyId(
+        @Param("pharmacyId") Long pharmacyId
     );
 
     Optional<MedicineStockItem> findByIdAndPharmacyOwnerUserId(Long id, Long ownerUserId);

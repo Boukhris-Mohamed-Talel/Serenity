@@ -17,6 +17,7 @@ import {
   PharmacyUpsertRequest,
   PrescriptionResponse,
   PrescriptionStatusUpdateRequest,
+  ReorderSuggestion,
   StockItemCreateRequest,
   StockItemRenameRequest,
   StockItemResponse,
@@ -141,6 +142,14 @@ export class PharmacyService {
       params.push(`query=${encodeURIComponent(query.trim())}`);
     }
     return this.http.get<StockItemResponse[]>(`${this.API_URL}/stock?${params.join('&')}`);
+  }
+
+  getReorderSuggestions(limit = 5): Observable<ReorderSuggestion[]> {
+    return this.http.get<ReorderSuggestion[]>(`${this.API_URL}/stock/reorder-suggestions?limit=${limit}`);
+  }
+
+  refreshReorderSuggestions(): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/stock/reorder-suggestions/refresh`, {});
   }
 
   createStockItem(payload: StockItemCreateRequest): Observable<StockItemResponse> {

@@ -1,4 +1,4 @@
-package com.example.pharmacy.dto;
+ package com.example.pharmacy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
