@@ -118,7 +118,7 @@
       </div>
 
       <!-- Conversation Analysis Section -->
-      <div class="analysis-container" *ngIf="analysisLoading || conversationAnalysis">
+      <div class="analysis-container" *ngIf="(analysisLoading || conversationAnalysis) && authService.hasRole('DOCTOR') ">
         <div *ngIf="analysisLoading" class="analysis-loading">
           <span class="loader"></span> Analyzing conversation...
         </div>

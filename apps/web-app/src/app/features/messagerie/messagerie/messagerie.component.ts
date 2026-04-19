@@ -59,7 +59,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
 
   constructor(
     private messagerieService: MessagerieService,
-    private authService: AuthService,
+    public authService: AuthService,
     private userService: UserService,
     private webSocketService: WebSocketService
   ) {
