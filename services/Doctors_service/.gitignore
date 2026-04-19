@@ -33,3 +33,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+services/Doctors_service/src/main/resources/application-secrets.properties

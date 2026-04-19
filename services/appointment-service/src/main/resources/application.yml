@@ -4,8 +4,8 @@ server:
 spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/appointments_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    username: root
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -43,7 +43,7 @@ app:
     # Internal email lookup (must match user-service port when gateway has no /api/internal route).
     internal-base-url: ${USER_SERVICE_INTERNAL_URL:http://localhost:8081}
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47
   teleconsultation:
     default-duration-minutes: ${TELECONSULT_DEFAULT_MINUTES:30}
     jitsi-room-prefix: ${JITSI_ROOM_PREFIX:serenity-appt}
