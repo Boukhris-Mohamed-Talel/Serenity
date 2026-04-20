@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } fr
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { PatientService } from '../../core/services/patient.service';
 import { UserResponse } from '../../shared/models/user.model';
 import { DashboardStats } from '../../models/dashboard.model';
 import { Chart, ArcElement, Tooltip, Legend, PieController } from 'chart.js';
@@ -24,7 +25,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly dashboardService: DashboardService
+    private readonly dashboardService: DashboardService,
+    private readonly patientService: PatientService
   ) {}
 
   ngOnInit(): void {
@@ -35,9 +37,21 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dashboardService.getStats().subscribe({
       next: (stats) => {
         this.stats = stats;
-        this.loading = false;
-        // Build chart after data arrives (if view is ready)
-        setTimeout(() => this.buildChart(), 0);
+        
+        // Fetch patients to get the total count
+        this.patientService.getAllPatients().subscribe({
+          next: (patients) => {
+            if (this.stats) {
+              this.stats.totalPatients = patients ? patients.length : 0;
+            }
+            this.loading = false;
+            setTimeout(() => this.buildChart(), 0);
+          },
+          error: () => {
+            this.loading = false;
+            setTimeout(() => this.buildChart(), 0);
+          }
+        });
       },
       error: () => {
         this.loading = false;

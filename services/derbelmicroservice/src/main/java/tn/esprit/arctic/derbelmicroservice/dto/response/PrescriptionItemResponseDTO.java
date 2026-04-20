@@ -18,4 +18,5 @@ public class PrescriptionItemResponseDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private String instructions;
+    private Boolean isAiRecommended;
 }

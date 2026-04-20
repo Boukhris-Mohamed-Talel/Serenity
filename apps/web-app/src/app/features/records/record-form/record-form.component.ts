@@ -16,6 +16,8 @@ import { getParamFromRouteTree } from '../../../shared/utils/route-params';
   styleUrls: ['./record-form.component.scss']
 })
 export class RecordFormComponent implements OnInit {
+  isListening = false;
+
   patientId: number | null = null;
   recordId: number | null = null;
   isEdit = false;
@@ -132,6 +134,52 @@ export class RecordFormComponent implements OnInit {
         this.aiPredicting = false;
       }
     });
+  }
+
+  startDictation(): void {
+    if (this.isListening) return;
+
+    // Detect browser support for Web Speech API
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      this.notification.error("This browser does not support Speech Recognition. Try Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'en-US'; // Set to 'fr-FR' if you prefer French detection
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      this.isListening = true;
+      // Optional UI trigger since it updates state
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      const currentNotes = this.form.get('notes')?.value || '';
+      
+      // Capitalize first letter of transcript
+      const formattedTranscript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+      
+      const newNotes = currentNotes.trim() ? `${currentNotes.trim()}\n${formattedTranscript}.` : `${formattedTranscript}.`;
+      this.form.patchValue({ notes: newNotes });
+      this.notification.success("Dictation added to notes!");
+    };
+
+    recognition.onerror = (event: any) => {
+      this.isListening = false;
+      if (event.error !== 'no-speech') {
+        this.notification.error("Microphone error: " + event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      this.isListening = false;
+    };
+
+    recognition.start();
   }
 
   private loadRecord(id: number): void {

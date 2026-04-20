@@ -70,6 +70,7 @@ export class PrescriptionFormComponent implements OnInit {
     startDate?: string;
     endDate?: string;
     instructions?: string;
+    isAiRecommended?: boolean;
   }): FormGroup {
     return this.fb.group({
       medicineNameSearch: [initial?.medicineNameSearch ?? ''],
@@ -79,7 +80,8 @@ export class PrescriptionFormComponent implements OnInit {
       quantity: [initial?.quantity ?? 1, [Validators.required, Validators.min(1)]],
       startDate: [initial?.startDate ?? '', [Validators.required]],
       endDate: [initial?.endDate ?? ''],
-      instructions: [initial?.instructions ?? '', [Validators.maxLength(500)]]
+      instructions: [initial?.instructions ?? '', [Validators.maxLength(500)]],
+      isAiRecommended: [initial?.isAiRecommended ?? false]
     });
   }
 
@@ -153,8 +155,8 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   applyAiRecommendation(itemIndex: number, drug: string): void {
-    // Fill the visual input
-    this.itemsArray.at(itemIndex).patchValue({ medicineNameSearch: drug });
+    // Fill the visual input + mark as AI recommended
+    this.itemsArray.at(itemIndex).patchValue({ medicineNameSearch: drug, isAiRecommended: true });
     // Trigger OpenFDA search to get the official ID
     this.searchSubject.next({ index: itemIndex, query: drug });
     this.notification.info('Checking OpenFDA for ' + drug + '...');
@@ -240,7 +242,8 @@ export class PrescriptionFormComponent implements OnInit {
         quantity: Number(m['quantity'] ?? 1),
         startDate: String(m['startDate'] ?? ''),
         endDate: m['endDate'] ? String(m['endDate']) : null,
-        instructions: String(m['instructions'] ?? '').trim() || null
+        instructions: String(m['instructions'] ?? '').trim() || null,
+        isAiRecommended: !!m['isAiRecommended']
       }));
 
     if (!items.length) {

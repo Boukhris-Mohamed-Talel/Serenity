@@ -152,8 +152,20 @@ def recommend_drugs():
         except Exception as e:
             print("Fallback error:", str(e))
 
+    # Build confidence details for each recommended drug
+    drug_details = []
+    try:
+        proba = rec_model.predict_proba(X)
+        for drug_name in drug_list:
+            idx = list(rec_mlb.classes_).index(drug_name)
+            conf = round(float(proba[idx][0][1]), 4)
+            drug_details.append({"drug": drug_name, "confidence": conf})
+    except Exception:
+        drug_details = [{"drug": d, "confidence": None} for d in drug_list]
+
     return jsonify({
-        "recommended_drugs": drug_list
+        "recommended_drugs": drug_list,
+        "details": drug_details
     })
 
 # ═══════════════════════════════════════════════════════════

@@ -32,4 +32,6 @@ public class PrescriptionItemRequestDTO {
 
     @Size(max = 500)
     private String instructions;
+
+    private Boolean isAiRecommended;
 }

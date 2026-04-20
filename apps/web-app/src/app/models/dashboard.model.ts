@@ -5,4 +5,10 @@ export interface DashboardStats {
   severityLow: number;
   severityMedium: number;
   severityHigh: number;
+
+  // AI Recommendation Statistics
+  aiRecommendedCount: number;
+  totalPrescriptionItems: number;
+  aiAcceptanceRate: number;
+  topAiMedicines: { name: string; count: number }[];
 }

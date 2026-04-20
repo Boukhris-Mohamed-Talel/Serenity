@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,4 +19,10 @@ public class DashboardDTO {
     private long severityLow;
     private long severityMedium;
     private long severityHigh;
+
+    // AI Recommendation Statistics
+    private long aiRecommendedCount;
+    private long totalPrescriptionItems;
+    private double aiAcceptanceRate;
+    private List<Map<String, Object>> topAiMedicines;
 }

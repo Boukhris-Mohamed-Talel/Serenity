@@ -70,6 +70,7 @@ public class PrescriptionMapper {
                     .startDate(dto.getStartDate())
                     .endDate(dto.getEndDate())
                     .instructions(dto.getInstructions() != null ? dto.getInstructions().trim() : null)
+                    .isAiRecommended(dto.getIsAiRecommended() != null ? dto.getIsAiRecommended() : false)
                     .build();
         }).toList();
     }
@@ -90,6 +91,7 @@ public class PrescriptionMapper {
                 .startDate(item.getStartDate())
                 .endDate(item.getEndDate())
                 .instructions(item.getInstructions())
+                .isAiRecommended(item.getIsAiRecommended())
                 .build();
     }
 }
