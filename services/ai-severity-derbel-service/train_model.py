@@ -224,6 +224,40 @@ plt.savefig("plots/confusion_matrices.png", dpi=150)
 plt.close()
 print("Saved: plots/confusion_matrices.png")
 
+# Plot 5: ROC Curve (Multi-class, best model only)
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
+
+y_test_bin = label_binarize(y_test, classes=list(range(len(le.classes_))))
+best_name_temp = max(results, key=lambda n: results[n]["accuracy"])
+best_model_temp = results[best_name_temp]["model"]
+
+try:
+    y_score = best_model_temp.predict_proba(X_test_tfidf)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    colors_roc = ["#3b82f6", "#f59e0b", "#ef4444"]
+    for i, label in enumerate(le.classes_):
+        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr, color=colors_roc[i % len(colors_roc)], linewidth=2,
+                label=f'{label} (AUC = {roc_auc:.3f})')
+
+    ax.plot([0, 1], [0, 1], 'k--', alpha=0.5, linewidth=1)
+    ax.set_title(f"ROC Curve — {best_name_temp}", fontsize=14, fontweight="bold")
+    ax.set_xlabel("False Positive Rate", fontsize=12)
+    ax.set_ylabel("True Positive Rate", fontsize=12)
+    ax.legend(fontsize=11, loc="lower right")
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1.05])
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("plots/roc_curve.png", dpi=150)
+    plt.close()
+    print("Saved: plots/roc_curve.png")
+except Exception as e:
+    print(f"ROC curve skipped (model may not support predict_proba): {e}")
+
 # ═══════════════════════════════════════════════════════════
 #  6. SAVE BEST MODEL
 # ═══════════════════════════════════════════════════════════

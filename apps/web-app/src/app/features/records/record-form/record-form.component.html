@@ -75,8 +75,16 @@
         <small class="err" *ngIf="form.get('status')?.invalid && form.get('status')?.touched">Status is required</small>
       </label>
       <label class="field full">
-        <span>Notes</span>
-        <textarea formControlName="notes" rows="4" maxlength="2000"></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <span>Notes</span>
+          <button type="button" class="btn btn-sm" 
+                  [ngStyle]="{'background': isListening ? '#ef4444' : '#10b981', 'color': 'white', 'border': 'none', 'border-radius': '4px', 'padding': '4px 10px', 'font-size': '0.75rem', 'cursor': 'pointer', 'transition': 'background 0.3s', 'display': 'flex', 'align-items': 'center', 'gap': '5px'}"
+                  (click)="startDictation()">
+            <span class="material-icons" style="font-size: 1rem;">{{ isListening ? 'mic' : 'mic_none' }}</span>
+            {{ isListening ? 'Listening... Speak now' : 'Dictate Notes' }}
+          </button>
+        </div>
+        <textarea formControlName="notes" rows="4" maxlength="2000" [placeholder]="isListening ? 'Listening to your voice... 🎤' : 'Add your consultation notes here...'"></textarea>
         <small class="err" *ngIf="form.get('notes')?.invalid && form.get('notes')?.touched">Max 2000 characters</small>
       </label>
     </div>
