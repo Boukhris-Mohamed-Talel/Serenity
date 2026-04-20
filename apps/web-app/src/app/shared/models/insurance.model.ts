@@ -36,6 +36,12 @@ export interface InsuranceClaimTransition {
   changedAt: string;
 }
 
+export interface ClaimRiskScoreResponse {
+  riskScore: number;
+  riskBand: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  topReasons: string[];
+}
+
 export const INSURANCE_COMPANIES = Array.from(
   { length: 10 },
   (_, index) => `Insurance ${index + 1}`
@@ -55,6 +61,21 @@ export interface RemboursementResponse {
   date: string;
   statut: string;
   claimId: number;
+}
+
+/** Backend JPQL report: claim + joined remboursement totals + OCR audit count. */
+export interface ClaimRemittanceOcrSummary {
+  claimId: number;
+  externalRef?: string | null;
+  userId: number;
+  status: string;
+  amount: number;
+  reimbursementAmount: number;
+  insuranceCompany: string;
+  claimDate: string;
+  totalRemboursementPaid: number;
+  remboursementCount: number;
+  ocrAuditCount: number;
 }
 
 export interface InsuranceNotification {

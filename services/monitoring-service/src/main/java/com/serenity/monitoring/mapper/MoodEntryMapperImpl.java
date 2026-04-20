@@ -41,6 +41,12 @@ public class MoodEntryMapperImpl implements MoodEntryMapper {
                 .doctorId(entity.getDoctorId())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .aiRiskLevel(entity.getAiRiskLevel())
+                .aiRiskConfidence(entity.getAiRiskConfidence())
+                .aiRiskRecommendation(entity.getAiRiskRecommendation())
+                .aiRiskType(entity.getAiRiskType())
+                .aiMediumRiskType(entity.getAiMediumRiskType())
+                .aiRiskScore(entity.getAiRiskScore())
                 .build();
     }
 

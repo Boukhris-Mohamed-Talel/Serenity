@@ -40,6 +40,28 @@ public class MoodEntry {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
+    /** From monitoring-ai: HIGH_RISK, MEDIUM_RISK, LOW_RISK */
+    @Column(name = "ai_risk_level", length = 32)
+    private String aiRiskLevel;
+
+    @Column(name = "ai_risk_confidence")
+    private Double aiRiskConfidence;
+
+    @Column(name = "ai_risk_recommendation", columnDefinition = "TEXT")
+    private String aiRiskRecommendation;
+
+    /** Dataset-derived type for HIGH/MEDIUM risk (for example SUICIDAL_CRISIS, ANXIETY_DISTRESS). */
+    @Column(name = "ai_risk_type", length = 64)
+    private String aiRiskType;
+
+    /** Populated only when aiRiskLevel = MEDIUM_RISK. */
+    @Column(name = "ai_medium_risk_type", length = 64)
+    private String aiMediumRiskType;
+
+    /** 1=low, 2=medium, 3=high (mirrors Python risk_score) */
+    @Column(name = "ai_risk_score")
+    private Integer aiRiskScore;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = new Date();

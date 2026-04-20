@@ -30,4 +30,14 @@ public class MoodEntryResponseDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private Date updatedAt;
+
+    /** HIGH_RISK, MEDIUM_RISK, LOW_RISK from monitoring-ai (optional). */
+    private String aiRiskLevel;
+    private Double aiRiskConfidence;
+    private String aiRiskRecommendation;
+    /** Generic risk subtype (HIGH/MEDIUM), e.g. SUICIDAL_CRISIS or ANXIETY_DISTRESS. */
+    private String aiRiskType;
+    /** Present when aiRiskLevel == MEDIUM_RISK (for example ANXIETY_DISTRESS). */
+    private String aiMediumRiskType;
+    private Integer aiRiskScore;
 }

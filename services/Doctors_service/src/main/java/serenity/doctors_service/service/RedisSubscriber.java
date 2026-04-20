@@ -58,5 +58,19 @@ public class RedisSubscriber {
         }
     }
 
+    public void receiveApproveContract(String message) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+            Map<String, Object> payload = mapper.readValue(message, new TypeReference<Map<String, Object>>() {
+            });
+            messagingTemplate.convertAndSend("/topic/approve-contract", payload);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

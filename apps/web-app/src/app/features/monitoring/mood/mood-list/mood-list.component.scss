@@ -545,6 +545,62 @@
   gap: 12px;
 }
 
+.header-meta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+
+  &__label {
+    line-height: 1;
+  }
+
+  &__confidence {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  &--high {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  &--medium {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  &--low {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+}
+
+.risk-subtype {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .score-block {
   display: flex;
   align-items: center;

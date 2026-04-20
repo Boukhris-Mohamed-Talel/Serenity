@@ -1,5 +1,6 @@
 package com.example.insurance.service.impl;
 
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
@@ -562,13 +563,18 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ClaimRemittanceOcrSummaryDTO> getRemittanceOcrSummaryReport() {
+        return claimRepository.findRemittanceOcrSummaryByJpql();
+    }
+
+    @Override
     public InsuranceClaimResponseDTO approveClaim(Long id, Double montant, Long adminUserId) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
         ensureTransitionAllowed(claim.getStatus(), ClaimStatus.APPROVED);
         ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.APPROVED);
-        // Reimbursement becomes known at approval time
         claim.setReimbursementAmount(montant);
         claim.setReason(null);
         Remboursement remboursement = Remboursement.builder()
@@ -596,7 +602,6 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         ensureTransitionAllowed(claim.getStatus(), ClaimStatus.REJECTED);
         ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.REJECTED);
-        // Schema expects non-null reimbursement_amount
         claim.setReimbursementAmount(0.0);
         claim.setReason(null);
         claimRepository.save(claim);
@@ -619,7 +624,6 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only rejected claims can be deleted");
         }
 
-        // JPA mappings (cascade + orphanRemoval) handle remboursements + files cleanup where configured.
         claimRepository.delete(claim);
     }
 

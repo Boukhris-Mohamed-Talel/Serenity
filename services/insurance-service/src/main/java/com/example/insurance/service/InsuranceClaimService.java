@@ -1,5 +1,6 @@
 package com.example.insurance.service;
 
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
 import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
@@ -85,4 +86,6 @@ public interface InsuranceClaimService {
     List<InsuranceClaimTransitionResponseDTO> getClaimTimeline(Long claimId, Long requesterUserId, boolean isAdmin);
 
     List<InsuranceClaimOcrAuditResponseDTO> getClaimOcrAudit(Long claimId, Long requesterUserId, boolean isAdmin);
+
+    List<ClaimRemittanceOcrSummaryDTO> getRemittanceOcrSummaryReport();
 }

@@ -55,6 +55,34 @@
         <span class="value">{{ claim.infoRequestDeadline | date:'medium' }}</span>
       </div>
 
+      <div *ngIf="isAdmin" class="admin-actions card risk-card">
+        <div class="risk-header">
+          <div>
+            <h3>Risk score</h3>
+            <p class="risk-subtitle">Admin-only fraud/error risk signal.</p>
+          </div>
+          <button class="btn btn-primary" type="button" (click)="fetchRiskScore()" [disabled]="riskLoading">
+            {{ riskLoading ? 'Scoring…' : 'Compute risk score' }}
+          </button>
+        </div>
+
+        <div *ngIf="riskError" class="alert alert-error" style="margin-top: 0.75rem;">{{ riskError }}</div>
+
+        <div *ngIf="riskResult" class="risk-summary">
+          <div class="risk-score">{{ riskResult.riskScore | number:'1.0-1' }}</div>
+          <div class="risk-band">
+            <span [class]="getRiskBandClass(riskResult.riskBand)">{{ riskResult.riskBand }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="riskResult" class="risk-reasons">
+          <h4>Top reasons</h4>
+          <ul>
+            <li *ngFor="let reason of riskResult.topReasons">{{ reason }}</li>
+          </ul>
+        </div>
+      </div>
+
       <div class="prescriptions-section" *ngIf="claim.filePaths && claim.filePaths.length > 0">
         <h3>Uploaded Prescriptions</h3>
         <div class="file-list">

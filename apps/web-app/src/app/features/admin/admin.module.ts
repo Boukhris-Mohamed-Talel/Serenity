@@ -4,6 +4,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
 import { PharmacyApplicationsComponent } from './pharmacy-applications/pharmacy-applications.component';
 
+
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
   {
