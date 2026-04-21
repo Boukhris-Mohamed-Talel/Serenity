@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 
@@ -15,16 +14,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class BanMaintenanceService {
-    private static final Duration AUTO_UNBAN_GRACE_WINDOW = Duration.ofHours(3);
-
     private final UserRepository userRepository;
 
     @Transactional
     public int unbanExpiredUsers() {
         Date now = new Date();
-        Date cutoff = new Date(now.getTime() + AUTO_UNBAN_GRACE_WINDOW.toMillis());
         List<User> eligibleUsers =
-                userRepository.findByIsPermanentlyBannedFalseAndBannedUntilLessThanEqual(cutoff);
+                userRepository.findByIsPermanentlyBannedFalseAndBannedUntilLessThanEqual(now);
         if (eligibleUsers.isEmpty()) {
             return 0;
         }
@@ -34,7 +30,7 @@ public class BanMaintenanceService {
             user.setIsPermanentlyBanned(false);
         });
         userRepository.saveAll(eligibleUsers);
-        log.info("Auto-unbanned {} users with <=3h remaining or expired bans", eligibleUsers.size());
+        log.info("Auto-unbanned {} users with expired bans", eligibleUsers.size());
         return eligibleUsers.size();
     }
 }

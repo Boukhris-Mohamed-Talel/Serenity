@@ -37,6 +37,7 @@ export class ClaimListComponent implements OnInit, OnDestroy {
   riskError = '';
   riskTargetClaim: InsuranceClaimResponse | null = null;
   riskResult: ClaimRiskScoreResponse | null = null;
+  holdActionLoadingByClaimId = new Map<number, boolean>();
 
   constructor(
     private readonly insuranceService: InsuranceService,
@@ -94,6 +95,45 @@ export class ClaimListComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to load claims';
         this.loading = false;
+      }
+    });
+  }
+
+  isHoldActionLoading(claimId: number): boolean {
+    return this.holdActionLoadingByClaimId.get(claimId) === true;
+  }
+
+  sendHeldToPortal(claim: InsuranceClaimResponse, event?: MouseEvent): void {
+    event?.stopPropagation();
+    if (!this.isAdmin || claim.status !== 'UNDER_REVIEW') return;
+    if (this.isHoldActionLoading(claim.id)) return;
+    this.holdActionLoadingByClaimId.set(claim.id, true);
+    this.insuranceService.sendHeldClaimToPortal(claim.id).subscribe({
+      next: () => {
+        this.holdActionLoadingByClaimId.delete(claim.id);
+        this.loadClaims();
+      },
+      error: (err) => {
+        this.holdActionLoadingByClaimId.delete(claim.id);
+        this.errorMessage = err?.error?.message || 'Failed to send claim to portal';
+      }
+    });
+  }
+
+  rejectHeld(claim: InsuranceClaimResponse, event?: MouseEvent): void {
+    event?.stopPropagation();
+    if (!this.isAdmin || claim.status !== 'UNDER_REVIEW') return;
+    if (this.isHoldActionLoading(claim.id)) return;
+    const reason = window.prompt('Reject reason (optional):') || '';
+    this.holdActionLoadingByClaimId.set(claim.id, true);
+    this.insuranceService.rejectHeldClaim(claim.id, reason.trim()).subscribe({
+      next: () => {
+        this.holdActionLoadingByClaimId.delete(claim.id);
+        this.loadClaims();
+      },
+      error: (err) => {
+        this.holdActionLoadingByClaimId.delete(claim.id);
+        this.errorMessage = err?.error?.message || 'Failed to reject claim';
       }
     });
   }

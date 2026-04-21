@@ -49,7 +49,6 @@ public class ClaimRiskScoringServiceImpl implements ClaimRiskScoringService {
         payload.put("insurance_grade", claim.getInsuranceGrade());
         payload.put("file_count", claim.getFilePaths() == null ? 0 : claim.getFilePaths().size());
 
-        // Optional OCR fields (latest audit row)
         List<InsuranceClaimOcrAudit> audits = ocrAuditRepository.findByClaimIdOrderByCreatedAtDesc(claim.getId());
         InsuranceClaimOcrAudit latest = audits.isEmpty() ? null : audits.get(0);
         if (latest != null) {
@@ -61,7 +60,6 @@ public class ClaimRiskScoringServiceImpl implements ClaimRiskScoringService {
             payload.put("ocr_extracted_amount", latest.getExtractedAmount());
         }
 
-        // Optional user-history enrichment
         payload.put("user_total_claims", (int) claimRepository.countByUserId(userId));
         payload.put("user_rejected_claims", (int) claimRepository.countByUserIdAndStatus(userId, ClaimStatus.REJECTED));
 

@@ -660,5 +660,45 @@
     "attachmentUrls": [
       "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F23%2Fccc547ed-5916-449e-a979-2bb661b7f2bd_medical_invoice+%281%29.pdf"
     ]
+  },
+  {
+    "ref": "8a342360-df7e-4b0d-8ca2-be01dc2a8b68",
+    "patientName": "3",
+    "description": "hmmmmmmmmmmmmm",
+    "amount": 128,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 2,
+    "status": "APPROVED",
+    "reimbursementAmount": 15.36,
+    "receivedAt": "2026-04-21T09:09:42.734Z",
+    "processedAt": "2026-04-21T09:11:00.824Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fe09c732e-1305-453a-9b48-6702617173bc_medical_invoice+%281%29.pdf"
+    ]
+  },
+  {
+    "ref": "9de6f979-5a55-4209-89cc-3674b684e08d",
+    "patientName": "3",
+    "description": "testing flow admin",
+    "amount": 128,
+    "insuranceCompany": "Insurance 2",
+    "insuranceGrade": 3,
+    "status": "APPROVED",
+    "reimbursementAmount": 23.04,
+    "receivedAt": "2026-04-21T09:12:13.623Z",
+    "processedAt": "2026-04-21T09:12:35.073Z",
+    "rejectReason": null,
+    "adjustmentReason": null,
+    "infoRequestReason": null,
+    "infoRequestDeadline": null,
+    "infoRespondedAt": null,
+    "attachmentUrls": [
+      "http://localhost:8090/api/files/open?path=uploads%2Fclaims%2F3%2Fe9c93774-bf90-4139-9ed8-00a7c0b6394e_medical_invoice+%281%29.pdf"
+    ]
   }
 ]

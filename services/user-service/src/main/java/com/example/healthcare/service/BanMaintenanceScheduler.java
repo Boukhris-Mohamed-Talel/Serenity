@@ -12,7 +12,8 @@ public class BanMaintenanceScheduler {
 
     private final BanMaintenanceService banMaintenanceService;
 
-    @Scheduled(cron = "${app.ban.cleanup-cron:0 0 0 * * *}", zone = "${app.ban.cleanup-zone:UTC}")
+    // Default: every 30 minutes on the clock (:00 and :30)
+    @Scheduled(cron = "${app.ban.cleanup-cron:0 0/30 * * * *}", zone = "${app.ban.cleanup-zone:UTC}")
     public void cleanupExpiredBans() {
         int cleaned = banMaintenanceService.unbanExpiredUsers();
         if (cleaned > 0) {

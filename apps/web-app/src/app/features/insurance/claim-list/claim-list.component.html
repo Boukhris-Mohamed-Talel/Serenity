@@ -161,6 +161,24 @@
       <div class="claim-actions">
         <a [routerLink]="[claim.id]" class="btn btn-secondary btn-sm">View Details</a>
         <button
+          *ngIf="isAdmin && claim.status === 'UNDER_REVIEW'"
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="sendHeldToPortal(claim, $event)"
+          [disabled]="isHoldActionLoading(claim.id)"
+        >
+          Send to portal
+        </button>
+        <button
+          *ngIf="isAdmin && claim.status === 'UNDER_REVIEW'"
+          type="button"
+          class="btn btn-danger btn-sm"
+          (click)="rejectHeld(claim, $event)"
+          [disabled]="isHoldActionLoading(claim.id)"
+        >
+          Reject
+        </button>
+        <button
           *ngIf="isAdmin"
           type="button"
           class="btn btn-primary btn-sm"

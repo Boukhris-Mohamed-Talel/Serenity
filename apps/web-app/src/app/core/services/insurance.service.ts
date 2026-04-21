@@ -140,6 +140,16 @@ export class InsuranceService {
     return this.http.get<ClaimRemittanceOcrSummary[]>(`${this.API_URL}/reports/remittance-ocr-summary`);
   }
 
+  sendHeldClaimToPortal(id: number): Observable<InsuranceClaimResponse> {
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/send-to-portal`, {});
+  }
+
+  rejectHeldClaim(id: number, reason?: string): Observable<InsuranceClaimResponse> {
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/reject-held`, {
+      reason: reason || undefined
+    });
+  }
+
   deleteClaim(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/claims/${id}`);
   }

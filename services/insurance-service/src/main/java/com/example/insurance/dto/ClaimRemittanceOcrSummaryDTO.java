@@ -1,6 +1,7 @@
 package com.example.insurance.dto;
 
 import com.example.insurance.entity.ClaimStatus;
+import com.example.insurance.entity.InsuranceClaim;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,8 +10,7 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * Result of {@link com.example.insurance.repository.InsuranceClaimRepository#findRemittanceOcrSummaryByJpql()} —
- * one row per claim: aggregates from joined remboursements plus OCR audit count via subquery.
+ * Result row of {@link com.example.insurance.repository.InsuranceClaimRepository#findRemittanceOcrSummaryByJpql()}.
  */
 @Getter
 @Setter

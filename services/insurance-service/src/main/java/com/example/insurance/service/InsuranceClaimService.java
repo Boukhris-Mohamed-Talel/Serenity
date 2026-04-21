@@ -88,4 +88,14 @@ public interface InsuranceClaimService {
     List<InsuranceClaimOcrAuditResponseDTO> getClaimOcrAudit(Long claimId, Long requesterUserId, boolean isAdmin);
 
     List<ClaimRemittanceOcrSummaryDTO> getRemittanceOcrSummaryReport();
+
+    /**
+     * For high-risk claims held in {@code UNDER_REVIEW}: manually forward the claim to the external insurer portal.
+     */
+    InsuranceClaimResponseDTO sendHeldClaimToPortal(Long claimId, Long adminUserId);
+
+    /**
+     * For high-risk claims held in {@code UNDER_REVIEW}: reject the claim internally (admin decision).
+     */
+    InsuranceClaimResponseDTO rejectHeldClaim(Long claimId, Long adminUserId, String reason);
 }

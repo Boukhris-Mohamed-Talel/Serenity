@@ -29,6 +29,7 @@ import com.example.insurance.repository.InsuranceClaimRepository;
 import com.example.insurance.repository.InsuranceClaimOcrAuditRepository;
 import com.example.insurance.repository.InsuranceClaimTransitionRepository;
 import com.example.insurance.repository.RemboursementRepository;
+import com.example.insurance.service.ClaimRiskScoringService;
 import com.example.insurance.service.InsuranceClaimService;
 import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
     private static final int FALLBACK_SAFE_JSON_LENGTH = 240;
     private static final int FALLBACK_SAFE_TEXT_LENGTH = 240;
+    private static final double HIGH_RISK_SCORE_THRESHOLD = 70.0;
 
     private final InsuranceClaimRepository claimRepository;
     private final InsuranceClaimOcrAuditRepository ocrAuditRepository;
@@ -85,6 +87,7 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     private final NotificationService notificationService;
     private final OcrExtractionService ocrExtractionService;
     private final ClaimConsistencyService claimConsistencyService;
+    private final ClaimRiskScoringService claimRiskScoringService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -215,6 +218,41 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
 
         recordTransition(claim, null, ClaimStatus.SUBMITTED, userId, "USER", "Claim submitted");
 
+        // High-risk hold: if risk score is 70+ we stop here for admin review
+        try {
+            var score = claimRiskScoringService.scoreClaim(claim.getId());
+            if (score != null && score.getRiskScore() != null && score.getRiskScore() >= HIGH_RISK_SCORE_THRESHOLD) {
+                ClaimStatus fromStatus = claim.getStatus();
+                claim.setStatus(ClaimStatus.UNDER_REVIEW);
+                claim.setReason("Held for admin review due to high risk score (" + score.getRiskScore() + ").");
+                claimRepository.save(claim);
+                recordTransition(
+                        claim,
+                        fromStatus,
+                        ClaimStatus.UNDER_REVIEW,
+                        userId,
+                        "SYSTEM",
+                        "High risk score: " + score.getRiskScore()
+                );
+                notifyAdminsSafely(
+                        claim.getId(),
+                        NotificationType.OCR_MINOR_MISMATCH,
+                        "Admin review required: high-risk claim",
+                        "Claim " + claim.getExternalRef() + " was held for review (risk score " + score.getRiskScore() + ")."
+                );
+                notificationService.createNotification(
+                        userId,
+                        claim.getId(),
+                        NotificationType.DOCUMENTS_REQUESTED,
+                        "Claim pending manual review",
+                        "Your claim requires a manual review before being sent to the insurer."
+                );
+                return toResponseDTO(claim);
+            }
+        } catch (Exception ignored) {
+            // If risk service is unavailable, keep default behavior and submit to portal.
+        }
+
         // Fire-and-forget: external provider may accept/reject asynchronously.
         // Our scheduler will poll portal status and update this claim.
         PortalSubmitClaimRequest portalReq = new PortalSubmitClaimRequest(
@@ -237,6 +275,68 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 "Your claim has been sent to the external insurance portal and is awaiting their decision."
         );
 
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO sendHeldClaimToPortal(Long claimId, Long adminUserId) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+
+        if (claim.getStatus() != ClaimStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only UNDER_REVIEW claims can be sent to portal");
+        }
+
+        PortalSubmitClaimRequest portalReq = new PortalSubmitClaimRequest(
+                claim.getExternalRef(),
+                String.valueOf(claim.getUserId()),
+                claim.getDescription(),
+                claim.getAmount(),
+                claim.getReimbursementAmount(),
+                claim.getInsuranceCompany(),
+                claim.getInsuranceGrade(),
+                buildAttachmentUrls(claim.getFilePaths())
+        );
+        insurancePortalClient.submitClaim(portalReq);
+
+        ClaimStatus from = claim.getStatus();
+        claim.setStatus(ClaimStatus.SUBMITTED);
+        claim.setReason("Sent to insurer portal after admin review.");
+        claimRepository.save(claim);
+        recordTransition(claim, from, ClaimStatus.SUBMITTED, adminUserId, "ADMIN", "Sent to insurer portal");
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_SENT_TO_INSURER,
+                "Claim sent to insurer",
+                "Your claim was reviewed and sent to the external insurance portal."
+        );
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO rejectHeldClaim(Long claimId, Long adminUserId, String reason) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+
+        if (claim.getStatus() != ClaimStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only UNDER_REVIEW claims can be rejected by admin");
+        }
+
+        ClaimStatus from = claim.getStatus();
+        claim.setStatus(ClaimStatus.REJECTED);
+        claim.setReason(reason == null || reason.isBlank() ? "Rejected by admin review." : reason.trim());
+        claimRepository.save(claim);
+        recordTransition(claim, from, ClaimStatus.REJECTED, adminUserId, "ADMIN", claim.getReason());
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_REJECTED,
+                "Claim rejected",
+                "Your claim was rejected after an admin review."
+        );
         return toResponseDTO(claim);
     }
 
@@ -931,7 +1031,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                         || to == ClaimStatus.REJECTED;
                 break;
             case UNDER_REVIEW:
-                allowed = to == ClaimStatus.NEEDS_INFO
+                allowed = to == ClaimStatus.SUBMITTED
+                        || to == ClaimStatus.NEEDS_INFO
                         || to == ClaimStatus.APPROVED
                         || to == ClaimStatus.PARTIALLY_APPROVED
                         || to == ClaimStatus.REJECTED;

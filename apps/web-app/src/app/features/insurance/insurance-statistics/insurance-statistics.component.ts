@@ -50,10 +50,8 @@ export class InsuranceStatisticsComponent implements OnInit {
   monthlyStats: { month: string; count: number; amount: number; reimbursed: number }[] = [];
   maxMonthlyCount = 0;
 
-  // Time range selection
   timeRange: 'ALL' | 'LAST_7' | 'LAST_30' | 'LAST_90' | 'THIS_YEAR' = 'ALL';
 
-  // Deltas vs previous period
   deltaClaims: number | null = null;
   deltaReimbursed: number | null = null;
 
@@ -63,7 +61,6 @@ export class InsuranceStatisticsComponent implements OnInit {
 
   private readonly userLabelsByUserId = new Map<number, string>();
 
-  /** Client-side paging for the remittance/OCR table */
   readonly remittanceReportPageSize = 10;
   remittanceReportPageIndex = 0;
 
@@ -134,7 +131,6 @@ export class InsuranceStatisticsComponent implements OnInit {
         statusCounts[claim.status]++;
       }
 
-      // Company
       const companyKey = claim.insuranceCompany || 'Unknown';
       const companyBucket = companyMap.get(companyKey) || { count: 0, amount: 0, reimbursed: 0 };
       companyBucket.count++;
@@ -142,7 +138,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       companyBucket.reimbursed += reimbursed;
       companyMap.set(companyKey, companyBucket);
 
-      // Grade
       const gradeKey = claim.insuranceGrade;
       const gradeBucket = gradeMap.get(gradeKey) || { count: 0, amount: 0, reimbursed: 0 };
       gradeBucket.count++;
@@ -150,7 +145,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       gradeBucket.reimbursed += reimbursed;
       gradeMap.set(gradeKey, gradeBucket);
 
-      // Month
       const date = new Date(claim.claimDate);
       const monthKey = isNaN(date.getTime())
         ? 'Unknown'
@@ -181,7 +175,6 @@ export class InsuranceStatisticsComponent implements OnInit {
 
     this.maxMonthlyCount = this.monthlyStats.reduce((max, m) => Math.max(max, m.count), 0);
 
-    // Deltas vs previous period
     const prevTotalClaims = previous.length;
     const prevReimbursed = previous.reduce((sum, c) => sum + (c.reimbursementAmount ?? 0), 0);
     this.deltaClaims = prevTotalClaims > 0 ? this.totalClaims - prevTotalClaims : null;
@@ -264,7 +257,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       return { current, previous };
     }
 
-    // THIS_YEAR
     const year = now.getFullYear();
     const current = all.filter(c => {
       const d = new Date(c.claimDate);

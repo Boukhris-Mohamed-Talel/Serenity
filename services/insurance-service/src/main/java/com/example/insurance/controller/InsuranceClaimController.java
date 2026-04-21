@@ -29,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/insurance")
@@ -149,6 +150,24 @@ public class InsuranceClaimController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ClaimRiskScoreResponseDTO> getRiskScore(@PathVariable Long id) {
         return ResponseEntity.ok(claimRiskScoringService.scoreClaim(id));
+    }
+
+    @PostMapping("/claims/{id}/send-to-portal")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InsuranceClaimResponseDTO> sendHeldClaimToPortal(@PathVariable Long id) {
+        Long adminUserId = InsuranceAuth.requireUserId();
+        return ResponseEntity.ok(insuranceClaimService.sendHeldClaimToPortal(id, adminUserId));
+    }
+
+    @PostMapping("/claims/{id}/reject-held")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InsuranceClaimResponseDTO> rejectHeldClaim(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        Long adminUserId = InsuranceAuth.requireUserId();
+        String reason = body != null && body.get("reason") != null ? String.valueOf(body.get("reason")) : null;
+        return ResponseEntity.ok(insuranceClaimService.rejectHeldClaim(id, adminUserId, reason));
     }
 
     @PostMapping("/claims/{id}/request-documents")
