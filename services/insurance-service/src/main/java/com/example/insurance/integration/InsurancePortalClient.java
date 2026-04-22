@@ -27,7 +27,6 @@ public class InsurancePortalClient {
             );
             log.info("Submitted claim to portal, externalRef={}, status={}", request.getRef(), resp.getStatusCode());
         } catch (RestClientException e) {
-            // The local claim should still exist; the scheduler will update when portal accepts/returns state.
             log.warn("Failed to submit claim to portal, externalRef={}, error={}", request.getRef(), e.getMessage());
         }
     }

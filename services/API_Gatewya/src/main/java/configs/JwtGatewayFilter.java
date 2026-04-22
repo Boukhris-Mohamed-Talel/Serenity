@@ -38,21 +38,7 @@ public class JwtGatewayFilter implements WebFilter {
         if ("OPTIONS".equalsIgnoreCase(method)) {
             // Short-circuit preflight so downstream services (and their CORS/security configs)
             // cannot accidentally cause 403/401 and missing CORS headers.
-            String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
-            String reqMethod = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Method");
-            String reqHeaders = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Headers");
-
-            if (origin != null) {
-                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-                exchange.getResponse().getHeaders().set(HttpHeaders.VARY, "Origin");
-                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
-
-                // Mirror requested preflight method/headers (or fall back to broad values).
-                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
-                        reqMethod != null ? reqMethod : "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-                exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
-                        reqHeaders != null ? reqHeaders : "*");
-            }
+            addCorsHeaders(exchange, true);
 
             exchange.getResponse().setStatusCode(HttpStatus.OK);
             return exchange.getResponse().setComplete();
@@ -67,7 +53,13 @@ public class JwtGatewayFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
+        if (path.startsWith("/uploads")) {
+            return chain.filter(exchange);
+        }
+
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            addCorsHeaders(exchange, false);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -96,8 +88,30 @@ public class JwtGatewayFilter implements WebFilter {
             ServerHttpRequest newRequest = requestBuilder.build();
             return chain.filter(exchange.mutate().request(newRequest).build());
         } catch (JwtException | IllegalArgumentException e) {
+            addCorsHeaders(exchange, false);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
+        }
+    }
+
+    private void addCorsHeaders(ServerWebExchange exchange, boolean preflight) {
+        String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
+        if (!StringUtils.hasText(origin)) {
+            return;
+        }
+
+        String reqMethod = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Method");
+        String reqHeaders = exchange.getRequest().getHeaders().getFirst("Access-Control-Request-Headers");
+
+        exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+        exchange.getResponse().getHeaders().set(HttpHeaders.VARY, "Origin");
+        exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+
+        if (preflight) {
+            exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                    StringUtils.hasText(reqMethod) ? reqMethod : "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+            exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                    StringUtils.hasText(reqHeaders) ? reqHeaders : "Authorization,Content-Type,Accept");
         }
     }
 

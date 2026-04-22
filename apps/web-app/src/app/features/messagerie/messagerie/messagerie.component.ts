@@ -33,6 +33,13 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   filteredUsers: any[] = [];
   private searchSubject = new Subject<string>();
 
+  // Keyword search
+  keywordSearchTerm: string = '';
+  keywordSearchResults: any[] = [];
+  keywordSearchActive: boolean = false;
+  keywordSearchLoading: boolean = false;
+  private keywordSearchSubject = new Subject<string>();
+
   searchActive: boolean = false;
   messageContent: string = '';
   currentUserId: number | null = null;
@@ -42,12 +49,17 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   conversationMenuY = 0;
   selectedConversation: any = null;
 
+  conversationAnalysis: any = null;
+  analysisLoading = false;
+  analysisMessage: string = '';
+  analysisBadgeClass: string = '';
+
   private wsSubscription: Subscription | null = null;
   private clickListener!: () => void;
 
   constructor(
     private messagerieService: MessagerieService,
-    private authService: AuthService,
+    public authService: AuthService,
     private userService: UserService,
     private webSocketService: WebSocketService
   ) {
@@ -62,6 +74,60 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         return this.messagerieService.searchUsers(term);
       })
     ).subscribe(users => this.filteredUsers = users);
+
+    // Keyword search subscription
+    this.keywordSearchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (!term.trim()) {
+          this.keywordSearchResults = [];
+          return [];
+        }
+        if (this.activeConversationId === null) {
+          this.keywordSearchResults = [];
+          return [];
+        }
+        this.keywordSearchLoading = true;
+        return this.messagerieService.searchKeyword(term);
+      })
+    ).subscribe({
+      next: (results) => {
+        this.keywordSearchResults = (results || [])
+          .map((result: any) => {
+            const conversationId =
+              result.conversationId ?? result.conversation_id ?? result.id ?? null;
+            const participants =
+              result.participants ??
+              result.participantNames ??
+              result.conversationName ??
+              this.activeConversationName;
+            const matchCount =
+              result.matchCount ?? result.matches ?? result.count ?? 0;
+            const lastMatchingMessage =
+              result.lastMatchingMessage ??
+              result.lastMessageContainingKeyword ??
+              result.lastMatchedMessage ??
+              result.lastMessage ??
+              result.preview ??
+              '';
+
+            return {
+              ...result,
+              conversationId,
+              participants,
+              matchCount,
+              lastMatchingMessage
+            };
+          })
+          .filter((result: any) => result.conversationId === this.activeConversationId);
+        this.keywordSearchLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur recherche par mot-clé:', err);
+        this.keywordSearchLoading = false;
+      }
+    });
   }
 
   ngOnInit() {
@@ -86,22 +152,35 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         return this.userService.getUsersNamesById(otherUserIds).pipe(
           map(users => ({ convos, users }))
         );
+      }),
+      switchMap(({ convos, users }) => {
+        // Fetch conversation summaries to get last messages
+        return this.messagerieService.conversationSummary().pipe(
+          map(summaries => ({ convos, users, summaries }))
+        );
       })
     ).subscribe({
-      next: ({ convos, users }) => {
+      next: ({ convos, users, summaries }) => {
         console.log('✅ Convos:', convos);
         console.log('👤 Users:', users);
+        console.log('💬 Summaries:', summaries);
 
         // Try both 'id' and 'userId' field names to be safe
         const usersMap = new Map(
           users.map((u: any) => [u.id ?? u.userId, `${u.firstName} ${u.lastName}`])
         );
 
+        // Create a map of conversation summaries by conversation ID
+        const summaryMap = new Map(
+          summaries.map((summary: any) => [summary.conversationId, summary.lastMessage])
+        );
+
         this.conversations = convos.map((c: any) => ({
           ...c,
           otherUserName: usersMap.get(
             c.user1Id === this.currentUserId ? c.user2Id : c.user1Id
-          ) ?? 'Unknown'
+          ) ?? 'Unknown',
+          lastMessage: summaryMap.get(c.id) || ''
         }));
 
         this.filteredConversations = [...this.conversations];
@@ -160,6 +239,51 @@ export class MessagerieComponent implements OnInit, OnDestroy {
     this.filteredUsers = [];
   }
 
+  onKeywordSearch() {
+    if (this.activeConversationId === null) {
+      this.keywordSearchActive = false;
+      this.keywordSearchResults = [];
+      return;
+    }
+    this.keywordSearchSubject.next(this.keywordSearchTerm);
+  }
+
+  onKeywordSearchFocus() {
+    if (this.activeConversationId === null) {
+      return;
+    }
+    this.keywordSearchActive = true;
+  }
+
+  cancelKeywordSearch() {
+    this.keywordSearchActive = false;
+    this.keywordSearchTerm = '';
+    this.keywordSearchResults = [];
+  }
+
+  selectSearchResult(result: any) {
+    if (this.activeConversationId === null || result.conversationId !== this.activeConversationId) {
+      return;
+    }
+
+    setTimeout(() => {
+      const targetMessage = this.messages.find(m =>
+        m.text.toLowerCase().includes(this.keywordSearchTerm.toLowerCase())
+      );
+      if (targetMessage) {
+        const messageIndex = this.messages.indexOf(targetMessage);
+        const messageElements = document.querySelectorAll('.message');
+        if (messageElements[messageIndex]) {
+          messageElements[messageIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (messageElements[messageIndex] as HTMLElement).classList.add('highlight-search');
+          setTimeout(() => {
+            (messageElements[messageIndex] as HTMLElement).classList.remove('highlight-search');
+          }, 2000);
+        }
+      }
+    }, 100);
+  }
+
   selectUser(user: any) {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser?.userId) return;
@@ -168,6 +292,9 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       next: (conversation) => {
         this.activeConversationId = conversation.id;
         this.activeConversationName = `${user.firstName} ${user.lastName}`;
+
+        // Load analysis for this conversation
+        this.loadConversationAnalysis(conversation.id);
 
         // Load messages for this conversation
         this.messagerieService.getConversationMessages(conversation.id).subscribe({
@@ -203,6 +330,20 @@ export class MessagerieComponent implements OnInit, OnDestroy {
         // ✅ Always sync filteredConversations BEFORE cancelSearch
         this.filteredConversations = [...this.conversations];
         this.cancelSearch();
+        this.cancelKeywordSearch();
+
+        // Load summary to populate lastMessage
+        this.messagerieService.conversationSummary().subscribe({
+          next: (summaries) => {
+            const lastMsg = summaries.find((s: any) => s.conversationId === conversation.id)?.lastMessage || '';
+            const convoToUpdate = this.conversations.find(c => c.id === conversation.id);
+            if (convoToUpdate) {
+              convoToUpdate.lastMessage = lastMsg;
+              this.filteredConversations = [...this.conversations];
+            }
+          },
+          error: (err) => console.error('Erreur chargement summary:', err)
+        });
       },
       error: (err) => console.error('Erreur démarrage conversation:', err)
     });
@@ -211,6 +352,10 @@ export class MessagerieComponent implements OnInit, OnDestroy {
   selectConversation(convo: any) {
     this.activeConversationId = convo.id;
     this.activeConversationName = convo.otherUserName;
+    this.cancelKeywordSearch();
+
+    // Load analysis for this conversation
+    this.loadConversationAnalysis(convo.id);
 
     this.messagerieService.getConversationMessages(convo.id).subscribe({
       next: (msgs) => {
@@ -330,6 +475,7 @@ export class MessagerieComponent implements OnInit, OnDestroy {
           this.activeConversationId = null;
           this.activeConversationName = '';
           this.messages = [];
+          this.conversationAnalysis = null;
         }
 
         this.conversationMenuVisible = false;
@@ -337,5 +483,52 @@ export class MessagerieComponent implements OnInit, OnDestroy {
       },
       error: (err) => console.error('Erreur suppression conversation:', err)
     });
+  }
+
+  loadConversationAnalysis(conversationId: number) {
+    this.analysisLoading = true;
+    this.conversationAnalysis = null;
+    this.analysisMessage = '';
+    this.analysisBadgeClass = '';
+    this.messagerieService.analyseConversation(conversationId).subscribe({
+      next: (analysis) => {
+        this.conversationAnalysis = analysis;
+        this.updateAnalysisMessage(analysis);
+        this.analysisLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur analyse conversation:', err);
+        this.analysisLoading = false;
+        this.conversationAnalysis = null;
+      }
+    });
+  }
+
+  updateAnalysisMessage(analysis: any) {
+    const prediction = analysis?.prediction || 'Unknown';
+    const confidence = analysis?.confidence || 0;
+    const confidencePercent = (confidence * 100).toFixed(1);
+
+    switch (prediction.toLowerCase()) {
+      case 'suicidal':
+        this.analysisBadgeClass = 'badge-suicidal';
+        this.analysisMessage = `⚠️ SUICIDAL RISK DETECTED (${confidencePercent}% confidence) - This conversation shows indicators of suicidal ideation. Professional intervention may be necessary.`;
+        break;
+      case 'depression':
+        this.analysisBadgeClass = 'badge-depression';
+        this.analysisMessage = `😔 DEPRESSION INDICATORS (${confidencePercent}% confidence) - The conversation contains signs of depression. Consider providing mental health resources.`;
+        break;
+      case 'anxiety':
+        this.analysisBadgeClass = 'badge-anxiety';
+        this.analysisMessage = `😰 ANXIETY DETECTED (${confidencePercent}% confidence) - The conversation shows anxiety-related patterns. Support and reassurance may be helpful.`;
+        break;
+      case 'normal':
+        this.analysisBadgeClass = 'badge-normal';
+        this.analysisMessage = `✅ NORMAL (${confidencePercent}% confidence) - The conversation appears to be healthy and positive. No concerning patterns detected.`;
+        break;
+      default:
+        this.analysisBadgeClass = 'badge-unknown';
+        this.analysisMessage = `❓ ANALYSIS UNKNOWN - Unable to determine conversation status.`;
+    }
   }
 }

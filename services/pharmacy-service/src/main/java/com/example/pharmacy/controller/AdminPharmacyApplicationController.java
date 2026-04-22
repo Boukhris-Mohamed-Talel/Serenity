@@ -7,6 +7,8 @@ import com.example.pharmacy.entity.PharmacyApplicationStatus;
 import com.example.pharmacy.service.PharmacyApplicationDocumentPayload;
 import com.example.pharmacy.service.PharmacyApplicationService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/pharmacy/admin/applications")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Validated
 public class AdminPharmacyApplicationController {
 
     private final PharmacyApplicationService pharmacyApplicationService;
@@ -34,18 +38,22 @@ public class AdminPharmacyApplicationController {
     }
 
     @GetMapping("/{applicationId}")
-    public ResponseEntity<AdminPharmacyApplicationDetailsDTO> getApplicationDetails(@PathVariable Long applicationId) {
+    public ResponseEntity<AdminPharmacyApplicationDetailsDTO> getApplicationDetails(
+        @PathVariable @Positive(message = "Application id must be positive") Long applicationId
+    ) {
         return ResponseEntity.ok(pharmacyApplicationService.getApplicationDetails(applicationId));
     }
 
     @PostMapping("/{applicationId}/approve")
-    public ResponseEntity<AdminPharmacyApplicationDetailsDTO> approveApplication(@PathVariable Long applicationId) {
+    public ResponseEntity<AdminPharmacyApplicationDetailsDTO> approveApplication(
+        @PathVariable @Positive(message = "Application id must be positive") Long applicationId
+    ) {
         return ResponseEntity.ok(pharmacyApplicationService.approveApplication(applicationId));
     }
 
     @PostMapping("/{applicationId}/reject")
     public ResponseEntity<AdminPharmacyApplicationDetailsDTO> rejectApplication(
-        @PathVariable Long applicationId,
+        @PathVariable @Positive(message = "Application id must be positive") Long applicationId,
         @Valid @RequestBody PharmacyApplicationRejectRequestDTO request
     ) {
         return ResponseEntity.ok(
@@ -55,8 +63,8 @@ public class AdminPharmacyApplicationController {
 
     @GetMapping("/{applicationId}/documents/{documentType}")
     public ResponseEntity<Resource> getApplicationDocument(
-        @PathVariable Long applicationId,
-        @PathVariable String documentType
+        @PathVariable @Positive(message = "Application id must be positive") Long applicationId,
+        @PathVariable @NotBlank(message = "Document type is required") String documentType
     ) {
         PharmacyApplicationDocumentPayload payload = pharmacyApplicationService
             .getApplicationDocument(applicationId, documentType);

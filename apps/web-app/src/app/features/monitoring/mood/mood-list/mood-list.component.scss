@@ -449,13 +449,59 @@
       transition: all 0.2s ease;
 
       &:hover:not(:disabled) {
-        background: #0d9488;
+        background: #0f766e;
         color: #ffffff;
       }
 
       &:disabled {
         cursor: not-allowed;
         opacity: 0.7;
+      }
+    }
+
+    .detail-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .btn-dashboard {
+      border: 1px solid #0d9488;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      color: #0d9488;
+
+      &:hover {
+        background: #0d9488;
+        color: #ffffff;
+      }
+    }
+
+    .btn-export-record {
+      border: 1px solid #0d9488;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #0d9488;
+      color: #ffffff;
+
+      &:hover:not(:disabled) {
+        background: #0f766e;
+        border-color: #0f766e;
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
       }
     }
   }
@@ -497,6 +543,62 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+}
+
+.header-meta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.risk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+
+  &__label {
+    line-height: 1;
+  }
+
+  &__confidence {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  &--high {
+    color: #b91c1c;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  &--medium {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  &--low {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+}
+
+.risk-subtype {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 
 .score-block {

@@ -52,6 +52,12 @@ export interface CreateAppointmentDoctorRequest {
   notes?: string;
 }
 
+/** Move an existing booking to a new date/time (same doctor & patient; overlap rules apply). */
+export interface RescheduleAppointmentRequest {
+  appointmentDate: string;
+  timeSlot: string;
+}
+
 export interface AppointmentNotification {
   id: number;
   userId: number;

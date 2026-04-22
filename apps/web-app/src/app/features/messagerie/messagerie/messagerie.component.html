@@ -29,6 +29,7 @@
             {{ user.firstName }} {{ user.lastName }}
           </div>
         </div>
+
       </div>
 
       <!-- ✅ Show conversations regardless of searchActive so they appear after selecting a user -->
@@ -77,6 +78,62 @@
         <div class="chat-name">{{ activeConversationName }}</div>
       </div>
 
+      <!-- In-conversation message search -->
+      <div class="conversation-search-panel">
+        <div class="keyword-search-wrapper">
+          <input
+            type="text"
+            placeholder="Search messages in this conversation..."
+            [(ngModel)]="keywordSearchTerm"
+            (input)="onKeywordSearch()"
+            (focus)="onKeywordSearchFocus()"
+            class="keyword-search-bar"
+          />
+          <button *ngIf="keywordSearchTerm" class="cancel-btn" (click)="cancelKeywordSearch()">X</button>
+        </div>
+
+        <div *ngIf="keywordSearchActive && keywordSearchLoading" class="keyword-search-loading">
+          <span class="loader"></span> Searching messages...
+        </div>
+
+        <div *ngIf="keywordSearchActive && keywordSearchTerm.trim() && keywordSearchResults.length > 0" class="keyword-search-results">
+          <div
+            *ngFor="let result of keywordSearchResults"
+            class="search-result-item"
+            (click)="selectSearchResult(result)"
+            (keydown.enter)="selectSearchResult(result)"
+            (keydown.space)="selectSearchResult(result)"
+          >
+            <div class="result-header">
+              <div class="participants">{{ result.participants }}</div>
+              <span class="match-count">{{ result.matchCount }} match{{ result.matchCount !== 1 ? 'es' : '' }}</span>
+            </div>
+            <div class="result-preview">{{ result.lastMatchingMessage || 'Message preview unavailable' }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="keywordSearchActive && keywordSearchTerm.trim() && !keywordSearchLoading && keywordSearchResults.length === 0" class="no-results">
+          No messages found in this conversation
+        </div>
+      </div>
+
+      <!-- Conversation Analysis Section -->
+      <div class="analysis-container" *ngIf="(analysisLoading || conversationAnalysis) && authService.hasRole('DOCTOR') ">
+        <div *ngIf="analysisLoading" class="analysis-loading">
+          <span class="loader"></span> Analyzing conversation...
+        </div>
+        <div *ngIf="conversationAnalysis && !analysisLoading" [ngClass]="['analysis-result', analysisBadgeClass]">
+          <div class="analysis-prediction">
+            <span class="prediction-badge">{{ conversationAnalysis.prediction }}</span>
+            <span class="confidence-score">Confidence: {{ (conversationAnalysis.confidence * 100).toFixed(1) }}%</span>
+            <button class="analyze-btn" (click)="loadConversationAnalysis(activeConversationId!)" [disabled]="analysisLoading">
+              🔄 Analyse with AI
+            </button>
+          </div>
+          <div class="analysis-message">{{ analysisMessage }}</div>
+        </div>
+      </div>
+
       <div class="messages" #messagesContainer>
         <div
           class="message"
@@ -94,6 +151,8 @@
             [(ngModel)]="editText"
             (keyup.enter)="saveEditMessage(i)"
             (blur)="cancelEdit()"
+            placeholder="Edit message"
+            title="Edit message"
             class="edit-input"
             autofocus
           />

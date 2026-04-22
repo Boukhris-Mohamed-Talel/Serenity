@@ -20,6 +20,9 @@ public class SchemaCompatibilityMigration {
         alterColumnSafely("ALTER TABLE insurance_notifications MODIFY COLUMN type VARCHAR(64) NOT NULL");
         alterColumnSafely("ALTER TABLE insurance_claim_transitions MODIFY COLUMN from_status VARCHAR(64) NULL");
         alterColumnSafely("ALTER TABLE insurance_claim_transitions MODIFY COLUMN to_status VARCHAR(64) NOT NULL");
+        alterColumnSafely("ALTER TABLE insurance_claim_ocr_audit MODIFY COLUMN mismatch_details_json LONGTEXT NULL");
+        alterColumnSafely("ALTER TABLE insurance_claim_ocr_audit MODIFY COLUMN extracted_text LONGTEXT NULL");
+        alterColumnSafely("ALTER TABLE insurance_claim_ocr_audit MODIFY COLUMN mismatch_summary TEXT NULL");
     }
 
     private void alterColumnSafely(String sql) {

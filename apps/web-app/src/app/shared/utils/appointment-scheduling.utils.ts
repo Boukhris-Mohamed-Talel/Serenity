@@ -215,6 +215,36 @@ export function parseAppointmentLocalStart(
   return new Date(y, mo - 1, d, hh, mm, 0, 0);
 }
 
+/** Milliseconds timestamp for appointment start in local time (0 when invalid). */
+export function appointmentResponseStartMs(a: AppointmentResponse, defaultHour = 9): number {
+  const start = parseAppointmentLocalStart(a.appointmentDate, a.timeSlot, defaultHour);
+  return start ? start.getTime() : 0;
+}
+
+/** Human countdown label from remaining milliseconds. */
+export function formatCountdownMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return 'Starting now';
+  }
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
+
 /**
  * Earliest upcoming or in-progress visit (pending/confirmed, end time still in the future).
  */

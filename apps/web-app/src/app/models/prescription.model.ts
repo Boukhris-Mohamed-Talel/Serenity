@@ -9,6 +9,7 @@ export interface PrescriptionItem {
   startDate: string;
   endDate: string | null;
   instructions: string | null;
+  isAiRecommended?: boolean;
 }
 
 export interface PrescriptionItemRequest {
@@ -19,6 +20,7 @@ export interface PrescriptionItemRequest {
   startDate: string;
   endDate?: string | null;
   instructions?: string | null;
+  isAiRecommended?: boolean;
 }
 
 export interface Prescription {
@@ -28,6 +30,7 @@ export interface Prescription {
   doctorId: number;
   status: string;
   items: PrescriptionItem[];
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,4 +41,5 @@ export interface PrescriptionRequest {
   doctorId?: number;
   status?: string;
   items: PrescriptionItemRequest[];
+  imageBase64?: string;
 }

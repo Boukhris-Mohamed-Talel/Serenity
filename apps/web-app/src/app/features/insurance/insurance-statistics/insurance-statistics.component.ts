@@ -1,8 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { InsuranceService } from '../../../core/services/insurance.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { InsuranceClaimResponse } from '../../../shared/models/insurance.model';
+import { UserService } from '../../../core/services/user.service';
+import {
+  ClaimRemittanceOcrSummary,
+  InsuranceClaimResponse
+} from '../../../shared/models/insurance.model';
+import { UserResponse } from '../../../shared/models/user.model';
 
 interface StatusBucket {
   label: string;
@@ -43,17 +50,23 @@ export class InsuranceStatisticsComponent implements OnInit {
   monthlyStats: { month: string; count: number; amount: number; reimbursed: number }[] = [];
   maxMonthlyCount = 0;
 
-  // Time range selection
   timeRange: 'ALL' | 'LAST_7' | 'LAST_30' | 'LAST_90' | 'THIS_YEAR' = 'ALL';
 
-  // Deltas vs previous period
   deltaClaims: number | null = null;
   deltaReimbursed: number | null = null;
 
   insights: string[] = [];
 
+  remittanceOcrSummary: ClaimRemittanceOcrSummary[] = [];
+
+  private readonly userLabelsByUserId = new Map<number, string>();
+
+  readonly remittanceReportPageSize = 10;
+  remittanceReportPageIndex = 0;
+
   constructor(
     private readonly insuranceService: InsuranceService,
+    private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly router: Router
   ) {}
@@ -65,9 +78,16 @@ export class InsuranceStatisticsComponent implements OnInit {
       return;
     }
 
-    this.insuranceService.getAllClaims().subscribe({
-      next: (claims) => {
+    forkJoin({
+      claims: this.insuranceService.getAllClaims(),
+      remittanceOcrSummary: this.insuranceService.getRemittanceOcrSummaryReport(),
+      users: this.userService.getAllUsers().pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({ claims, remittanceOcrSummary, users }) => {
         this.claims = claims || [];
+        this.remittanceOcrSummary = remittanceOcrSummary || [];
+        this.remittanceReportPageIndex = 0;
+        this.buildUserLabelMap((users || []) as UserResponse[]);
         this.recomputeAll();
       },
       error: (err) => {
@@ -111,7 +131,6 @@ export class InsuranceStatisticsComponent implements OnInit {
         statusCounts[claim.status]++;
       }
 
-      // Company
       const companyKey = claim.insuranceCompany || 'Unknown';
       const companyBucket = companyMap.get(companyKey) || { count: 0, amount: 0, reimbursed: 0 };
       companyBucket.count++;
@@ -119,7 +138,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       companyBucket.reimbursed += reimbursed;
       companyMap.set(companyKey, companyBucket);
 
-      // Grade
       const gradeKey = claim.insuranceGrade;
       const gradeBucket = gradeMap.get(gradeKey) || { count: 0, amount: 0, reimbursed: 0 };
       gradeBucket.count++;
@@ -127,7 +145,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       gradeBucket.reimbursed += reimbursed;
       gradeMap.set(gradeKey, gradeBucket);
 
-      // Month
       const date = new Date(claim.claimDate);
       const monthKey = isNaN(date.getTime())
         ? 'Unknown'
@@ -158,7 +175,6 @@ export class InsuranceStatisticsComponent implements OnInit {
 
     this.maxMonthlyCount = this.monthlyStats.reduce((max, m) => Math.max(max, m.count), 0);
 
-    // Deltas vs previous period
     const prevTotalClaims = previous.length;
     const prevReimbursed = previous.reduce((sum, c) => sum + (c.reimbursementAmount ?? 0), 0);
     this.deltaClaims = prevTotalClaims > 0 ? this.totalClaims - prevTotalClaims : null;
@@ -241,7 +257,6 @@ export class InsuranceStatisticsComponent implements OnInit {
       return { current, previous };
     }
 
-    // THIS_YEAR
     const year = now.getFullYear();
     const current = all.filter(c => {
       const d = new Date(c.claimDate);
@@ -280,6 +295,68 @@ export class InsuranceStatisticsComponent implements OnInit {
 
   goToClaims(): void {
     this.router.navigate(['/admin/insurance']);
+  }
+
+  get remittanceReportPagedRows(): ClaimRemittanceOcrSummary[] {
+    const start = this.remittanceReportPageIndex * this.remittanceReportPageSize;
+    return this.remittanceOcrSummary.slice(start, start + this.remittanceReportPageSize);
+  }
+
+  get remittanceReportPageCount(): number {
+    if (!this.remittanceOcrSummary.length) {
+      return 0;
+    }
+    return Math.ceil(this.remittanceOcrSummary.length / this.remittanceReportPageSize);
+  }
+
+  get remittanceReportRangeFrom(): number {
+    if (!this.remittanceOcrSummary.length) {
+      return 0;
+    }
+    return this.remittanceReportPageIndex * this.remittanceReportPageSize + 1;
+  }
+
+  get remittanceReportRangeTo(): number {
+    return Math.min(
+      (this.remittanceReportPageIndex + 1) * this.remittanceReportPageSize,
+      this.remittanceOcrSummary.length
+    );
+  }
+
+  remittanceReportGoPrev(): void {
+    if (this.remittanceReportPageIndex > 0) {
+      this.remittanceReportPageIndex--;
+    }
+  }
+
+  remittanceReportGoNext(): void {
+    if (this.remittanceReportPageIndex < this.remittanceReportPageCount - 1) {
+      this.remittanceReportPageIndex++;
+    }
+  }
+
+  getRemittanceUserLabel(userId: number): string {
+    return this.userLabelsByUserId.get(userId) ?? `User #${userId}`;
+  }
+
+  remittanceClaimReferenceLabel(row: ClaimRemittanceOcrSummary): string {
+    const ref = row.externalRef?.trim();
+    if (ref) {
+      return ref;
+    }
+    return `Claim #${row.claimId}`;
+  }
+
+  private buildUserLabelMap(users: UserResponse[]): void {
+    this.userLabelsByUserId.clear();
+    for (const user of users) {
+      const isAnonymous = !!user.profile?.isAnonymous;
+      const full = `${(user.firstName || '').trim()} ${(user.lastName || '').trim()}`.trim();
+      const label = isAnonymous
+        ? `Anonymous user #${user.id}`
+        : full || user.email?.split('@')[0]?.trim() || `User #${user.id}`;
+      this.userLabelsByUserId.set(user.id, label);
+    }
   }
 }
 

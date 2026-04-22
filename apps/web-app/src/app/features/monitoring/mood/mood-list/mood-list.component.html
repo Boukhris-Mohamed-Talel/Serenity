@@ -124,9 +124,12 @@
               <span class="avg-value">{{ averageMood }}/10</span>
             </div>
 
-            <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
-              {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
-            </button>
+            <div class="detail-actions">
+              <button class="btn-dashboard" (click)="openDoctorDashboard()">Dashboard</button>
+              <button class="btn-export-record" (click)="exportSelectedPatientRecord()" [disabled]="exportingRecord">
+                {{ exportingRecord ? 'Exporting...' : 'Export Patient PDF' }}
+              </button>
+            </div>
           </div>
 
           <div class="entries-grid">
@@ -157,9 +160,17 @@
             <span class="score-label" [style.color]="getMoodColor(entry.moodScore)">{{ getMoodLabel(entry.moodScore) }}</span>
           </div>
         </div>
-        <div class="entry-date">
-          <span class="material-icons">schedule</span>
-          {{ formatDate(entry.createdAt) }}
+        <div class="header-meta">
+          <div class="risk-chip" *ngIf="isDoctorView" [ngClass]="getEntryRiskClass(entry)">
+            <span class="risk-chip__label">
+              {{ getEntryRiskLabel(entry) }}<ng-container *ngIf="getEntryRiskTypeLabel(entry) as riskType">: {{ riskType }}</ng-container>
+            </span>
+          </div>
+
+          <div class="entry-date">
+            <span class="material-icons">schedule</span>
+            {{ formatDate(entry.createdAt) }}
+          </div>
         </div>
       </div>
 

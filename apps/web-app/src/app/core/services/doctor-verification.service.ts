@@ -31,8 +31,9 @@ export class DoctorVerificationService {
     return this.http.get<DoctorVerification>(`${this.API_URL}/${id}`);
   }
 
-  approveVerification(verificationId: number): Observable<any> {
-    return this.http.put(`${this.API_URL}/Approve/${verificationId}`, {});
+  approveVerification(verificationId: number, token: string): Observable<any> {
+    const headers = { Authorization: `Bearer ${token}` };
+    return this.http.put(`${this.API_URL}/Approve/${verificationId}`, {}, { headers });
   }
 
   rejectVerification(verificationId: number): Observable<any> {
@@ -78,4 +79,16 @@ export class DoctorVerificationService {
       formData
     );
   }
+
+  approveContract(token: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/approve-contract`, null, { params: { token } });
+  }
+
+  getRejected() {
+  const token = this.authService.getToken();
+  return this.http.get<any[]>(
+    `${this.API_URL}/rejected-keywords`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+}
 }

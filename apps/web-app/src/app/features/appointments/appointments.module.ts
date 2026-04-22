@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { AppointmentsRoutingModule } from './appointments-routing.module';
+import { AppointmentEntryComponent } from './appointment-entry/appointment-entry.component';
+import { PatientAppointmentsHubComponent } from './patient-appointments-hub/patient-appointments-hub.component';
 import { AppointmentListComponent } from './appointment-list/appointment-list.component';
 import { AppointmentBookComponent } from './appointment-book/appointment-book.component';
 import { AppointmentScheduleComponent } from './appointment-schedule/appointment-schedule.component';
@@ -10,6 +12,8 @@ import { AppointmentBusyTimesPanelComponent } from './appointment-busy-times-pan
 
 @NgModule({
   declarations: [
+    AppointmentEntryComponent,
+    PatientAppointmentsHubComponent,
     AppointmentListComponent,
     AppointmentBookComponent,
     AppointmentScheduleComponent,

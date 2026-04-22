@@ -49,5 +49,17 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
     long countBySeverity(tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
 
     long countByDoctorIdAndSeverity(Long doctorId, tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
+
+    // ── JPQL Complexe (JOIN entre MedicalRecord et Prescription) ──
+    @Query("SELECT DISTINCT m FROM MedicalRecord m " +
+           "JOIN m.prescriptions p " +
+           "WHERE m.patientId = :patientId AND p.status = 'ACTIVE'")
+    List<MedicalRecord> findRecordsWithActiveTreatment(@Param("patientId") Long patientId);
+
+    @Query("SELECT DISTINCT m FROM MedicalRecord m " +
+           "JOIN m.prescriptions p " +
+           "WHERE m.patientId = :patientId AND m.doctorId = :doctorId AND p.status = 'ACTIVE'")
+    List<MedicalRecord> findRecordsWithActiveTreatmentByDoctor(@Param("patientId") Long patientId,
+                                                                @Param("doctorId") Long doctorId);
 }
 

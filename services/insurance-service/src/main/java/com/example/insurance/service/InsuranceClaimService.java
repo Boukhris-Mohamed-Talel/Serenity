@@ -1,7 +1,9 @@
 package com.example.insurance.service;
 
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
+import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -82,4 +84,18 @@ public interface InsuranceClaimService {
     );
 
     List<InsuranceClaimTransitionResponseDTO> getClaimTimeline(Long claimId, Long requesterUserId, boolean isAdmin);
+
+    List<InsuranceClaimOcrAuditResponseDTO> getClaimOcrAudit(Long claimId, Long requesterUserId, boolean isAdmin);
+
+    List<ClaimRemittanceOcrSummaryDTO> getRemittanceOcrSummaryReport();
+
+    /**
+     * For high-risk claims held in {@code UNDER_REVIEW}: manually forward the claim to the external insurer portal.
+     */
+    InsuranceClaimResponseDTO sendHeldClaimToPortal(Long claimId, Long adminUserId);
+
+    /**
+     * For high-risk claims held in {@code UNDER_REVIEW}: reject the claim internally (admin decision).
+     */
+    InsuranceClaimResponseDTO rejectHeldClaim(Long claimId, Long adminUserId, String reason);
 }

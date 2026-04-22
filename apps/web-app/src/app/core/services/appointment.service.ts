@@ -11,6 +11,7 @@ import {
   CalendarBusySlot,
   CreateAppointmentDoctorRequest,
   CreateAppointmentPatientRequest,
+  RescheduleAppointmentRequest,
   TeleconsultationResponse
 } from '../../shared/models/appointment.model';
 
@@ -39,16 +40,15 @@ export class AppointmentService {
     return this.http.patch<AppointmentResponse>(`${this.API_URL}/${id}/cancel`, {});
   }
 
+  /** POST (not PATCH): matches gateway/proxy behavior; backend accepts both. */
+  reschedule(id: number, body: RescheduleAppointmentRequest): Observable<AppointmentResponse> {
+    return this.http.post<AppointmentResponse>(`${this.API_URL}/${id}/reschedule`, body);
+  }
+
   complete(id: number): Observable<AppointmentResponse> {
     return this.http.patch<AppointmentResponse>(`${this.API_URL}/${id}/complete`, {});
   }
 
-  reschedule(
-    id: number,
-    body: { appointmentDate: string; timeSlot: string }
-  ): Observable<AppointmentResponse> {
-    return this.http.patch<AppointmentResponse>(`${this.API_URL}/${id}/reschedule`, body);
-  }
 
   /** Opens in browser or downloads — caller should revoke object URL after use. */
   downloadCalendarIcs(id: number): Observable<Blob> {

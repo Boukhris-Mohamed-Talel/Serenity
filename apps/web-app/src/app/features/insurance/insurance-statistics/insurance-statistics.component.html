@@ -4,8 +4,29 @@
       <h1>Insurance Analytics</h1>
       <p class="subtitle">Portfolio overview for all insurance claims</p>
     </div>
-    <button class="btn btn-secondary" (click)="goToClaims()">Back to Claims</button>
   </div>
+
+  <nav class="sub-tabs">
+    <a
+      routerLink="/admin/insurance"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      Claims
+    </a>
+    <a
+      routerLink="/admin/insurance/statistics"
+      routerLinkActive="active"
+    >
+      Statistics
+    </a>
+    <a
+      routerLink="/admin/insurance/ocr-notifications"
+      routerLinkActive="active"
+    >
+      Notifications
+    </a>
+  </nav>
 
   <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
 
@@ -185,6 +206,65 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="card remittance-ocr-report">
+      <h3>Reimbursements &amp; OCR checks per claim</h3>
+      <div *ngIf="remittanceOcrSummary.length === 0" class="empty-mini">
+        No rows to show yet.
+      </div>
+      <ng-container *ngIf="remittanceOcrSummary.length > 0">
+        <div class="mini-table wide">
+          <div class="mini-header">
+            <span>Reference</span>
+            <span>Member</span>
+            <span>Status</span>
+            <span>Company</span>
+            <span>Claim date</span>
+            <span>Remit. rows</span>
+            <span>Sum remit.</span>
+            <span>OCR audits</span>
+          </div>
+          <div *ngFor="let row of remittanceReportPagedRows" class="mini-row">
+            <span>
+              <a [routerLink]="['/admin/insurance', row.claimId]">{{ remittanceClaimReferenceLabel(row) }}</a>
+            </span>
+            <span class="member-name">{{ getRemittanceUserLabel(row.userId) }}</span>
+            <span class="status-pill">{{ row.status }}</span>
+            <span>{{ row.insuranceCompany }}</span>
+            <span>{{ row.claimDate | date:'mediumDate' }}</span>
+            <span>{{ row.remboursementCount }}</span>
+            <span>{{ row.totalRemboursementPaid | currency:'TND':'symbol':'1.0-2' }}</span>
+            <span>{{ row.ocrAuditCount }}</span>
+          </div>
+        </div>
+        <div class="report-pagination" *ngIf="remittanceReportPageCount > 1">
+          <span class="report-range">
+            Showing {{ remittanceReportRangeFrom }}–{{ remittanceReportRangeTo }} of {{ remittanceOcrSummary.length }}
+          </span>
+          <div class="report-nav">
+            <button
+              type="button"
+              class="report-page-btn"
+              (click)="remittanceReportGoPrev()"
+              [disabled]="remittanceReportPageIndex === 0"
+            >
+              Previous
+            </button>
+            <span class="report-page-indicator">
+              Page {{ remittanceReportPageIndex + 1 }} / {{ remittanceReportPageCount }}
+            </span>
+            <button
+              type="button"
+              class="report-page-btn"
+              (click)="remittanceReportGoNext()"
+              [disabled]="remittanceReportPageIndex >= remittanceReportPageCount - 1"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </ng-container>
     </section>
   </div>
 </div>

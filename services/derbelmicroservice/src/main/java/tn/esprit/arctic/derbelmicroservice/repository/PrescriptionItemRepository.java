@@ -15,4 +15,15 @@ public interface PrescriptionItemRepository extends JpaRepository<PrescriptionIt
 
     @Query("SELECT pi FROM PrescriptionItem pi WHERE pi.medicine.id = :medicineId")
     List<PrescriptionItem> findByMedicineId(@Param("medicineId") Long medicineId);
+
+    // ── AI Recommendation Statistics ──
+
+    // Total items recommended by AI
+    long countByIsAiRecommended(Boolean isAiRecommended);
+
+    // Top AI-recommended medicines (name + count)
+    @Query("SELECT pi.medicine.name, COUNT(pi) FROM PrescriptionItem pi " +
+           "WHERE pi.isAiRecommended = true " +
+           "GROUP BY pi.medicine.name ORDER BY COUNT(pi) DESC")
+    List<Object[]> findTopAiRecommendedMedicines();
 }

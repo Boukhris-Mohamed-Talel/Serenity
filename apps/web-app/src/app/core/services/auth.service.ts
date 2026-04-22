@@ -126,7 +126,7 @@ export class AuthService {
     this.currentUserSubject.next(next);
   }
 
-  private storeAuth(response: AuthResponse): void {
+  storeAuth(response: AuthResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.accessToken);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));
     this.currentUserSubject.next(response);
@@ -148,10 +148,12 @@ export class AuthService {
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .pipe(
-        tap((updatedUser) => {
-        
-          localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
-          this.currentUserSubject.next(updatedUser);
+        tap((response: AuthResponse) => {
+          console.log('Role updated with new JWT:', response.role);
+          console.log('New accessToken:', response.accessToken);
+          
+          // Store the new token and user data
+          this.storeAuth(response);
         })
       );
   }
@@ -169,6 +171,7 @@ export class AuthService {
     const formData = new FormData()
     
     const token = this.getToken()
+    
     formData.append('cv', cv)
     formData.append('diploma', diploma)
     formData.append('licenseNumber', licenseNumber)
@@ -178,13 +181,21 @@ export class AuthService {
       `${environment.apiUrl}/doctor-verifications/add_verification`,
       formData,
       { headers: { Authorization: `Bearer ${token}` } }
+    ).pipe(
+      tap((response: any) => {
+        console.log('Doctor verification submitted:', response);
+        // Backend should handle role/token updates if needed
+      })
     );
-
   }
 
 
   private normalizeRole(role: string | null | undefined): string {
     const value = role?.trim().toUpperCase() ?? '';
     return value.startsWith('ROLE_') ? value.substring(5) : value;
+  }
+
+  setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
   }
 }

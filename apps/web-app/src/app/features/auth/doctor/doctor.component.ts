@@ -90,7 +90,7 @@ export class DoctorComponent {
     const speciality = this.doctorForm.get('speciality')?.value
 
     const token = this.AuthService.getToken();
-    console.log('JWT Token being sent:', token);
+    console.log('JWT fel page mte3 doctor:', token);
 
     this.AuthService.addDoctor(this.userId, speciality, this.imageFile).subscribe({
       next: () => {

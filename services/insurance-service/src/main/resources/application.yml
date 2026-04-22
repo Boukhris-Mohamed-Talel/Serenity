@@ -30,10 +30,24 @@ app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
   public-base-url: ${INSURANCE_PUBLIC_BASE_URL:http://localhost:8090}
+  claim-risk-model:
+    url: ${CLAIM_RISK_MODEL_URL:http://localhost:5123}
   insurance-portal:
     api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
   status-poller:
     fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS:5000}
+  ocr:
+    enabled: ${INSURANCE_OCR_ENABLED:true}
+    strict-major-block: ${INSURANCE_OCR_STRICT_MAJOR_BLOCK:true}
+    store-full-text: ${INSURANCE_OCR_STORE_FULL_TEXT:false}
+    admin-alert-user-ids: ${INSURANCE_OCR_ADMIN_ALERT_USER_IDS:}
+    amount-major-diff-threshold: ${INSURANCE_OCR_AMOUNT_MAJOR_DIFF_THRESHOLD:10.0}
+    amount-minor-diff-threshold: ${INSURANCE_OCR_AMOUNT_MINOR_DIFF_THRESHOLD:2.0}
+    max-pages-per-pdf: ${INSURANCE_OCR_MAX_PAGES_PER_PDF:3}
+    max-chars-per-file: ${INSURANCE_OCR_MAX_CHARS_PER_FILE:12000}
+    tesseract:
+      language: ${INSURANCE_OCR_LANG:eng}
+      datapath: ${INSURANCE_OCR_TESSDATA_PATH:}
 
 springdoc:
   api-docs:

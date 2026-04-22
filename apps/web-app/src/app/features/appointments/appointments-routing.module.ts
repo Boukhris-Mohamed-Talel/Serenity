@@ -1,13 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RoleGuard } from '../../core/guards/role.guard';
+import { AppointmentEntryComponent } from './appointment-entry/appointment-entry.component';
 import { AppointmentListComponent } from './appointment-list/appointment-list.component';
 import { AppointmentBookComponent } from './appointment-book/appointment-book.component';
 import { AppointmentScheduleComponent } from './appointment-schedule/appointment-schedule.component';
 import { AppointmentDetailComponent } from './appointment-detail/appointment-detail.component';
 
 const routes: Routes = [
-  { path: '', component: AppointmentListComponent },
+  { path: '', component: AppointmentEntryComponent },
+  { path: 'list', component: AppointmentListComponent },
   {
     path: 'book',
     component: AppointmentBookComponent,

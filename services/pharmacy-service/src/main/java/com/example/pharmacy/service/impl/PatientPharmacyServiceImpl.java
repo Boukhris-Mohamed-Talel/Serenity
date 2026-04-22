@@ -83,12 +83,10 @@ public class PatientPharmacyServiceImpl implements PatientPharmacyService {
     @Override
     @Transactional(readOnly = true)
     public List<PharmacyCandidateResponseDTO> suggestNearest(Double latitude, Double longitude, Double radiusKm) {
-        validateCoordinates(latitude, longitude);
-        double maxRadiusKm = radiusKm == null ? 20.0 : radiusKm;
-
-        if (maxRadiusKm <= 0) {
-            throw new IllegalArgumentException("Radius must be greater than 0 km");
+        if (latitude == null || longitude == null) {
+            throw new IllegalArgumentException("Latitude and longitude are required");
         }
+        double maxRadiusKm = (radiusKm == null || radiusKm <= 0) ? 20.0 : radiusKm;
 
         return pharmacyRepository.findAllByOrderByNameAsc().stream()
             .filter(pharmacy -> pharmacy.getLatitude() != null && pharmacy.getLongitude() != null)
@@ -134,20 +132,6 @@ public class PatientPharmacyServiceImpl implements PatientPharmacyService {
             .supportsEmergency(pharmacy.getSupportsEmergency())
             .distanceKm(distanceKm == null ? null : roundDistance(distanceKm))
             .build();
-    }
-
-    private void validateCoordinates(Double latitude, Double longitude) {
-        if (latitude == null || longitude == null) {
-            throw new IllegalArgumentException("Latitude and longitude are required");
-        }
-
-        if (latitude < -90 || latitude > 90) {
-            throw new IllegalArgumentException("Latitude must be between -90 and 90");
-        }
-
-        if (longitude < -180 || longitude > 180) {
-            throw new IllegalArgumentException("Longitude must be between -180 and 180");
-        }
     }
 
     private String normalize(String value) {

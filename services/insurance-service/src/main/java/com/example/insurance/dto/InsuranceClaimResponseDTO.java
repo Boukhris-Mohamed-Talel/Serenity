@@ -28,5 +28,9 @@ public class InsuranceClaimResponseDTO {
     private Date infoRequestDeadline;
     private Date infoRequestedAt;
     private Date infoRespondedAt;
+    private String ocrLastDecision;
+    private Integer ocrMismatchCount;
+    private Date ocrLastAnalyzedAt;
+    private String ocrSummary;
     private List<RemboursementResponseDTO> remboursements;
 }

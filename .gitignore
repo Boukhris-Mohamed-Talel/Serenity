@@ -45,3 +45,6 @@ services/pharmacy-service/src/test/
 
 layoutlmv3_cnopt_v4_doc_status_output/
 layoutlmv3_cnopt_v4_ner_output/
+services/Doctors_service/src/main/resources/application-secrets.properties
+
+.venv/

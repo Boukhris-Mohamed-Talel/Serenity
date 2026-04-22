@@ -83,6 +83,19 @@ public class InsuranceClaim {
     @Builder.Default
     private List<InsuranceClaimTransition> transitions = new ArrayList<>();
 
+    @Column(name = "ocr_last_decision", length = 40)
+    private String ocrLastDecision;
+
+    @Column(name = "ocr_mismatch_count")
+    private Integer ocrMismatchCount;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ocr_last_analyzed_at")
+    private Date ocrLastAnalyzedAt;
+
+    @Column(name = "ocr_summary", length = 1500)
+    private String ocrSummary;
+
     @PrePersist
     protected void onCreate() {
         this.claimDate = new Date();

@@ -89,4 +89,25 @@ export class PrescriptionListComponent implements OnInit {
       }
     });
   }
+
+  // ── Keywords Complexes: Filtre "Critical Prescriptions" ──
+  filterCriticalOnly = false;
+
+  toggleCriticalPrescriptions(): void {
+    this.filterCriticalOnly = !this.filterCriticalOnly;
+    if (this.filterCriticalOnly && this.patientId != null) {
+      this.loading = true;
+      this.prescriptionService.getCriticalPrescriptions(this.patientId).subscribe({
+        next: (list) => {
+          this.prescriptions = list;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        }
+      });
+    } else {
+      this.load();
+    }
+  }
 }

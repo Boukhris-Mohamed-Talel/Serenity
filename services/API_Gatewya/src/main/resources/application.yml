@@ -62,6 +62,42 @@ spring:
           uri: ws://localhost:8083
           predicates:
             - Path=/ws-doctor-verification/**
+        - id: websocket-route-approved-contract
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws-approve-contract/**
+        - id: derbel-service
+          uri: http://localhost:8099
+          predicates:
+            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
+        - id : doctor-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/doctors/**
+        - id : image-uploads
+          uri: http://localhost:8081
+          predicates:
+            - Path=/uploads/**
+        - id: doctor-microservice
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/doctor-verifications/**
+        - id: doctor-microservice-conversation
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/conversations/**
+        - id: doctor-microservice-messages
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/messages/**
+        - id: websocket-route-doctor
+          uri: ws://localhost:8081
+          predicates:
+            - Path=/ws/**
+        - id: websocket-route-doctor-verification
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws-doctor-verification/**
         - id: derbel-service
           uri: http://localhost:8099
           predicates:
@@ -74,6 +110,7 @@ spring:
             allowed-origins:
               - "http://localhost:4200"
               - "http://localhost:3000"
+              #- "http://192.168.1.145:4200"
             allowed-methods:
               - GET
               - POST
@@ -89,6 +126,7 @@ spring:
 
 server:
   port: 8082
+  #address: 0.0.0.0
 
 app:
   jwt:

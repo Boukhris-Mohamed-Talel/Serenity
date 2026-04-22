@@ -16,12 +16,14 @@ public class RedisConfig {
     public RedisMessageListenerContainer redisContainer(
             RedisConnectionFactory connectionFactory,
             MessageListenerAdapter listenerAdapter,
-            MessageListenerAdapter chatListenerAdapter) {
+            MessageListenerAdapter chatListenerAdapter,
+            MessageListenerAdapter approveContractListenerAdapter) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listenerAdapter, new PatternTopic("doctor-verifications"));
         container.addMessageListener(chatListenerAdapter, new PatternTopic("chat-messages"));
+        container.addMessageListener(approveContractListenerAdapter, new PatternTopic("approve-contract"));
         return container;
     }
 
@@ -33,5 +35,10 @@ public class RedisConfig {
     @Bean
     public MessageListenerAdapter chatListenerAdapter(RedisSubscriber chatSubscriber) {
         return new MessageListenerAdapter(chatSubscriber, "receiveChatMessage");
+    }
+
+    @Bean
+    public MessageListenerAdapter approveContractListenerAdapter(RedisSubscriber subscriber) {
+        return new MessageListenerAdapter(subscriber, "receiveApproveContract");
     }
 }

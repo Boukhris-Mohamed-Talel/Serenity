@@ -1,6 +1,7 @@
 package com.example.healthcare.service;
 
 import com.example.healthcare.dto.*;
+import com.example.healthcare.entity.BanDuration;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -30,6 +31,10 @@ public interface UserService {
     void deactivateUser(Long id);
 
     void activateUser(Long id);
+
+    void banUser(Long id, BanDuration duration);
+
+    void unbanUser(Long id);
 
     void deleteUser(Long id);
 

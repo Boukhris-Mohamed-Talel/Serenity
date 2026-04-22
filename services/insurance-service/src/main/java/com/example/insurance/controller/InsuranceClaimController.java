@@ -1,12 +1,16 @@
 package com.example.insurance.controller;
 
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
+import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
 import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RequestAdditionalDocumentsDTO;
 import com.example.insurance.dto.SubmitAdditionalDocumentsDTO;
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
+import com.example.insurance.dto.ClaimRiskScoreResponseDTO;
 import com.example.insurance.security.InsuranceAuth;
+import com.example.insurance.service.ClaimRiskScoringService;
 import com.example.insurance.service.InsuranceClaimService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -25,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/insurance")
@@ -33,6 +38,7 @@ import java.util.List;
 public class InsuranceClaimController {
 
     private final InsuranceClaimService insuranceClaimService;
+    private final ClaimRiskScoringService claimRiskScoringService;
 
     @PostMapping(value = "/claims", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -92,6 +98,12 @@ public class InsuranceClaimController {
         ));
     }
 
+    @GetMapping("/reports/remittance-ocr-summary")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ClaimRemittanceOcrSummaryDTO>> getRemittanceOcrSummaryReport() {
+        return ResponseEntity.ok(insuranceClaimService.getRemittanceOcrSummaryReport());
+    }
+
     @GetMapping("/claims/paged")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponseDTO<InsuranceClaimResponseDTO>> getAllClaimsPaged(
@@ -124,6 +136,38 @@ public class InsuranceClaimController {
         Long userId = InsuranceAuth.requireUserId();
         boolean admin = InsuranceAuth.isAdmin();
         return ResponseEntity.ok(insuranceClaimService.getClaimTimeline(id, userId, admin));
+    }
+
+    @GetMapping("/claims/{id}/ocr-audit")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<InsuranceClaimOcrAuditResponseDTO>> getClaimOcrAudit(@PathVariable Long id) {
+        Long userId = InsuranceAuth.requireUserId();
+        boolean admin = InsuranceAuth.isAdmin();
+        return ResponseEntity.ok(insuranceClaimService.getClaimOcrAudit(id, userId, admin));
+    }
+
+    @GetMapping("/claims/{id}/risk-score")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClaimRiskScoreResponseDTO> getRiskScore(@PathVariable Long id) {
+        return ResponseEntity.ok(claimRiskScoringService.scoreClaim(id));
+    }
+
+    @PostMapping("/claims/{id}/send-to-portal")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InsuranceClaimResponseDTO> sendHeldClaimToPortal(@PathVariable Long id) {
+        Long adminUserId = InsuranceAuth.requireUserId();
+        return ResponseEntity.ok(insuranceClaimService.sendHeldClaimToPortal(id, adminUserId));
+    }
+
+    @PostMapping("/claims/{id}/reject-held")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<InsuranceClaimResponseDTO> rejectHeldClaim(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        Long adminUserId = InsuranceAuth.requireUserId();
+        String reason = body != null && body.get("reason") != null ? String.valueOf(body.get("reason")) : null;
+        return ResponseEntity.ok(insuranceClaimService.rejectHeldClaim(id, adminUserId, reason));
     }
 
     @PostMapping("/claims/{id}/request-documents")

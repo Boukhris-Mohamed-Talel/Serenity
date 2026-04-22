@@ -28,6 +28,7 @@ public class UserRequestDTO {
     @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
 
+    @Pattern(regexp = "^$|^\\d{8}$", message = "Phone must be exactly 8 digits")
     private String phone;
 
     @Past(message = "Date of birth must be in the past")

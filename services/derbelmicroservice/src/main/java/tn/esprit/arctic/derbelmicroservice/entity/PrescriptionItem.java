@@ -49,4 +49,8 @@ public class PrescriptionItem {
 
     @Size(max = 500)
     private String instructions;
+
+    @Column(name = "is_ai_recommended")
+    @Builder.Default
+    private Boolean isAiRecommended = false;
 }

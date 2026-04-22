@@ -1,4 +1,43 @@
 .insurance-stats-page {
+  .sub-tabs {
+    display: inline-flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+
+    a {
+      position: relative;
+      padding: 0.2rem 0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-light);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -0.25rem;
+        width: 0;
+        height: 2px;
+        border-radius: 999px;
+        background: linear-gradient(to right, #38bdf8, #6366f1);
+        transition: width 0.2s ease;
+      }
+
+      &.active {
+        color: #e5e7eb;
+
+        &::after {
+          width: 100%;
+        }
+      }
+    }
+  }
+
   .page-header {
     display: flex;
     justify-content: space-between;
@@ -265,6 +304,96 @@
     border-radius: 999px;
     background: linear-gradient(90deg, #22c55e, #06b6d4);
     transition: width 0.4s ease;
+  }
+
+  .remittance-ocr-report {
+    .member-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+
+    .report-pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.25);
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    .report-range {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .report-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .report-page-indicator {
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      min-width: 7rem;
+      text-align: center;
+    }
+
+    .report-page-btn {
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.6);
+      color: #e5e7eb;
+      border-radius: 0.45rem;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: rgba(56, 189, 248, 0.5);
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+
+    .mini-table.wide {
+      .mini-header,
+      .mini-row {
+        grid-template-columns:
+          minmax(52px, 0.65fr) minmax(48px, 0.55fr) minmax(72px, 0.75fr) minmax(72px, 1fr)
+          minmax(88px, 0.85fr) minmax(56px, 0.55fr) minmax(70px, 0.75fr) minmax(48px, 0.5fr);
+        gap: 0.35rem;
+        align-items: center;
+        font-size: 0.75rem;
+      }
+    }
+
+    .status-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #a5b4fc;
+    }
+
+    a {
+      color: #38bdf8;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 }
 

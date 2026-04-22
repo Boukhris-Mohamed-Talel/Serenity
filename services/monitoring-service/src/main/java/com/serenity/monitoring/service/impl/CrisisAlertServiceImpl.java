@@ -1,6 +1,7 @@
 package com.serenity.monitoring.service.impl;
 
 import com.serenity.monitoring.dto.CrisisAlertPayload;
+import com.serenity.monitoring.dto.WeeklyDoctorDigestPayload;
 import com.serenity.monitoring.service.CrisisAlertService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -77,5 +78,29 @@ public class CrisisAlertServiceImpl implements CrisisAlertService {
                     payload.getDoctorId(), ex.getMessage());
         }
     }
-}
 
+    @Override
+    public void sendWeeklyDigestNotification(WeeklyDoctorDigestPayload payload) {
+        if (payload == null || payload.getDoctorId() == null) {
+            return;
+        }
+
+        SseEmitter emitter = emitters.get(payload.getDoctorId());
+        if (emitter == null) {
+            log.info("No active SSE emitter for doctorId={} during weekly digest push", payload.getDoctorId());
+            return;
+        }
+
+        try {
+            emitter.send(SseEmitter.event().name("doctor-weekly-digest").data(payload, MediaType.APPLICATION_JSON));
+            emitter.send(payload, MediaType.APPLICATION_JSON);
+            log.info("Weekly digest sent to doctorId={} for week {}..{}",
+                    payload.getDoctorId(), payload.getWeekStartDate(), payload.getWeekEndDate());
+        } catch (IOException ex) {
+            emitters.computeIfPresent(payload.getDoctorId(), (id, current) -> current == emitter ? null : current);
+            emitter.completeWithError(ex);
+            log.warn("SSE emitter removed for doctorId={} after weekly digest send failure: {}",
+                    payload.getDoctorId(), ex.getMessage());
+        }
+    }
+}

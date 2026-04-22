@@ -7,6 +7,8 @@ import {
   InsuranceClaimRequest,
   InsuranceClaimResponse,
   InsuranceClaimTransition,
+  ClaimRiskScoreResponse,
+  ClaimRemittanceOcrSummary,
   InsuranceNotification,
   NotificationUnreadCountResponse
 } from '../../shared/models/insurance.model';
@@ -130,12 +132,34 @@ export class InsuranceService {
     return this.http.get<InsuranceClaimTransition[]>(`${this.API_URL}/claims/${id}/timeline`);
   }
 
+  getClaimRiskScore(id: number): Observable<ClaimRiskScoreResponse> {
+    return this.http.get<ClaimRiskScoreResponse>(`${this.API_URL}/claims/${id}/risk-score`);
+  }
+
+  getRemittanceOcrSummaryReport(): Observable<ClaimRemittanceOcrSummary[]> {
+    return this.http.get<ClaimRemittanceOcrSummary[]>(`${this.API_URL}/reports/remittance-ocr-summary`);
+  }
+
+  sendHeldClaimToPortal(id: number): Observable<InsuranceClaimResponse> {
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/send-to-portal`, {});
+  }
+
+  rejectHeldClaim(id: number, reason?: string): Observable<InsuranceClaimResponse> {
+    return this.http.post<InsuranceClaimResponse>(`${this.API_URL}/claims/${id}/reject-held`, {
+      reason: reason || undefined
+    });
+  }
+
   deleteClaim(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/claims/${id}`);
   }
 
   getMyNotifications(): Observable<InsuranceNotification[]> {
     return this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications/me`);
+  }
+
+  getAllNotificationsForAdmin(): Observable<InsuranceNotification[]> {
+    return this.http.get<InsuranceNotification[]>(`${this.API_URL}/notifications`);
   }
 
   getUnreadNotificationsCount(): Observable<NotificationUnreadCountResponse> {

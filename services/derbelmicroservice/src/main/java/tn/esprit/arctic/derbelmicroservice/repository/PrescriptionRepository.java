@@ -65,4 +65,15 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
     List<Prescription> searchByDoctor(@Param("doctorId") Long doctorId,
                                       @Param("medicationName") String medicationName,
                                       @Param("status") String status);
+
+    // ── Scheduler: find all active prescriptions with items loaded ──
+    @Query("SELECT DISTINCT p FROM Prescription p " +
+           "LEFT JOIN FETCH p.items i " +
+           "WHERE p.status = :status")
+    List<Prescription> findByStatusWithItems(@Param("status") String status);
+
+    // ── Keywords Complexes (traverse Prescription → MedicalRecord, 2 tables) ──
+    List<Prescription> findByPatientIdAndMedicalRecord_Severity(Long patientId, tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity);
+
+    List<Prescription> findByPatientIdAndMedicalRecord_SeverityAndDoctorId(Long patientId, tn.esprit.arctic.derbelmicroservice.entity.enums.Severity severity, Long doctorId);
 }

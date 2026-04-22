@@ -10,6 +10,7 @@ import { LayoutComponent } from './layout/layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { StatisticsComponent } from './features/statistics/statistics.component';
+import { ContratComponent } from './features/contrat/contrat.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { StatisticsComponent } from './features/statistics/statistics.component'
     LayoutComponent,
     AdminLayoutComponent,
     DashboardComponent,
-    StatisticsComponent
+    StatisticsComponent,
+    ContratComponent
   ],
   imports: [
     BrowserModule,

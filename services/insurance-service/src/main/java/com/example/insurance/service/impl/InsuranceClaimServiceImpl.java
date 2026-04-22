@@ -1,10 +1,13 @@
 package com.example.insurance.service.impl;
 
+import com.example.insurance.dto.ClaimRemittanceOcrSummaryDTO;
 import com.example.insurance.dto.InsuranceClaimRequestDTO;
+import com.example.insurance.dto.InsuranceClaimOcrAuditResponseDTO;
 import com.example.insurance.dto.InsuranceClaimResponseDTO;
 import com.example.insurance.dto.InsuranceClaimTransitionResponseDTO;
 import com.example.insurance.dto.PageResponseDTO;
 import com.example.insurance.dto.RemboursementResponseDTO;
+import com.example.insurance.entity.InsuranceClaimOcrAudit;
 import com.example.insurance.integration.InsurancePortalClient;
 import com.example.insurance.integration.PortalResubmissionRequest;
 import com.example.insurance.integration.PortalSubmitClaimRequest;
@@ -12,14 +15,26 @@ import com.example.insurance.entity.ClaimStatus;
 import com.example.insurance.entity.InsuranceClaim;
 import com.example.insurance.entity.InsuranceClaimTransition;
 import com.example.insurance.entity.NotificationType;
+import com.example.insurance.entity.OcrAnalysisDecision;
+import com.example.insurance.entity.OcrAttemptType;
 import com.example.insurance.entity.Remboursement;
+import com.example.insurance.exception.OcrMajorMismatchException;
+import com.example.insurance.ocr.ClaimConsistencyService;
+import com.example.insurance.ocr.OcrConsistencyResult;
+import com.example.insurance.ocr.OcrExtractionResult;
+import com.example.insurance.ocr.OcrExtractionService;
+import com.example.insurance.ocr.OcrMismatchDetail;
+import com.example.insurance.ocr.OcrMismatchSeverity;
 import com.example.insurance.repository.InsuranceClaimRepository;
+import com.example.insurance.repository.InsuranceClaimOcrAuditRepository;
 import com.example.insurance.repository.InsuranceClaimTransitionRepository;
 import com.example.insurance.repository.RemboursementRepository;
+import com.example.insurance.service.ClaimRiskScoringService;
 import com.example.insurance.service.InsuranceClaimService;
 import com.example.insurance.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +59,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -58,17 +75,32 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     );
     private static final int MAX_FILES = 5;
     private static final long MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
+    private static final int FALLBACK_SAFE_JSON_LENGTH = 240;
+    private static final int FALLBACK_SAFE_TEXT_LENGTH = 240;
+    private static final double HIGH_RISK_SCORE_THRESHOLD = 70.0;
 
     private final InsuranceClaimRepository claimRepository;
+    private final InsuranceClaimOcrAuditRepository ocrAuditRepository;
     private final InsuranceClaimTransitionRepository transitionRepository;
     private final RemboursementRepository remboursementRepository;
     private final InsurancePortalClient insurancePortalClient;
     private final NotificationService notificationService;
+    private final OcrExtractionService ocrExtractionService;
+    private final ClaimConsistencyService claimConsistencyService;
+    private final ClaimRiskScoringService claimRiskScoringService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
     @Value("${app.public-base-url:http://localhost:8090}")
     private String publicBaseUrl;
+    @Value("${app.ocr.enabled:true}")
+    private boolean ocrEnabled;
+    @Value("${app.ocr.strict-major-block:true}")
+    private boolean strictMajorBlock;
+    @Value("${app.ocr.store-full-text:false}")
+    private boolean storeFullExtractedText;
+    @Value("${app.ocr.admin-alert-user-ids:}")
+    private String ocrAdminAlertUserIds;
 
     @Override
     public InsuranceClaimResponseDTO submitClaim(Long userId, InsuranceClaimRequestDTO request, List<MultipartFile> files) {
@@ -77,6 +109,38 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         List<String> filePaths = new ArrayList<>();
         if (files != null && !files.isEmpty()) {
             filePaths = saveFiles(files, userId);
+        }
+
+        OcrProcessingOutcome ocrOutcome = runOcrChecks(filePaths, request.getAmount(), request.getInsuranceCompany());
+        OcrConsistencyResult ocrResult = ocrOutcome.result();
+        if (ocrEnabled && strictMajorBlock && ocrResult.getSeverity() == OcrMismatchSeverity.MAJOR) {
+            persistOcrAudit(
+                    null,
+                    userId,
+                    OcrAttemptType.INITIAL_SUBMISSION,
+                    OcrAnalysisDecision.MAJOR_BLOCKED,
+                    request.getAmount(),
+                    request.getInsuranceCompany(),
+                    ocrResult,
+                    ocrOutcome
+            );
+            notificationService.createNotification(
+                    userId,
+                    null,
+                    NotificationType.OCR_MAJOR_BLOCKED,
+                    "Claim blocked by document checks",
+                    ocrResult.getMismatchSummary()
+            );
+            notifyAdminsSafely(
+                    null,
+                    NotificationType.OCR_MAJOR_BLOCKED,
+                    "Admin alert: claim blocked by OCR",
+                    "A claim submission was blocked due to major mismatches."
+            );
+            throw new OcrMajorMismatchException(
+                    "Claim blocked due to major document mismatches. Please fix your form/documents and try again.",
+                    ocrResult.getMismatches()
+            );
         }
 
         String externalRef = UUID.randomUUID().toString();
@@ -95,10 +159,99 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .externalRef(externalRef)
                 .userId(userId)
                 .filePaths(filePaths)
+                .ocrLastDecision(ocrResult.getSeverity().name())
+                .ocrMismatchCount(ocrResult.getMismatches() == null ? 0 : ocrResult.getMismatches().size())
+                .ocrLastAnalyzedAt(new Date())
+                .ocrSummary(ocrResult.getMismatchSummary())
                 .build();
 
+        if (ocrEnabled && ocrResult.getSeverity() == OcrMismatchSeverity.MINOR) {
+            claim.setStatus(ClaimStatus.NEEDS_INFO);
+            claim.setInfoRequestReason("OCR consistency check: " + ocrResult.getMismatchSummary());
+            claim.setInfoRequestedAt(new Date());
+            claim.setReason("Returned to patient for document/form correction.");
+        }
+
         claimRepository.save(claim);
+        persistOcrAudit(
+                claim.getId(),
+                userId,
+                OcrAttemptType.INITIAL_SUBMISSION,
+                ocrResult.getSeverity() == OcrMismatchSeverity.MINOR ? OcrAnalysisDecision.MINOR_MISMATCH : OcrAnalysisDecision.PASS,
+                request.getAmount(),
+                request.getInsuranceCompany(),
+                ocrResult,
+                ocrOutcome
+        );
+
+        if (ocrEnabled && ocrResult.getSeverity() == OcrMismatchSeverity.MINOR) {
+            // Keep portal in sync with the claim reference even when local OCR asks the
+            // patient for corrections; otherwise later resubmissions may not exist in portal.
+            PortalSubmitClaimRequest portalReq = new PortalSubmitClaimRequest(
+                    externalRef,
+                    String.valueOf(userId),
+                    request.getDescription(),
+                    request.getAmount(),
+                    reimbursementAmount,
+                    request.getInsuranceCompany(),
+                    request.getInsuranceGrade(),
+                    buildAttachmentUrls(filePaths)
+            );
+            insurancePortalClient.submitClaim(portalReq);
+
+            recordTransition(claim, null, ClaimStatus.NEEDS_INFO, userId, "SYSTEM", "OCR found minor mismatches");
+            notificationService.createNotification(
+                    userId,
+                    claim.getId(),
+                    NotificationType.OCR_MINOR_MISMATCH,
+                    "Action needed on your claim",
+                    "Your claim was returned for corrections: " + ocrResult.getMismatchSummary()
+            );
+            notifyAdminsSafely(
+                    claim.getId(),
+                    NotificationType.OCR_MINOR_MISMATCH,
+                    "Admin alert: claim needs corrections",
+                    "A claim has minor OCR mismatches and was returned to the patient."
+            );
+            return toResponseDTO(claim);
+        }
+
         recordTransition(claim, null, ClaimStatus.SUBMITTED, userId, "USER", "Claim submitted");
+
+        // High-risk hold: if risk score is 70+ we stop here for admin review
+        try {
+            var score = claimRiskScoringService.scoreClaim(claim.getId());
+            if (score != null && score.getRiskScore() != null && score.getRiskScore() >= HIGH_RISK_SCORE_THRESHOLD) {
+                ClaimStatus fromStatus = claim.getStatus();
+                claim.setStatus(ClaimStatus.UNDER_REVIEW);
+                claim.setReason("Held for admin review due to high risk score (" + score.getRiskScore() + ").");
+                claimRepository.save(claim);
+                recordTransition(
+                        claim,
+                        fromStatus,
+                        ClaimStatus.UNDER_REVIEW,
+                        userId,
+                        "SYSTEM",
+                        "High risk score: " + score.getRiskScore()
+                );
+                notifyAdminsSafely(
+                        claim.getId(),
+                        NotificationType.OCR_MINOR_MISMATCH,
+                        "Admin review required: high-risk claim",
+                        "Claim " + claim.getExternalRef() + " was held for review (risk score " + score.getRiskScore() + ")."
+                );
+                notificationService.createNotification(
+                        userId,
+                        claim.getId(),
+                        NotificationType.DOCUMENTS_REQUESTED,
+                        "Claim pending manual review",
+                        "Your claim requires a manual review before being sent to the insurer."
+                );
+                return toResponseDTO(claim);
+            }
+        } catch (Exception ignored) {
+            // If risk service is unavailable, keep default behavior and submit to portal.
+        }
 
         // Fire-and-forget: external provider may accept/reject asynchronously.
         // Our scheduler will poll portal status and update this claim.
@@ -122,6 +275,68 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 "Your claim has been sent to the external insurance portal and is awaiting their decision."
         );
 
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO sendHeldClaimToPortal(Long claimId, Long adminUserId) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+
+        if (claim.getStatus() != ClaimStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only UNDER_REVIEW claims can be sent to portal");
+        }
+
+        PortalSubmitClaimRequest portalReq = new PortalSubmitClaimRequest(
+                claim.getExternalRef(),
+                String.valueOf(claim.getUserId()),
+                claim.getDescription(),
+                claim.getAmount(),
+                claim.getReimbursementAmount(),
+                claim.getInsuranceCompany(),
+                claim.getInsuranceGrade(),
+                buildAttachmentUrls(claim.getFilePaths())
+        );
+        insurancePortalClient.submitClaim(portalReq);
+
+        ClaimStatus from = claim.getStatus();
+        claim.setStatus(ClaimStatus.SUBMITTED);
+        claim.setReason("Sent to insurer portal after admin review.");
+        claimRepository.save(claim);
+        recordTransition(claim, from, ClaimStatus.SUBMITTED, adminUserId, "ADMIN", "Sent to insurer portal");
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_SENT_TO_INSURER,
+                "Claim sent to insurer",
+                "Your claim was reviewed and sent to the external insurance portal."
+        );
+        return toResponseDTO(claim);
+    }
+
+    @Override
+    public InsuranceClaimResponseDTO rejectHeldClaim(Long claimId, Long adminUserId, String reason) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+
+        if (claim.getStatus() != ClaimStatus.UNDER_REVIEW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only UNDER_REVIEW claims can be rejected by admin");
+        }
+
+        ClaimStatus from = claim.getStatus();
+        claim.setStatus(ClaimStatus.REJECTED);
+        claim.setReason(reason == null || reason.isBlank() ? "Rejected by admin review." : reason.trim());
+        claimRepository.save(claim);
+        recordTransition(claim, from, ClaimStatus.REJECTED, adminUserId, "ADMIN", claim.getReason());
+
+        notificationService.createNotification(
+                claim.getUserId(),
+                claim.getId(),
+                NotificationType.CLAIM_REJECTED,
+                "Claim rejected",
+                "Your claim was rejected after an admin review."
+        );
         return toResponseDTO(claim);
     }
 
@@ -312,6 +527,76 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             );
         }
 
+        OcrProcessingOutcome ocrOutcome = runOcrChecks(claim.getFilePaths(), claim.getAmount(), claim.getInsuranceCompany());
+        OcrConsistencyResult ocrResult = ocrOutcome.result();
+        claim.setOcrLastDecision(ocrResult.getSeverity().name());
+        claim.setOcrMismatchCount(ocrResult.getMismatches() == null ? 0 : ocrResult.getMismatches().size());
+        claim.setOcrLastAnalyzedAt(new Date());
+        claim.setOcrSummary(ocrResult.getMismatchSummary());
+        persistOcrAudit(
+                claim.getId(),
+                userId,
+                OcrAttemptType.RESUBMISSION,
+                ocrResult.getSeverity() == OcrMismatchSeverity.MAJOR
+                        ? OcrAnalysisDecision.MAJOR_BLOCKED
+                        : (ocrResult.getSeverity() == OcrMismatchSeverity.MINOR ? OcrAnalysisDecision.MINOR_MISMATCH : OcrAnalysisDecision.PASS),
+                claim.getAmount(),
+                claim.getInsuranceCompany(),
+                ocrResult,
+                ocrOutcome
+        );
+
+        if (ocrEnabled && strictMajorBlock && ocrResult.getSeverity() == OcrMismatchSeverity.MAJOR) {
+            claimRepository.save(claim);
+            notificationService.createNotification(
+                    claim.getUserId(),
+                    claim.getId(),
+                    NotificationType.OCR_MAJOR_BLOCKED,
+                    "Resubmission blocked by document checks",
+                    ocrResult.getMismatchSummary()
+            );
+            notifyAdminsSafely(
+                    claim.getId(),
+                    NotificationType.OCR_MAJOR_BLOCKED,
+                    "Admin alert: resubmission blocked by OCR",
+                    "A claim resubmission was blocked due to major mismatches."
+            );
+            throw new OcrMajorMismatchException(
+                    "Resubmission blocked due to major document mismatches. Please fix your form/documents and try again.",
+                    ocrResult.getMismatches()
+            );
+        }
+
+        if (ocrEnabled && ocrResult.getSeverity() == OcrMismatchSeverity.MINOR) {
+            claim.setStatus(ClaimStatus.NEEDS_INFO);
+            claim.setInfoRequestReason("OCR consistency check: " + ocrResult.getMismatchSummary());
+            claim.setInfoRequestedAt(new Date());
+            claim.setInfoRespondedAt(null);
+            claimRepository.save(claim);
+            recordTransition(
+                    claim,
+                    ClaimStatus.NEEDS_INFO,
+                    ClaimStatus.NEEDS_INFO,
+                    userId,
+                    "SYSTEM",
+                    "OCR returned claim for additional correction"
+            );
+            notificationService.createNotification(
+                    claim.getUserId(),
+                    claim.getId(),
+                    NotificationType.OCR_MINOR_MISMATCH,
+                    "More corrections needed",
+                    "OCR detected minor mismatches: " + ocrResult.getMismatchSummary()
+            );
+            notifyAdminsSafely(
+                    claim.getId(),
+                    NotificationType.OCR_MINOR_MISMATCH,
+                    "Admin alert: claim still needs correction",
+                    "A resubmitted claim still has minor OCR mismatches."
+            );
+            return toResponseDTO(claim);
+        }
+
         ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.UNDER_REVIEW);
         claim.setInfoRespondedAt(new Date());
@@ -364,13 +649,32 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<InsuranceClaimOcrAuditResponseDTO> getClaimOcrAudit(Long claimId, Long requesterUserId, boolean isAdmin) {
+        InsuranceClaim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + claimId));
+        if (!isAdmin && !claim.getUserId().equals(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to view this OCR audit");
+        }
+        return ocrAuditRepository.findByClaimIdOrderByCreatedAtDesc(claimId)
+                .stream()
+                .map(this::toOcrAuditDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClaimRemittanceOcrSummaryDTO> getRemittanceOcrSummaryReport() {
+        return claimRepository.findRemittanceOcrSummaryByJpql();
+    }
+
+    @Override
     public InsuranceClaimResponseDTO approveClaim(Long id, Double montant, Long adminUserId) {
         InsuranceClaim claim = claimRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Claim not found: " + id));
         ensureTransitionAllowed(claim.getStatus(), ClaimStatus.APPROVED);
         ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.APPROVED);
-        // Reimbursement becomes known at approval time
         claim.setReimbursementAmount(montant);
         claim.setReason(null);
         Remboursement remboursement = Remboursement.builder()
@@ -398,7 +702,6 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         ensureTransitionAllowed(claim.getStatus(), ClaimStatus.REJECTED);
         ClaimStatus fromStatus = claim.getStatus();
         claim.setStatus(ClaimStatus.REJECTED);
-        // Schema expects non-null reimbursement_amount
         claim.setReimbursementAmount(0.0);
         claim.setReason(null);
         claimRepository.save(claim);
@@ -421,7 +724,6 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only rejected claims can be deleted");
         }
 
-        // JPA mappings (cascade + orphanRemoval) handle remboursements + files cleanup where configured.
         claimRepository.delete(claim);
     }
 
@@ -494,6 +796,131 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
         }
     }
 
+    private OcrProcessingOutcome runOcrChecks(List<String> filePaths, Double amount, String insuranceCompany) {
+        if (!ocrEnabled || filePaths == null || filePaths.isEmpty()) {
+            OcrConsistencyResult passResult = OcrConsistencyResult.builder()
+                    .severity(OcrMismatchSeverity.NONE)
+                    .mismatches(List.of())
+                    .mismatchSummary("OCR checks skipped: no attachments or OCR disabled.")
+                    .build();
+            return new OcrProcessingOutcome("", passResult);
+        }
+        OcrExtractionResult extractionResult = ocrExtractionService.extractFromFiles(filePaths);
+        OcrConsistencyResult consistencyResult = claimConsistencyService.analyze(
+                extractionResult.getCombinedText(),
+                amount,
+                insuranceCompany
+        );
+        return new OcrProcessingOutcome(extractionResult.getCombinedText(), consistencyResult);
+    }
+
+    private void persistOcrAudit(
+            Long claimId,
+            Long userId,
+            OcrAttemptType attemptType,
+            OcrAnalysisDecision decision,
+            Double submittedAmount,
+            String submittedCompany,
+            OcrConsistencyResult result,
+            OcrProcessingOutcome outcome
+    ) {
+        int mismatchCount = result.getMismatches() == null ? 0 : result.getMismatches().size();
+        int majorCount = result.getMismatches() == null ? 0 : (int) result.getMismatches().stream()
+                .filter(m -> m.getSeverity() == OcrMismatchSeverity.MAJOR)
+                .count();
+        int minorCount = result.getMismatches() == null ? 0 : (int) result.getMismatches().stream()
+                .filter(m -> m.getSeverity() == OcrMismatchSeverity.MINOR)
+                .count();
+
+        InsuranceClaimOcrAudit audit = InsuranceClaimOcrAudit.builder()
+                .claimId(claimId)
+                .userId(userId)
+                .attemptType(attemptType)
+                .decision(decision)
+                .submittedAmount(submittedAmount)
+                .submittedCompany(submittedCompany)
+                .extractedAmount(result.getExtractedAmount())
+                .extractedInvoiceDate(result.getExtractedInvoiceDate())
+                .extractedProviderName(result.getExtractedProviderName())
+                .mismatchCount(mismatchCount)
+                .majorCount(majorCount)
+                .minorCount(minorCount)
+                .mismatchSummary(result.getMismatchSummary())
+                .mismatchDetailsJson(toMismatchJson(result.getMismatches()))
+                .extractedText(storeFullExtractedText && outcome != null ? outcome.extractedText() : null)
+                .build();
+        try {
+            ocrAuditRepository.save(audit);
+        } catch (DataIntegrityViolationException ex) {
+            // Backward-compatible fallback for pre-existing narrow DB columns.
+            audit.setMismatchDetailsJson(truncate(audit.getMismatchDetailsJson(), FALLBACK_SAFE_JSON_LENGTH));
+            audit.setExtractedText(truncate(audit.getExtractedText(), FALLBACK_SAFE_TEXT_LENGTH));
+            audit.setMismatchSummary(truncate(audit.getMismatchSummary(), 500));
+            ocrAuditRepository.save(audit);
+        }
+    }
+
+    private String toMismatchJson(List<OcrMismatchDetail> mismatches) {
+        if (mismatches == null || mismatches.isEmpty()) {
+            return "[]";
+        }
+        return mismatches.stream()
+                .map(m -> "{"
+                        + "\"code\":\"" + safeJson(m.getCode()) + "\","
+                        + "\"field\":\"" + safeJson(m.getField()) + "\","
+                        + "\"expected\":\"" + safeJson(m.getExpectedValue()) + "\","
+                        + "\"extracted\":\"" + safeJson(m.getExtractedValue()) + "\","
+                        + "\"severity\":\"" + (m.getSeverity() == null ? "" : m.getSeverity().name()) + "\","
+                        + "\"message\":\"" + safeJson(m.getMessage()) + "\""
+                        + "}")
+                .collect(Collectors.joining(",", "[", "]"));
+    }
+
+    private String safeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
+    }
+
+    private void notifyAdminsSafely(Long claimId, NotificationType type, String title, String message) {
+        List<Long> adminIds = parseAdminAlertUserIds();
+        for (Long adminId : adminIds) {
+            try {
+                notificationService.createNotification(adminId, claimId, type, title, message);
+            } catch (Exception ignored) {
+                // Admin alert delivery should never block patient claim flow.
+            }
+        }
+    }
+
+    private List<Long> parseAdminAlertUserIds() {
+        if (ocrAdminAlertUserIds == null || ocrAdminAlertUserIds.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(ocrAdminAlertUserIds.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(this::safeParseLong)
+                .filter(v -> v != null && v > 0)
+                .toList();
+    }
+
+    private Long safeParseLong(String raw) {
+        try {
+            return Long.parseLong(raw);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
     private InsuranceClaimResponseDTO toResponseDTO(InsuranceClaim claim) {
         List<RemboursementResponseDTO> rembDtos = claim.getRemboursements() != null
                 ? claim.getRemboursements().stream()
@@ -524,9 +951,36 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                 .infoRequestDeadline(claim.getInfoRequestDeadline())
                 .infoRequestedAt(claim.getInfoRequestedAt())
                 .infoRespondedAt(claim.getInfoRespondedAt())
+                .ocrLastDecision(claim.getOcrLastDecision())
+                .ocrMismatchCount(claim.getOcrMismatchCount())
+                .ocrLastAnalyzedAt(claim.getOcrLastAnalyzedAt())
+                .ocrSummary(claim.getOcrSummary())
                 .remboursements(rembDtos)
                 .build();
     }
+
+    private InsuranceClaimOcrAuditResponseDTO toOcrAuditDto(InsuranceClaimOcrAudit audit) {
+        return InsuranceClaimOcrAuditResponseDTO.builder()
+                .id(audit.getId())
+                .claimId(audit.getClaimId())
+                .userId(audit.getUserId())
+                .attemptType(audit.getAttemptType().name())
+                .decision(audit.getDecision().name())
+                .submittedAmount(audit.getSubmittedAmount())
+                .submittedCompany(audit.getSubmittedCompany())
+                .extractedAmount(audit.getExtractedAmount())
+                .extractedInvoiceDate(audit.getExtractedInvoiceDate())
+                .extractedProviderName(audit.getExtractedProviderName())
+                .mismatchCount(audit.getMismatchCount())
+                .majorCount(audit.getMajorCount())
+                .minorCount(audit.getMinorCount())
+                .mismatchSummary(audit.getMismatchSummary())
+                .mismatchDetailsJson(audit.getMismatchDetailsJson())
+                .createdAt(audit.getCreatedAt())
+                .build();
+    }
+
+    private record OcrProcessingOutcome(String extractedText, OcrConsistencyResult result) {}
 
     private InsuranceClaimTransitionResponseDTO toTransitionDto(InsuranceClaimTransition transition) {
         return InsuranceClaimTransitionResponseDTO.builder()
@@ -577,7 +1031,8 @@ public class InsuranceClaimServiceImpl implements InsuranceClaimService {
                         || to == ClaimStatus.REJECTED;
                 break;
             case UNDER_REVIEW:
-                allowed = to == ClaimStatus.NEEDS_INFO
+                allowed = to == ClaimStatus.SUBMITTED
+                        || to == ClaimStatus.NEEDS_INFO
                         || to == ClaimStatus.APPROVED
                         || to == ClaimStatus.PARTIALLY_APPROVED
                         || to == ClaimStatus.REJECTED;
