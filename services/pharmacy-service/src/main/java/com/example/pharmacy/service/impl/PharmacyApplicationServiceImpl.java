@@ -4,6 +4,7 @@ import com.example.pharmacy.dto.*;
 import com.example.pharmacy.entity.Pharmacy;
 import com.example.pharmacy.entity.PharmacyApplicationStatus;
 import com.example.pharmacy.entity.PharmacyOnboardingApplication;
+import com.example.pharmacy.exception.CnoptSubmissionBlockedException;
 import com.example.pharmacy.exception.ResourceNotFoundException;
 import com.example.pharmacy.repository.PharmacyOnboardingApplicationRepository;
 import com.example.pharmacy.repository.PharmacyRepository;
@@ -15,8 +16,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
@@ -37,6 +42,7 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
     private final PharmacyOnboardingApplicationRepository applicationRepository;
     private final PharmacyRepository pharmacyRepository;
     private final PharmacyApplicationDocumentStorageService documentStorageService;
+    private final PharmacyApplicationAiClient pharmacyApplicationAiClient;
     private final UserRoleAssignmentClient userRoleAssignmentClient;
     private final CurrentUserService currentUserService;
 
@@ -50,6 +56,7 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
     }
 
     @Override
+    @Transactional(noRollbackFor = CnoptSubmissionBlockedException.class)
     public PharmacyApplicationResponseDTO submitMyApplication(
         PharmacyApplicationSubmitRequestDTO request,
         MultipartFile cinDocument,
@@ -116,6 +123,19 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
         application.setCinDocumentPath(cinPath);
         application.setCnoptProofPath(cnoptPath);
         application.setPharmacyAuthorizationPath(legalPath);
+
+        CnoptVerificationResultDTO cnoptVerdict = verifyCnoptWithFallback(cnoptProofDocument, cnoptPath);
+        applyCnoptMlVerdict(application, cnoptVerdict);
+
+        if (isBlockedCnoptVerdict(cnoptVerdict)) {
+            application.setStatus(PharmacyApplicationStatus.REJECTED);
+            application.setSubmittedAt(null);
+            application.setReviewedAt(null);
+            application.setReviewedByAdminId(null);
+            application.setReviewComment(null);
+            applicationRepository.save(application);
+            throw new CnoptSubmissionBlockedException(resolveCnoptBlockMessage(cnoptVerdict));
+        }
 
         application.setStatus(PharmacyApplicationStatus.SUBMITTED);
         application.setSubmittedAt(LocalDateTime.now());
@@ -252,6 +272,125 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
         throw new IllegalArgumentException("Missing required " + documentType + " document");
     }
 
+    private CnoptVerificationResultDTO verifyCnoptWithFallback(MultipartFile cnoptProofDocument, String cnoptPath) {
+        byte[] cnoptBytes = resolveCnoptDocumentBytes(cnoptProofDocument, cnoptPath);
+        String cnoptFilename = resolveCnoptFilename(cnoptProofDocument, cnoptPath);
+
+        try {
+            CnoptVerificationResultDTO result = pharmacyApplicationAiClient.verifyCnoptDocument(cnoptBytes, cnoptFilename);
+            return result != null ? result : buildUnavailableCnoptVerdict("CNOPT verification returned no result.");
+        } catch (HttpClientErrorException.BadRequest ex) {
+            return buildBadRequestCnoptVerdict(ex.getResponseBodyAsString());
+        } catch (Exception ex) {
+            return buildUnavailableCnoptVerdict(
+                "CNOPT ML verification unavailable. Routed to manual review. Cause: " + ex.getMessage()
+            );
+        }
+    }
+
+    private byte[] resolveCnoptDocumentBytes(MultipartFile uploadedFile, String storedPath) {
+        if (uploadedFile != null && !uploadedFile.isEmpty()) {
+            try {
+                return uploadedFile.getBytes();
+            } catch (IOException ex) {
+                if (StringUtils.hasText(storedPath)) {
+                    return loadStoredDocumentBytes(storedPath);
+                }
+                throw new IllegalStateException("Failed to read uploaded CNOPT document", ex);
+            }
+        }
+
+        return loadStoredDocumentBytes(storedPath);
+    }
+
+    private byte[] loadStoredDocumentBytes(String storedPath) {
+        Resource resource = documentStorageService.loadDocument(storedPath);
+        try (InputStream inputStream = resource.getInputStream();
+             ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            inputStream.transferTo(buffer);
+            return buffer.toByteArray();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Failed to load stored CNOPT document", ex);
+        }
+    }
+
+    private String resolveCnoptFilename(MultipartFile uploadedFile, String storedPath) {
+        if (uploadedFile != null && uploadedFile.getOriginalFilename() != null) {
+            return uploadedFile.getOriginalFilename();
+        }
+        return extractFileName(storedPath);
+    }
+
+    private CnoptVerificationResultDTO buildUnavailableCnoptVerdict(String message) {
+        return CnoptVerificationResultDTO.builder()
+            .documentDecision("MANUAL_REVIEW")
+            .fraudStatus("unavailable")
+            .message(message)
+            .isCnoptDocument(true)
+            .fraudRiskScore(0.5d)
+            .flags(List.of("ml_unavailable"))
+            .build();
+    }
+
+    private CnoptVerificationResultDTO buildBadRequestCnoptVerdict(String rawErrorBody) {
+        String normalized = rawErrorBody == null ? "" : rawErrorBody.toLowerCase(Locale.ROOT);
+        if (normalized.contains("unsupported file type")) {
+            return CnoptVerificationResultDTO.builder()
+                .documentDecision("REJECT")
+                .fraudStatus("wrong_type")
+                .message("Wrong CNOPT file type")
+                .isCnoptDocument(false)
+                .fraudRiskScore(0.99d)
+                .build();
+        }
+
+        return CnoptVerificationResultDTO.builder()
+            .documentDecision("MANUAL_REVIEW")
+            .fraudStatus("incomplete")
+            .message("CNOPT file incomplete")
+            .isCnoptDocument(true)
+            .fraudRiskScore(0.90d)
+            .build();
+    }
+
+    private void applyCnoptMlVerdict(PharmacyOnboardingApplication application, CnoptVerificationResultDTO verdict) {
+        application.setCnoptMlDecision(normalizeUpper(verdict.getDocumentDecision()));
+        application.setCnoptMlFraudStatus(normalizeLower(verdict.getFraudStatus()));
+        application.setCnoptMlMessage(trimToNull(verdict.getMessage()));
+        application.setCnoptMlRiskScore(verdict.getFraudRiskScore());
+        application.setCnoptMlCheckedAt(LocalDateTime.now());
+    }
+
+    private boolean isBlockedCnoptVerdict(CnoptVerificationResultDTO verdict) {
+        String decision = normalizeUpper(verdict.getDocumentDecision());
+        String fraudStatus = normalizeLower(verdict.getFraudStatus());
+        return "REJECT".equals(decision)
+            || "wrong_type".equals(fraudStatus)
+            || "incomplete".equals(fraudStatus)
+            || hasWrongDocumentFlags(verdict);
+    }
+
+    private String resolveCnoptBlockMessage(CnoptVerificationResultDTO verdict) {
+        String fraudStatus = normalizeLower(verdict.getFraudStatus());
+        if ("incomplete".equals(fraudStatus)) {
+            return "CNOPT file incomplete";
+        }
+        return "Wrong CNOPT file type";
+    }
+
+    private boolean hasWrongDocumentFlags(CnoptVerificationResultDTO verdict) {
+        if (verdict == null || verdict.getFlags() == null || verdict.getFlags().isEmpty()) {
+            return false;
+        }
+        return verdict.getFlags().stream()
+            .filter(StringUtils::hasText)
+            .map(flag -> flag.trim().toLowerCase(Locale.ROOT))
+            .anyMatch(flag ->
+                "cnopt_strong_keywords_missing".equals(flag)
+                    || "core_entities_sparse".equals(flag)
+            );
+    }
+
     private void validateRequiredDocumentPaths(PharmacyOnboardingApplication application) {
         if (!StringUtils.hasText(application.getCinDocumentPath())
             || !StringUtils.hasText(application.getCnoptProofPath())
@@ -289,6 +428,22 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
             return normalized;
         }
         return normalized.toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeUpper(String value) {
+        String normalized = trimToNull(value);
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        return normalized.toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeLower(String value) {
+        String normalized = trimToNull(value);
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        return normalized.toLowerCase(Locale.ROOT);
     }
 
     private String trimToNull(String value) {
@@ -385,6 +540,11 @@ public class PharmacyApplicationServiceImpl implements PharmacyApplicationServic
             .legalDocumentUrl(StringUtils.hasText(application.getPharmacyAuthorizationPath())
                 ? "/api/pharmacy/admin/applications/" + id + "/documents/legal-proof"
                 : null)
+            .cnoptMlDecision(application.getCnoptMlDecision())
+            .cnoptMlFraudStatus(application.getCnoptMlFraudStatus())
+            .cnoptMlMessage(application.getCnoptMlMessage())
+            .cnoptMlRiskScore(application.getCnoptMlRiskScore())
+            .cnoptMlCheckedAt(toIso(application.getCnoptMlCheckedAt()))
             .build();
     }
 

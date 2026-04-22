@@ -246,6 +246,11 @@ export interface AdminPharmacyApplicationDetails {
   cinDocumentUrl?: string;
   cnoptProofUrl?: string;
   legalDocumentUrl?: string;
+  cnoptMlDecision?: string;
+  cnoptMlFraudStatus?: string;
+  cnoptMlMessage?: string;
+  cnoptMlRiskScore?: number;
+  cnoptMlCheckedAt?: string;
 }
 
 export interface StockItemCreateRequest {

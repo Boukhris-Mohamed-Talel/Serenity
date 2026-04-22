@@ -36,4 +36,10 @@ public class AdminPharmacyApplicationDetailsDTO {
     private String cinDocumentUrl;
     private String cnoptProofUrl;
     private String legalDocumentUrl;
+
+    private String cnoptMlDecision;
+    private String cnoptMlFraudStatus;
+    private String cnoptMlMessage;
+    private Double cnoptMlRiskScore;
+    private String cnoptMlCheckedAt;
 }

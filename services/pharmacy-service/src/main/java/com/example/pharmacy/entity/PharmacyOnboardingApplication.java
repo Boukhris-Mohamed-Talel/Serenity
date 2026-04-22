@@ -70,6 +70,19 @@ public class PharmacyOnboardingApplication {
     @Column(nullable = false)
     private String pharmacyAuthorizationPath;
 
+    @Column(length = 32)
+    private String cnoptMlDecision;
+
+    @Column(length = 32)
+    private String cnoptMlFraudStatus;
+
+    @Column(length = 1500)
+    private String cnoptMlMessage;
+
+    private Double cnoptMlRiskScore;
+
+    private LocalDateTime cnoptMlCheckedAt;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

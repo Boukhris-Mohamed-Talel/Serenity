@@ -123,6 +123,65 @@
   gap: 0.5rem;
 }
 
+.ml-verdict {
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border: 1px solid #d3e4e8;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.ml-verdict-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.ml-decision-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ml-decision-badge.accept {
+  background: #e1f6ea;
+  color: #0c6c39;
+}
+
+.ml-decision-badge.manual-review {
+  background: #fff3d6;
+  color: #7b5a00;
+}
+
+.ml-decision-badge.reject {
+  background: #fde6e6;
+  color: #972222;
+}
+
+.ml-decision-badge.unknown {
+  background: #eef4f6;
+  color: #365561;
+}
+
+.ml-fraud-status,
+.ml-message,
+.ml-risk,
+.ml-checked-at {
+  margin: 0;
+  color: #1e3f4d;
+  font-size: 0.92rem;
+}
+
+.ml-message,
+.ml-risk,
+.ml-checked-at {
+  margin-top: 0.25rem;
+}
+
 .actions {
   margin-top: 1rem;
   display: flex;

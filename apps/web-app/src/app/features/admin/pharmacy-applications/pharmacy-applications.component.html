@@ -70,6 +70,25 @@
           <button type="button" class="btn btn-secondary" (click)="openDocument(details.legalDocumentUrl)" [disabled]="!details.legalDocumentUrl">Open Legal Proof</button>
         </div>
 
+        <div class="ml-verdict" *ngIf="details.cnoptMlDecision || details.cnoptMlFraudStatus || details.cnoptMlMessage">
+          <h3>ML CNOPT Verdict</h3>
+          <div class="ml-verdict-row">
+            <span class="ml-decision-badge" [class]="'ml-decision-badge ' + mlDecisionClass(details.cnoptMlDecision)">
+              {{ details.cnoptMlDecision || 'UNKNOWN' }}
+            </span>
+            <span class="ml-fraud-status">
+              Fraud status: {{ details.cnoptMlFraudStatus || 'unknown' }}
+            </span>
+          </div>
+          <p class="ml-message" *ngIf="details.cnoptMlMessage">{{ details.cnoptMlMessage }}</p>
+          <p class="ml-risk" *ngIf="details.cnoptMlRiskScore !== undefined && details.cnoptMlRiskScore !== null">
+            Risk score: {{ details.cnoptMlRiskScore | number: '1.2-2' }}
+          </p>
+          <p class="ml-checked-at" *ngIf="details.cnoptMlCheckedAt">
+            Checked at: {{ details.cnoptMlCheckedAt | date: 'medium' }}
+          </p>
+        </div>
+
         <div class="actions" *ngIf="details.status === 'SUBMITTED'">
           <textarea [(ngModel)]="reviewComment" placeholder="Rejection comment (required if rejecting)"></textarea>
           <div class="action-row">

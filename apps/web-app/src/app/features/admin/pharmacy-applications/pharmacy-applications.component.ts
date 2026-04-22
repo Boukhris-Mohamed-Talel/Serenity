@@ -161,4 +161,17 @@ export class PharmacyApplicationsComponent implements OnInit {
   trackByApplicationId(_: number, item: AdminPharmacyApplicationSummary): number {
     return item.id;
   }
+
+  mlDecisionClass(decision?: string): string {
+    switch ((decision || '').toUpperCase()) {
+      case 'REJECT':
+        return 'reject';
+      case 'MANUAL_REVIEW':
+        return 'manual-review';
+      case 'ACCEPT':
+        return 'accept';
+      default:
+        return 'unknown';
+    }
+  }
 }
