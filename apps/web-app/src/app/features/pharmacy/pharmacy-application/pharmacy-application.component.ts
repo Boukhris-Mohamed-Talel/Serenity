@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { LocationGeocodingService } from '../../../core/services/location-geocoding.service';
 import { PharmacyService } from '../../../core/services/pharmacy.service';
 import { UserService } from '../../../core/services/user.service';
 import { PickerLocation } from '../../../shared/components/location-picker/location-picker.component';
@@ -20,12 +21,15 @@ export class PharmacyApplicationComponent implements OnInit {
 
   errorMessage = '';
   successMessage = '';
+  locationAutoFillMessage = '';
+  locationAutoFillLoading = false;
 
   application: PharmacyApplicationResponse | null = null;
 
   cinDocumentFile: File | null = null;
   cnoptProofDocumentFile: File | null = null;
   legalProofDocumentFile: File | null = null;
+  private openingHoursPrefix = '';
 
   readonly applicationForm = this.formBuilder.group({
     firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
@@ -37,6 +41,8 @@ export class PharmacyApplicationComponent implements OnInit {
     authorizationReferenceNumber: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
     phone: ['', [Validators.maxLength(50)]],
     openingHours: ['', [Validators.maxLength(120)]],
+    openingFrom: [''],
+    openingTo: [''],
     addressLine: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(255)]],
     city: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     governorate: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
@@ -46,6 +52,7 @@ export class PharmacyApplicationComponent implements OnInit {
 
   constructor(
     private readonly formBuilder: FormBuilder,
+    private readonly geocodingService: LocationGeocodingService,
     private readonly pharmacyService: PharmacyService,
     private readonly userService: UserService,
     private readonly router: Router
@@ -68,6 +75,29 @@ export class PharmacyApplicationComponent implements OnInit {
     this.applicationForm.patchValue({
       latitude: location.latitude,
       longitude: location.longitude
+    });
+
+    this.locationAutoFillLoading = true;
+    this.locationAutoFillMessage = 'Trying to autofill address, city and governorate from map...';
+    this.geocodingService.reverseGeocode(location.latitude, location.longitude).subscribe({
+      next: (result) => {
+        this.locationAutoFillLoading = false;
+        if (!result) {
+          this.locationAutoFillMessage = 'Could not autofill location fields. You can fill them manually.';
+          return;
+        }
+
+        this.applicationForm.patchValue({
+          addressLine: result.addressLine || this.applicationForm.value.addressLine,
+          city: result.city || this.applicationForm.value.city,
+          governorate: result.governorate || this.applicationForm.value.governorate
+        });
+        this.locationAutoFillMessage = 'Location fields autofilled. You can edit them if needed.';
+      },
+      error: () => {
+        this.locationAutoFillLoading = false;
+        this.locationAutoFillMessage = 'Could not autofill location fields. You can fill them manually.';
+      }
     });
   }
 
@@ -104,7 +134,33 @@ export class PharmacyApplicationComponent implements OnInit {
       return;
     }
 
-    const payload = this.applicationForm.getRawValue() as PharmacyApplicationSubmitRequest;
+    if (this.hasPartialOpeningHours()) {
+      this.errorMessage = 'Please select both opening and closing time, or leave both empty.';
+      return;
+    }
+
+    const raw = this.applicationForm.getRawValue();
+    const payload: PharmacyApplicationSubmitRequest = {
+      firstName: String(raw.firstName || '').trim(),
+      lastName: String(raw.lastName || '').trim(),
+      email: String(raw.email || '').trim(),
+      cinNumber: String(raw.cinNumber || '').trim(),
+      cnopNumber: String(raw.cnopNumber || '').trim(),
+      pharmacyName: String(raw.pharmacyName || '').trim(),
+      authorizationReferenceNumber: String(raw.authorizationReferenceNumber || '').trim(),
+      addressLine: String(raw.addressLine || '').trim(),
+      city: String(raw.city || '').trim(),
+      governorate: String(raw.governorate || '').trim(),
+      latitude: Number(raw.latitude),
+      longitude: Number(raw.longitude),
+      openingHours: this.buildOpeningHours()
+    };
+
+    const phone = String(raw.phone || '').trim();
+    if (phone) {
+      payload.phone = phone;
+    }
+
     this.submitting = true;
 
     this.pharmacyService.submitMyPharmacyApplication(
@@ -173,6 +229,8 @@ export class PharmacyApplicationComponent implements OnInit {
       latitude: application.latitude ?? null,
       longitude: application.longitude ?? null
     });
+
+    this.applyOpeningHours(application.openingHours || '');
   }
 
   private prefillIdentityFromCurrentUser(): void {
@@ -201,5 +259,93 @@ export class PharmacyApplicationComponent implements OnInit {
     this.cinDocumentFile = null;
     this.cnoptProofDocumentFile = null;
     this.legalProofDocumentFile = null;
+  }
+
+  fileNameFor(type: 'cin' | 'cnopt' | 'legal'): string {
+    if (type === 'cin') {
+      return this.cinDocumentFile?.name || 'No file selected';
+    }
+    if (type === 'cnopt') {
+      return this.cnoptProofDocumentFile?.name || 'No file selected';
+    }
+    return this.legalProofDocumentFile?.name || 'No file selected';
+  }
+
+  hasStoredDocument(type: 'cin' | 'cnopt' | 'legal'): boolean {
+    if (type === 'cin') {
+      return !!this.application?.cinDocumentUploaded;
+    }
+    if (type === 'cnopt') {
+      return !!this.application?.cnoptProofUploaded;
+    }
+    return !!this.application?.legalDocumentUploaded;
+  }
+
+  hasNewDocument(type: 'cin' | 'cnopt' | 'legal'): boolean {
+    if (type === 'cin') {
+      return !!this.cinDocumentFile;
+    }
+    if (type === 'cnopt') {
+      return !!this.cnoptProofDocumentFile;
+    }
+    return !!this.legalProofDocumentFile;
+  }
+
+  private applyOpeningHours(openingHours: string): void {
+    const source = String(openingHours || '').trim();
+    if (!source) {
+      return;
+    }
+
+    const match = source.match(/^(.*?)(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
+    if (!match) {
+      return;
+    }
+
+    const openingFrom = this.normalizeTimeValue(match[2]);
+    const openingTo = this.normalizeTimeValue(match[3]);
+    if (!openingFrom || !openingTo) {
+      return;
+    }
+
+    this.openingHoursPrefix = match[1].trim();
+    this.applicationForm.patchValue({
+      openingFrom,
+      openingTo
+    });
+  }
+
+  private buildOpeningHours(): string {
+    const from = String(this.applicationForm.get('openingFrom')?.value || '').trim();
+    const to = String(this.applicationForm.get('openingTo')?.value || '').trim();
+    const existing = String(this.applicationForm.get('openingHours')?.value || '').trim();
+
+    if (from && to) {
+      const prefix = this.openingHoursPrefix ? `${this.openingHoursPrefix} ` : '';
+      return `${prefix}${from}-${to}`.trim();
+    }
+
+    return existing;
+  }
+
+  private hasPartialOpeningHours(): boolean {
+    const from = String(this.applicationForm.get('openingFrom')?.value || '').trim();
+    const to = String(this.applicationForm.get('openingTo')?.value || '').trim();
+    return (!!from && !to) || (!from && !!to);
+  }
+
+  private normalizeTimeValue(value: string): string {
+    const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) {
+      return '';
+    }
+
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return '';
+    }
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   }
 }

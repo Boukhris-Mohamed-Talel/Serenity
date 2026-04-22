@@ -151,16 +151,6 @@ export interface PrescriptionLineResponse {
 }
 
 export type StockState = 'IN_STOCK' | 'OUT_OF_STOCK';
-export type StockoutRisk = 'LOW' | 'MEDIUM' | 'HIGH';
-
-export interface ReorderSuggestion {
-  medicineName: string;
-  currentQty: number;
-  demand14: number;
-  suggestedReorderQty: number;
-  stockoutRisk: StockoutRisk;
-  generatedAt?: string;
-}
 
 export type PharmacyApplicationStatus = 'SUBMITTED' | 'REJECTED' | 'APPROVED';
 

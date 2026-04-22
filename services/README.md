@@ -12,7 +12,7 @@ Backend services. **One folder = one deployable service** (own process, port, co
 | **insurance-service** | `services/insurance-service/` | 8090 (default in gateway) | Insurance claims, reimbursements. |
 | **pharmacy-service** | `services/pharmacy-service/` | 8093 (per gateway) | Pharmacy products, prescriptions. |
 | **marketplace-service** | `services/marketplace-service/` | 8088 | Mental health products, checkout. |
-| **pharmacy-ml** | `services/pharmacy-ml/` | 8096 | Python FastAPI forecasting service (TSB) for AI reorder suggestions. |
+| **pharmacy-ml** | `services/pharmacy-ml/` | 8096 | Python FastAPI service for CNOPT document verification. |
 
 Other folders under `services/` (monitoring, doctors, microservices, etc.) are additional deployables—see each module’s `pom.xml` and `application.yml`.
 

@@ -387,12 +387,30 @@ class CnoptVerificationService:
             self._collect_ocr_lines(vars(node), lines)
 
     def _looks_like_old_ocr_line(self, value: Any) -> bool:
-        if not isinstance(value, (list, tuple)) or len(value) < 2:
+        # Old PaddleOCR line shape is exactly:
+        # [points, (text, score)] or [points, text]
+        # Avoid matching whole-page lists (list of many lines), which caused false parsing.
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
             return False
         points = value[0]
         if not self._looks_like_points(points):
             return False
-        return bool(self._extract_text_from_node(value[1]))
+        return self._looks_like_text_node(value[1])
+
+    @staticmethod
+    def _looks_like_text_node(value: Any) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, str):
+            return bool(value.strip())
+        if isinstance(value, (list, tuple)):
+            if not value:
+                return False
+            return isinstance(value[0], str) and bool(value[0].strip())
+        if isinstance(value, dict):
+            text = value.get("text")
+            return isinstance(text, str) and bool(text.strip())
+        return False
 
     @staticmethod
     def _looks_like_points(points: Any) -> bool:
@@ -691,13 +709,11 @@ class CnoptVerificationService:
         strict_missing = [entity for entity in STRICT_ENTITIES_FOR_ACCEPT if not presence.get(entity, False)]
         core_present_count = len(STRICT_ENTITIES_FOR_ACCEPT) - len(strict_missing)
 
-        wrong_type_trigger = (doc_pred_status == "wrong_type" and doc_conf >= 0.40) or (
-            "cnopt_strong_keywords_missing" in severe_flags
-            and (core_present_count <= 3 or doc_pred_status in {"wrong_type", "suspicious"})
-        ) or (
-            "cnopt_strong_keywords_missing" in severe_flags and "reg_number_missing" in flags
-        ) or (
-            "core_entities_sparse" in severe_flags and "reg_number_missing" in flags
+        # Be conservative with hard wrong-type rejections to avoid false negatives.
+        # OCR quality can vary; uncertain cases should go to manual review.
+        wrong_type_trigger = doc_pred_status == "wrong_type" and (
+            doc_conf >= 0.55
+            or ("cnopt_strong_keywords_missing" in severe_flags and core_present_count <= 2)
         )
 
         if wrong_type_trigger:

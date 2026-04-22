@@ -5,8 +5,6 @@ from typing import Optional
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel
-from forecast_pipeline import run_forecast_pipeline
 from cnopt_verification import CnoptVerificationService
 
 
@@ -14,10 +12,6 @@ app = FastAPI(title="Pharmacy ML Service", version="1.0.0")
 INTERNAL_API_KEY = os.getenv("PHARMACY_ML_INTERNAL_API_KEY", "serenity-internal-key-dev")
 LOGGER = logging.getLogger(__name__)
 CNOPT_VERIFIER = CnoptVerificationService()
-
-
-class ForecastRunRequest(BaseModel):
-    pharmacyId: Optional[int] = None
 
 
 def _ensure_internal_key(x_internal_key: Optional[str]) -> None:
@@ -34,17 +28,6 @@ def healthcheck() -> dict:
             "error": CNOPT_VERIFIER.last_error if not CNOPT_VERIFIER.available else None,
         },
     }
-
-
-@app.post("/internal/forecast/run")
-def run_forecast(
-    request: Optional[ForecastRunRequest] = None,
-    x_internal_key: Optional[str] = Header(default=None, alias="X-Internal-Key"),
-) -> dict:
-    _ensure_internal_key(x_internal_key)
-    pharmacy_id = request.pharmacyId if request is not None else None
-    result = run_forecast_pipeline(pharmacy_id)
-    return {"runAt": datetime.now().isoformat(), **result}
 
 
 @app.post("/internal/pharmacy-applications/verify-cnopt")

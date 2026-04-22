@@ -2,7 +2,6 @@ package com.example.pharmacy.service;
 
 import com.example.pharmacy.dto.StockItemCreateRequestDTO;
 import com.example.pharmacy.dto.StockItemResponseDTO;
-import com.example.pharmacy.dto.StockReorderSuggestionDTO;
 
 import java.util.List;
 
@@ -15,6 +14,4 @@ public interface StockService {
     StockItemResponseDTO restoreStockItem(Long stockItemId);
     void archiveStockItem(Long stockItemId);
     void deleteArchivedStockItem(Long stockItemId);
-    List<StockReorderSuggestionDTO> getMyReorderSuggestions(int limit);
-    void refreshMyReorderSuggestions();
 }

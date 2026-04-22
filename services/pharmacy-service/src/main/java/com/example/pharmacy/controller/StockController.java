@@ -3,7 +3,6 @@ package com.example.pharmacy.controller;
 import com.example.pharmacy.dto.StockItemCreateRequestDTO;
 import com.example.pharmacy.dto.StockItemRenameRequestDTO;
 import com.example.pharmacy.dto.StockItemResponseDTO;
-import com.example.pharmacy.dto.StockReorderSuggestionDTO;
 import com.example.pharmacy.dto.StockQuantityIncrementRequestDTO;
 import com.example.pharmacy.service.StockService;
 import jakarta.validation.Valid;
@@ -28,18 +27,6 @@ public class StockController {
         @RequestParam(defaultValue = "false") boolean includeArchived
     ) {
         return ResponseEntity.ok(stockService.listMyStock(query, includeArchived));
-    }
-
-    @GetMapping("/reorder-suggestions")
-    public List<StockReorderSuggestionDTO> listReorderSuggestions(
-        @RequestParam(defaultValue = "5") int limit
-    ) {
-        return stockService.getMyReorderSuggestions(limit);
-    }
-
-    @PostMapping("/reorder-suggestions/refresh")
-    public void refreshReorderSuggestions() {
-        stockService.refreshMyReorderSuggestions();
     }
 
     @PostMapping

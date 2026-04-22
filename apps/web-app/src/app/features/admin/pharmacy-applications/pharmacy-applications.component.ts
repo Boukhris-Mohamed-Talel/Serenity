@@ -23,11 +23,16 @@ export class PharmacyApplicationsComponent implements OnInit {
   loadingList = true;
   loadingDetails = false;
   actionLoading = false;
+  confirmDialogOpen = false;
+  confirmDialogDanger = false;
+  confirmDialogTitle = '';
+  confirmDialogMessage = '';
 
   listErrorMessage = '';
   detailsErrorMessage = '';
   successMessage = '';
   reviewComment = '';
+  private pendingAction: 'approve' | 'reject' | null = null;
 
   constructor(private readonly pharmacyService: PharmacyService) {}
 
@@ -88,7 +93,54 @@ export class PharmacyApplicationsComponent implements OnInit {
     if (!details || this.actionLoading) {
       return;
     }
-    if (!window.confirm(`Approve application #${details.id} for ${details.pharmacyName}?`)) {
+
+    const applicantName = `${details.firstName} ${details.lastName}`.trim();
+    this.pendingAction = 'approve';
+    this.confirmDialogDanger = false;
+    this.confirmDialogTitle = 'Approve Application';
+    this.confirmDialogMessage = `Approve ${details.pharmacyName} for ${applicantName}?`;
+    this.confirmDialogOpen = true;
+  }
+
+  rejectSelected(): void {
+    const details = this.selectedDetails;
+    if (!details || this.actionLoading) {
+      return;
+    }
+    const comment = this.reviewComment.trim();
+    if (!comment) {
+      this.detailsErrorMessage = 'Please provide a rejection comment.';
+      return;
+    }
+
+    const applicantName = `${details.firstName} ${details.lastName}`.trim();
+    this.pendingAction = 'reject';
+    this.confirmDialogDanger = true;
+    this.confirmDialogTitle = 'Reject Application';
+    this.confirmDialogMessage = `Reject ${details.pharmacyName} for ${applicantName}?`;
+    this.confirmDialogOpen = true;
+  }
+
+  cancelConfirmation(): void {
+    this.confirmDialogOpen = false;
+    this.pendingAction = null;
+  }
+
+  confirmAction(): void {
+    const action = this.pendingAction;
+    this.cancelConfirmation();
+    if (action === 'approve') {
+      this.performApprove();
+      return;
+    }
+    if (action === 'reject') {
+      this.performReject();
+    }
+  }
+
+  private performApprove(): void {
+    const details = this.selectedDetails;
+    if (!details || this.actionLoading) {
       return;
     }
 
@@ -110,7 +162,7 @@ export class PharmacyApplicationsComponent implements OnInit {
     });
   }
 
-  rejectSelected(): void {
+  private performReject(): void {
     const details = this.selectedDetails;
     if (!details || this.actionLoading) {
       return;
@@ -118,9 +170,6 @@ export class PharmacyApplicationsComponent implements OnInit {
     const comment = this.reviewComment.trim();
     if (!comment) {
       this.detailsErrorMessage = 'Please provide a rejection comment.';
-      return;
-    }
-    if (!window.confirm(`Reject application #${details.id}?`)) {
       return;
     }
 

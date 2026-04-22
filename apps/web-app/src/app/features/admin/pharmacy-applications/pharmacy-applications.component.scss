@@ -1,4 +1,15 @@
 .verification-page {
+  --bg: rgba(20, 25, 42, 0.64);
+  --border: rgba(133, 154, 204, 0.22);
+  --text-main: #e7eefc;
+  --text-soft: #a7b7dc;
+  --text-muted: #8f9fc8;
+  --card-hover: rgba(48, 63, 108, 0.56);
+  --accent: #51b8c4;
+  --accent-soft: rgba(81, 184, 196, 0.24);
+  --success: #90e3b0;
+  --warning: #f8d483;
+  --danger: #ff9a9a;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -6,11 +17,12 @@
 
 .page-header h1 {
   margin: 0 0 0.35rem;
+  color: var(--text-main);
 }
 
 .page-header p {
   margin: 0;
-  color: #4c6672;
+  color: var(--text-soft);
 }
 
 .filters {
@@ -20,18 +32,18 @@
 }
 
 .filter-btn {
-  border: 1px solid #bad8dd;
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0.4rem 0.9rem;
-  background: #fff;
-  color: #1f4756;
+  background: rgba(18, 24, 41, 0.8);
+  color: var(--text-soft);
   cursor: pointer;
 }
 
 .filter-btn.active {
-  background: #2f9ea0;
-  color: #fff;
-  border-color: #2f9ea0;
+  background: var(--accent-soft);
+  color: #dff8fb;
+  border-color: rgba(81, 184, 196, 0.65);
 }
 
 .grid {
@@ -40,11 +52,13 @@
   gap: 1rem;
 }
 
-.card {
-  background: #f8fbfc;
-  border: 1px solid #c7dde2;
+.verification-page .card {
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1rem;
+  color: var(--text-main);
+  box-shadow: 0 12px 28px -20px rgba(0, 0, 0, 0.7);
 }
 
 .list {
@@ -56,23 +70,30 @@
 }
 
 .list-item {
-  border: 1px solid #d3e4e8;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.75rem;
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
+  background: rgba(23, 30, 52, 0.88);
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.list-item:hover {
+  background: var(--card-hover);
+  border-color: rgba(122, 147, 206, 0.5);
 }
 
 .name {
   margin: 0 0 0.25rem;
   font-weight: 700;
-  color: #1d3f4c;
+  color: #f3f7ff;
 }
 
 .meta {
   margin: 0 0 0.2rem;
-  color: #4c6570;
+  color: var(--text-soft);
   font-size: 0.93rem;
 }
 
@@ -86,49 +107,57 @@
 }
 
 .status.submitted {
-  background: #fff3d6;
-  color: #7b5a00;
+  background: rgba(248, 212, 131, 0.2);
+  color: var(--warning);
 }
 
 .status.rejected {
-  background: #fde6e6;
-  color: #972222;
+  background: rgba(255, 154, 154, 0.2);
+  color: var(--danger);
 }
 
 .status.approved {
-  background: #e1f6ea;
-  color: #0c6c39;
+  background: rgba(144, 227, 176, 0.2);
+  color: var(--success);
 }
 
 .details-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
 }
 
 .details-grid h3,
-.documents h3 {
-  margin: 0 0 0.4rem;
+.documents h3,
+.ml-verdict h3 {
+  margin: 0 0 0.45rem;
+  color: #f2f6ff;
 }
 
-.details-grid p {
-  margin: 0 0 0.3rem;
-  color: #1e3f4d;
+.detail-line {
+  margin: 0 0 0.4rem;
+  color: var(--text-soft);
+  font-size: 0.93rem;
+}
+
+.detail-line span {
+  color: #d2ddf8;
+  font-weight: 700;
 }
 
 .documents {
-  margin-top: 0.8rem;
+  margin-top: 0.95rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .ml-verdict {
-  margin-top: 0.9rem;
-  padding: 0.8rem;
-  border: 1px solid #d3e4e8;
+  margin-top: 0.95rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(133, 154, 204, 0.28);
   border-radius: 12px;
-  background: #ffffff;
+  background: rgba(19, 26, 45, 0.95);
 }
 
 .ml-verdict-row {
@@ -148,23 +177,23 @@
 }
 
 .ml-decision-badge.accept {
-  background: #e1f6ea;
-  color: #0c6c39;
+  background: rgba(144, 227, 176, 0.2);
+  color: var(--success);
 }
 
 .ml-decision-badge.manual-review {
-  background: #fff3d6;
-  color: #7b5a00;
+  background: rgba(248, 212, 131, 0.2);
+  color: var(--warning);
 }
 
 .ml-decision-badge.reject {
-  background: #fde6e6;
-  color: #972222;
+  background: rgba(255, 154, 154, 0.2);
+  color: var(--danger);
 }
 
 .ml-decision-badge.unknown {
-  background: #eef4f6;
-  color: #365561;
+  background: rgba(148, 166, 209, 0.25);
+  color: #c6d4f2;
 }
 
 .ml-fraud-status,
@@ -172,7 +201,7 @@
 .ml-risk,
 .ml-checked-at {
   margin: 0;
-  color: #1e3f4d;
+  color: var(--text-soft);
   font-size: 0.92rem;
 }
 
@@ -192,10 +221,16 @@
 .actions textarea {
   width: 100%;
   min-height: 96px;
-  border: 1px solid #bad8dd;
+  border: 1px solid rgba(119, 140, 191, 0.48);
   border-radius: 10px;
-  padding: 0.55rem;
+  padding: 0.6rem;
   font: inherit;
+  color: var(--text-main);
+  background: rgba(14, 20, 36, 0.94);
+}
+
+.actions textarea::placeholder {
+  color: var(--text-muted);
 }
 
 .action-row {
@@ -204,23 +239,23 @@
 }
 
 .btn-danger {
-  background: #d95f5f;
-  color: #fff;
-  border: 1px solid #d95f5f;
+  background: rgba(255, 154, 154, 0.22);
+  color: #ffdede;
+  border: 1px solid rgba(255, 154, 154, 0.5);
 }
 
 .hint {
-  color: #597681;
+  color: var(--text-muted);
 }
 
 .error {
   margin: 0;
-  color: #b12626;
+  color: #ffb7b7;
 }
 
 .success {
   margin: 0;
-  color: #0f7a46;
+  color: #a6efbf;
 }
 
 @media (max-width: 1050px) {

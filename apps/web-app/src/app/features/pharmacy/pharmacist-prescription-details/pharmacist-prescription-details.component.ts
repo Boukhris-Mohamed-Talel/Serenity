@@ -16,9 +16,16 @@ import {
 })
 export class PharmacistPrescriptionDetailsComponent implements OnInit, OnDestroy {
   loading = true;
+  statusUpdating = false;
   errorMessage = '';
   successMessage = '';
   prescription: PrescriptionResponse | null = null;
+  showRejectPanel = false;
+  rejectReason = '';
+  confirmDialogOpen = false;
+  confirmDialogTitle = '';
+  confirmDialogMessage = '';
+  private pendingStatusUpdate: PrescriptionStatus | null = null;
   showInsuranceUploadPanel = false;
   selectedInsuranceUploadMode: 'mobile' | 'pc' | null = null;
   insuranceUploadFile: File | null = null;
@@ -71,38 +78,36 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit, OnDestroy
     if (!this.prescription) {
       return;
     }
-
-    const actionLabel = this.statusActionLabel(status);
-    if (!window.confirm(`Are you sure you want to ${actionLabel} this prescription?`)) {
+    if (this.statusUpdating) {
       return;
     }
 
-    let rejectionReason = '';
-    if (status === 'REJECTED') {
-      rejectionReason = prompt('Please provide rejection reason') || '';
-      if (!rejectionReason.trim()) {
-        this.errorMessage = 'Rejection reason is required.';
-        return;
-      }
-    }
-
-    const payload: PrescriptionStatusUpdateRequest = { status, rejectionReason };
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.pharmacyService.updatePrescriptionStatus(this.prescription.id, payload).subscribe({
-      next: (updated) => {
-        this.prescription = updated;
-        this.successMessage = `Prescription updated to ${updated.status}.`;
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to update prescription status';
-      }
-    });
+    if (status === 'REJECTED') {
+      this.showRejectPanel = true;
+      return;
+    }
+
+    this.showRejectPanel = false;
+    this.rejectReason = '';
+    this.pendingStatusUpdate = status;
+    this.confirmDialogTitle = 'Confirm Status Update';
+    this.confirmDialogMessage = `Mark this prescription as ${this.statusLabel(status)}?`;
+    this.confirmDialogOpen = true;
   }
 
   canProcess(status: PrescriptionStatus): boolean {
     return status === 'PENDING' || status === 'ACCEPTED';
+  }
+
+  statusClass(status: PrescriptionStatus): string {
+    return `status-pill status-pill-${status.toLowerCase()}`;
+  }
+
+  statusLabel(status: PrescriptionStatus): string {
+    return status.split('_').join(' ');
   }
 
   medicineLines(): PrescriptionLineResponse[] {
@@ -137,6 +142,34 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit, OnDestroy
 
   canShowInsuranceUpload(): boolean {
     return this.prescription?.status === 'READY_FOR_PICKUP';
+  }
+
+  cancelRejectPanel(): void {
+    this.showRejectPanel = false;
+    this.rejectReason = '';
+  }
+
+  confirmReject(): void {
+    const reason = this.rejectReason.trim();
+    if (!reason) {
+      this.errorMessage = 'Rejection reason is required.';
+      return;
+    }
+    this.performStatusUpdate('REJECTED', reason);
+  }
+
+  cancelStatusConfirmation(): void {
+    this.confirmDialogOpen = false;
+    this.pendingStatusUpdate = null;
+  }
+
+  confirmStatusUpdate(): void {
+    const status = this.pendingStatusUpdate;
+    this.cancelStatusConfirmation();
+    if (!status) {
+      return;
+    }
+    this.performStatusUpdate(status);
   }
 
   openInsuranceUploadPanel(): void {
@@ -275,21 +308,29 @@ export class PharmacistPrescriptionDetailsComponent implements OnInit, OnDestroy
     return (value ?? '').trim().toLowerCase();
   }
 
-  private statusActionLabel(status: PrescriptionStatus): string {
-    switch (status) {
-      case 'ACCEPTED':
-        return 'accept';
-      case 'REJECTED':
-        return 'reject';
-      case 'READY_FOR_PICKUP':
-        return 'mark as ready for pickup';
-      case 'COLLECTED':
-        return 'mark as collected';
-      case 'EXPIRED':
-        return 'mark as expired';
-      default:
-        return `set to ${status.toLowerCase().replace(/_/g, ' ')}`;
+  private performStatusUpdate(status: PrescriptionStatus, rejectionReason = ''): void {
+    if (!this.prescription) {
+      return;
     }
+
+    const payload: PrescriptionStatusUpdateRequest = { status, rejectionReason };
+    this.statusUpdating = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.pharmacyService.updatePrescriptionStatus(this.prescription.id, payload).subscribe({
+      next: (updated) => {
+        this.prescription = updated;
+        this.statusUpdating = false;
+        this.showRejectPanel = false;
+        this.rejectReason = '';
+        this.successMessage = `Prescription updated to ${this.statusLabel(updated.status)}.`;
+      },
+      error: (err) => {
+        this.statusUpdating = false;
+        this.errorMessage = err.error?.message || 'Failed to update prescription status';
+      }
+    });
   }
 
   private startMobileUploadWatch(): void {

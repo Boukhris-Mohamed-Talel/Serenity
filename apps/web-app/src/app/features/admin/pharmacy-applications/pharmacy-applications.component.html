@@ -1,7 +1,7 @@
 <div class="verification-page">
   <header class="page-header">
     <h1>Pharmacy Verification Queue</h1>
-    <p>Review pharmacist applications and decide whether to approve or reject.</p>
+    <p>Review pharmacist applications with clear document and fraud insights before approval.</p>
   </header>
 
   <div class="filters">
@@ -27,7 +27,7 @@
         <article class="list-item" *ngFor="let item of applications; trackBy: trackByApplicationId">
           <div>
             <p class="name">{{ item.applicantName }}</p>
-            <p class="meta">{{ item.pharmacyName }} - {{ item.city }}, {{ item.governorate }}</p>
+            <p class="meta">{{ item.pharmacyName }} &middot; {{ item.city }}, {{ item.governorate }}</p>
             <p class="meta">Submitted: {{ item.submittedAt | date: 'medium' }}</p>
             <span class="status" [class]="'status ' + item.status.toLowerCase()">{{ item.status }}</span>
           </div>
@@ -47,19 +47,19 @@
         <div class="details-grid">
           <div>
             <h3>Applicant</h3>
-            <p>{{ details.firstName }} {{ details.lastName }}</p>
-            <p>{{ details.email }}</p>
-            <p>CIN: {{ details.cinNumber }}</p>
-            <p>CNOP/CNOPT: {{ details.cnopNumber }}</p>
+            <p class="detail-line"><span>Name:</span> {{ details.firstName }} {{ details.lastName }}</p>
+            <p class="detail-line"><span>Email:</span> {{ details.email }}</p>
+            <p class="detail-line"><span>CIN:</span> {{ details.cinNumber }}</p>
+            <p class="detail-line"><span>CNOP/CNOPT:</span> {{ details.cnopNumber }}</p>
           </div>
           <div>
             <h3>Pharmacy</h3>
-            <p>{{ details.pharmacyName }}</p>
-            <p>Authorization Ref: {{ details.authorizationReferenceNumber }}</p>
-            <p>{{ details.addressLine }}</p>
-            <p>{{ details.city }}, {{ details.governorate }}</p>
-            <p *ngIf="details.phone">Phone: {{ details.phone }}</p>
-            <p *ngIf="details.openingHours">Hours: {{ details.openingHours }}</p>
+            <p class="detail-line"><span>Name:</span> {{ details.pharmacyName }}</p>
+            <p class="detail-line"><span>Authorization Ref:</span> {{ details.authorizationReferenceNumber }}</p>
+            <p class="detail-line"><span>Address:</span> {{ details.addressLine }}</p>
+            <p class="detail-line"><span>City/Governorate:</span> {{ details.city }}, {{ details.governorate }}</p>
+            <p class="detail-line" *ngIf="details.phone"><span>Phone:</span> {{ details.phone }}</p>
+            <p class="detail-line" *ngIf="details.openingHours"><span>Hours:</span> {{ details.openingHours }}</p>
           </div>
         </div>
 
@@ -99,4 +99,15 @@
       </ng-container>
     </section>
   </div>
+
+  <app-confirm-dialog
+    [open]="confirmDialogOpen"
+    [title]="confirmDialogTitle"
+    [message]="confirmDialogMessage"
+    [danger]="confirmDialogDanger"
+    [confirmLabel]="confirmDialogDanger ? 'Reject Application' : 'Approve Application'"
+    cancelLabel="Cancel"
+    (confirm)="confirmAction()"
+    (cancel)="cancelConfirmation()">
+  </app-confirm-dialog>
 </div>

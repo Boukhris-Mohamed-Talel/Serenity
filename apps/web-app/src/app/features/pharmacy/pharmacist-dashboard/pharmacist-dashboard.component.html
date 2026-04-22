@@ -131,43 +131,6 @@
 
         <div class="sub-section">
           <div class="panel-head compact">
-            <h2>AI Reorder Suggestions</h2>
-            <button
-              type="button"
-              class="btn btn-ghost btn-compact"
-              (click)="refreshReorderSuggestions()"
-              [disabled]="refreshingReorderSuggestions">
-              {{ refreshingReorderSuggestions ? 'Refreshing...' : 'Refresh' }}
-            </button>
-          </div>
-
-          <div class="ai-list" *ngIf="reorderSuggestions.length > 0; else emptyReorderSuggestions">
-            <button
-              type="button"
-              class="ai-row"
-              *ngFor="let suggestion of reorderSuggestions"
-              (click)="openStockManagement()">
-              <div class="ai-main">
-                <p class="name">{{ suggestion.medicineName }}</p>
-                <p class="meta">
-                  Current: {{ suggestion.currentQty }} · Demand 14d: {{ suggestion.demand14 | number:'1.0-1' }} ·
-                  Reorder: {{ suggestion.suggestedReorderQty }}
-                </p>
-              </div>
-              <span [class]="riskClass(suggestion.stockoutRisk)">{{ suggestion.stockoutRisk }}</span>
-            </button>
-            <p class="hint" *ngIf="reorderSuggestions[0]?.generatedAt">
-              Generated at {{ reorderSuggestions[0].generatedAt | date:'short' }}
-            </p>
-          </div>
-
-          <ng-template #emptyReorderSuggestions>
-            <p class="empty">No AI reorder suggestions available yet.</p>
-          </ng-template>
-        </div>
-
-        <div class="sub-section">
-          <div class="panel-head compact">
             <h2>Needs Insurance Upload</h2>
             <span class="count-pill">{{ insuranceMissingItems.length }}</span>
           </div>
@@ -191,3 +154,4 @@
     </section>
   </section>
 </div>
+
