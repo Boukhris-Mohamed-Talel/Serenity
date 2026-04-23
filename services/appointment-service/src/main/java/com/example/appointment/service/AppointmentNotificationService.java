@@ -8,6 +8,9 @@ import java.util.List;
 
 public interface AppointmentNotificationService {
 
+    /** In-app + email to doctor when a patient requests a new appointment. */
+    void notifyPatientRequested(Appointment appt);
+
     void notifyScheduledByDoctor(Appointment appt);
 
     void notifyConfirmed(Appointment appt);

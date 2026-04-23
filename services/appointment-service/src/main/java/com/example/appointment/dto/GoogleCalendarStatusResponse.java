@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoogleCalendarStatusResponse {
+    /** False when server has no OAuth client configured. */
+    private boolean configured;
     private boolean connected;
     private String googleEmail;
 }

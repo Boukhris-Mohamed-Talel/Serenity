@@ -47,4 +47,14 @@ layoutlmv3_cnopt_v4_doc_status_output/
 layoutlmv3_cnopt_v4_ner_output/
 services/Doctors_service/src/main/resources/application-secrets.properties
 
+# Google OAuth client downloads (never commit)
+client_secret*.json
+**/google-calendar-credentials.json
+services/appointment-service/src/main/resources/application-google-local.yml
+services/appointment-service/src/main/resources/application-mail-local.yml
+
 .venv/
+
+# Whisper AI — downloaded weights / generated sample data (keep out of git)
+services/whisper-ai-service/models/
+services/whisper-ai-service/data/

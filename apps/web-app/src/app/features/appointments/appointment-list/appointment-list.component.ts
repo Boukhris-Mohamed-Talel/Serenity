@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { AppointmentService } from '../../../core/services/appointment.service';
+import { AppointmentService, GoogleCalendarStatusDto } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { formatUserLookupName, UserLookup } from '../../../shared/models/user.model';
@@ -28,9 +28,24 @@ export class AppointmentListComponent implements OnInit, OnDestroy {
   displayedAppointments: AppointmentResponse[] = [];
   loading = true;
   errorMessage = '';
+  infoMessage = '';
   isAdmin = false;
+  googleCalendarStatus: GoogleCalendarStatusDto | null = null;
+  googleCalendarSyncing = false;
   /** When true, admin sees every appointment (query ?scope=all). */
   scopeAll = false;
+  /** Admin module route: show only the full table + stats (no calendar / hub). */
+  adminAppointmentsShell = false;
+  /** Summary counts for admin dashboard (all appointments). */
+  adminStats: {
+    total: number;
+    pending: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
+    tele: number;
+    inPerson: number;
+  } | null = null;
   private readonly lookupById = new Map<number, UserLookup>();
 
   nextAppointment: AppointmentResponse | null = null;
@@ -65,10 +80,106 @@ export class AppointmentListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
     this.querySub = this.route.queryParamMap.subscribe((qm) => {
-      const scope = qm.get('scope');
-      this.scopeAll = this.isAdmin && scope === 'all';
-      this.load();
+      const urlPath = this.router.url.split('?')[0].replace(/\/$/, '') || '/';
+      this.adminAppointmentsShell =
+        this.isAdmin && (urlPath === '/admin/appointments' || urlPath === '/admin/appointments/list');
+      if (this.adminAppointmentsShell) {
+        this.scopeAll = true;
+        this.selectedFilterDate = null;
+      } else {
+        const scope = qm.get('scope');
+        this.scopeAll = this.isAdmin && scope === 'all';
+      }
+      const calendarLinked = qm.get('calendarLinked');
+      const calendarError = qm.get('calendarError');
+      this.load(calendarLinked, calendarError);
     });
+  }
+
+  /** First connection or first successful sync in this browser (per user). */
+  get showGcalMainButton(): boolean {
+    return (
+      (this.authService.hasRole('PATIENT') || this.authService.hasRole('DOCTOR')) &&
+      !this.scopeAll &&
+      (!this.googleCalendarStatus?.connected || !this.isGcalInitialSyncComplete())
+    );
+  }
+
+  /** After at least one successful sync, show a small “update” action instead of the main CTA. */
+  get showGcalResyncLink(): boolean {
+    return (
+      (this.authService.hasRole('PATIENT') || this.authService.hasRole('DOCTOR')) &&
+      !this.scopeAll &&
+      !!this.googleCalendarStatus?.connected &&
+      this.isGcalInitialSyncComplete()
+    );
+  }
+
+  onGoogleCalendarSync(): void {
+    this.infoMessage = '';
+    this.errorMessage = '';
+    if (!this.googleCalendarStatus?.connected) {
+      this.googleCalendarSyncing = true;
+      const returnTo = this.router.url.split('?')[0].startsWith('/admin/')
+        ? '/admin/appointments/list'
+        : '/appointments/list';
+      this.appointmentService.getGoogleCalendarAuthorizeUrl(returnTo).subscribe({
+        next: (r) => {
+          window.location.href = r.authorizeUrl;
+        },
+        error: (err) => {
+          this.googleCalendarSyncing = false;
+          this.errorMessage =
+            err.error?.message || err.error?.error || err.message || 'Could not start Google authorization';
+        }
+      });
+      return;
+    }
+    this.googleCalendarSyncing = true;
+    this.appointmentService.syncGoogleCalendar().subscribe({
+      next: (r) => {
+        this.googleCalendarSyncing = false;
+        this.markGcalInitialSyncComplete();
+        this.infoMessage = this.gcalSyncResultMessage(r.eventsUpserted, r.totalCandidates);
+      },
+      error: (err) => {
+        this.googleCalendarSyncing = false;
+        if (err.status === 412) {
+          this.googleCalendarStatus = { configured: true, connected: false };
+          this.errorMessage = 'Connect Google Calendar first, then try again.';
+          return;
+        }
+        this.errorMessage =
+          err.error?.message || err.error?.error || err.message || 'Google Calendar sync failed';
+      }
+    });
+  }
+
+  private gcalSyncStorageKey(): string | null {
+    const id = this.authService.getUserId();
+    return id != null ? `serenity_gcal_sync_v1_u${id}` : null;
+  }
+
+  private isGcalInitialSyncComplete(): boolean {
+    const k = this.gcalSyncStorageKey();
+    return k != null && localStorage.getItem(k) === '1';
+  }
+
+  private markGcalInitialSyncComplete(): void {
+    const k = this.gcalSyncStorageKey();
+    if (k) {
+      localStorage.setItem(k, '1');
+    }
+  }
+
+  private gcalSyncResultMessage(upserted: number, total: number | undefined): string {
+    if (upserted > 0) {
+      return `Updated Google Calendar: ${upserted} event(s).`;
+    }
+    if ((total ?? 0) === 0) {
+      return 'No visits to add right now. Only pending or confirmed visits (from yesterday onward) are included.';
+    }
+    return 'Google Calendar did not change. If you expected new events, try again in a few seconds.';
   }
 
   ngOnDestroy(): void {
@@ -91,9 +202,10 @@ export class AppointmentListComponent implements OnInit, OnDestroy {
     });
   }
 
-  load(): void {
+  load(calendarLinked: string | null = null, calendarError: string | null = null): void {
     this.loading = true;
     this.errorMessage = '';
+    this.refreshGoogleCalendarStatus();
     const req$ = this.scopeAll ? this.appointmentService.getAll() : this.appointmentService.getMine();
     req$.subscribe({
       next: (rows) => {
@@ -101,9 +213,34 @@ export class AppointmentListComponent implements OnInit, OnDestroy {
         this.applyCalendarAndNext();
         this.applyTableFilter();
         const ids = [...new Set(rows.flatMap((a) => [a.patientUserId, a.doctorUserId]))];
-        if (ids.length === 0) {
+        const finish = (): void => {
           this.loading = false;
-          this.startCountdownTicker();
+          this.recomputeAdminStats();
+          if (!this.adminAppointmentsShell) {
+            this.startCountdownTicker();
+          }
+          if (calendarLinked) {
+            this.infoMessage =
+              'Google Calendar is connected. Use "Synchronize with Google Calendar" above to add your visits to the calendar.';
+            void this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { calendarLinked: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          }
+          if (calendarError) {
+            this.errorMessage = 'Google Calendar: ' + calendarError;
+            void this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { calendarError: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          }
+        };
+        if (ids.length === 0) {
+          finish();
           return;
         }
         this.userService.lookupNamesByIds(ids).subscribe({
@@ -112,23 +249,55 @@ export class AppointmentListComponent implements OnInit, OnDestroy {
             for (const u of list) {
               this.lookupById.set(u.id, u);
             }
-            this.loading = false;
-            this.startCountdownTicker();
+            finish();
           },
           error: () => {
-            this.loading = false;
-            this.startCountdownTicker();
+            finish();
           }
         });
       },
       error: (err) => {
         this.errorMessage = err.error?.message || err.error?.error || err.message || 'Failed to load appointments';
         this.loading = false;
+        this.adminStats = null;
       }
     });
   }
 
+  private refreshGoogleCalendarStatus(): void {
+    this.appointmentService.getGoogleCalendarStatus().subscribe({
+      next: (s) => {
+        this.googleCalendarStatus = s;
+      },
+      error: () => {
+        this.googleCalendarStatus = { configured: false, connected: false };
+      }
+    });
+  }
+
+  private recomputeAdminStats(): void {
+    if (!this.adminAppointmentsShell) {
+      this.adminStats = null;
+      return;
+    }
+    const r = this.appointments;
+    this.adminStats = {
+      total: r.length,
+      pending: r.filter((a) => a.status === 'PENDING').length,
+      confirmed: r.filter((a) => a.status === 'CONFIRMED').length,
+      completed: r.filter((a) => a.status === 'COMPLETED').length,
+      cancelled: r.filter((a) => a.status === 'CANCELLED').length,
+      tele: r.filter((a) => a.type === 'TELECONSULTATION').length,
+      inPerson: r.filter((a) => a.type !== 'TELECONSULTATION').length
+    };
+  }
+
   private applyCalendarAndNext(): void {
+    if (this.adminAppointmentsShell) {
+      this.calendarBusySlots = [];
+      this.nextAppointment = null;
+      return;
+    }
     this.calendarBusySlots = this.appointments
       .filter((a) => a.status !== 'CANCELLED')
       .map((a) => ({

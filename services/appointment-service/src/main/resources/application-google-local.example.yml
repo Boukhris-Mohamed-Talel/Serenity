@@ -1,0 +1,10 @@
+# Copy to application-google-local.yml and fill in your Web client id/secret from Google Cloud Console.
+# Required redirect URI in Console: http://localhost:4200/appointments/oauth/calendar
+# Alternative (no file): set env APP_GOOGLE_CALENDAR_CLIENT_ID and APP_GOOGLE_CALENDAR_CLIENT_SECRET before mvn spring-boot:run.
+app:
+  google:
+    calendar:
+      enabled: true
+      client-id: YOUR_CLIENT_ID.apps.googleusercontent.com
+      client-secret: YOUR_CLIENT_SECRET
+      redirect-uri: http://localhost:4200/appointments/oauth/calendar

@@ -15,6 +15,12 @@ import {
   TeleconsultationResponse
 } from '../../shared/models/appointment.model';
 
+export interface GoogleCalendarStatusDto {
+  configured: boolean;
+  connected: boolean;
+  googleEmail?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -23,6 +29,32 @@ export class AppointmentService {
   private readonly API_URL = `${environment.apiUrl}/appointments`;
 
   constructor(private readonly http: HttpClient) {}
+
+  getGoogleCalendarStatus(): Observable<GoogleCalendarStatusDto> {
+    return this.http.get<GoogleCalendarStatusDto>(`${this.API_URL}/google-calendar/status`);
+  }
+
+  getGoogleCalendarAuthorizeUrl(returnTo?: string): Observable<{ authorizeUrl: string; returnTo?: string }> {
+    let params = new HttpParams();
+    if (returnTo) {
+      params = params.set('returnTo', returnTo);
+    }
+    return this.http.get<{ authorizeUrl: string; returnTo?: string }>(
+      `${this.API_URL}/google-calendar/oauth2/authorize-url`,
+      { params }
+    );
+  }
+
+  completeGoogleCalendarOAuth(code: string): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/google-calendar/oauth2/complete`, { code });
+  }
+
+  syncGoogleCalendar(): Observable<{ eventsUpserted: number; totalCandidates: number }> {
+    return this.http.post<{ eventsUpserted: number; totalCandidates: number }>(
+      `${this.API_URL}/google-calendar/sync`,
+      {}
+    );
+  }
 
   patientRequest(body: CreateAppointmentPatientRequest): Observable<AppointmentResponse> {
     return this.http.post<AppointmentResponse>(`${this.API_URL}/patient-request`, body);

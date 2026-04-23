@@ -25,7 +25,8 @@ public class AppointmentUserNotification {
     private Long appointmentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    /** Longest value: PATIENT_REQUESTED (17). Use 64 so MySQL is never truncated vs legacy short ENUM/VARCHAR. */
+    @Column(nullable = false, length = 64)
     private AppointmentNotificationType type;
 
     @Column(nullable = false, length = 160)

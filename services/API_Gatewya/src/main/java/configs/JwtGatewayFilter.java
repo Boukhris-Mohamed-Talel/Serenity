@@ -110,8 +110,11 @@ public class JwtGatewayFilter implements WebFilter {
         if (preflight) {
             exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
                     StringUtils.hasText(reqMethod) ? reqMethod : "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-            exchange.getResponse().getHeaders().set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
-                    StringUtils.hasText(reqHeaders) ? reqHeaders : "Authorization,Content-Type,Accept");
+            exchange.getResponse().getHeaders().set(
+                    HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                    StringUtils.hasText(reqHeaders)
+                            ? reqHeaders
+                            : "Authorization,Content-Type,Accept,Origin,X-Requested-With");
         }
     }
 

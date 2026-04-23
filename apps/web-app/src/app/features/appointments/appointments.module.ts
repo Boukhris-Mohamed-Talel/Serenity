@@ -9,6 +9,7 @@ import { AppointmentScheduleComponent } from './appointment-schedule/appointment
 import { AppointmentDetailComponent } from './appointment-detail/appointment-detail.component';
 import { AppointmentCalendarComponent } from './appointment-calendar/appointment-calendar.component';
 import { AppointmentBusyTimesPanelComponent } from './appointment-busy-times-panel/appointment-busy-times-panel.component';
+import { GoogleCalendarOAuthCallbackComponent } from './google-calendar-oauth-callback/google-calendar-oauth-callback.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { AppointmentBusyTimesPanelComponent } from './appointment-busy-times-pan
     AppointmentScheduleComponent,
     AppointmentDetailComponent,
     AppointmentCalendarComponent,
-    AppointmentBusyTimesPanelComponent
+    AppointmentBusyTimesPanelComponent,
+    GoogleCalendarOAuthCallbackComponent
   ],
   imports: [
     SharedModule,

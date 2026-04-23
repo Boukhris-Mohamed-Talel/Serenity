@@ -32,6 +32,45 @@
   align-items: center;
 }
 
+.btn-calendar-sync {
+  font-weight: 600;
+  border: 2px solid var(--primary, #0d9488);
+  color: var(--primary, #0d9488);
+  background: #f0fdfa;
+  padding: 0.5rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-calendar-sync:hover:not(:disabled) {
+  background: #ccfbf1;
+}
+
+.btn-calendar-sync:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.gcal-resync {
+  font-weight: 500;
+  font-size: 0.88rem;
+  border: 1px solid rgba(13, 148, 136, 0.45);
+  color: #0f766e;
+  background: transparent;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.gcal-resync:hover:not(:disabled) {
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.gcal-resync:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .scope-toggle {
   display: inline-flex;
   border-radius: 10px;
@@ -425,4 +464,36 @@ line.clock-hand-minute {
   to {
     transform: rotate(360deg);
   }
+}
+
+.admin-appt-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-appt-stats .stat-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.admin-appt-stats .stat-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-appt-stats .stat-value {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
 }

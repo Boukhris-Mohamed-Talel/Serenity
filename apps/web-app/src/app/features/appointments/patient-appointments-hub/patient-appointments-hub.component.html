@@ -9,6 +9,22 @@
       <div class="hero-actions">
         <button type="button" class="hub-btn hub-btn--primary btn-hero" (click)="goBook()">Book a visit</button>
         <button type="button" class="hub-btn hub-btn--outline btn-hero" (click)="goList()">View all appointments</button>
+        <button
+          *ngIf="showGcalMainButton"
+          type="button"
+          class="hub-btn hub-btn--outline btn-hero"
+          (click)="onGoogleCalendarSync()"
+          [disabled]="googleCalendarSyncing">
+          {{ googleCalendarSyncing ? 'Please wait…' : 'Synchronize with Google Calendar' }}
+        </button>
+        <button
+          *ngIf="showGcalResyncLink"
+          type="button"
+          class="hub-btn hub-btn--ghost btn-hero gcal-resync"
+          (click)="onGoogleCalendarSync()"
+          [disabled]="googleCalendarSyncing">
+          {{ googleCalendarSyncing ? 'Please wait…' : 'Update Google Calendar' }}
+        </button>
       </div>
     </div>
     <div class="hero-stats" *ngIf="!loading" role="region" aria-label="Visit summary">
@@ -27,6 +43,7 @@
     </div>
   </header>
 
+  <div *ngIf="infoMessage" class="hub-alert hub-alert--success" role="status">{{ infoMessage }}</div>
   <div *ngIf="errorMessage" class="hub-alert hub-alert--error" role="alert">{{ errorMessage }}</div>
 
   <div *ngIf="loading" class="hub-loading">

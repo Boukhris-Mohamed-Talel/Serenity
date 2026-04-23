@@ -76,7 +76,10 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .notes(trimToNull(request.getNotes()))
                 .build();
         appt = appointmentRepository.save(appt);
-        return toResponse(appt);
+        Appointment reloaded = appointmentRepository.findById(appt.getId()).orElse(appt);
+        AppointmentResponse response = toResponse(reloaded);
+        appointmentNotificationService.notifyPatientRequested(reloaded);
+        return response;
     }
 
     @Override
@@ -179,33 +182,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional(readOnly = true)
     public List<AppointmentResponse> listMine(Long userId) {
-        List<Appointment> asPatient = appointmentRepository
-                .findByPatientUserIdOrderByAppointmentDateDescTimeSlotDesc(userId);
-        List<Appointment> asDoctor = appointmentRepository
-                .findByDoctorUserIdOrderByAppointmentDateDescTimeSlotDesc(userId);
-        Map<Long, Appointment> merged = new LinkedHashMap<>();
-        for (Appointment a : asPatient) {
-            merged.putIfAbsent(a.getId(), a);
-        }
-        for (Appointment a : asDoctor) {
-            merged.putIfAbsent(a.getId(), a);
-        }
-        List<Appointment> sorted = merged.values().stream()
-                .sorted((a, b) -> {
-                    int d = b.getAppointmentDate().compareTo(a.getAppointmentDate());
-                    if (d != 0) {
-                        return d;
-                    }
-                    return b.getTimeSlot().compareTo(a.getTimeSlot());
-                })
-                .toList();
-        return toResponses(sorted);
+        return toResponses(appointmentRepository.findMineSorted(userId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AppointmentResponse> listAll() {
-        return toResponses(appointmentRepository.findAllByOrderByAppointmentDateDescTimeSlotDesc());
+        return toResponses(appointmentRepository.findAllSorted());
     }
 
     @Override
@@ -289,7 +272,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         int newStart = slotToMinutes(timeSlotNormalized);
         int newEnd = newStart + SLOT_DURATION_MINUTES;
 
-        for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
+        for (Appointment a : appointmentRepository.findDoctorCalendarRange(
                 doctorUserId, date, date, BLOCKING_STATUSES)) {
             if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
@@ -302,7 +285,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         "That time overlaps another appointment for this doctor.");
             }
         }
-        for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
+        for (Appointment a : appointmentRepository.findPatientCalendarRange(
                 patientUserId, date, date, BLOCKING_STATUSES)) {
             if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
@@ -356,7 +339,8 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private void createTeleconsultationForAppointment(Appointment appt) {
-        String room = jitsiRoomPrefix + "-" + appt.getId() + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+        // One stable room per appointment so doctor and patient always join the same Jitsi URL.
+        String room = jitsiRoomPrefix + "-" + appt.getId();
         String url = "https://meet.jit.si/" + room;
         Teleconsultation tele = Teleconsultation.builder()
                 .appointment(appt)
@@ -486,7 +470,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             Long patientUserId, Long doctorUserId, LocalDate from, LocalDate to, Long excludeAppointmentId) {
         validateCalendarRange(from, to);
         List<CalendarBusySlotResponse> out = new ArrayList<>();
-        for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
+        for (Appointment a : appointmentRepository.findDoctorCalendarRange(
                 doctorUserId, from, to, CALENDAR_BLOCKING)) {
             if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
@@ -497,7 +481,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .source("DOCTOR")
                     .build());
         }
-        for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
+        for (Appointment a : appointmentRepository.findPatientCalendarRange(
                 patientUserId, from, to, CALENDAR_BLOCKING)) {
             if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
@@ -517,7 +501,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             Long doctorUserId, Long patientUserIdOrNull, LocalDate from, LocalDate to, Long excludeAppointmentId) {
         validateCalendarRange(from, to);
         List<CalendarBusySlotResponse> out = new ArrayList<>();
-        for (Appointment a : appointmentRepository.findByDoctorUserIdAndAppointmentDateBetweenAndStatusIn(
+        for (Appointment a : appointmentRepository.findDoctorCalendarRange(
                 doctorUserId, from, to, CALENDAR_BLOCKING)) {
             if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                 continue;
@@ -529,7 +513,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .build());
         }
         if (patientUserIdOrNull != null) {
-            for (Appointment a : appointmentRepository.findByPatientUserIdAndAppointmentDateBetweenAndStatusIn(
+            for (Appointment a : appointmentRepository.findPatientCalendarRange(
                     patientUserIdOrNull, from, to, CALENDAR_BLOCKING)) {
                 if (excludeAppointmentId != null && excludeAppointmentId.equals(a.getId())) {
                     continue;

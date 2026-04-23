@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { AppointmentService } from '../../../core/services/appointment.service';
+import { AppointmentService, GoogleCalendarStatusDto } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { formatUserLookupName, UserLookup } from '../../../shared/models/user.model';
@@ -28,6 +28,9 @@ export class PatientAppointmentsHubComponent implements OnInit, OnDestroy {
   appointments: AppointmentResponse[] = [];
   loading = true;
   errorMessage = '';
+  infoMessage = '';
+  googleCalendarStatus: GoogleCalendarStatusDto | null = null;
+  googleCalendarSyncing = false;
   private readonly lookupById = new Map<number, UserLookup>();
 
   /** Calendar: all visits (any status) so the month reflects history + future. */
@@ -40,13 +43,15 @@ export class PatientAppointmentsHubComponent implements OnInit, OnDestroy {
   userFirstName = '';
 
   private userSub?: Subscription;
+  private querySub?: Subscription;
   private tickId: ReturnType<typeof setInterval> | undefined;
 
   constructor(
     private readonly appointmentService: AppointmentService,
     private readonly userService: UserService,
     readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -62,28 +67,126 @@ export class PatientAppointmentsHubComponent implements OnInit, OnDestroy {
         /* keep greeting generic */
       }
     });
-    this.load();
+    this.querySub = this.route.queryParamMap.subscribe((qm) => {
+      this.load(qm.get('calendarLinked'), qm.get('calendarError'));
+    });
     this.tickId = setInterval(() => this.refreshCountdown(), 1000);
+  }
+
+  get showGcalMainButton(): boolean {
+    return !this.googleCalendarStatus?.connected || !this.isGcalInitialSyncComplete();
+  }
+
+  get showGcalResyncLink(): boolean {
+    return !!this.googleCalendarStatus?.connected && this.isGcalInitialSyncComplete();
+  }
+
+  onGoogleCalendarSync(): void {
+    this.infoMessage = '';
+    this.errorMessage = '';
+    if (!this.googleCalendarStatus?.connected) {
+      this.googleCalendarSyncing = true;
+      this.appointmentService.getGoogleCalendarAuthorizeUrl('/appointments').subscribe({
+        next: (r) => {
+          window.location.href = r.authorizeUrl;
+        },
+        error: (err) => {
+          this.googleCalendarSyncing = false;
+          this.errorMessage =
+            err.error?.message || err.error?.error || err.message || 'Could not start Google authorization';
+        }
+      });
+      return;
+    }
+    this.googleCalendarSyncing = true;
+    this.appointmentService.syncGoogleCalendar().subscribe({
+      next: (r) => {
+        this.googleCalendarSyncing = false;
+        this.markGcalInitialSyncComplete();
+        this.infoMessage = this.gcalSyncResultMessage(r.eventsUpserted, r.totalCandidates);
+      },
+      error: (err) => {
+        this.googleCalendarSyncing = false;
+        if (err.status === 412) {
+          this.googleCalendarStatus = { configured: true, connected: false };
+          this.errorMessage = 'Connect Google Calendar first, then try again.';
+          return;
+        }
+        this.errorMessage =
+          err.error?.message || err.error?.error || err.message || 'Google Calendar sync failed';
+      }
+    });
+  }
+
+  private gcalSyncStorageKey(): string | null {
+    const id = this.authService.getUserId();
+    return id != null ? `serenity_gcal_sync_v1_u${id}` : null;
+  }
+
+  private isGcalInitialSyncComplete(): boolean {
+    const k = this.gcalSyncStorageKey();
+    return k != null && localStorage.getItem(k) === '1';
+  }
+
+  private markGcalInitialSyncComplete(): void {
+    const k = this.gcalSyncStorageKey();
+    if (k) {
+      localStorage.setItem(k, '1');
+    }
+  }
+
+  private gcalSyncResultMessage(upserted: number, total: number | undefined): string {
+    if (upserted > 0) {
+      return `Updated Google Calendar: ${upserted} event(s).`;
+    }
+    if ((total ?? 0) === 0) {
+      return 'No visits to add right now. Only pending or confirmed visits (from yesterday onward) are included.';
+    }
+    return 'Google Calendar did not change. If you expected new events, try again in a few seconds.';
   }
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+    this.querySub?.unsubscribe();
     if (this.tickId) {
       clearInterval(this.tickId);
     }
   }
 
-  load(): void {
+  load(calendarLinked: string | null = null, calendarError: string | null = null): void {
     this.loading = true;
     this.errorMessage = '';
+    this.refreshGoogleCalendarStatus();
     this.appointmentService.getMine().subscribe({
       next: (rows) => {
         this.appointments = rows;
         this.rebuildCalendarSlots();
         this.refreshCountdown();
         const ids = [...new Set(rows.flatMap((a) => [a.patientUserId, a.doctorUserId]))];
-        if (ids.length === 0) {
+        const finish = (): void => {
           this.loading = false;
+          if (calendarLinked) {
+            this.infoMessage =
+              'Google Calendar is connected. Tap "Synchronize with Google Calendar" to add your visits to the calendar.';
+            void this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { calendarLinked: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          }
+          if (calendarError) {
+            this.errorMessage = 'Google Calendar: ' + calendarError;
+            void this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { calendarError: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          }
+        };
+        if (ids.length === 0) {
+          finish();
           return;
         }
         this.userService.lookupNamesByIds(ids).subscribe({
@@ -92,16 +195,27 @@ export class PatientAppointmentsHubComponent implements OnInit, OnDestroy {
             for (const u of list) {
               this.lookupById.set(u.id, u);
             }
-            this.loading = false;
+            finish();
           },
           error: () => {
-            this.loading = false;
+            finish();
           }
         });
       },
       error: (err) => {
         this.errorMessage = err.error?.message || err.error?.error || err.message || 'Failed to load appointments';
         this.loading = false;
+      }
+    });
+  }
+
+  private refreshGoogleCalendarStatus(): void {
+    this.appointmentService.getGoogleCalendarStatus().subscribe({
+      next: (s) => {
+        this.googleCalendarStatus = s;
+      },
+      error: () => {
+        this.googleCalendarStatus = { configured: false, connected: false };
       }
     });
   }

@@ -1,6 +1,8 @@
 spring:
   application:
     name: API_Gatewya
+  codec:
+    max-in-memory-size: 32MB
   cloud:
     gateway:
       default-filters:
@@ -14,10 +16,19 @@ spring:
           uri: http://localhost:8091
           predicates:
             - Path=/api/appointments/**
+        - id: whisper-ai-service
+          uri: http://localhost:5002
+          predicates:
+            - Path=/api/whisper/**
         - id: auth-service
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
+        # Service-to-service (appointment-service → user emails). Must be before generic user routes if paths overlap.
+        - id: user-service-internal
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/internal/**
         - id: user-service
           uri: http://localhost:8081
           predicates:
@@ -122,6 +133,10 @@ spring:
               - Authorization
               - Content-Type
               - Accept
+              - Origin
+              - X-Requested-With
+              - Access-Control-Request-Method
+              - Access-Control-Request-Headers
             allow-credentials: true
 
 server:
