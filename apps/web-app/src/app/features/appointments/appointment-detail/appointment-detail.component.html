@@ -173,8 +173,8 @@
             <span>Conference / tab audio (recommended for hearing the other participant)</span>
           </label>
           <label class="caption-option">
-            <input type="checkbox" [(ngModel)]="autoTranslateEnabled" name="capAutoTr" [disabled]="translateBusy" />
-            <span>Auto-translate transcript (updates while captions run)</span>
+            <input type="checkbox" [(ngModel)]="suppressOwnSpeechEnabled" name="capSuppressOwn" [disabled]="captionsActive" />
+            <span>Suppress my own voice (show mostly the other participant)</span>
           </label>
           <div class="captions-actions">
             <button type="button" class="btn" [class.btn-primary]="!captionsActive" [class.btn-secondary]="captionsActive" (click)="toggleLiveCaptions()">
@@ -192,21 +192,16 @@
               <option value="en">English</option>
             </select>
           </div>
-          <label for="liveTx">Transcript</label>
-          <textarea #liveTxArea id="liveTx" class="transcript-area" readonly rows="8" [value]="liveTranscript" placeholder="Transcript appears here…"></textarea>
           <div class="translate-row">
-            <label for="tgtLang">Translate to</label>
+            <label for="tgtLang">Caption language</label>
             <select id="tgtLang" name="tgtLang" [(ngModel)]="translateTargetLang" (ngModelChange)="onTranslateTargetLangChange()">
               <option value="fr">French</option>
               <option value="en">English</option>
               <option value="ar">Arabic</option>
             </select>
-            <button type="button" class="btn btn-secondary" (click)="runTranslate()" [disabled]="translateBusy || !liveTranscript.trim()">
-              {{ translateBusy ? 'Translating…' : 'Translate now' }}
-            </button>
           </div>
-          <label for="translated">Translated</label>
-          <textarea #translatedArea id="translated" class="transcript-area transcript-area--translated" readonly rows="6" [value]="translatedText" placeholder="Translation appears here…"></textarea>
+          <label for="translated">Live translated captions</label>
+          <textarea #translatedArea id="translated" class="transcript-area transcript-area--translated" readonly rows="8" [value]="translatedText" placeholder="Translated captions from the other participant appear here…"></textarea>
         </aside>
       </div>
     </div>

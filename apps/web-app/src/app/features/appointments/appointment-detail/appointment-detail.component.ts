@@ -28,7 +28,6 @@ import {
 })
 export class AppointmentDetailComponent implements OnInit, OnDestroy {
   private static readonly JITSI_ORIGIN = 'https://meet.jit.si/';
-  @ViewChild('liveTxArea') private liveTxArea?: ElementRef<HTMLTextAreaElement>;
   @ViewChild('translatedArea') private translatedArea?: ElementRef<HTMLTextAreaElement>;
 
   appointment: AppointmentResponse | null = null;
@@ -66,7 +65,9 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
   /** Tab capture so mixed Jitsi audio can be transcribed (user must share this tab + tab audio in the browser dialog). */
   captionUseConferenceAudio = true;
   /** Debounced full-transcript translation while captions run. */
-  autoTranslateEnabled = false;
+  autoTranslateEnabled = true;
+  /** Skip STT while local speaker is talking so captions focus on the remote side. */
+  suppressOwnSpeechEnabled = true;
 
   private mediaRecorder: MediaRecorder | null = null;
   private mediaStream: MediaStream | null = null;
@@ -78,6 +79,11 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
   private translateSub: Subscription | null = null;
   private lastAutoTranslateAtMs = 0;
   private lastAutoTranslateKey = '';
+  private localMicMonitorStream: MediaStream | null = null;
+  private speakerMonitorCtx: AudioContext | null = null;
+  private speakerMonitorAnalyser: AnalyserNode | null = null;
+  private speakerMonitorTimer: number | null = null;
+  private speakerActiveUntilMs = 0;
 
   private scrollTextareaToBottom(el?: ElementRef<HTMLTextAreaElement>): void {
     const area = el?.nativeElement;
@@ -413,6 +419,7 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.captionsActive = true;
+    await this.initLocalSpeakerMonitor();
     this.beginCaptionSegmentLoop();
   }
 
@@ -464,6 +471,22 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
   }
 
   private releaseCaptionStreams(): void {
+    if (this.speakerMonitorTimer != null) {
+      cancelAnimationFrame(this.speakerMonitorTimer);
+      this.speakerMonitorTimer = null;
+    }
+    if (this.speakerMonitorCtx) {
+      void this.speakerMonitorCtx.close();
+      this.speakerMonitorCtx = null;
+    }
+    this.speakerMonitorAnalyser = null;
+    this.speakerActiveUntilMs = 0;
+    if (this.localMicMonitorStream) {
+      for (const t of this.localMicMonitorStream.getTracks()) {
+        t.stop();
+      }
+      this.localMicMonitorStream = null;
+    }
     if (this.conferenceSurfaceStream) {
       for (const t of this.conferenceSurfaceStream.getTracks()) {
         t.stop();
@@ -496,6 +519,76 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
 
   private captionFilenameForMime(mime: string): string {
     return mime.includes('mp4') ? 'captions.m4a' : 'captions.webm';
+  }
+
+  private async initLocalSpeakerMonitor(): Promise<void> {
+    this.speakerMonitorAnalyser = null;
+    this.speakerActiveUntilMs = 0;
+    if (!this.suppressOwnSpeechEnabled || !this.captionUseConferenceAudio) {
+      return;
+    }
+    const md = navigator.mediaDevices;
+    if (!md?.getUserMedia) {
+      return;
+    }
+    try {
+      this.localMicMonitorStream = await md.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      const Ctor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctor) {
+        return;
+      }
+      this.speakerMonitorCtx = new Ctor();
+      const source = this.speakerMonitorCtx.createMediaStreamSource(this.localMicMonitorStream);
+      const analyser = this.speakerMonitorCtx.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.25;
+      source.connect(analyser);
+      this.speakerMonitorAnalyser = analyser;
+      this.runSpeakerMonitorLoop();
+    } catch {
+      // If mic monitor is blocked, continue captions without own-speech suppression.
+      this.speakerMonitorAnalyser = null;
+    }
+  }
+
+  private runSpeakerMonitorLoop(): void {
+    const analyser = this.speakerMonitorAnalyser;
+    if (!analyser || !this.captionsActive) {
+      this.speakerMonitorTimer = null;
+      return;
+    }
+    const data = new Uint8Array(analyser.fftSize);
+    const tick = (): void => {
+      if (!this.captionsActive || !this.speakerMonitorAnalyser) {
+        this.speakerMonitorTimer = null;
+        return;
+      }
+      this.speakerMonitorAnalyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i += 1) {
+        const centered = (data[i] - 128) / 128;
+        sum += centered * centered;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      if (rms > 0.055) {
+        this.speakerActiveUntilMs = Date.now() + 800;
+      }
+      this.speakerMonitorTimer = requestAnimationFrame(tick);
+    };
+    this.speakerMonitorTimer = requestAnimationFrame(tick);
+  }
+
+  private isLocalSpeakerActive(): boolean {
+    if (!this.suppressOwnSpeechEnabled || !this.captionUseConferenceAudio) {
+      return false;
+    }
+    return Date.now() < this.speakerActiveUntilMs;
   }
 
   /**
@@ -555,6 +648,9 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
   }
 
   private uploadAudioChunk(blob: Blob, filename: string): void {
+    if (this.isLocalSpeakerActive()) {
+      return;
+    }
     this.captionBusy = true;
     this.whisperAi.transcribeChunk(blob, filename, this.speechSourceLang).subscribe({
       next: (r) => {
@@ -563,7 +659,6 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
           this.liveTranscript = this.liveTranscript
             ? `${this.liveTranscript}\n${r.text.trim()}`
             : r.text.trim();
-          this.scrollTextareaToBottom(this.liveTxArea);
           this.scheduleAutoTranslate();
         }
       },
