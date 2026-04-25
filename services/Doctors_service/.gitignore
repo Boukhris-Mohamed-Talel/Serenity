@@ -1,7 +1,7 @@
 HELP.md
 ### Local secrets (never commit) ###
 src/main/resources/application-local.properties
-target/
+services\Doctors_service\src\main\resources\application.propertiestarget/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
