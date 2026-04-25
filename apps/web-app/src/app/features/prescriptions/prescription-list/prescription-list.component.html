@@ -22,14 +22,11 @@
 
   <!-- ═══ Keywords Filter Toggle ═══ -->
   <div class="filter-bar" *ngIf="patientId">
-    <button
-      type="button"
-      class="filter-toggle"
-      [class.active]="filterCriticalOnly"
+    <button type="button" class="filter-toggle" [class.active]="filterCriticalOnly"
       (click)="toggleCriticalPrescriptions()">
       🔴 {{ filterCriticalOnly ? 'Show all prescriptions' : 'Show critical only (HIGH severity)' }}
     </button>
-    <span class="filter-hint" *ngIf="filterCriticalOnly">Filtered by Keywords cross-table — showing prescriptions linked to HIGH severity records</span>
+
   </div>
 
   <!-- ═══ SKELETON LOADING ═══ -->
@@ -88,7 +85,9 @@
             <span class="chip-icon">💊</span>
             <div class="chip-info">
               <span class="chip-name">{{ item.medicine.name }}
-                <span *ngIf="item.isAiRecommended" style="background: linear-gradient(135deg, #6b11ff, #8ec5fc); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 8px; margin-left: 5px; font-weight: 600; vertical-align: middle;">🤖 AI</span>
+                <span *ngIf="item.isAiRecommended"
+                  style="background: linear-gradient(135deg, #6b11ff, #8ec5fc); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 8px; margin-left: 5px; font-weight: 600; vertical-align: middle;">🤖
+                  AI</span>
               </span>
               <span class="chip-dosage">{{ item.dosage }}</span>
             </div>
@@ -99,13 +98,17 @@
         <div class="med-details" *ngFor="let item of p.items">
           <div class="med-detail-name">{{ item.medicine.name }}</div>
           <div class="rx-meta">
-            <span class="meta-item"><span class="meta-label">Frequency</span><span class="meta-value">{{ item.frequency }}</span></span>
+            <span class="meta-item"><span class="meta-label">Frequency</span><span class="meta-value">{{ item.frequency
+                }}</span></span>
             <span class="meta-sep" aria-hidden="true">&middot;</span>
-            <span class="meta-item"><span class="meta-label">Qty</span><span class="meta-value">{{ item.quantity }}</span></span>
+            <span class="meta-item"><span class="meta-label">Qty</span><span class="meta-value">{{ item.quantity
+                }}</span></span>
             <span class="meta-sep" aria-hidden="true">&middot;</span>
-            <span class="meta-item"><span class="meta-label">Start</span><span class="meta-value">{{ item.startDate }}</span></span>
+            <span class="meta-item"><span class="meta-label">Start</span><span class="meta-value">{{ item.startDate
+                }}</span></span>
             <span class="meta-sep" aria-hidden="true">&middot;</span>
-            <span class="meta-item"><span class="meta-label">End</span><span class="meta-value">{{ item.endDate || '—' }}</span></span>
+            <span class="meta-item"><span class="meta-label">End</span><span class="meta-value">{{ item.endDate || '—'
+                }}</span></span>
           </div>
           <div class="rx-instructions" *ngIf="item.instructions">
             <span class="meta-label">Instructions:</span> {{ item.instructions }}
@@ -113,18 +116,14 @@
         </div>
 
         <!-- Cloudinary Image Preview -->
-        <div class="rx-image-preview" *ngIf="p.imageUrl" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
+        <div class="rx-image-preview" *ngIf="p.imageUrl"
+          style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
           <div class="rx-section-label">📸 Original Prescription Image</div>
           <a [href]="p.imageUrl" target="_blank" style="display: block; margin-top: 10px;">
-            <img
-              [src]="p.imageUrl"
-              alt="Prescription Image"
+            <img [src]="p.imageUrl" alt="Prescription Image"
               style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;"
-              onmouseover="this.style.transform='scale(1.02)'"
-              onmouseout="this.style.transform='scale(1)'"
-              onfocus="this.style.transform='scale(1.02)'"
-              onblur="this.style.transform='scale(1)'"
-            />
+              onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"
+              onfocus="this.style.transform='scale(1.02)'" onblur="this.style.transform='scale(1)'" />
           </a>
         </div>
       </div>
@@ -142,13 +141,7 @@
   </div>
 </section>
 
-<app-confirm-dialog
-  [open]="!!deleteConfirm"
-  title="Delete this prescription?"
-  message="This action is permanent. The prescription will be removed from the record."
-  confirmLabel="Delete"
-  cancelLabel="Cancel"
-  [danger]="true"
-  (confirm)="confirmDeletePrescription()"
-  (cancel)="closeDeleteConfirm()">
+<app-confirm-dialog [open]="!!deleteConfirm" title="Delete this prescription?"
+  message="This action is permanent. The prescription will be removed from the record." confirmLabel="Delete"
+  cancelLabel="Cancel" [danger]="true" (confirm)="confirmDeletePrescription()" (cancel)="closeDeleteConfirm()">
 </app-confirm-dialog>

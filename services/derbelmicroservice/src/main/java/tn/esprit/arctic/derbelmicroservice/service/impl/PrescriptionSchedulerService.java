@@ -24,11 +24,8 @@ public class PrescriptionSchedulerService {
 
     private final PrescriptionRepository prescriptionRepository;
 
-    /**
-     * S'exécute toutes les minutes (pour faciliter les tests en soutenance).
-     * En production, on utiliserait "0 0 0 * * ?" (une fois par jour à minuit).
-     */
-    @Scheduled(cron = "0 * * * * ?")
+    
+    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void autoCompletePrescriptions() {
         log.info("⏰ [SCHEDULER] Vérification des prescriptions expirées...");
