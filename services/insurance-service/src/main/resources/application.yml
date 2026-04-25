@@ -1,11 +1,14 @@
 server:
-  port: ${SERVER_PORT:8090}
+  port: ${SERVER_PORT}
 
 spring:
+  config:
+    # Works whether you run from the service folder or repo root.
+    import: optional:file:./.env[.properties],optional:file:./services/insurance-service/.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/healthcare_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   servlet:
@@ -25,29 +28,29 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
-    expiration-ms: ${JWT_EXPIRATION:86400000}
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION}
   upload:
-    dir: ${UPLOAD_DIR:uploads}
-  public-base-url: ${INSURANCE_PUBLIC_BASE_URL:http://localhost:8090}
+    dir: ${UPLOAD_DIR}
+  public-base-url: ${INSURANCE_PUBLIC_BASE_URL}
   claim-risk-model:
-    url: ${CLAIM_RISK_MODEL_URL:http://localhost:5123}
+    url: ${CLAIM_RISK_MODEL_URL}
   insurance-portal:
-    api-url: ${INSURANCE_PORTAL_API_URL:http://localhost:3000/api}
+    api-url: ${INSURANCE_PORTAL_API_URL}
   status-poller:
-    fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS:5000}
+    fixed-delay-ms: ${INSURANCE_STATUS_POLLER_DELAY_MS}
   ocr:
-    enabled: ${INSURANCE_OCR_ENABLED:true}
-    strict-major-block: ${INSURANCE_OCR_STRICT_MAJOR_BLOCK:true}
-    store-full-text: ${INSURANCE_OCR_STORE_FULL_TEXT:false}
-    admin-alert-user-ids: ${INSURANCE_OCR_ADMIN_ALERT_USER_IDS:}
-    amount-major-diff-threshold: ${INSURANCE_OCR_AMOUNT_MAJOR_DIFF_THRESHOLD:10.0}
-    amount-minor-diff-threshold: ${INSURANCE_OCR_AMOUNT_MINOR_DIFF_THRESHOLD:2.0}
-    max-pages-per-pdf: ${INSURANCE_OCR_MAX_PAGES_PER_PDF:3}
-    max-chars-per-file: ${INSURANCE_OCR_MAX_CHARS_PER_FILE:12000}
+    enabled: ${INSURANCE_OCR_ENABLED}
+    strict-major-block: ${INSURANCE_OCR_STRICT_MAJOR_BLOCK}
+    store-full-text: ${INSURANCE_OCR_STORE_FULL_TEXT}
+    admin-alert-user-ids: ${INSURANCE_OCR_ADMIN_ALERT_USER_IDS}
+    amount-major-diff-threshold: ${INSURANCE_OCR_AMOUNT_MAJOR_DIFF_THRESHOLD}
+    amount-minor-diff-threshold: ${INSURANCE_OCR_AMOUNT_MINOR_DIFF_THRESHOLD}
+    max-pages-per-pdf: ${INSURANCE_OCR_MAX_PAGES_PER_PDF}
+    max-chars-per-file: ${INSURANCE_OCR_MAX_CHARS_PER_FILE}
     tesseract:
-      language: ${INSURANCE_OCR_LANG:eng}
-      datapath: ${INSURANCE_OCR_TESSDATA_PATH:}
+      language: ${INSURANCE_OCR_LANG}
+      datapath: ${INSURANCE_OCR_TESSDATA_PATH}
 
 springdoc:
   api-docs:
