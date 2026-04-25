@@ -189,3 +189,22 @@
     <p class="footer-copy">&copy; {{ currentYear }} Serenity. All rights reserved.</p>
   </div>
 </footer>
+
+<!-- Pinned sticky note (floating across navigation) -->
+<div
+  class="pinned-sticky"
+  *ngIf="pinnedSticky?.open"
+  [ngStyle]="pinnedStyle"
+>
+  <div class="pinned-pin" (mousedown)="onPinnedMouseDown($event)" title="Drag to move"></div>
+  <button type="button" class="pinned-close" (click)="unpinSticky()" title="Unpin">
+    <span class="material-icons" aria-hidden="true">close</span>
+  </button>
+  <textarea
+    class="pinned-sticky-text"
+    [attr.data-color]="pinnedColor"
+    [value]="pinnedText"
+    (input)="onPinnedTextChange(($any($event.target)).value)"
+    rows="7"
+  ></textarea>
+</div>

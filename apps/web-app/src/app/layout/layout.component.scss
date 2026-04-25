@@ -565,6 +565,133 @@
   min-height: 0;
 }
 
+/* Floating pinned sticky (global overlay) */
+.pinned-sticky {
+  position: fixed;
+  z-index: 140;
+  width: min(320px, calc(100vw - 24px));
+  user-select: none;
+  pointer-events: auto;
+}
+
+.pinned-pin {
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  cursor: grab;
+  z-index: 2;
+  background: radial-gradient(circle at 50% 55%, #e34b4b 0 55%, #b52b2b 56% 100%);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.18),
+    0 2px 0 rgba(255, 255, 255, 0.35) inset;
+}
+
+.pinned-pin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 18px;
+  background: linear-gradient(180deg, rgba(110, 110, 110, 0.95), rgba(160, 160, 160, 0.75));
+  border-radius: 2px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.14);
+}
+
+.pinned-pin::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0) 70%);
+  filter: blur(0.2px);
+  pointer-events: none;
+}
+
+.pinned-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(24, 37, 44, 0.7);
+  cursor: pointer;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: rgba(231, 76, 60, 0.08);
+    border-color: rgba(231, 76, 60, 0.18);
+  }
+}
+
+.pinned-sticky-text {
+  margin-top: 0;
+  width: 100%;
+  resize: none;
+  border-radius: 14px;
+  outline: none;
+  user-select: text;
+  padding: 1.35rem 2.55rem 0.75rem 0.8rem;
+  font-weight: 850;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: rgba(41, 36, 18, 0.92);
+  box-shadow: 0 18px 42px rgba(25, 35, 34, 0.22);
+  transform: rotate(-0.15deg);
+  border: 1px solid rgba(219, 206, 94, 0.65);
+  background:
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+    linear-gradient(180deg, rgba(255, 250, 204, 0.96) 0%, rgba(255, 244, 165, 0.92) 100%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(77, 66, 25, 0.08) 22px 23px);
+}
+
+/* Match dashboard color variants */
+.pinned-sticky-text[data-color='yellow'] { border-color: rgba(219, 206, 94, 0.65); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(255, 250, 204, 0.96) 0%, rgba(255, 244, 165, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(77, 66, 25, 0.08) 22px 23px); }
+.pinned-sticky-text[data-color='pink'] { border-color: rgba(222, 146, 170, 0.55); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(255, 226, 237, 0.96) 0%, rgba(255, 197, 222, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(92, 44, 62, 0.08) 22px 23px); }
+.pinned-sticky-text[data-color='green'] { border-color: rgba(140, 196, 152, 0.55); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(222, 255, 231, 0.96) 0%, rgba(179, 244, 200, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(35, 72, 42, 0.08) 22px 23px); }
+.pinned-sticky-text[data-color='blue'] { border-color: rgba(130, 169, 214, 0.55); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(221, 240, 255, 0.96) 0%, rgba(187, 221, 255, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(28, 55, 92, 0.08) 22px 23px); }
+.pinned-sticky-text[data-color='lavender'] { border-color: rgba(170, 150, 214, 0.55); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(238, 231, 255, 0.96) 0%, rgba(215, 200, 255, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(54, 40, 92, 0.08) 22px 23px); }
+.pinned-sticky-text[data-color='peach'] { border-color: rgba(224, 170, 120, 0.55); background:
+  linear-gradient(-45deg, rgba(255, 255, 255, 0.85) 0 12px, rgba(0, 0, 0, 0) 12px) top right / 26px 26px no-repeat,
+  linear-gradient(180deg, rgba(255, 239, 224, 0.96) 0%, rgba(255, 213, 174, 0.92) 100%),
+  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0 22px, rgba(92, 55, 28, 0.08) 22px 23px); }
+
 /* Monitoring mood list (doctor sidebar) needs a flex chain from main → host → inner layout. */
 .main-content > app-mood-list {
   flex: 1;

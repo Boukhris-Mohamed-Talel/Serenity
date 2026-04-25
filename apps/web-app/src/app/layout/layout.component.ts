@@ -46,6 +46,13 @@ export class LayoutComponent implements OnInit, OnDestroy {
   private authSub!: Subscription;
   private notificationRefreshInterval: ReturnType<typeof setInterval> | undefined;
 
+  // ── Sticky notes: pinned overlay state (persists across navigation) ──────────
+  pinnedSticky: { pageIndex: number; x: number; y: number; open: boolean } | null = null;
+  private readonly stickyPrefix = 'serenity:dashboard:sticky';
+  private stickyPollInterval: ReturnType<typeof setInterval> | undefined;
+  private draggingPinned = false;
+  private dragStart: { mouseX: number; mouseY: number; x: number; y: number } | null = null;
+
   constructor(
     public readonly authService: AuthService,
     private readonly crisisAlertService: CrisisAlertService,
@@ -120,6 +127,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
       }
       this.crisisAlertService.disconnect();
     });
+
+    // Poll localStorage for pinned note changes (same-tab writes don’t trigger `storage` events).
+    this.refreshPinnedSticky();
+    this.stickyPollInterval = setInterval(() => this.refreshPinnedSticky(), 750);
   }
 
   ngOnDestroy(): void {
@@ -141,9 +152,148 @@ export class LayoutComponent implements OnInit, OnDestroy {
     if (this.notificationRefreshInterval) {
       clearInterval(this.notificationRefreshInterval);
     }
+    if (this.stickyPollInterval) {
+      clearInterval(this.stickyPollInterval);
+    }
+    this.stopPinnedDrag();
     if (this.authService.isDoctor()) {
       this.crisisAlertService.disconnect();
     }
+  }
+
+  // ── Pinned sticky helpers ───────────────────────────────────────────────────
+  private stickyStorageKey(): string {
+    const userId = this.user?.id ?? this.authService.getUserId() ?? 'anon';
+    return `${this.stickyPrefix}:${userId}`;
+  }
+
+  private todayKey(d = new Date()): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private readStickyPayload(): any | null {
+    try {
+      const raw = localStorage.getItem(this.stickyStorageKey());
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeStickyPayload(payload: any): void {
+    try {
+      localStorage.setItem(this.stickyStorageKey(), JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }
+
+  private refreshPinnedSticky(): void {
+    const payload = this.readStickyPayload();
+    if (!payload || payload.date !== this.todayKey()) {
+      this.pinnedSticky = null;
+      return;
+    }
+    const p = payload.pinned;
+    if (p && typeof p === 'object' && p.open === true) {
+      this.pinnedSticky = {
+        open: true,
+        pageIndex: typeof p.pageIndex === 'number' ? p.pageIndex : 0,
+        x: typeof p.x === 'number' ? p.x : 24,
+        y: typeof p.y === 'number' ? p.y : 120
+      };
+    } else {
+      this.pinnedSticky = null;
+    }
+  }
+
+  unpinSticky(): void {
+    const payload = this.readStickyPayload();
+    if (!payload) {
+      this.pinnedSticky = null;
+      return;
+    }
+    payload.pinned = null;
+    this.writeStickyPayload(payload);
+    this.pinnedSticky = null;
+  }
+
+  get pinnedStyle(): { [k: string]: string } {
+    const x = this.pinnedSticky?.x ?? 24;
+    const y = this.pinnedSticky?.y ?? 120;
+    return { left: `${x}px`, top: `${y}px` };
+  }
+
+  get pinnedText(): string {
+    const payload = this.readStickyPayload();
+    const pages: string[] = Array.isArray(payload?.pages) ? payload.pages : [];
+    const idx = this.pinnedSticky?.pageIndex ?? 0;
+    return pages[idx] ?? '';
+  }
+
+  get pinnedColor(): string {
+    const payload = this.readStickyPayload();
+    const colors: string[] = Array.isArray(payload?.colors) ? payload.colors : [];
+    const idx = this.pinnedSticky?.pageIndex ?? 0;
+    return colors[idx] ?? 'yellow';
+  }
+
+  onPinnedTextChange(v: string): void {
+    const payload = this.readStickyPayload();
+    if (!payload || !this.pinnedSticky) return;
+    const pages: string[] = Array.isArray(payload.pages) ? payload.pages : [];
+    const idx = this.pinnedSticky.pageIndex;
+    while (pages.length <= idx) {
+      pages.push('');
+    }
+    pages[idx] = v;
+    payload.pages = pages;
+    this.writeStickyPayload(payload);
+  }
+
+  onPinnedMouseDown(ev: MouseEvent): void {
+    if (!this.pinnedSticky) return;
+    this.draggingPinned = true;
+    this.dragStart = {
+      mouseX: ev.clientX,
+      mouseY: ev.clientY,
+      x: this.pinnedSticky.x,
+      y: this.pinnedSticky.y
+    };
+    window.addEventListener('mousemove', this.onPinnedMouseMove);
+    window.addEventListener('mouseup', this.onPinnedMouseUp);
+    ev.preventDefault();
+  }
+
+  private onPinnedMouseMove = (ev: MouseEvent): void => {
+    if (!this.draggingPinned || !this.dragStart || !this.pinnedSticky) return;
+    const dx = ev.clientX - this.dragStart.mouseX;
+    const dy = ev.clientY - this.dragStart.mouseY;
+    this.pinnedSticky.x = Math.max(8, this.dragStart.x + dx);
+    this.pinnedSticky.y = Math.max(8, this.dragStart.y + dy);
+  };
+
+  private onPinnedMouseUp = (): void => {
+    if (this.draggingPinned) {
+      this.draggingPinned = false;
+      this.dragStart = null;
+      // Persist final position
+      const payload = this.readStickyPayload();
+      if (payload && this.pinnedSticky) {
+        payload.pinned = this.pinnedSticky;
+        this.writeStickyPayload(payload);
+      }
+    }
+    this.stopPinnedDrag();
+  };
+
+  private stopPinnedDrag(): void {
+    window.removeEventListener('mousemove', this.onPinnedMouseMove);
+    window.removeEventListener('mouseup', this.onPinnedMouseUp);
   }
 
   toggleNotifDropdown(): void {

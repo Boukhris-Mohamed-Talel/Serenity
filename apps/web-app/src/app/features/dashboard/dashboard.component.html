@@ -11,19 +11,46 @@
         </div>
 
         <div class="cards-row">
-          <section class="card dash-card">
+          <section class="card dash-card sticky-card">
             <div class="dash-head">
               <h2>{{ activePreset.focusTitle }}</h2>
               <span class="chev material-icons" aria-hidden="true">chevron_right</span>
             </div>
             <div class="dash-subtitle">{{ activePreset.focusSubtitle }}</div>
             <div class="dash-line"></div>
-            <div class="dash-kicker">{{ activePreset.focusTask }}</div>
-            <label class="check">
-              <input type="checkbox" />
-              <span>{{ activePreset.focusChecklist }}</span>
-            </label>
-            <div class="note">{{ activePreset.focusNote }}</div>
+            <div class="sticky-head">
+              <div class="sticky-meta">
+                <div class="dash-kicker">Sticky note</div>
+                <div class="sticky-pager">Page {{ stickyIndex + 1 }} / {{ stickyPageCount }}</div>
+              </div>
+              <div class="sticky-actions">
+                <button type="button" class="sticky-icon" (click)="pinCurrentSticky()" [disabled]="canPinCurrent">
+                  <span class="material-icons" aria-hidden="true">push_pin</span>
+                </button>
+                <button type="button" class="sticky-icon" (click)="stickyPrev()" [disabled]="stickyIndex === 0">
+                  <span class="material-icons" aria-hidden="true">chevron_left</span>
+                </button>
+                <button type="button" class="sticky-icon" (click)="stickyNext()" [disabled]="stickyIndex >= stickyPageCount - 1">
+                  <span class="material-icons" aria-hidden="true">chevron_right</span>
+                </button>
+                <button type="button" class="sticky-icon" (click)="stickyAddPage()">
+                  <span class="material-icons" aria-hidden="true">note_add</span>
+                </button>
+                <button type="button" class="sticky-icon danger" (click)="stickyDeletePage()">
+                  <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              class="sticky-text"
+              [attr.data-color]="stickyColor"
+              [value]="stickyCurrentText"
+              (input)="onStickyTextChange(($any($event.target)).value)"
+              placeholder="Write reminders for today… (resets at midnight)"
+              rows="6"
+            ></textarea>
+            <div class="sticky-saved-corner" [class.show]="stickySavedPulse">Saved</div>
           </section>
 
           <section class="card dash-card">
