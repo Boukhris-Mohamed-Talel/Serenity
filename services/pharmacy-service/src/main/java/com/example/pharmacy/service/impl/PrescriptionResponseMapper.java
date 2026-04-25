@@ -13,7 +13,6 @@ public class PrescriptionResponseMapper {
 
     public PrescriptionResponseDTO toResponse(PharmacyPrescription workflow, List<PrescriptionLineResponseDTO> lines) {
         Pharmacy assignedPharmacy = workflow.getAssignedPharmacy();
-        PrescriptionLineResponseDTO summaryLine = lines.isEmpty() ? null : lines.get(0);
         String updatedAt = workflow.getUpdatedAt() != null
             ? workflow.getUpdatedAt().toString()
             : (workflow.getCreatedAt() != null ? workflow.getCreatedAt().toString() : null);
@@ -28,10 +27,6 @@ public class PrescriptionResponseMapper {
             .patientName(workflow.getPatientNameSnapshot())
             .assignedToPharmacy(assignedPharmacy != null)
             .assignmentMessage(assignedPharmacy == null ? "Patient has no default pharmacy yet" : null)
-            .medicationName(summaryLine != null ? summaryLine.getMedicationName() : null)
-            .dosage(summaryLine != null ? summaryLine.getDosage() : null)
-            .quantity(summaryLine != null ? summaryLine.getQuantity() : null)
-            .instructions(summaryLine != null ? summaryLine.getInstructions() : null)
             .medicineLines(lines)
             .status(workflow.getStatus())
             .rejectionReason(workflow.getRejectionReason())

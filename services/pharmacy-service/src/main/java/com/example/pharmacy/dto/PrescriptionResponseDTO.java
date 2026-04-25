@@ -21,18 +21,6 @@ public class PrescriptionResponseDTO {
     private String patientName;
     private Boolean assignedToPharmacy;
     private String assignmentMessage;
-    /**
-     * Legacy single-line summary fields kept for compatibility with older clients.
-     * New clients should use medicineLines as the source of truth.
-     */
-    @Deprecated
-    private String medicationName;
-    @Deprecated
-    private String dosage;
-    @Deprecated
-    private Integer quantity;
-    @Deprecated
-    private String instructions;
     private List<PrescriptionLineResponseDTO> medicineLines;
     private PrescriptionStatus status;
     private String rejectionReason;
