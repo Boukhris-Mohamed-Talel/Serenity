@@ -9,7 +9,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 from lara_sdk import Credentials, LaraApiError, LaraError, Translator
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 logger = logging.getLogger("whisper-ai")
 
@@ -114,12 +114,37 @@ def _lara_source_locale(source: str | None) -> str | None:
     return _lara_target_locale(s)
 
 
+def _lara_translation_to_plain_text(translation) -> str:
+    """Lara `TextResult.translation` may be str, list[str], or list[TextBlock]."""
+    if translation is None:
+        return ""
+    if isinstance(translation, str):
+        return translation.strip()
+    if isinstance(translation, (list, tuple)):
+        parts: list[str] = []
+        for item in translation:
+            if isinstance(item, str):
+                parts.append(item)
+            else:
+                t = getattr(item, "text", None)
+                if isinstance(t, str) and t.strip():
+                    parts.append(t.strip())
+        return "\n".join(parts).strip()
+    return str(translation).strip()
+
+
 class TranslateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     text: str = Field(..., min_length=1, max_length=50_000)
-    target_lang: str = Field(default="fr", alias="targetLang")
-    source_lang: str = Field(default="auto", alias="sourceLang")
+    target_lang: str = Field(
+        default="fr",
+        validation_alias=AliasChoices("targetLang", "target_lang"),
+    )
+    source_lang: str = Field(
+        default="auto",
+        validation_alias=AliasChoices("sourceLang", "source_lang"),
+    )
 
 
 class TranslateResponse(BaseModel):
@@ -186,6 +211,15 @@ async def transcribe(
 def translate(req: TranslateRequest):
     src = _lara_source_locale(req.source_lang)
     target = _lara_target_locale(req.target_lang)
+    lara_id = os.environ.get("LARA_ACCESS_KEY_ID", "").strip()
+    lara_secret = os.environ.get("LARA_ACCESS_KEY_SECRET", "").strip()
+    if not lara_id or not lara_secret:
+        # Local dev: avoid empty "translated" UI when Lara keys are not set.
+        return TranslateResponse(
+            translated_text=req.text.strip(),
+            provider="passthrough",
+            note="Lara not configured; showing source text. Set LARA_ACCESS_KEY_ID and LARA_ACCESS_KEY_SECRET to enable translation.",
+        )
     lara = _get_lara()
     try:
         if src:
@@ -201,7 +235,13 @@ def translate(req: TranslateRequest):
         logger.exception("lara translate failed")
         raise HTTPException(status_code=502, detail=str(e)) from e
 
-    out = getattr(result, "translation", None)
-    if not isinstance(out, str) or not out.strip():
-        raise HTTPException(status_code=502, detail="Empty translation from Lara")
-    return TranslateResponse(translated_text=out.strip(), provider="laratranslate", note=None)
+    out = _lara_translation_to_plain_text(getattr(result, "translation", None))
+    if not out:
+        # Same text so the UI is not blank if Lara returns an unexpected structure.
+        logger.warning("Lara returned empty translation; falling back to source text")
+        return TranslateResponse(
+            translated_text=req.text.strip(),
+            provider="laratranslate",
+            note="Lara returned no extractable text; source returned as-is.",
+        )
+    return TranslateResponse(translated_text=out, provider="laratranslate", note=None)

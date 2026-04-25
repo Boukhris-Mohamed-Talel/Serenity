@@ -5,12 +5,15 @@ import com.example.appointment.security.AppointmentAuth;
 import com.example.appointment.service.AppointmentNotificationService;
 import com.example.appointment.service.AppointmentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
+@Validated
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
@@ -41,7 +45,7 @@ public class AppointmentController {
     }
 
     @PatchMapping("/notifications/me/{notificationId}/read")
-    public ResponseEntity<Void> markAppointmentNotificationRead(@PathVariable Long notificationId) {
+    public ResponseEntity<Void> markAppointmentNotificationRead(@PathVariable @Positive Long notificationId) {
         Long userId = AppointmentAuth.requireUserId();
         appointmentNotificationService.markAsRead(notificationId, userId);
         return ResponseEntity.noContent().build();
@@ -69,28 +73,28 @@ public class AppointmentController {
     }
 
     @PatchMapping("/{id:\\d+}/confirm")
-    public ResponseEntity<AppointmentResponse> confirm(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponse> confirm(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         AppointmentAuth.requireDoctor();
         return ResponseEntity.ok(appointmentService.confirm(id, userId));
     }
 
     @PatchMapping("/{id:\\d+}/cancel")
-    public ResponseEntity<AppointmentResponse> cancel(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponse> cancel(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         return ResponseEntity.ok(appointmentService.cancel(id, userId));
     }
 
     @PatchMapping("/{id:\\d+}/reschedule")
     public ResponseEntity<AppointmentResponse> reschedule(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody RescheduleAppointmentRequest request) {
         Long userId = AppointmentAuth.requireUserId();
         return ResponseEntity.ok(appointmentService.reschedule(id, userId, request));
     }
 
     @PatchMapping("/{id:\\d+}/complete")
-    public ResponseEntity<AppointmentResponse> complete(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponse> complete(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         AppointmentAuth.requireDoctor();
         return ResponseEntity.ok(appointmentService.complete(id, userId));
@@ -120,11 +124,11 @@ public class AppointmentController {
      */
     @GetMapping("/calendar-hints")
     public ResponseEntity<List<CalendarBusySlotResponse>> calendarHints(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) Long doctorUserId,
-            @RequestParam(required = false) Long patientUserId,
-            @RequestParam(required = false) Long excludeAppointmentId) {
+            @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) @Positive Long doctorUserId,
+            @RequestParam(required = false) @Positive Long patientUserId,
+            @RequestParam(required = false) @Positive Long excludeAppointmentId) {
         Long uid = AppointmentAuth.requireUserId();
         if (AppointmentAuth.isPatient()) {
             if (doctorUserId == null) {
@@ -139,14 +143,14 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id:\\d+}")
-    public ResponseEntity<AppointmentResponse> getOne(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponse> getOne(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         boolean admin = AppointmentAuth.isAdmin();
         return ResponseEntity.ok(appointmentService.getById(id, userId, admin));
     }
 
     @GetMapping(value = "/{id:\\d+}/calendar.ics", produces = "text/calendar")
-    public ResponseEntity<byte[]> downloadCalendarIcs(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadCalendarIcs(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         boolean admin = AppointmentAuth.isAdmin();
         byte[] body = appointmentService.exportIcs(id, userId, admin);
@@ -157,21 +161,21 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id:\\d+}/google-calendar-link")
-    public ResponseEntity<GoogleCalendarLinkResponse> googleCalendarLink(@PathVariable Long id) {
+    public ResponseEntity<GoogleCalendarLinkResponse> googleCalendarLink(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         boolean admin = AppointmentAuth.isAdmin();
         return ResponseEntity.ok(appointmentService.googleCalendarLink(id, userId, admin));
     }
 
     @GetMapping("/{id:\\d+}/teleconsultation")
-    public ResponseEntity<TeleconsultationResponse> getTele(@PathVariable Long id) {
+    public ResponseEntity<TeleconsultationResponse> getTele(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         boolean admin = AppointmentAuth.isAdmin();
         return ResponseEntity.ok(appointmentService.getTeleconsultation(id, userId, admin));
     }
 
     @PatchMapping("/{id:\\d+}/teleconsultation/start")
-    public ResponseEntity<TeleconsultationResponse> startTele(@PathVariable Long id) {
+    public ResponseEntity<TeleconsultationResponse> startTele(@PathVariable @Positive Long id) {
         Long userId = AppointmentAuth.requireUserId();
         return ResponseEntity.ok(appointmentService.startTeleconsultation(id, userId));
     }

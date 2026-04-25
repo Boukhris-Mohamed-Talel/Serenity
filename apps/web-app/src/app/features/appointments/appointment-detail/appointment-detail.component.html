@@ -181,6 +181,7 @@
               {{ captionsActive ? 'Stop live captions' : 'Start live captions' }}
             </button>
             <span class="caption-status" *ngIf="captionBusy">Transcribing…</span>
+            <span class="caption-status" *ngIf="translateBusy">Translating…</span>
           </div>
           <p class="hint warn" *ngIf="captionError">{{ captionError }}</p>
           <div class="translate-row">
@@ -199,7 +200,19 @@
               <option value="en">English</option>
               <option value="ar">Arabic</option>
             </select>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="runTranslate()" [disabled]="translateBusy || !liveTranscript.trim()">
+              Translate now
+            </button>
           </div>
+          <label for="liveStt">Live transcript (speech-to-text)</label>
+          <textarea
+            id="liveStt"
+            class="transcript-area"
+            readonly
+            rows="6"
+            [value]="liveTranscript"
+            placeholder="Raw transcript from audio appears here as it is recognized…"
+          ></textarea>
           <label for="translated">Live translated captions</label>
           <textarea #translatedArea id="translated" class="transcript-area transcript-area--translated" readonly rows="8" [value]="translatedText" placeholder="Translated captions from the other participant appear here…"></textarea>
         </aside>

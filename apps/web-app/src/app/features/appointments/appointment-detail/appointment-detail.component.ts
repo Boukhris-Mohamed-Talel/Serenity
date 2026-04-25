@@ -780,6 +780,7 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
       next: (r) => {
         this.translateBusy = false;
         this.translateSub = null;
+        this.captionError = '';
         if (!isManual) {
           this.lastAutoTranslateAtMs = Date.now();
           this.lastAutoTranslateKey = `${this.translateTargetLang}|${src}`;
@@ -799,9 +800,9 @@ export class AppointmentDetailComponent implements OnInit, OnDestroy {
             'Translation quota exceeded for Lara API. Auto-translate has been paused.';
           return;
         }
-        if (isManual) {
-          this.captionError = msgStr;
-        }
+        this.captionError = isManual
+          ? msgStr
+          : `Translation (auto): ${msgStr}`;
       }
     });
   }

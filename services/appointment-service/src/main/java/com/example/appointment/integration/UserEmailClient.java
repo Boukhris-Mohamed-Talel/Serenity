@@ -38,7 +38,7 @@ public class UserEmailClient {
         if (internalApiKey == null || internalApiKey.isBlank()) {
             if (LOGGED_MISSING_INTERNAL_KEY.compareAndSet(false, true)) {
                 log.warn("app.internal-api-key / INTERNAL_API_KEY is empty — cannot load user emails for notifications. "
-                        + "Set the same value as user-service (see application.yml).");
+                        + "Set the same value as user-service (INTERNAL_API_KEY environment variable).");
             }
             return Map.of();
         }

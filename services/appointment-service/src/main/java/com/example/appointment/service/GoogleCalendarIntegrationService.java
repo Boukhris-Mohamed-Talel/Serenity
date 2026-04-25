@@ -366,7 +366,7 @@ public class GoogleCalendarIntegrationService {
     private void assertConfigured() {
         if (!isConfigured()) {
             throw new ResponseStatusException(SERVICE_UNAVAILABLE,
-                    "Google Calendar is not configured: add application-google-local.yml, set APP_GOOGLE_CALENDAR_CLIENT_ID/SECRET, or GOOGLE_CALENDAR_CREDENTIALS_JSON.");
+                    "Google Calendar is not configured: set GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET, or GOOGLE_CALENDAR_CREDENTIALS_JSON.");
         }
     }
 }

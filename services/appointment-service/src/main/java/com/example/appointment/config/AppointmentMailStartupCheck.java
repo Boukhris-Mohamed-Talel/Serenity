@@ -45,13 +45,7 @@ public class AppointmentMailStartupCheck implements ApplicationRunner {
             return;
         }
         if (!StringUtils.hasText(mailPassword)) {
-            log.warn("spring.mail.password is not set — Gmail SMTP will reject login. "
-                    + "Put your 16-char app password in application-mail-local.yml or set MAIL_PASSWORD. "
-                    + "If you still see this after editing YAML, rebuild so resources are copied to target/classes.");
-            return;
-        }
-        if ("YOUR_APP_PASSWORD_HERE".equals(mailPassword.trim())) {
-            log.error("Replace YOUR_APP_PASSWORD_HERE in application-mail-local.yml with your real Google app password, then restart.");
+            log.warn("spring.mail.password / MAIL_PASSWORD is not set — SMTP login will fail until you set the env var.");
             return;
         }
 
