@@ -34,7 +34,7 @@ Generate them with:
 cd "Serenity/services/monitoring -ai"
 pip install -r requirements.txt
 python training/generate_data.py
-python training/train_model.py --combined-csv "C:\Users\Rayen\AppData\Local\Temp\Combined Data.csv" --notebook "C:\Users\Rayen\Downloads\mental-health-sentiment-analysis-nlp-ml.ipynb"
+python training/train_model.py --combined-csv "C:\Users\Rayen\Desktop\pi\Serenity\services\monitoring -ai\training\Combined Data.csv" --notebook "C:\Users\Rayen\Desktop\pi\Serenity\services\monitoring -ai\training\mental-health-sentiment-analysis-nlp-ml.ipynb"
 ```
 
 If `models/` is missing, the API still responds using a **heuristic** fallback (same JSON shape).

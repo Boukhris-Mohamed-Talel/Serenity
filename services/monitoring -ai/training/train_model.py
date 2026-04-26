@@ -57,6 +57,23 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 
+def random_oversample_text(X_train: pd.Series, y_train: pd.Series, random_state: int = 42) -> tuple[pd.Series, pd.Series]:
+    """Notebook-aligned random over-sampling on training split only."""
+    train_df = pd.DataFrame({"text": X_train.astype(str), "label": y_train.astype(str)})
+    max_count = train_df["label"].value_counts().max()
+
+    balanced_parts = []
+    for label, group in train_df.groupby("label"):
+        if len(group) < max_count:
+            sampled = group.sample(n=max_count, replace=True, random_state=random_state)
+        else:
+            sampled = group
+        balanced_parts.append(sampled)
+
+    balanced = pd.concat(balanced_parts, ignore_index=True).sample(frac=1.0, random_state=random_state)
+    return balanced["text"], balanced["label"]
+
+
 def train_numeric_model(base_dir: Path, model_dir: Path, report: dict) -> None:
     data_path = base_dir / "training" / "crisis_training_data.csv"
     df = pd.read_csv(data_path)
@@ -109,7 +126,14 @@ def train_numeric_model(base_dir: Path, model_dir: Path, report: dict) -> None:
     joblib.dump(NUMERIC_FEATURE_COLUMNS, model_dir / "feature_columns.pkl")
 
 
-def train_text_models(base_dir: Path, model_dir: Path, combined_path: Path, notebook_path: Path, report: dict) -> None:
+def train_text_models(
+    base_dir: Path,
+    model_dir: Path,
+    combined_path: Path,
+    notebook_path: Path,
+    report: dict,
+    use_oversampling: bool,
+) -> None:
     raw = pd.read_csv(combined_path)
     df = raw[["statement", "status"]].copy()
     df["status"] = df["status"].astype(str).str.strip()
@@ -128,6 +152,9 @@ def train_text_models(base_dir: Path, model_dir: Path, combined_path: Path, note
         random_state=42,
         stratify=df["risk_label"],
     )
+
+    if use_oversampling:
+        X_train, y_train = random_oversample_text(X_train, y_train)
 
     vectorizer = TfidfVectorizer(ngram_range=(1, 2), max_features=50000, min_df=2)
     X_train_vec = vectorizer.fit_transform(X_train)
@@ -196,6 +223,7 @@ def train_text_models(base_dir: Path, model_dir: Path, combined_path: Path, note
 
     report["text_model"] = {
         "dataset_rows": int(len(df)),
+        "oversampling": bool(use_oversampling),
         "raw_status_distribution": raw["status"].astype(str).str.strip().value_counts().to_dict(),
         "risk_distribution": df["risk_label"].value_counts().to_dict(),
         "accuracy": round(accuracy, 4),
@@ -234,18 +262,23 @@ def parse_args(base_dir: Path) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train Serenity monitoring hybrid risk models.")
     parser.add_argument(
         "--combined-csv",
-        default=str(Path(r"C:\Users\Rayen\AppData\Local\Temp\Combined Data.csv")),
+        default=str(base_dir / "training" / "Combined Data.csv"),
         help="Path to Combined Data.csv (text dataset).",
     )
     parser.add_argument(
         "--notebook",
-        default=str(Path(r"C:\Users\Rayen\Downloads\mental-health-sentiment-analysis-nlp-ml.ipynb")),
+        default=str(base_dir / "training" / "mental-health-sentiment-analysis-nlp-ml.ipynb"),
         help="Path to reference notebook.",
     )
     parser.add_argument(
         "--report-out",
         default=str(base_dir / "training" / "training_report.json"),
         help="Output JSON report path.",
+    )
+    parser.add_argument(
+        "--disable-oversampling",
+        action="store_true",
+        help="Disable notebook-style random over-sampling for text risk training.",
     )
     return parser.parse_args()
 
@@ -265,7 +298,14 @@ def main() -> None:
 
     report: dict = {}
     train_numeric_model(base_dir, model_dir, report)
-    train_text_models(base_dir, model_dir, combined_path, notebook_path, report)
+    train_text_models(
+        base_dir,
+        model_dir,
+        combined_path,
+        notebook_path,
+        report,
+        use_oversampling=not args.disable_oversampling,
+    )
 
     report_out.parent.mkdir(parents=True, exist_ok=True)
     report_out.write_text(json.dumps(report, indent=2), encoding="utf-8")

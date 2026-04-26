@@ -1,14 +1,17 @@
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT}
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   application:
     name: monitoring-service
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/healthcare_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -27,16 +30,19 @@ logging:
     com.serenity.monitoring: DEBUG
 
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000}
+    allow-credentials: ${APP_CORS_ALLOW_CREDENTIALS:true}
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+    secret: ${JWT_SECRET}
   digest:
-    cron: ${MONITORING_WEEKLY_DIGEST_CRON:0 0 8 ? * MON}
-    timezone: ${MONITORING_WEEKLY_DIGEST_TIMEZONE:Africa/Tunis}
+    cron: ${MONITORING_WEEKLY_DIGEST_CRON}
+    timezone: ${MONITORING_WEEKLY_DIGEST_TIMEZONE}
   cleanup:
-    cron: ${MONITORING_CLEANUP_CRON:0 0 3 * * ?}
-    timezone: ${MONITORING_CLEANUP_TIMEZONE:Africa/Tunis}
-    retention-days: ${MONITORING_CLEANUP_RETENTION_DAYS:90}
+    cron: ${MONITORING_CLEANUP_CRON}
+    timezone: ${MONITORING_CLEANUP_TIMEZONE}
+    retention-days: ${MONITORING_CLEANUP_RETENTION_DAYS}
   # Python FastAPI in Serenity/services/monitoring -ai (default port 5150)
   monitoring-ai:
-    enabled: ${MONITORING_AI_ENABLED:true}
-    url: ${MONITORING_AI_URL:http://localhost:5150}
+    enabled: ${MONITORING_AI_ENABLED}
+    url: ${MONITORING_AI_URL}

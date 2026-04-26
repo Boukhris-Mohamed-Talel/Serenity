@@ -29,7 +29,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WeeklyDoctorDigest {
+public class  WeeklyDoctorDigest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,5 +66,5 @@ public class WeeklyDoctorDigest {
             generatedAt = new Date();
         }
     }
-}
+} 
 

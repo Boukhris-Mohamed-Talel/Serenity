@@ -252,16 +252,41 @@ export class MoodListComponent implements OnInit, OnDestroy {
   getEntryRiskTypeLabel(entry: MoodEntryResponse): string | null {
     const level = this.getEntryRiskLevel(entry);
     if (level === 'LOW_RISK') {
-      return null;
+      return 'Normal';
     }
+
     const raw = (entry.aiRiskType || entry.aiMediumRiskType || '').trim();
     if (!raw) {
       return null;
     }
+
+    const mappedStatus = this.mapSubtypeToStatus(raw);
+    if (mappedStatus) {
+      return mappedStatus;
+    }
+
     return raw
       .split('_')
       .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  private mapSubtypeToStatus(subtype: string): string | null {
+    const normalized = subtype.trim().toUpperCase();
+    if (!normalized) {
+      return null;
+    }
+
+    const map: Record<string, string> = {
+      SUICIDAL_CRISIS: 'Suicidal',
+      BIPOLAR_EPISODE: 'Bipolar',
+      ANXIETY_DISTRESS: 'Anxiety',
+      DEPRESSIVE_MOOD: 'Depression',
+      STRESS_OVERLOAD: 'Stress',
+      PERSONALITY_DYSREGULATION: 'Personality disorder'
+    };
+
+    return map[normalized] || null;
   }
 
   private matchesAny(text: string, patterns: RegExp[]): boolean {

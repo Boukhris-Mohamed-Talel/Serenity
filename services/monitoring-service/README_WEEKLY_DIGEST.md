@@ -16,6 +16,26 @@ This feature adds an automatic weekly portfolio recap for doctors.
 
 `src/main/resources/application.yml`
 
+The service now loads local secrets from `.env` in this folder via:
+
+- `spring.config.import=optional:file:.env[.properties]`
+
+Create local env file from template:
+
+```powershell
+cd C:\Users\Rayen\Desktop\pi\Serenity\services\monitoring-service
+Copy-Item .env.example .env
+```
+
+Important keys in `.env`:
+
+- `SERVER_PORT`
+- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`
+- `JWT_SECRET`
+- `MONITORING_AI_URL`, `MONITORING_AI_ENABLED`
+- `MONITORING_WEEKLY_DIGEST_CRON`, `MONITORING_WEEKLY_DIGEST_TIMEZONE`
+- `MONITORING_CLEANUP_CRON`, `MONITORING_CLEANUP_TIMEZONE`, `MONITORING_CLEANUP_RETENTION_DAYS`
+
 - `app.digest.cron` (default: `0 0 8 ? * MON`)
 - `app.digest.timezone` (default: `Africa/Tunis`)
 
