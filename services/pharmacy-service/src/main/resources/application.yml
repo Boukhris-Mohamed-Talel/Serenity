@@ -1,11 +1,13 @@
 server:
-  port: ${SERVER_PORT:8093}
+  port: ${SERVER_PORT}
 
 spring:
+  config:
+    import: optional:file:./.env[.properties],optional:file:./services/pharmacy-service/.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/pharmacy_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: root
-    password:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -17,27 +19,27 @@ spring:
         format_sql: true
   servlet:
     multipart:
-      enabled: true
-      max-file-size: 10MB
-      max-request-size: 30MB
+      enabled: ${SPRING_SERVLET_MULTIPART_ENABLED}
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE}
 
 app:
   upload:
-    dir: ${UPLOAD_DIR:uploads}
+    dir: ${UPLOAD_DIR}
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+    secret: ${JWT_SECRET}
   derbel-db:
-    url: ${DERBEL_DB_URL:jdbc:mysql://localhost:3306/medical_records_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DERBEL_DB_USERNAME:root}
-    password: ${DERBEL_DB_PASSWORD:}
+    url: ${DERBEL_DB_URL}
+    username: ${DERBEL_DB_USERNAME}
+    password: ${DERBEL_DB_PASSWORD}
   user-service:
-    base-url: ${USER_SERVICE_BASE_URL:http://localhost:8081}
-    internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:${INTERNAL_API_KEY:serenity-internal-key-dev}}
-    me-url: ${USER_SERVICE_ME_URL:http://localhost:8081/api/users/me}
-    admin-email: ${USER_SERVICE_ADMIN_EMAIL:}
-    admin-password: ${USER_SERVICE_ADMIN_PASSWORD:}
+    base-url: ${USER_SERVICE_BASE_URL}
+    internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY}
+    me-url: ${USER_SERVICE_ME_URL}
+    admin-email: ${USER_SERVICE_ADMIN_EMAIL}
+    admin-password: ${USER_SERVICE_ADMIN_PASSWORD}
   ai-service:
-    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8096}
-    internal-api-key: ${AI_SERVICE_INTERNAL_API_KEY:${INTERNAL_API_KEY:serenity-internal-key-dev}}
-    verify-cnopt-path: ${AI_SERVICE_VERIFY_CNOPT_PATH:/internal/pharmacy-applications/verify-cnopt}
-    verify-timeout-ms: ${AI_SERVICE_VERIFY_TIMEOUT_MS:180000}
+    base-url: ${AI_SERVICE_BASE_URL}
+    internal-api-key: ${AI_SERVICE_INTERNAL_API_KEY}
+    verify-cnopt-path: ${AI_SERVICE_VERIFY_CNOPT_PATH}
+    verify-timeout-ms: ${AI_SERVICE_VERIFY_TIMEOUT_MS}
