@@ -59,3 +59,12 @@ services/appointment-service/src/main/resources/application-mail-local.yml
 # Whisper AI — downloaded weights / generated sample data (keep out of git)
 services/whisper-ai-service/models/
 services/whisper-ai-service/data/
+
+services/whisper-ai-service/.env  
+services/monitoring-service/.env  
+services/pharmacy-service/.env   
+services/derbelmicroservice/.env   
+services/insurance-service/.env    
+services/appointment-service/.env   
+services/user-service/.env     
+
