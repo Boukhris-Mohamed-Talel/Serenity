@@ -4,8 +4,8 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * OAuth client for Google Calendar sync. Bind from {@code GOOGLE_CALENDAR_*} env vars
- * (see {@code application.properties}). Optional JSON path is filled by {@link GoogleCalendarCredentialsLoader}.
+ * OAuth client for Google Calendar sync. Prefer env vars; optional JSON path for local dev
+ * (see {@link GoogleCalendarCredentialsLoader}).
  */
 @Data
 @ConfigurationProperties(prefix = "app.google.calendar")
