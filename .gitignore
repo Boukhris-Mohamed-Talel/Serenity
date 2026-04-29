@@ -46,6 +46,7 @@ coverage/
 layoutlmv3_cnopt_v4_doc_status_output/
 layoutlmv3_cnopt_v4_ner_output/
 services/Doctors_service/src/main/resources/application-secrets.properties
+services/Doctors_service/.env
 
 # Google OAuth client downloads (never commit)
 client_secret*.json

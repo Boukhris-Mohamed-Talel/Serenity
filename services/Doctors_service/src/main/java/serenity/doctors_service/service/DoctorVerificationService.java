@@ -30,7 +30,9 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Autowired
     private DoctorVerificationRepository repository;
     private final String uploadDir = "uploads/";
-    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     private MailService mailService;
