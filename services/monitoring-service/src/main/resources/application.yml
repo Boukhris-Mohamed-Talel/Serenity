@@ -3,7 +3,8 @@ server:
 
 spring:
   config:
-    import: optional:file:.env[.properties]
+    # Works whether you run from the service folder or repo root.
+    import: optional:file:./.env[.properties],optional:file:./services/monitoring-service/.env[.properties]
 
   application:
     name: monitoring-service
