@@ -1,12 +1,12 @@
 server:
-  port: ${SERVER_PORT:8091}
+  port: ${SERVER_PORT}
 
 spring:
   config:
     import: optional:file:./.env[.properties],optional:file:./services/appointment-service/.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/appointments_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -19,42 +19,37 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
-  # SMTP (JavaMail) — not the Gmail API. Keep credentials in application-mail-local.yml or env MAIL_USERNAME / MAIL_PASSWORD.
-  # Do not use empty username/password here — that prevents optional application-mail-local.yml from applying.
-  # INTERNAL_API_KEY must match user-service for /api/internal/users/emails-by-ids.
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH}
           starttls:
-            enable: true
-            required: true
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE}
+            required: ${MAIL_SMTP_STARTTLS_REQUIRED}
           ssl:
-            trust: smtp.gmail.com
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+            trust: ${MAIL_SMTP_SSL_TRUST}
+          connectiontimeout: ${MAIL_SMTP_CONNECTION_TIMEOUT}
+          timeout: ${MAIL_SMTP_TIMEOUT}
+          writetimeout: ${MAIL_SMTP_WRITE_TIMEOUT}
 
 app:
   google:
     calendar:
-      enabled: ${GOOGLE_CALENDAR_ENABLED:true}
+      enabled: ${GOOGLE_CALENDAR_ENABLED}
       # Optional JSON path still read by GoogleCalendarCredentialsLoader if set:
       credentials-json-path: ${GOOGLE_CALENDAR_CREDENTIALS_JSON:}
-      # Must match Google Cloud Console → OAuth client → Authorized redirect URIs exactly
-      redirect-uri: ${GOOGLE_CALENDAR_REDIRECT_URI:http://localhost:4200/appointments/oauth/calendar}
+      redirect-uri: ${GOOGLE_CALENDAR_REDIRECT_URI}
   internal-api-key: ${INTERNAL_API_KEY:}
   user-service:
     # Same host as the SPA apiUrl gateway (8082) so lookups work when only the gateway exposes /api/users.
     # Use http://localhost:8081 if you run user-service without the gateway.
-    base-url: ${USER_SERVICE_URL:http://localhost:8082}
-    # Email lookup: direct user-service (8081) or gateway (8082) if it routes /api/internal/** (see API gateway config).
-    internal-base-url: ${USER_SERVICE_INTERNAL_URL:http://localhost:8081}
+    base-url: ${USER_SERVICE_URL}
+    internal-base-url: ${USER_SERVICE_INTERNAL_URL}
   jwt:
     secret: ${JWT_SECRET:}
   teleconsultation:
-    default-duration-minutes: ${TELECONSULT_DEFAULT_MINUTES:30}
-    jitsi-room-prefix: ${JITSI_ROOM_PREFIX:serenity-appt}
+    default-duration-minutes: ${TELECONSULT_DEFAULT_MINUTES}
+    jitsi-room-prefix: ${JITSI_ROOM_PREFIX}

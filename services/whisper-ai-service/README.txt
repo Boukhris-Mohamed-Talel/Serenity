@@ -5,8 +5,9 @@ Serenity Whisper AI (local inference, not OpenAI cloud)
    .venv\Scripts\activate
    pip install -r requirements.txt
 
-2) Download CTranslate2 Whisper weights (one-time, ~150MB for tiny multilingual):
-   python scripts/download_models.py
+2) Model source options:
+   - Preferred local folder (fast startup): python scripts/download_models.py
+   - Or rely on auto-download cache at runtime using WHISPER_MODEL_NAME=tiny (configured in .env)
 
 3) Versioned ASR mini-corpus (visible in Git under dataset/):
    - Already contains manifest + audio/ after clone; to regenerate:

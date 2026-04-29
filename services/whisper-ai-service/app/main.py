@@ -59,16 +59,20 @@ def _get_model() -> WhisperModel:
     global _model
     if _model is not None:
         return _model
-    model_dir = Path(os.environ.get("WHISPER_MODEL_DIR", str(DEFAULT_MODEL_DIR)))
-    if not model_dir.exists():
-        raise HTTPException(
-            status_code=503,
-            detail="Model directory missing. Run scripts/download_models.py",
-        )
+
+    # Prefer explicit/local model dirs first (including notebook-friendly location).
+    configured_model_dir = Path(os.environ.get("WHISPER_MODEL_DIR", str(DEFAULT_MODEL_DIR)))
+    notebook_model_dir = ROOT / "notebooks" / "models" / "faster-whisper-tiny"
+    model_dir_candidates = [configured_model_dir, DEFAULT_MODEL_DIR, notebook_model_dir]
+    resolved_model_dir = next((p for p in model_dir_candidates if p.exists()), None)
+
+    # If no local dir exists, fallback to a model name so faster-whisper can auto-download to cache.
+    model_name = os.environ.get("WHISPER_MODEL_NAME", "tiny").strip() or "tiny"
+    model_source = str(resolved_model_dir) if resolved_model_dir is not None else model_name
     device = os.environ.get("WHISPER_DEVICE", "cpu")
     compute = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
-    logger.info("load model dir=%s device=%s compute=%s", model_dir, device, compute)
-    _model = WhisperModel(str(model_dir), device=device, compute_type=compute)
+    logger.info("load model source=%s device=%s compute=%s", model_source, device, compute)
+    _model = WhisperModel(model_source, device=device, compute_type=compute)
     return _model
 
 
@@ -155,15 +159,19 @@ class TranslateResponse(BaseModel):
 
 @app.get("/api/whisper/health")
 def health():
-    model_dir = Path(os.environ.get("WHISPER_MODEL_DIR", str(DEFAULT_MODEL_DIR)))
+    configured_model_dir = Path(os.environ.get("WHISPER_MODEL_DIR", str(DEFAULT_MODEL_DIR)))
+    notebook_model_dir = ROOT / "notebooks" / "models" / "faster-whisper-tiny"
+    model_dir_candidates = [configured_model_dir, DEFAULT_MODEL_DIR, notebook_model_dir]
+    resolved_model_dir = next((p for p in model_dir_candidates if p.exists()), None)
+    fallback_model_name = os.environ.get("WHISPER_MODEL_NAME", "tiny").strip() or "tiny"
     lara_ok = bool(
         os.environ.get("LARA_ACCESS_KEY_ID", "").strip()
         and os.environ.get("LARA_ACCESS_KEY_SECRET", "").strip()
     )
     return {
         "status": "ok",
-        "model_dir": str(model_dir),
-        "model_present": model_dir.exists(),
+        "model_source": str(resolved_model_dir) if resolved_model_dir is not None else fallback_model_name,
+        "model_present": resolved_model_dir is not None,
         "lara_configured": lara_ok,
     }
 
