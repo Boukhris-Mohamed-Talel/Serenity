@@ -17,7 +17,7 @@ Serenity Whisper AI (local inference, not OpenAI cloud)
    - Legacy alias: python scripts/setup_sample_dataset.py  (same as build_versioned_dataset)
 
 4) Run API (default port 5002):
-   python -m uvicorn app.main:app --host 0.0.0.0 --port 5002
+   python -m uvicorn app.main:app --host 0.0.0.0 --port 5002 --env-file .env
 
 5) Gateway routes /api/whisper/** to this service; Angular calls http://localhost:8082/api/whisper/...
 

@@ -3,11 +3,11 @@ server:
 
 spring:
   config:
-    import: optional:classpath:application-google-local.yml, optional:classpath:application-mail-local.yml
+    import: optional:file:./.env[.properties],optional:file:./services/appointment-service/.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/appointments_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: root
-    password:
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -42,14 +42,11 @@ app:
   google:
     calendar:
       enabled: ${GOOGLE_CALENDAR_ENABLED:true}
-      # client-id / client-secret: use application-google-local.yml (imported above) or env:
-      #   APP_GOOGLE_CALENDAR_CLIENT_ID, APP_GOOGLE_CALENDAR_CLIENT_SECRET
       # Optional JSON path still read by GoogleCalendarCredentialsLoader if set:
       credentials-json-path: ${GOOGLE_CALENDAR_CREDENTIALS_JSON:}
       # Must match Google Cloud Console → OAuth client → Authorized redirect URIs exactly
       redirect-uri: ${GOOGLE_CALENDAR_REDIRECT_URI:http://localhost:4200/appointments/oauth/calendar}
-  # Default matches user-service so local dev resolves emails without exporting INTERNAL_API_KEY.
-  internal-api-key: ${INTERNAL_API_KEY:serenity-internal-key-dev}
+  internal-api-key: ${INTERNAL_API_KEY:}
   user-service:
     # Same host as the SPA apiUrl gateway (8082) so lookups work when only the gateway exposes /api/users.
     # Use http://localhost:8081 if you run user-service without the gateway.
@@ -57,7 +54,7 @@ app:
     # Email lookup: direct user-service (8081) or gateway (8082) if it routes /api/internal/** (see API gateway config).
     internal-base-url: ${USER_SERVICE_INTERNAL_URL:http://localhost:8081}
   jwt:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47
+    secret: ${JWT_SECRET:}
   teleconsultation:
     default-duration-minutes: ${TELECONSULT_DEFAULT_MINUTES:30}
     jitsi-room-prefix: ${JITSI_ROOM_PREFIX:serenity-appt}
