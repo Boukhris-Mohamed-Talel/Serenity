@@ -21,5 +21,12 @@ class BanMaintenanceSchedulerTest {
         scheduler.cleanupExpiredBans();
         verify(banMaintenanceService).unbanExpiredUsers();
     }
+
+    @Test
+    void cleanupExpiredBans_logsPathWhenCleanedPositive() {
+        when(banMaintenanceService.unbanExpiredUsers()).thenReturn(2);
+        scheduler.cleanupExpiredBans();
+        verify(banMaintenanceService).unbanExpiredUsers();
+    }
 }
 

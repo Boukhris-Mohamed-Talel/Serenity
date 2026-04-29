@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -152,6 +153,41 @@ class ClaimRiskScoringServiceImplTest {
         when(claimRiskModelClient.score(org.mockito.ArgumentMatchers.anyMap())).thenReturn(null);
 
         assertThrows(ResponseStatusException.class, () -> service.scoreClaim(100L));
+    }
+
+    @Test
+    void scoreClaim_whenNoOtherClaims_daysSinceLastIsNull() {
+        InsuranceClaim claim = InsuranceClaim.builder()
+                .id(50L)
+                .userId(7L)
+                .amount(10.0)
+                .reimbursementAmount(1.0)
+                .insuranceCompany("Insurance 1")
+                .insuranceGrade(1.0)
+                .filePaths(List.of())
+                .status(ClaimStatus.SUBMITTED)
+                .description("d")
+                .build();
+
+        ClaimRiskModelScoreResponse modelResp = new ClaimRiskModelScoreResponse();
+        modelResp.setRiskScore(10.0);
+        modelResp.setRiskBand("LOW");
+        modelResp.setTopReasons(List.of());
+
+        when(claimRepository.findById(50L)).thenReturn(Optional.of(claim));
+        when(ocrAuditRepository.findByClaimIdOrderByCreatedAtDesc(50L)).thenReturn(List.of());
+        when(claimRepository.countByUserId(7L)).thenReturn(1L);
+        when(claimRepository.countByUserIdAndStatus(7L, ClaimStatus.REJECTED)).thenReturn(0L);
+        when(claimRepository.countByUserIdAndClaimDateAfter(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.any(Date.class)))
+                .thenReturn(0L);
+        when(claimRepository.findByUserIdOrderByClaimDateDesc(7L)).thenReturn(List.of(claim));
+        when(claimRiskModelClient.score(org.mockito.ArgumentMatchers.anyMap())).thenReturn(modelResp);
+
+        ClaimRiskScoreResponseDTO dto = service.scoreClaim(50L);
+
+        assertNotNull(dto);
+        verify(claimRiskModelClient).score(payloadCaptor.capture());
+        assertThat(payloadCaptor.getValue().get("days_since_last_claim")).isNull();
     }
 }
 

@@ -112,6 +112,12 @@ class NotificationServiceImplTest {
     }
 
     @Test
+    void markAsRead_shouldThrowWhenNotificationMissing() {
+        when(notificationRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.markAsRead(99L, 10L));
+    }
+
+    @Test
     void markAsRead_shouldThrowWhenNotOwner() {
         InsuranceNotification n = InsuranceNotification.builder()
                 .id(1L)
