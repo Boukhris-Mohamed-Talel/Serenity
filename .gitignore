@@ -43,3 +43,4 @@ coverage/
 
 services/pharmacy-service/src/test/
 services/Doctors_service/src/main/resources/application-secrets.properties
+services/Doctors_service/.env

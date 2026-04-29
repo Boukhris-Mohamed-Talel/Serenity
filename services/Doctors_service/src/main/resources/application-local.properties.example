@@ -1,7 +1,0 @@
-# Copy this file to application-local.properties (same folder) OR set env vars instead.
-# application-local.properties is gitignored — do not commit real secrets.
-#
-# spring.datasource.password=7ot lpassword mte3ek postgres
-# spring.security.user.name=admin
-# spring.security.user.password=YOUR_BASIC_AUTH_PASSWORD
-#
