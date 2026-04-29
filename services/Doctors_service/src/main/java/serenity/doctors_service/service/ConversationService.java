@@ -23,16 +23,17 @@ public class ConversationService implements IConversationService {
 
     private final ConversationRepository conversationRepository;
     private final ConversationMapper conversationMapper;
+    private final RestTemplate restTemplate;
+    private final MessageRepository messageRepository;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private MessageRepository messageRepository;
-
-    public ConversationService(ConversationRepository conversationRepository, ConversationMapper conversationMapper) {
+    public ConversationService(ConversationRepository conversationRepository,
+                               ConversationMapper conversationMapper,
+                               RestTemplate restTemplate,
+                               MessageRepository messageRepository) {
         this.conversationRepository = conversationRepository;
         this.conversationMapper = conversationMapper;
+        this.restTemplate = restTemplate;
+        this.messageRepository = messageRepository;
     }
 
     @Override
