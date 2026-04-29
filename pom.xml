@@ -31,7 +31,21 @@
           So we measure coverage on service code only (across all microservices).
         -->
         <sonar.coverage.inclusions>**/service/**</sonar.coverage.inclusions>
-        <sonar.coverage.exclusions>**/*Application.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>
+            **/*Application.java,
+            **/controller/**,
+            **/dto/**,
+            **/entity/**,
+            **/repository/**,
+            **/config/**,
+            **/security/**,
+            **/exception/**,
+            **/mapper/**,
+            **/generated/**,
+            **/service/**/*Payload*.java,
+            **/service/**/*Mapper*.java,
+            **/service/**/*Client*.java
+        </sonar.coverage.exclusions>
         <sonar.java.binaries>**/target/classes</sonar.java.binaries>
 
     </properties>
