@@ -16,9 +16,22 @@
         <!-- Default: CI/terminal environment variable -->
         <!--suppress UnresolvedMavenProperty -->
         <sonar.token>${env.SONAR_TOKEN}</sonar.token>
-        <sonar.coverage.jacoco.xmlReportPaths>
-            ${maven.multiModuleProjectDirectory}/**/target/site/jacoco/jacoco.xml
-        </sonar.coverage.jacoco.xmlReportPaths>
+        <!--
+          IMPORTANT:
+          Do NOT use a repo-wide glob here (e.g. **/target/site/jacoco/jacoco.xml).
+          In multi-module analysis that makes each module import other modules' coverage,
+          producing "File X.java not found in project sources" warnings and wrong coverage.
+
+          Using a relative path makes Sonar resolve it per-module (module baseDir).
+        -->
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
+        <!--
+          Per professor requirement we only write tests for the service layer.
+          So we measure coverage on service code only (across all microservices).
+        -->
+        <sonar.coverage.inclusions>**/service/**</sonar.coverage.inclusions>
+        <sonar.coverage.exclusions>**/*Application.java</sonar.coverage.exclusions>
         <sonar.java.binaries>**/target/classes</sonar.java.binaries>
 
     </properties>

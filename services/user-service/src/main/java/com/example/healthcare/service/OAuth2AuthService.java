@@ -71,7 +71,7 @@ public class OAuth2AuthService {
         return buildAuthResponse(user);
     }
 
-    private GoogleIdToken.Payload verifyGoogleToken(String idTokenString) {
+    GoogleIdToken.Payload verifyGoogleToken(String idTokenString) {
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(), GsonFactory.getDefaultInstance())
@@ -89,7 +89,7 @@ public class OAuth2AuthService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> verifyFacebookToken(String accessToken) {
+    Map<String, Object> verifyFacebookToken(String accessToken) {
         RestTemplate restTemplate = new RestTemplate();
         String url = "https://graph.facebook.com/me?fields=id,email,first_name,last_name&access_token=" + accessToken;
         try {
