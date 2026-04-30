@@ -60,6 +60,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponseDTO createProduct(ProductUpsertRequestDTO request) {
+        Integer stock = resolveStockQuantity(request.getType(), request.getStockQuantity());
         Product product = Product.builder()
                 .name(request.getName().trim())
                 .description(request.getDescription().trim())
@@ -68,10 +69,11 @@ public class ProductServiceImpl implements ProductService {
                 .price(request.getPrice())
                 .active(request.getActive())
                 .imageUrl(request.getImageUrl())
-            .previewable(request.getPreviewable())
-            .previewType(request.getPreviewType())
-            .previewUrl(request.getPreviewUrl())
-            .contentUrl(request.getContentUrl())
+                .previewable(request.getPreviewable())
+                .previewType(request.getPreviewType())
+                .previewUrl(request.getPreviewUrl())
+                .contentUrl(request.getContentUrl())
+                .stockQuantity(stock)
                 .build();
 
         return toResponse(productRepository.save(product));
@@ -92,6 +94,7 @@ public class ProductServiceImpl implements ProductService {
         product.setPreviewType(request.getPreviewType());
         product.setPreviewUrl(request.getPreviewUrl());
         product.setContentUrl(request.getContentUrl());
+        product.setStockQuantity(resolveStockQuantity(request.getType(), request.getStockQuantity()));
         return toResponse(productRepository.save(product));
     }
 
@@ -105,6 +108,19 @@ public class ProductServiceImpl implements ProductService {
     private Product findProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id=" + id));
+    }
+
+    private Integer resolveStockQuantity(ProductType type, Integer requested) {
+        if (type == ProductType.DIGITAL) {
+            return null;
+        }
+        if (requested == null) {
+            throw new IllegalArgumentException("Physical products require a stock quantity (0 or more).");
+        }
+        if (requested < 0) {
+            throw new IllegalArgumentException("Stock quantity cannot be negative.");
+        }
+        return requested;
     }
 
     private ProductResponseDTO toResponse(Product product) {
@@ -121,6 +137,7 @@ public class ProductServiceImpl implements ProductService {
                 .previewType(product.getPreviewType())
                 .previewUrl(product.getPreviewUrl())
                 .contentUrl(product.getContentUrl())
+                .stockQuantity(product.getStockQuantity())
                 .build();
     }
 }

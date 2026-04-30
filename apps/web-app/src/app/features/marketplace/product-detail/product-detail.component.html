@@ -1,12 +1,35 @@
-<section class="container detail-page" *ngIf="loading">
+<section class="mp-root container detail-page" *ngIf="loading">
   <div class="loading-panel card">
     <span class="spinner" aria-hidden="true"></span>
     <p>Loading product…</p>
   </div>
 </section>
 
-<section class="container detail-page" *ngIf="!loading && product as p">
+<section class="mp-root container detail-page" *ngIf="!loading && product as p">
   <button class="btn btn-link" type="button" routerLink="/marketplace">Back to marketplace</button>
+
+  <div class="detail-toolbar">
+    <button type="button" class="btn btn-outline btn-sm" (click)="openAccessExplainer()">How access works</button>
+    <button type="button" class="btn btn-outline btn-sm" [class.btn-primary]="isInCompare()" (click)="toggleCompare()">
+      {{ isInCompare() ? 'In compare' : 'Compare' }}
+    </button>
+  </div>
+
+  <div class="resume-banner" *ngIf="showResumeBanner">
+    <p>Continue where you left off on this device.</p>
+    <button type="button" class="btn btn-primary btn-sm" (click)="continuePreview()">Resume preview</button>
+    <button type="button" class="btn btn-link btn-sm" (click)="dismissResume()">Dismiss</button>
+  </div>
+
+  <section class="ux-strip-wrap" *ngIf="recentOthers.length > 0">
+    <h3 class="ux-strip-title">Recently viewed</h3>
+    <div class="ux-strip">
+      <a *ngFor="let rp of recentOthers" class="ux-strip__item" [routerLink]="['/marketplace/product', rp.id]">
+        <img [src]="rp.imageUrl || 'assets/logo.png'" [alt]="rp.name" />
+        <span>{{ rp.name }}</span>
+      </a>
+    </div>
+  </section>
 
   <div class="detail-card">
     <img [src]="p.imageUrl || 'assets/logo.png'" [alt]="p.name" />
@@ -49,16 +72,36 @@
       </div>
 
       <div class="order-row" *ngIf="!usesPreviewFlow">
-        <label class="qty">
+        <p class="stock-note" *ngIf="p.type === 'PHYSICAL'">
+          <ng-container *ngIf="physicalInStock">In stock: <strong>{{ p.stockQuantity }}</strong> available.</ng-container>
+          <ng-container *ngIf="!physicalInStock">This item is currently <strong>out of stock</strong>.</ng-container>
+        </p>
+        <label class="qty" *ngIf="physicalInStock || p.type !== 'PHYSICAL'">
           <span>Quantity</span>
-          <input type="number" min="1" [(ngModel)]="quantity" />
+          <input
+            type="number"
+            min="1"
+            [max]="maxBuyQuantity"
+            [(ngModel)]="quantity"
+            (ngModelChange)="clampQuantityToStock()" />
         </label>
-        <button class="btn btn-primary" type="button" (click)="addToCart()">Add to cart</button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="p.type === 'PHYSICAL' && !physicalInStock"
+          (click)="addToCart()">
+          {{ p.type === 'PHYSICAL' && !physicalInStock ? 'Unavailable' : 'Add to cart' }}
+        </button>
       </div>
 
       <div class="unlock-state" *ngIf="isUnlocked">
         You have full access. Continue at your own pace.
       </div>
+
+      <p class="entitlement-note" *ngIf="isDigitalArticle && isUnlocked">
+        <span class="pill pill-soft">Entitled</span>
+        Use this signed-in session to open content in the app. Downloads are not attached in this preview build; your access is confirmed on the server.
+      </p>
 
       <div class="unlock-error" *ngIf="unlockError">{{ unlockError }}</div>
       <div class="unlock-error" *ngIf="mediaError">{{ mediaError }}</div>
@@ -66,11 +109,33 @@
       <section class="preview-card" *ngIf="usesPreviewFlow && experienceType === 'PODCAST'">
         <h3>Audio preview</h3>
         <p>Preview is limited to {{ previewLimitSeconds }} seconds. Seeking past the limit is disabled.</p>
+        <div class="media-advanced" *ngIf="!isUnlocked">
+          <label>
+            Speed
+            <select [(ngModel)]="playbackRate" (ngModelChange)="applyPlaybackRate()">
+              <option [ngValue]="0.75">0.75×</option>
+              <option [ngValue]="1">1×</option>
+              <option [ngValue]="1.25">1.25×</option>
+              <option [ngValue]="1.5">1.5×</option>
+            </select>
+          </label>
+          <label>
+            Sleep timer
+            <select [(ngModel)]="sleepTimerMin" (ngModelChange)="onSleepTimerChange()">
+              <option [ngValue]="0">Off</option>
+              <option [ngValue]="5">5 min</option>
+              <option [ngValue]="10">10 min</option>
+              <option [ngValue]="15">15 min</option>
+              <option [ngValue]="30">30 min</option>
+            </select>
+          </label>
+        </div>
         <audio
           #previewAudio
           [src]="getPodcastPreviewUrl(p.id)"
           controls
           (play)="onAudioPlay()"
+          (pause)="onAudioPause()"
           (timeupdate)="onAudioTimeUpdate()"
           (seeking)="onAudioSeeking()"
           (ended)="onAudioEnded()"

@@ -18,4 +18,10 @@ public class ProductReviewDTO {
     private String reviewText;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    /** Count of signed-in users who marked this review helpful. */
+    private int helpfulCount;
+    /** True when this reviewer has a PAID order that includes this product. */
+    private boolean verifiedPurchase;
+    /** Present for the signed-in viewer: whether they already marked helpful. */
+    private boolean viewerMarkedHelpful;
 }

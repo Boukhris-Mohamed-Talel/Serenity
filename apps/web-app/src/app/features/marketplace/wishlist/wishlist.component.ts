@@ -74,30 +74,41 @@ export class WishlistComponent implements OnInit {
 
   addToCart(productId: number): void {
     const item = this.wishlistItems.find(w => w.productId === productId);
-    if (item) {
-      const product: MarketplaceProduct = {
-        id: item.productId,
-        name: item.productName,
-        description: 'Saved wishlist item',
-        category: 'SELF_CARE',
-        type: item.productType ?? 'PHYSICAL',
-        price: item.productPrice,
-        active: true,
-        imageUrl: item.productImageUrl,
-        previewable: Boolean(item.productPreviewable),
-        previewType: undefined,
-        previewUrl: undefined,
-        contentUrl: undefined
-      };
-
-      if (!this.marketplaceService.isCartEligible(product)) {
-        this.viewProduct(productId);
-        return;
-      }
-
-      this.marketplaceService.addToCart(product);
-      this.router.navigate(['/marketplace/cart']);
+    if (!item) {
+      return;
     }
+    const stub: MarketplaceProduct = {
+      id: item.productId,
+      name: item.productName,
+      description: 'Saved wishlist item',
+      category: 'SELF_CARE',
+      type: item.productType ?? 'PHYSICAL',
+      price: item.productPrice,
+      active: true,
+      imageUrl: item.productImageUrl,
+      previewable: Boolean(item.productPreviewable),
+      previewType: undefined,
+      previewUrl: undefined,
+      contentUrl: undefined
+    };
+
+    if (!this.marketplaceService.isCartEligible(stub)) {
+      this.viewProduct(productId);
+      return;
+    }
+
+    this.marketplaceService.getProductById(productId).subscribe({
+      next: product => {
+        if (!this.marketplaceService.addToCart(product, 1)) {
+          this.errorMessage = 'Could not add to cart — the item may be out of stock.';
+          return;
+        }
+        this.router.navigate(['/marketplace/cart']);
+      },
+      error: () => {
+        this.errorMessage = 'Could not load product details to add to cart.';
+      }
+    });
   }
 
   canAddToCart(item: WishlistItemView): boolean {

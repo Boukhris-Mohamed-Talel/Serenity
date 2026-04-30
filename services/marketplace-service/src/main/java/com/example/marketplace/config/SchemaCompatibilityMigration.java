@@ -27,6 +27,37 @@ public class SchemaCompatibilityMigration {
         alterColumnSafely("ALTER TABLE article_products MODIFY COLUMN preview_type VARCHAR(64) NULL");
     }
 
+    @PostConstruct
+    public void migrateReviewHelpfulVotesTable() {
+        try {
+            jdbcTemplate.execute(
+                    "CREATE TABLE IF NOT EXISTS article_review_helpful_votes ("
+                            + "id BIGINT AUTO_INCREMENT PRIMARY KEY,"
+                            + "review_id BIGINT NOT NULL,"
+                            + "user_id BIGINT NOT NULL,"
+                            + "created_at DATETIME NOT NULL,"
+                            + "UNIQUE KEY uk_article_review_helpful (review_id, user_id),"
+                            + "CONSTRAINT fk_article_review_helpful_review FOREIGN KEY (review_id) "
+                            + "REFERENCES article_product_reviews (id) ON DELETE CASCADE"
+                            + ")");
+            log.info("Schema compatibility: article_review_helpful_votes table ensured");
+        } catch (Exception ex) {
+            log.debug("Review helpful votes table migration skipped: {}", ex.getMessage());
+        }
+    }
+
+    @PostConstruct
+    public void migrateProductStockQuantity() {
+        alterColumnSafely("ALTER TABLE article_products ADD COLUMN stock_quantity INT NULL");
+        try {
+            jdbcTemplate.update("UPDATE article_products SET stock_quantity = NULL WHERE UPPER(TRIM(type)) = 'DIGITAL'");
+            jdbcTemplate.update(
+                    "UPDATE article_products SET stock_quantity = 0 WHERE stock_quantity IS NULL AND UPPER(TRIM(type)) = 'PHYSICAL'");
+        } catch (Exception ex) {
+            log.debug("Stock quantity backfill skipped: {}", ex.getMessage());
+        }
+    }
+
     private void alterColumnSafely(String sql) {
         try {
             jdbcTemplate.execute(sql);

@@ -59,6 +59,10 @@ public class Product {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    /** Units in stock for physical items (non-null, non-negative). Null for digital (unlimited). */
+    @Column(name = "stock_quantity")
+    private Integer stockQuantity;
+
     // Cascade delete relationships - allows deleting products even if they have orders/reviews/wishlist entries
     @OneToMany(mappedBy = "product", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<MarketplaceOrderItem> orderItems;

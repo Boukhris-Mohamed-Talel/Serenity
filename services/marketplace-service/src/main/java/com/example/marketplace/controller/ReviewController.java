@@ -37,9 +37,20 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ProductReviewDTO>> getProductReviews(@PathVariable Long productId) {
-        List<ProductReviewDTO> reviews = reviewService.getProductReviews(productId);
+    public ResponseEntity<List<ProductReviewDTO>> getProductReviews(
+            @PathVariable Long productId,
+            @RequestHeader(value = "userId", required = false) Long viewerUserId) {
+        List<ProductReviewDTO> reviews = reviewService.getProductReviews(productId, viewerUserId);
         return ResponseEntity.ok(reviews);
+    }
+
+    @PostMapping("/{reviewId}/helpful")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ProductReviewDTO> markHelpful(
+            @PathVariable Long reviewId,
+            @RequestHeader("userId") Long userId) {
+        ProductReviewDTO dto = reviewService.markReviewHelpful(reviewId, userId);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/product/{productId}/average")

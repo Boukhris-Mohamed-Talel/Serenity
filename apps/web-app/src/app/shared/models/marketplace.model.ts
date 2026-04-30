@@ -2,6 +2,22 @@ export type MarketplaceProductType = 'PHYSICAL' | 'DIGITAL';
 export type PreviewContentType = 'VIDEO' | 'BOOK' | 'AUDIO';
 export type MarketplaceOrderStatus = 'CREATED' | 'PAID' | 'CANCELLED';
 
+export type MarketplaceSort = 'newest' | 'price_asc' | 'price_desc' | 'name';
+
+export interface ProductReview {
+  id: number;
+  productId: number;
+  userId: number;
+  userEmail: string;
+  rating: number;
+  reviewText: string;
+  createdAt: string;
+  updatedAt?: string;
+  helpfulCount: number;
+  verifiedPurchase: boolean;
+  viewerMarkedHelpful: boolean;
+}
+
 export type MarketplaceProductCategory =
   | 'SELF_CARE'
   | 'SLEEP_SUPPORT'
@@ -23,6 +39,8 @@ export interface MarketplaceProduct {
   previewType?: PreviewContentType;
   previewUrl?: string;
   contentUrl?: string;
+  /** Physical stock. Omitted or null for digital (unlimited). */
+  stockQuantity?: number | null;
 }
 
 export interface MarketplaceProductUpsertRequest {
@@ -37,6 +55,8 @@ export interface MarketplaceProductUpsertRequest {
   previewUrl?: string;
   contentUrl?: string;
   active: boolean;
+  /** Required for physical (>= 0). Omit for digital. */
+  stockQuantity?: number | null;
 }
 
 export interface CartItem {

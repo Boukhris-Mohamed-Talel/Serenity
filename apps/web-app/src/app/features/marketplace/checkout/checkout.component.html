@@ -1,8 +1,12 @@
-<section class="container checkout-page">
+<section class="mp-root container checkout-page">
   <h2>Request order</h2>
   <p class="lead">No online payment yet. Submit your cart and we will confirm your order.</p>
 
   <p class="error" *ngIf="error">{{ error }}</p>
+
+  <ul class="stock-warn" *ngIf="stockWarnings.length > 0">
+    <li *ngFor="let w of stockWarnings">{{ w }}</li>
+  </ul>
 
   <div class="success" *ngIf="successOrder as order">
     <h3>Request submitted</h3>
@@ -23,6 +27,14 @@
   </div>
 
   <form [formGroup]="checkoutForm" (ngSubmit)="submit()" *ngIf="!successOrder && !isCartEmpty">
+    <div class="address-book card" *ngIf="addressBook.length > 0">
+      <label for="addrPick">Address book</label>
+      <select id="addrPick" (change)="applySavedAddress($event)">
+        <option value="">Insert a saved address…</option>
+        <option *ngFor="let a of addressBook" [value]="a.text">{{ a.label }}</option>
+      </select>
+    </div>
+
     <label for="shippingAddress">Delivery / contact details</label>
     <textarea id="shippingAddress" rows="4" formControlName="shippingAddress"></textarea>
     <small class="error" *ngIf="shippingAddressControl.touched && shippingAddressControl.hasError('required')">
@@ -34,6 +46,11 @@
     <small class="error" *ngIf="shippingAddressControl.touched && shippingAddressControl.hasError('maxlength')">
       Must be 500 characters or less.
     </small>
+
+    <div class="save-addr-row">
+      <input type="text" [(ngModel)]="newAddressLabel" placeholder="Label (e.g. Home)" [ngModelOptions]="{standalone: true}" />
+      <button type="button" class="btn btn-outline" (click)="saveShippingToBook()">Save address to this device</button>
+    </div>
 
     <label for="customerNote">Note (optional)</label>
     <textarea id="customerNote" rows="3" formControlName="customerNote"></textarea>

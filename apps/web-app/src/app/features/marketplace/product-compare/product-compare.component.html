@@ -1,0 +1,46 @@
+<section class="mp-root container compare-page">
+  <button class="btn btn-link" type="button" routerLink="/marketplace">Back to marketplace</button>
+  <h1>Compare products</h1>
+  <p class="lead">Up to three items side by side — price, format, preview, and who they suit best.</p>
+
+  <p *ngIf="loading">Loading…</p>
+
+  <div class="empty" *ngIf="!loading && products.length === 0">
+    <p>Nothing selected yet. Use “Compare” on catalog cards, then return here.</p>
+    <a routerLink="/marketplace" class="btn btn-primary">Browse</a>
+  </div>
+
+  <div class="compare-actions" *ngIf="!loading && products.length > 0">
+    <button type="button" class="btn btn-outline" (click)="clear()">Clear all</button>
+  </div>
+
+  <div class="compare-grid" *ngIf="!loading && products.length > 0">
+    <article class="compare-card" *ngFor="let p of products">
+      <button type="button" class="compare-card__remove" (click)="remove(p.id)" aria-label="Remove from compare">×</button>
+      <img [src]="p.imageUrl || 'assets/logo.png'" [alt]="p.name" />
+      <h2>{{ p.name }}</h2>
+      <p class="price">{{ p.price | currency:'TND ' }}</p>
+      <dl>
+        <div>
+          <dt>Type</dt>
+          <dd>{{ p.type === 'DIGITAL' ? 'Digital' : 'Physical' }}</dd>
+        </div>
+        <div>
+          <dt>Category</dt>
+          <dd>{{ categoryLabel(p.category) }}</dd>
+        </div>
+        <div>
+          <dt>Preview</dt>
+          <dd>{{ previewSummary(p) }}</dd>
+        </div>
+        <div>
+          <dt>Best for</dt>
+          <dd>
+            <span class="tag" *ngFor="let t of bestFor(p)">{{ t }}</span>
+          </dd>
+        </div>
+      </dl>
+      <a class="btn btn-secondary" [routerLink]="['/marketplace/product', p.id]">Open</a>
+    </article>
+  </div>
+</section>

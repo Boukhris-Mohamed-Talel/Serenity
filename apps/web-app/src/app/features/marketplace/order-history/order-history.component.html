@@ -1,4 +1,4 @@
-<section class="container history-page">
+<section class="mp-root container history-page">
   <div class="history-hero">
     <h2>My orders</h2>
     <p>Track requests and confirmations. Online payment is not enabled yet.</p>
@@ -64,6 +64,20 @@
       </div>
 
       <div class="order-details" *ngIf="expandedOrderId === order.id">
+        <p class="eta-note">{{ confirmationEtaNote() }}</p>
+        <ol class="order-timeline" aria-label="Order progress">
+          <li class="done"><span>Request received</span></li>
+          <li
+            [class.done]="order.status === 'PAID'"
+            [class.current]="order.status === 'CREATED'"
+            [class.bad]="order.status === 'CANCELLED'">
+            <span *ngIf="order.status !== 'CANCELLED'">Team review</span>
+            <span *ngIf="order.status === 'CANCELLED'">Stopped (cancelled)</span>
+          </li>
+          <li class="done" *ngIf="order.status === 'PAID'"><span>Confirmed — content available per product</span></li>
+          <li class="pending" *ngIf="order.status === 'CREATED'"><span>Confirmation pending</span></li>
+        </ol>
+
         <div class="meta-grid">
           <p *ngIf="order.paymentAttempt?.message"><span>Note</span><strong>{{ order.paymentAttempt?.message }}</strong></p>
           <p><span>Reference</span><strong>{{ order.paymentAttempt?.reference || 'N/A' }}</strong></p>

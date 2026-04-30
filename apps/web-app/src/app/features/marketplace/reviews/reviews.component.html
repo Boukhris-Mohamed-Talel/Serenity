@@ -75,11 +75,24 @@
       <p>No reviews yet. Be the first to review!</p>
     </div>
 
+    <div class="review-sort" *ngIf="!loading && reviews.length > 0">
+      <label for="reviewSort">Sort reviews</label>
+      <select id="reviewSort" [(ngModel)]="reviewSort">
+        <option value="recent">Newest</option>
+        <option value="rating_high">Highest rating</option>
+        <option value="rating_low">Lowest rating</option>
+        <option value="helpful">Most helpful</option>
+      </select>
+    </div>
+
     <div *ngIf="!loading && reviews.length > 0" class="review-items">
-      <div *ngFor="let review of reviews" class="review-item">
+      <div *ngFor="let review of sortedReviews" class="review-item">
         <div class="review-header">
           <div class="reviewer-info">
-            <h6>{{ review.userEmail }}</h6>
+            <h6>
+              {{ review.userEmail }}
+              <span class="verified-pill" *ngIf="review.verifiedPurchase">Verified purchase</span>
+            </h6>
             <p class="review-rating">
               <span class="stars">
                 <ng-container *ngFor="let star of getRatingArray(review.rating)">
@@ -96,6 +109,17 @@
 
         <div class="review-text">
           <p>{{ review.reviewText }}</p>
+        </div>
+
+        <div class="review-helpful">
+          <button
+            type="button"
+            class="btn btn-outline btn-sm"
+            [disabled]="!authService.isLoggedIn() || review.viewerMarkedHelpful"
+            (click)="markHelpful(review)">
+            {{ review.viewerMarkedHelpful ? 'You marked helpful' : 'Helpful' }}
+            <span class="helpful-count" *ngIf="review.helpfulCount">({{ review.helpfulCount }})</span>
+          </button>
         </div>
 
         <div class="review-actions" *ngIf="isUserReview(review.userId)">

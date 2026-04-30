@@ -10,16 +10,20 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { OrderHistoryComponent } from './order-history/order-history.component';
 import { WishlistComponent } from './wishlist/wishlist.component';
 import { ReviewsComponent } from './reviews/reviews.component';
+import { MarketplaceLayoutComponent } from './marketplace-layout/marketplace-layout.component';
+import { ProductCompareComponent } from './product-compare/product-compare.component';
 
 @NgModule({
   declarations: [
+    MarketplaceLayoutComponent,
     ProductListComponent,
     ProductDetailComponent,
     CartComponent,
     CheckoutComponent,
     OrderHistoryComponent,
     WishlistComponent,
-    ReviewsComponent
+    ReviewsComponent,
+    ProductCompareComponent
   ],
   imports: [
     CommonModule,

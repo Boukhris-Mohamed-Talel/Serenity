@@ -92,6 +92,10 @@ export class OrderHistoryComponent implements OnInit {
     this.router.navigate(['/marketplace/product', productId]);
   }
 
+  confirmationEtaNote(): string {
+    return 'Most requests are confirmed within 1–3 business days. You will see status updates here.';
+  }
+
   statusLabel(status: 'ALL' | MarketplaceOrderStatus): string {
     if (status === 'ALL') {
       return 'All';

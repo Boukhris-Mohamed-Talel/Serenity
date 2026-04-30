@@ -50,4 +50,7 @@ public class ProductUpsertRequestDTO {
 
     @NotNull
     private Boolean active;
+
+    /** Required for physical products (>= 0). Ignored for digital (stored as null). */
+    private Integer stockQuantity;
 }

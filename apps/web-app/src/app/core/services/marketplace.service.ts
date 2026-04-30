@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, forkJoin, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CartItem,
@@ -12,6 +12,7 @@ import {
   MarketplaceProductUpsertRequest,
   MarketplaceOrderStatus,
   OrderStatusUpdateRequest,
+  ProductReview,
   QuizRecommendationRequest,
   RecommendationResponse
 } from '../../shared/models/marketplace.model';
@@ -132,22 +133,52 @@ export class MarketplaceService {
     );
   }
 
-  addToCart(product: MarketplaceProduct, quantity = 1): void {
+  /**
+   * Max units of this product the user may still add (physical: remaining stock; digital: large cap).
+   * @param alreadyInCart excludes the line being edited when used from cart UI.
+   */
+  maxOrderableQuantity(product: MarketplaceProduct, alreadyInCartForThisProduct: number): number {
+    if (product.type !== 'PHYSICAL') {
+      return 1_000_000;
+    }
+    const stock = product.stockQuantity ?? 0;
+    return Math.max(0, stock - alreadyInCartForThisProduct);
+  }
+
+  /** Returns false if nothing was added (e.g. out of stock). */
+  addToCart(product: MarketplaceProduct, quantity = 1): boolean {
     if (!this.isCartEligible(product)) {
-      return;
+      return false;
+    }
+    if (!Number.isFinite(quantity) || quantity < 1) {
+      return false;
     }
 
     const current = [...this.cartSubject.value];
     const existing = current.find(item => item.product.id === product.id);
+    const inCart = existing?.quantity ?? 0;
+    let newTotal = inCart + quantity;
+
+    if (product.type === 'PHYSICAL') {
+      const stock = product.stockQuantity ?? 0;
+      if (stock <= 0) {
+        return false;
+      }
+      newTotal = Math.min(newTotal, stock);
+      if (newTotal <= inCart) {
+        return false;
+      }
+    }
 
     if (existing) {
-      existing.quantity += quantity;
+      existing.quantity = newTotal;
     } else {
-      current.push({ product, quantity });
+      current.push({ product, quantity: newTotal });
     }
 
     this.cartSubject.next(current);
     this.persistCart();
+    return true;
   }
 
   isCartEligible(product: MarketplaceProduct): boolean {
@@ -155,11 +186,58 @@ export class MarketplaceService {
   }
 
   updateCartQuantity(productId: number, quantity: number): void {
-    const current = this.cartSubject.value
-      .map(item => item.product.id === productId ? { ...item, quantity } : item)
-      .filter(item => item.quantity > 0);
-    this.cartSubject.next(current);
+    let q = Math.floor(Number(quantity));
+    if (!Number.isFinite(q) || q < 1) {
+      q = 1;
+    }
+    const current = this.cartSubject.value.map(item => {
+      if (item.product.id !== productId) {
+        return item;
+      }
+      if (item.product.type === 'PHYSICAL') {
+        const stock = item.product.stockQuantity ?? 0;
+        if (stock <= 0) {
+          return { ...item, quantity: 0 };
+        }
+        q = Math.min(q, stock);
+      }
+      return { ...item, quantity: q };
+    });
+    const next = current.filter(item => item.quantity > 0);
+    this.cartSubject.next(next);
     this.persistCart();
+  }
+
+  /** Re-fetch catalog rows for cart lines so stockQuantity stays accurate after reload. */
+  refreshCartProductMeta(): Observable<void> {
+    const cart = this.cartSubject.value;
+    if (cart.length === 0) {
+      return of(undefined);
+    }
+    const ids = [...new Set(cart.map(i => i.product.id))];
+    return forkJoin(ids.map(id => this.getProductById(id))).pipe(
+      tap(products => {
+        const byId = new Map(products.map(p => [p.id, p]));
+        const next = cart.map(item => {
+          const fresh = byId.get(item.product.id);
+          if (!fresh) {
+            return item;
+          }
+          let qty = item.quantity;
+          if (fresh.type === 'PHYSICAL') {
+            const stock = fresh.stockQuantity ?? 0;
+            qty = Math.min(qty, Math.max(0, stock));
+            if (qty < 1) {
+              qty = 0;
+            }
+          }
+          return { product: fresh, quantity: qty };
+        }).filter(i => i.quantity > 0);
+        this.cartSubject.next(next);
+        this.persistCart();
+      }),
+      map(() => undefined)
+    );
   }
 
   removeFromCart(productId: number): void {
@@ -206,8 +284,12 @@ export class MarketplaceService {
     return this.http.post(`${this.API_URL}/reviews`, request);
   }
 
-  getProductReviews(productId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/reviews/product/${productId}`);
+  getProductReviews(productId: number): Observable<ProductReview[]> {
+    return this.http.get<ProductReview[]>(`${this.API_URL}/reviews/product/${productId}`);
+  }
+
+  markReviewHelpful(reviewId: number): Observable<ProductReview> {
+    return this.http.post<ProductReview>(`${this.API_URL}/reviews/${reviewId}/helpful`, {});
   }
 
   getAverageRating(productId: number): Observable<number> {

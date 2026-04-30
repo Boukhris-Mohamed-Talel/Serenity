@@ -2,6 +2,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ProductReview } from '../../../shared/models/marketplace.model';
+
+export type ReviewSort = 'recent' | 'rating_high' | 'rating_low' | 'helpful';
 
 @Component({
   selector: 'app-reviews',
@@ -11,7 +14,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 export class ReviewsComponent implements OnInit {
   @Input() productId: number | null = null;
 
-  reviews: any[] = [];
+  reviews: ProductReview[] = [];
+  reviewSort: ReviewSort = 'recent';
   averageRating = 0;
   loading = false;
   submitting = false;
@@ -23,7 +27,7 @@ export class ReviewsComponent implements OnInit {
 
   constructor(
     private marketplaceService: MarketplaceService,
-    private authService: AuthService,
+    readonly authService: AuthService,
     private fb: FormBuilder
   ) {
     this.reviewForm = this.fb.group({
@@ -46,14 +50,55 @@ export class ReviewsComponent implements OnInit {
 
     this.loading = true;
     this.marketplaceService.getProductReviews(this.productId).subscribe({
-      next: (reviews) => {
-        this.reviews = reviews;
+      next: reviews => {
+        this.reviews = (reviews ?? []).map(r => this.normalizeReview(r));
         this.loading = false;
       },
       error: () => {
         this.loading = false;
       }
     });
+  }
+
+  get sortedReviews(): ProductReview[] {
+    const list = [...this.reviews];
+    switch (this.reviewSort) {
+      case 'rating_high':
+        return list.sort((a, b) => b.rating - a.rating);
+      case 'rating_low':
+        return list.sort((a, b) => a.rating - b.rating);
+      case 'helpful':
+        return list.sort((a, b) => (b.helpfulCount ?? 0) - (a.helpfulCount ?? 0));
+      default:
+        return list.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+    }
+  }
+
+  markHelpful(review: ProductReview): void {
+    if (!this.authService.isLoggedIn()) {
+      this.errorMessage = 'Please sign in to mark reviews as helpful.';
+      return;
+    }
+    this.marketplaceService.markReviewHelpful(review.id).subscribe({
+      next: updated => {
+        const norm = this.normalizeReview(updated);
+        this.reviews = this.reviews.map(r => (r.id === norm.id ? norm : r));
+      },
+      error: () => {
+        this.errorMessage = 'Could not update helpful count right now.';
+      }
+    });
+  }
+
+  private normalizeReview(r: ProductReview): ProductReview {
+    return {
+      ...r,
+      helpfulCount: r.helpfulCount ?? 0,
+      verifiedPurchase: !!r.verifiedPurchase,
+      viewerMarkedHelpful: !!r.viewerMarkedHelpful
+    };
   }
 
   loadAverageRating(): void {

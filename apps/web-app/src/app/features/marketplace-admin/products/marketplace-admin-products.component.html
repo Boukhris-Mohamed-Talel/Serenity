@@ -35,19 +35,23 @@
 
   <!-- Products Table -->
   <div class="products-table-wrapper" *ngIf="!loading && products.length > 0">
+    <div class="table-meta">
+      <span class="table-range">Showing <strong>{{ rangeFrom }}–{{ rangeTo }}</strong> of {{ products.length }}</span>
+    </div>
     <table class="products-table">
       <thead>
         <tr>
           <th class="col-name">Product Name</th>
           <th class="col-category">Category</th>
           <th class="col-type">Type</th>
+          <th class="col-stock">Stock</th>
           <th class="col-price">Price</th>
           <th class="col-status">Status</th>
           <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="product-row" *ngFor="let product of products">
+        <tr class="product-row" *ngFor="let product of paginatedProducts">
           <td class="col-name">
             <div class="product-name">
               <div class="product-image" *ngIf="product.imageUrl">
@@ -61,6 +65,10 @@
           </td>
           <td class="col-type">
             <small>{{ product.type }}</small>
+          </td>
+          <td class="col-stock">
+            <small *ngIf="product.type === 'PHYSICAL'">{{ product.stockQuantity ?? 0 }}</small>
+            <small *ngIf="product.type !== 'PHYSICAL'">—</small>
           </td>
           <td class="col-price">
             <strong>{{ product.price | currency:'TND ' }}</strong>
@@ -108,5 +116,15 @@
         </tr>
       </tbody>
     </table>
+
+    <nav class="admin-pagination" *ngIf="totalPages > 1" aria-label="Product list pages">
+      <button type="button" class="pager-btn" (click)="prevPage()" [disabled]="currentPage <= 1">Previous</button>
+      <ul class="pager-nums">
+        <li *ngFor="let n of pageNumbers">
+          <button type="button" class="pager-num" [class.active]="n === currentPage" (click)="goToPage(n)">{{ n }}</button>
+        </li>
+      </ul>
+      <button type="button" class="pager-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
+    </nav>
   </div>
 </section>

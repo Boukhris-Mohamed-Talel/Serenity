@@ -29,8 +29,9 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', [Validators.required, Validators.maxLength(2000)]],
     category: ['', Validators.required],
-    type: ['', Validators.required],
+    type: ['PHYSICAL', Validators.required],
     price: [null as number | null, [Validators.required, Validators.min(0.10)]],
+    stockQuantity: [{ value: 0 as number | null, disabled: false }, [Validators.required, Validators.min(0)]],
     imageUrl: [''],
     previewable: [false, Validators.required],
     previewType: ['' as PreviewContentType | ''],
@@ -49,6 +50,7 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
+      this.applyStockFieldForType();
       return;
     }
 
@@ -78,6 +80,14 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     this.saving = true;
     const raw = this.form.getRawValue();
     const isDigital = raw.type === 'DIGITAL';
+    if (raw.type === 'PHYSICAL') {
+      const stock = Number(raw.stockQuantity);
+      if (!Number.isFinite(stock) || stock < 0) {
+        this.error = 'Physical products need a valid stock quantity (0 or more).';
+        this.saving = false;
+        return;
+      }
+    }
     const previewable = isDigital && Boolean(raw.previewable);
     const payload: MarketplaceProductUpsertRequest = {
       name: raw.name ?? '',
@@ -90,7 +100,8 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
       previewType: previewable && raw.previewType ? raw.previewType : undefined,
       previewUrl: previewable ? (raw.previewUrl ?? undefined) : undefined,
       contentUrl: isDigital ? (raw.contentUrl ?? undefined) : undefined,
-      active: raw.active ?? true
+      active: raw.active ?? true,
+      stockQuantity: isDigital ? undefined : Number(raw.stockQuantity)
     };
 
     const request$ = this.productId
@@ -117,7 +128,12 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     return this.form.controls.type.value === 'DIGITAL';
   }
 
+  get isPhysicalSelected(): boolean {
+    return this.form.controls.type.value === 'PHYSICAL';
+  }
+
   onTypeChanged(): void {
+    this.applyStockFieldForType();
     if (!this.isDigitalSelected) {
       this.form.patchValue({
         previewable: false,
@@ -128,6 +144,27 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
     }
   }
 
+  private applyStockFieldForType(): void {
+    const ctrl = this.form.controls.stockQuantity;
+    const type = this.form.controls.type.value;
+    if (type === 'DIGITAL') {
+      ctrl.clearValidators();
+      ctrl.setValue(null, { emitEvent: false });
+      ctrl.disable({ emitEvent: false });
+    } else if (type === 'PHYSICAL') {
+      ctrl.enable({ emitEvent: false });
+      ctrl.setValidators([Validators.required, Validators.min(0)]);
+      if (ctrl.value === null || ctrl.value === undefined) {
+        ctrl.setValue(0, { emitEvent: false });
+      }
+    } else {
+      ctrl.clearValidators();
+      ctrl.setValue(null, { emitEvent: false });
+      ctrl.disable({ emitEvent: false });
+    }
+    ctrl.updateValueAndValidity({ emitEvent: false });
+  }
+
   private patchProduct(product: MarketplaceProduct): void {
     this.form.patchValue({
       name: product.name,
@@ -135,6 +172,7 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
       category: product.category,
       type: product.type,
       price: product.price,
+      stockQuantity: product.type === 'PHYSICAL' ? (product.stockQuantity ?? 0) : null,
       imageUrl: product.imageUrl ?? '',
       previewable: product.previewable,
       previewType: product.previewType ?? '',
@@ -142,5 +180,6 @@ export class MarketplaceAdminProductFormComponent implements OnInit {
       contentUrl: product.contentUrl ?? '',
       active: product.active
     });
+    this.applyStockFieldForType();
   }
 }

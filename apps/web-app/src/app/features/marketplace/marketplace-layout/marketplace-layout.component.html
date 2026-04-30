@@ -1,0 +1,86 @@
+<div class="mp-shell">
+  <header class="mp-shell__bar" role="navigation" aria-label="Marketplace">
+    <a routerLink="/marketplace" class="mp-shell__brand">Marketplace</a>
+    <div class="mp-shell__links">
+      <button type="button" class="mp-shell__link" (click)="openAccess()">How access works</button>
+      <a routerLink="/marketplace/compare" class="mp-shell__link" [class.mp-shell__link--badge]="compareCount > 0">
+        Compare<span *ngIf="compareCount > 0" class="mp-shell__badge">{{ compareCount }}</span>
+      </a>
+      <a routerLink="/marketplace/orders" class="mp-shell__link">Orders</a>
+      <a routerLink="/marketplace/wishlist" class="mp-shell__link">Wishlist</a>
+      <button type="button" class="mp-shell__cart" (click)="toggleMiniCart()" aria-label="Open cart">
+        Cart
+        <span class="mp-shell__badge" *ngIf="cartItems.length > 0">{{ cartItems.length }}</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="mp-shell__main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <div class="mp-drawer-backdrop" *ngIf="miniCartOpen" (click)="closeMiniCart()" aria-hidden="true"></div>
+  <aside class="mp-drawer" *ngIf="miniCartOpen" role="dialog" aria-label="Mini cart">
+    <div class="mp-drawer__head">
+      <h2>Your cart</h2>
+      <button type="button" class="mp-drawer__close" (click)="closeMiniCart()" aria-label="Close">×</button>
+    </div>
+    <div class="mp-drawer__empty" *ngIf="cartItems.length === 0">
+      <p>Nothing here yet.</p>
+      <button type="button" class="btn btn-primary" (click)="go('/marketplace')">Browse</button>
+    </div>
+    <ul class="mp-drawer__lines" *ngIf="cartItems.length > 0">
+      <li *ngFor="let item of cartItems">
+        <div>
+          <strong>{{ item.product.name }}</strong>
+          <span class="muted">× {{ item.quantity }}</span>
+        </div>
+        <div class="mp-drawer__line-actions">
+          <span>{{ cartLineTotal(item) | currency:'TND ' }}</span>
+          <button type="button" class="btn btn-link" (click)="removeLine(item.product.id)">Remove</button>
+        </div>
+      </li>
+    </ul>
+    <footer class="mp-drawer__foot" *ngIf="cartItems.length > 0">
+      <p class="mp-drawer__total">Total <strong>{{ cartGrandTotal() | currency:'TND ' }}</strong></p>
+      <button type="button" class="btn btn-secondary" (click)="go('/marketplace/cart')">View full cart</button>
+      <button type="button" class="btn btn-primary" (click)="go('/marketplace/checkout')">Checkout</button>
+    </footer>
+  </aside>
+
+  <div class="mp-modal-backdrop" *ngIf="accessModalOpen" (click)="closeAccess()"></div>
+  <div class="mp-modal" *ngIf="accessModalOpen" role="dialog" aria-labelledby="access-title" aria-modal="true">
+    <div class="mp-modal__panel">
+      <h2 id="access-title">How access works</h2>
+      <p class="lead">
+        We keep healthcare-adjacent content clear: you preview first, then request access. Staff confirmation unlocks the full experience—no online payment in this demo.
+      </p>
+      <ol class="mp-steps">
+        <li><strong>Preview</strong> — Try a short sample (audio, video, or reading) when available.</li>
+        <li><strong>Request</strong> — Submit a cart or a digital access request with your details.</li>
+        <li><strong>Confirmation</strong> — Our team reviews and marks your order confirmed when ready.</li>
+        <li><strong>Where to find content</strong> — Open the product again after confirmation; full media and guidance appear here in the app.</li>
+      </ol>
+      <p class="muted small">Typical confirmation: <strong>1–3 business days</strong> (varies by item).</p>
+      <button type="button" class="btn btn-primary" (click)="closeAccess()">Got it</button>
+    </div>
+  </div>
+
+  <div class="mp-modal-backdrop" *ngIf="disclaimerOpen"></div>
+  <div class="mp-modal" *ngIf="disclaimerOpen" role="dialog" aria-labelledby="disc-title" aria-modal="true">
+    <div class="mp-modal__panel">
+      <h2 id="disc-title">Digital wellness content</h2>
+      <p>
+        Programs, audio, and articles in this marketplace are for <strong>education and self-support</strong>. They are
+        <strong>not medical advice</strong> and do not replace care from a licensed clinician.
+      </p>
+      <label class="mp-check">
+        <input type="checkbox" [(ngModel)]="disclaimerChecked" />
+        <span>I understand this is educational content, not medical advice.</span>
+      </label>
+      <button type="button" class="btn btn-primary" [disabled]="!disclaimerChecked" (click)="acknowledgeDisclaimer()">
+        Continue
+      </button>
+    </div>
+  </div>
+</div>

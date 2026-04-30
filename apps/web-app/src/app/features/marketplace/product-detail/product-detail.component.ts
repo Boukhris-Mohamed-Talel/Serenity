@@ -1,7 +1,10 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MarketplaceShellService } from '../../../core/services/marketplace-shell.service';
+import { MarketplaceUxService } from '../../../core/services/marketplace-ux.service';
 import { MarketplaceProduct } from '../../../shared/models/marketplace.model';
 
 type ArticleExperienceType = 'PODCAST' | 'BOOK' | 'EXERCISE' | 'VIDEO';
@@ -11,7 +14,7 @@ type ArticleExperienceType = 'PODCAST' | 'BOOK' | 'EXERCISE' | 'VIDEO';
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss']
 })
-export class ProductDetailComponent implements OnInit {
+export class ProductDetailComponent implements OnInit, OnDestroy {
   @ViewChild('previewAudio') previewAudio?: ElementRef<HTMLAudioElement>;
   @ViewChild('previewVideo') previewVideo?: ElementRef<HTMLVideoElement>;
 
@@ -32,6 +35,14 @@ export class ProductDetailComponent implements OnInit {
   unlockError = '';
   mediaError = '';
 
+  recentOthers: MarketplaceProduct[] = [];
+  resumeDismissed = false;
+  playbackRate = 1;
+  sleepTimerMin: 0 | 5 | 10 | 15 | 30 = 0;
+  /** Browser `window.setTimeout` returns a numeric handle (not `NodeJS.Timeout`). */
+  private sleepTimerId: number | null = null;
+  private lastProgressFlush = 0;
+
   private productId = 0;
 
   bookPreviewPages: string[] = [];
@@ -44,7 +55,9 @@ export class ProductDetailComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly marketplaceService: MarketplaceService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly ux: MarketplaceUxService,
+    private readonly shell: MarketplaceShellService
   ) {}
 
   ngOnInit(): void {
@@ -61,9 +74,14 @@ export class ProductDetailComponent implements OnInit {
       next: product => {
         this.product = product;
         this.bootstrapPreviewContent(product);
+        this.hydratePreviewFromStorage();
+        this.clampQuantityToStock();
         this.loading = false;
         this.checkWishlistStatus(id);
         this.refreshAccess();
+        this.ux.pushRecentlyViewed(id);
+        this.loadRecentOthers();
+        window.setTimeout(() => this.applyPlaybackRate(), 0);
       },
       error: () => {
         this.loading = false;
@@ -76,6 +94,145 @@ export class ProductDetailComponent implements OnInit {
     this.exerciseSteps = this.buildExerciseSteps(product);
     this.completedSteps = this.exerciseSteps.map(() => false);
     this.currentBookPage = 0;
+  }
+
+  ngOnDestroy(): void {
+    this.clearSleepTimer();
+  }
+
+  get showResumeBanner(): boolean {
+    if (!this.product || !this.usesPreviewFlow || this.isUnlocked || this.resumeDismissed) {
+      return false;
+    }
+    const st = this.ux.getPreviewProgress(this.productId);
+    if (!st) {
+      return false;
+    }
+    return (
+      (st.bookPage ?? 0) > 0 ||
+      (st.audioTime ?? 0) > 2 ||
+      (st.videoTime ?? 0) > 2
+    );
+  }
+
+  dismissResume(): void {
+    this.resumeDismissed = true;
+  }
+
+  continuePreview(): void {
+    this.resumeDismissed = true;
+    this.openPreview();
+  }
+
+  applyPlaybackRate(): void {
+    const audio = this.previewAudio?.nativeElement;
+    if (audio) {
+      audio.playbackRate = this.playbackRate;
+    }
+  }
+
+  onSleepTimerChange(): void {
+    this.clearSleepTimer();
+  }
+
+  private clearSleepTimer(): void {
+    if (this.sleepTimerId !== null) {
+      window.clearTimeout(this.sleepTimerId);
+      this.sleepTimerId = null;
+    }
+  }
+
+  private scheduleSleepTimerOnPlay(): void {
+    this.clearSleepTimer();
+    if (!this.sleepTimerMin) {
+      return;
+    }
+    const ms = this.sleepTimerMin * 60 * 1000;
+    this.sleepTimerId = window.setTimeout(() => {
+      this.pauseAudio();
+      const a = this.previewAudio?.nativeElement;
+      a?.pause();
+    }, ms);
+  }
+
+  private flushPreviewProgress(): void {
+    if (!this.productId || !this.usesPreviewFlow || this.isUnlocked) {
+      return;
+    }
+    const now = Date.now();
+    if (now - this.lastProgressFlush < 1200) {
+      return;
+    }
+    this.lastProgressFlush = now;
+    const patch: { bookPage?: number; audioTime?: number; videoTime?: number } = {};
+    if (this.experienceType === 'BOOK') {
+      patch.bookPage = this.currentBookPage;
+    }
+    const audio = this.previewAudio?.nativeElement;
+    if (audio && this.experienceType === 'PODCAST') {
+      patch.audioTime = audio.currentTime;
+    }
+    const video = this.previewVideo?.nativeElement;
+    if (video && this.experienceType === 'VIDEO') {
+      patch.videoTime = video.currentTime;
+    }
+    this.ux.setPreviewProgress(this.productId, patch);
+  }
+
+  private hydratePreviewFromStorage(): void {
+    const st = this.ux.getPreviewProgress(this.productId);
+    if (!st) {
+      return;
+    }
+    if (this.experienceType === 'BOOK' && typeof st.bookPage === 'number') {
+      const max = Math.max(0, this.bookPreviewPages.length - 1);
+      this.currentBookPage = Math.min(Math.max(0, st.bookPage), max);
+    }
+    window.setTimeout(() => {
+      if (this.isUnlocked) {
+        return;
+      }
+      const audio = this.previewAudio?.nativeElement;
+      if (audio && this.experienceType === 'PODCAST' && typeof st.audioTime === 'number') {
+        audio.currentTime = Math.min(st.audioTime, ProductDetailComponent.AUDIO_PREVIEW_LIMIT_SECONDS - 0.25);
+      }
+      const video = this.previewVideo?.nativeElement;
+      if (video && this.experienceType === 'VIDEO' && typeof st.videoTime === 'number') {
+        video.currentTime = Math.min(st.videoTime, ProductDetailComponent.VIDEO_PREVIEW_LIMIT_SECONDS - 0.25);
+      }
+    }, 0);
+  }
+
+  private loadRecentOthers(): void {
+    const ids = this.ux.getRecentlyViewedIds().filter(x => x !== this.productId).slice(0, 8);
+    if (ids.length === 0) {
+      this.recentOthers = [];
+      return;
+    }
+    forkJoin(ids.map(pid => this.marketplaceService.getProductById(pid))).subscribe({
+      next: rows => {
+        const order = new Map(ids.map((pid, i) => [pid, i]));
+        this.recentOthers = [...rows].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      },
+      error: () => {
+        this.recentOthers = [];
+      }
+    });
+  }
+
+  openAccessExplainer(): void {
+    this.shell.openAccessExplainer();
+  }
+
+  toggleCompare(): void {
+    if (!this.product) {
+      return;
+    }
+    this.ux.toggleCompare(this.product.id);
+  }
+
+  isInCompare(): boolean {
+    return this.product ? this.ux.isInCompare(this.product.id) : false;
   }
 
   checkWishlistStatus(productId: number): void {
@@ -197,6 +354,8 @@ export class ProductDetailComponent implements OnInit {
     if (!this.usesPreviewFlow) {
       return;
     }
+    this.applyPlaybackRate();
+    this.scheduleSleepTimerOnPlay();
   }
 
   onAudioTimeUpdate(): void {
@@ -214,6 +373,7 @@ export class ProductDetailComponent implements OnInit {
       this.pauseAudio();
       this.openPaywall('Your preview ended. Request full access for the complete session.');
     }
+    this.flushPreviewProgress();
   }
 
   onAudioSeeking(): void {
@@ -257,6 +417,7 @@ export class ProductDetailComponent implements OnInit {
       video.pause();
       this.openPaywall('Your video preview ended. Request full access to keep watching.');
     }
+    this.flushPreviewProgress();
   }
 
   onVideoSeeking(): void {
@@ -301,6 +462,7 @@ export class ProductDetailComponent implements OnInit {
 
     if (this.hasNextBookPage) {
       this.currentBookPage += 1;
+      this.flushPreviewProgress();
       return;
     }
 
@@ -310,6 +472,7 @@ export class ProductDetailComponent implements OnInit {
   previousBookPage(): void {
     if (this.currentBookPage > 0) {
       this.currentBookPage -= 1;
+      this.flushPreviewProgress();
     }
   }
 
@@ -393,15 +556,52 @@ export class ProductDetailComponent implements OnInit {
     if (audio) {
       audio.pause();
     }
+    this.clearSleepTimer();
+  }
+
+  onAudioPause(): void {
+    this.clearSleepTimer();
+  }
+
+  get physicalInStock(): boolean {
+    return !!this.product && this.product.type === 'PHYSICAL' && (this.product.stockQuantity ?? 0) > 0;
+  }
+
+  get maxBuyQuantity(): number {
+    if (!this.product || this.product.type !== 'PHYSICAL') {
+      return 999;
+    }
+    return Math.max(1, this.product.stockQuantity ?? 0);
+  }
+
+  clampQuantityToStock(): void {
+    if (!this.product || this.product.type !== 'PHYSICAL') {
+      if (this.quantity < 1) {
+        this.quantity = 1;
+      }
+      return;
+    }
+    const max = this.maxBuyQuantity;
+    if (this.quantity > max) {
+      this.quantity = max;
+    }
+    if (this.quantity < 1) {
+      this.quantity = Math.min(1, max);
+    }
   }
 
   addToCart(): void {
     if (!this.product || !this.marketplaceService.isCartEligible(this.product)) {
       return;
     }
-
-    this.marketplaceService.addToCart(this.product, this.quantity);
-    this.router.navigate(['/marketplace/cart']);
+    this.clampQuantityToStock();
+    if (!this.physicalInStock) {
+      return;
+    }
+    if (!this.marketplaceService.addToCart(this.product, this.quantity)) {
+      return;
+    }
+    this.shell.openMiniCart();
   }
 
   getPodcastPreviewUrl(productId: number): string {

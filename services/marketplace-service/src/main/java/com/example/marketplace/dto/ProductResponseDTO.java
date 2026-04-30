@@ -23,4 +23,6 @@ public class ProductResponseDTO {
     private PreviewContentType previewType;
     private String previewUrl;
     private String contentUrl;
+    /** Null for digital goods (unlimited). */
+    private Integer stockQuantity;
 }

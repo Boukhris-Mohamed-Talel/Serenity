@@ -1,3 +1,5 @@
+@import '../marketplace-skin.scss';
+
 .history-page {
   padding: 1.5rem 0 2rem;
 }
@@ -228,4 +230,57 @@ ul {
   ul li {
     grid-template-columns: 1fr;
   }
+}
+
+.eta-note {
+  font-size: 0.9rem;
+  color: #3a4d63;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.65rem;
+  background: #f4f8fc;
+  border-radius: 10px;
+  border: 1px solid #d8e4f2;
+}
+
+.order-timeline {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.order-timeline li {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid #d0dce8;
+  background: #fff;
+  font-size: 0.82rem;
+  color: #4f5f74;
+}
+
+.order-timeline li.done {
+  border-color: #9bc4a3;
+  background: #f1faf3;
+  color: #1f4d2b;
+}
+
+.order-timeline li.current {
+  border-color: #7a9fd4;
+  background: #eef4ff;
+  color: #1f3b66;
+}
+
+.order-timeline li.pending {
+  opacity: 0.75;
+  font-style: italic;
+}
+
+.order-timeline li.bad {
+  border-color: #e0a8a8;
+  background: #fff5f5;
+  color: #6b1c1c;
 }

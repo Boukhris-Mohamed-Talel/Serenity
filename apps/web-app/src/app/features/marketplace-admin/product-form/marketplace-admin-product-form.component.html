@@ -1,79 +1,136 @@
-<section class="container admin-product-form-page">
-  <h2>{{ productId ? 'Edit Product' : 'Create Product' }}</h2>
+<section class="admin-marketplace-page admin-product-form">
+  <header class="form-page-header">
+    <div class="form-page-header__copy">
+      <p class="form-eyebrow">Marketplace catalog</p>
+      <h1 class="form-title">{{ productId ? 'Edit product' : 'New product' }}</h1>
+      <p class="form-subtitle">
+        {{ productId ? 'Update details, stock, and digital settings.' : 'Add an item shoppers will see in the storefront.' }}
+      </p>
+    </div>
+    <a class="form-back-link" routerLink="/admin/marketplace">← Back to products</a>
+  </header>
 
-  <p class="error" *ngIf="error">{{ error }}</p>
-  <p *ngIf="loading">Loading product...</p>
+  <div class="alert alert-error" *ngIf="error" role="alert">{{ error }}</div>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="!loading">
-    <label>Name</label>
-    <input type="text" formControlName="name" />
+  <div class="loading-state" *ngIf="loading">Loading product…</div>
 
-    <label>Description</label>
-    <textarea rows="4" formControlName="description"></textarea>
+  <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="!loading" class="form-shell" novalidate>
+    <div class="form-card">
+      <section class="form-section">
+        <h2 class="section-title">Basics</h2>
+        <p class="section-lead">Name and description appear on the product page and in search.</p>
 
-    <div class="grid-two">
-      <div>
-        <label>Category</label>
-        <select formControlName="category">
-          <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
-        </select>
-      </div>
-      <div>
-        <label>Type</label>
-        <select formControlName="type" (change)="onTypeChanged()">
-          <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
-        </select>
-      </div>
+        <div class="field">
+          <label class="field-label" for="mp-name">Name</label>
+          <input id="mp-name" type="text" formControlName="name" class="field-control" placeholder="Product title" />
+          <span class="field-error" *ngIf="form.controls.name.touched && form.controls.name.hasError('required')">Name is required.</span>
+          <span class="field-error" *ngIf="form.controls.name.touched && form.controls.name.hasError('maxlength')">Max 150 characters.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="mp-desc">Description</label>
+          <textarea id="mp-desc" rows="5" formControlName="description" class="field-control" placeholder="What buyers get and why it helps"></textarea>
+          <span class="field-error" *ngIf="form.controls.description.touched && form.controls.description.hasError('required')">
+            Description is required.
+          </span>
+        </div>
+
+        <div class="grid-two">
+          <div class="field">
+            <label class="field-label" for="mp-category">Category</label>
+            <select id="mp-category" formControlName="category" class="field-control">
+              <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="mp-type">Type</label>
+            <select id="mp-type" formControlName="type" class="field-control" (change)="onTypeChanged()">
+              <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <div class="grid-two">
-      <div>
-        <label>Price</label>
-        <input type="number" step="0.01" min="0.10" formControlName="price" />
-      </div>
-      <div>
-        <label>Status</label>
-        <select formControlName="active">
-          <option [ngValue]="true">Active</option>
-          <option [ngValue]="false">Inactive</option>
-        </select>
-      </div>
+    <div class="form-card">
+      <section class="form-section">
+        <h2 class="section-title">Pricing &amp; availability</h2>
+        <p class="section-lead">Price is shown in TND. Physical items need an on-hand count.</p>
+
+        <div class="grid-two">
+          <div class="field">
+            <label class="field-label" for="mp-price">Price (TND)</label>
+            <input id="mp-price" type="number" step="0.01" min="0.10" formControlName="price" class="field-control" />
+            <span class="field-error" *ngIf="form.controls.price.touched && form.controls.price.hasError('required')">Price is required.</span>
+            <span class="field-error" *ngIf="form.controls.price.touched && form.controls.price.hasError('min')">Minimum 0.10 TND.</span>
+          </div>
+          <div class="field">
+            <label class="field-label" for="mp-active">Catalog status</label>
+            <select id="mp-active" formControlName="active" class="field-control">
+              <option [ngValue]="true">Active — visible in storefront</option>
+              <option [ngValue]="false">Inactive — hidden from shoppers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" *ngIf="isPhysicalSelected">
+          <label class="field-label" for="mp-stock">Stock quantity</label>
+          <input id="mp-stock" type="number" min="0" step="1" formControlName="stockQuantity" class="field-control" />
+          <small class="field-hint">Units you can fulfill. Checkout cannot exceed this total per product.</small>
+          <span class="field-error" *ngIf="form.controls.stockQuantity.touched && form.controls.stockQuantity.hasError('required')">
+            Stock is required for physical products.
+          </span>
+        </div>
+      </section>
     </div>
 
-    <label>Image URL</label>
-    <input type="text" formControlName="imageUrl" />
-
-    <section class="preview-fields" *ngIf="isDigitalSelected">
-      <h3>Digital Content Settings</h3>
-
-      <label class="checkbox-row">
-        <input type="checkbox" formControlName="previewable" />
-        This digital item has a preview mode
-      </label>
-
-      <div class="grid-two" *ngIf="form.controls.previewable.value">
-        <div>
-          <label>Preview Type</label>
-          <select formControlName="previewType">
-            <option value="">Select preview type</option>
-            <option *ngFor="let previewType of previewTypes" [value]="previewType">{{ previewType }}</option>
-          </select>
+    <div class="form-card">
+      <section class="form-section">
+        <h2 class="section-title">Media</h2>
+        <p class="section-lead">Use a stable HTTPS image URL for the card and detail header.</p>
+        <div class="field">
+          <label class="field-label" for="mp-image">Image URL</label>
+          <input id="mp-image" type="text" formControlName="imageUrl" class="field-control" placeholder="https://…" />
         </div>
-        <div>
-          <label>Preview URL</label>
-          <input type="text" formControlName="previewUrl" placeholder="https://..." />
+      </section>
+    </div>
+
+    <div class="form-card form-card--accent" *ngIf="isDigitalSelected">
+      <section class="form-section">
+        <h2 class="section-title">Digital content</h2>
+        <p class="section-lead">Preview lets shoppers try before they request full access.</p>
+
+        <label class="checkbox-row">
+          <input type="checkbox" formControlName="previewable" />
+          <span>This item has a preview mode</span>
+        </label>
+
+        <div class="grid-two" *ngIf="form.controls.previewable.value">
+          <div class="field">
+            <label class="field-label" for="mp-preview-type">Preview type</label>
+            <select id="mp-preview-type" formControlName="previewType" class="field-control">
+              <option value="">Select type</option>
+              <option *ngFor="let previewType of previewTypes" [value]="previewType">{{ previewType }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="mp-preview-url">Preview URL</label>
+            <input id="mp-preview-url" type="text" formControlName="previewUrl" class="field-control" placeholder="https://…" />
+          </div>
         </div>
-      </div>
 
-      <label>Full Content URL (optional)</label>
-      <input type="text" formControlName="contentUrl" placeholder="https://..." />
-    </section>
+        <div class="field">
+          <label class="field-label" for="mp-content-url">Full content URL <span class="optional">(optional)</span></label>
+          <input id="mp-content-url" type="text" formControlName="contentUrl" class="field-control" placeholder="https://…" />
+        </div>
+      </section>
+    </div>
 
-    <div class="actions">
-      <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
-      <button class="btn btn-primary" type="submit" [disabled]="saving">
-        {{ saving ? 'Saving...' : 'Save Product' }}
+    <footer class="form-footer">
+      <button class="btn btn-secondary btn-pill" type="button" (click)="cancel()">Cancel</button>
+      <button class="btn btn-primary btn-pill" type="submit" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save product' }}
       </button>
-    </div>
+    </footer>
   </form>
 </section>

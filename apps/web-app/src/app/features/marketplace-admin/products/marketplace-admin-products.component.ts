@@ -15,6 +15,10 @@ export class MarketplaceAdminProductsComponent implements OnInit {
   successMessage = '';
   deletingProductId: number | null = null;
 
+  /** 1-based page index for the catalog table. */
+  currentPage = 1;
+  readonly pageSize = 10;
+
   constructor(
     private readonly marketplaceService: MarketplaceService,
     private readonly router: Router
@@ -32,6 +36,8 @@ export class MarketplaceAdminProductsComponent implements OnInit {
     this.marketplaceService.getAllProductsForAdmin().subscribe({
       next: products => {
         this.products = products;
+        this.currentPage = 1;
+        this.clampCurrentPage();
         this.loading = false;
       },
       error: () => {
@@ -39,6 +45,66 @@ export class MarketplaceAdminProductsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  get paginatedProducts(): MarketplaceProduct[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.products.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.products.length / this.pageSize));
+  }
+
+  get rangeFrom(): number {
+    if (!this.products.length) {
+      return 0;
+    }
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get rangeTo(): number {
+    return Math.min(this.currentPage * this.pageSize, this.products.length);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    if (total <= 9) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const cur = this.currentPage;
+    const set = new Set<number>([1, total]);
+    for (let i = cur - 2; i <= cur + 2; i++) {
+      if (i >= 1 && i <= total) {
+        set.add(i);
+      }
+    }
+    return [...set].sort((a, b) => a - b);
+  }
+
+  goToPage(n: number): void {
+    const next = Math.min(Math.max(1, n), this.totalPages);
+    if (next !== this.currentPage) {
+      this.currentPage = next;
+    }
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  private clampCurrentPage(): void {
+    const tp = this.totalPages;
+    if (this.currentPage > tp) {
+      this.currentPage = tp;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 
   createProduct(): void {
@@ -59,6 +125,7 @@ export class MarketplaceAdminProductsComponent implements OnInit {
     this.marketplaceService.deleteProduct(productId).subscribe({
       next: () => {
         this.products = this.products.filter(p => p.id !== productId);
+        this.clampCurrentPage();
         this.deletingProductId = null;
         this.successMessage = `Product deleted successfully`;
         setTimeout(() => this.successMessage = '', 3000);
@@ -96,7 +163,9 @@ export class MarketplaceAdminProductsComponent implements OnInit {
       previewable: updatedProduct.previewable,
       previewType: updatedProduct.previewType,
       previewUrl: updatedProduct.previewUrl,
-      contentUrl: updatedProduct.contentUrl
+      contentUrl: updatedProduct.contentUrl,
+      stockQuantity:
+        updatedProduct.type === 'PHYSICAL' ? (updatedProduct.stockQuantity ?? 0) : undefined
     }).subscribe({
       next: (updated) => {
         const idx = this.products.findIndex(p => p.id === productId);

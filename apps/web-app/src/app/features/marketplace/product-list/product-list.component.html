@@ -1,35 +1,46 @@
-<section class="marketplace-page container">
-  <header class="hero">
+<section class="mp-root marketplace-page container">
+  <header class="hero hero-showcase" role="banner">
+    <div class="hero-showcase__mesh" aria-hidden="true"></div>
+    <div class="hero-showcase__orb hero-showcase__orb--a" aria-hidden="true"></div>
+    <div class="hero-showcase__orb hero-showcase__orb--b" aria-hidden="true"></div>
+    <div class="hero-showcase__sheen" aria-hidden="true"></div>
+    <div class="hero-showcase__grain" aria-hidden="true"></div>
+
     <div class="hero-copy">
-      <p class="eyebrow">Marketplace</p>
-      <h1>Care products & calm content</h1>
+      <p class="eyebrow">
+        <span class="eyebrow-pill">Marketplace</span>
+      </p>
+      <h1 class="hero-title" id="mp-hero-heading">Care products & calm content</h1>
       <p class="hero-lead">
         Browse physical essentials and supportive digital resources. Preview digital items first; full access is confirmed by our team (no online payment yet).
       </p>
     </div>
     <div class="hero-actions">
-      <a class="btn btn-secondary" routerLink="/marketplace/cart">Cart</a>
-      <a class="btn btn-secondary" routerLink="/marketplace/orders">My orders</a>
-      <a class="btn btn-secondary" routerLink="/marketplace/wishlist">Wishlist</a>
+      <button class="hero-link-pill" type="button" (click)="openAccessExplainer()">How access works</button>
+      <a class="hero-link-pill" href="#" (click)="openQuickCart($event)">Quick cart</a>
+      <a class="hero-link-pill" routerLink="/marketplace/cart">Full cart</a>
+      <a class="hero-link-pill" routerLink="/marketplace/compare">Compare</a>
+      <a class="hero-link-pill" routerLink="/marketplace/orders">My orders</a>
+      <a class="hero-link-pill hero-link-pill--accent" routerLink="/marketplace/wishlist">Wishlist</a>
     </div>
   </header>
 
-  <div class="toolbar card-toolbar">
+  <div class="toolbar card-toolbar toolbar-elevated">
     <div class="filters">
       <input
         type="search"
         placeholder="Search by name"
         [(ngModel)]="query"
         (ngModelChange)="onQueryInputChange()"
-        (keyup.enter)="loadProducts()"
+        (keyup.enter)="submitSearchNow()"
         aria-label="Search marketplace" />
 
-      <select [(ngModel)]="selectedCategory" (change)="loadProducts()" aria-label="Category">
+      <select [(ngModel)]="selectedCategory" (change)="onCategoryChange()" aria-label="Category">
         <option value="">All categories</option>
         <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
       </select>
 
-      <select [(ngModel)]="selectedType" (change)="loadProducts()" aria-label="Product type">
+      <select [(ngModel)]="selectedType" (change)="onTypeChange()" aria-label="Product type">
         <option value="">All types</option>
         <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
       </select>
@@ -44,6 +55,61 @@
       </button>
     </div>
   </div>
+
+  <div class="ux-banner" *ngIf="searchAlertMessage">
+    <p>{{ searchAlertMessage }}</p>
+    <button type="button" class="btn btn-outline" (click)="searchAlertMessage = ''">Dismiss</button>
+  </div>
+  <p class="ux-hint" *ngIf="compareHint">{{ compareHint }}</p>
+
+  <section class="ux-panel card" *ngIf="recentProducts.length > 0">
+    <h3 class="ux-panel__title">Recently viewed</h3>
+    <div class="ux-strip">
+      <button type="button" class="ux-strip__item" *ngFor="let rp of recentProducts" (click)="openDetails(rp.id)">
+        <img [src]="rp.imageUrl || 'assets/logo.png'" [alt]="rp.name" />
+        <span>{{ rp.name }}</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="ux-panel card" *ngIf="picksForYou.length > 0">
+    <h3 class="ux-panel__title">Picks for your goals</h3>
+    <p class="ux-panel__lede">Based on the sleep, stress, and focus sliders below (stored on this device only).</p>
+    <div class="ux-strip">
+      <button type="button" class="ux-strip__item" *ngFor="let rp of picksForYou" (click)="openDetails(rp.id)">
+        <img [src]="rp.imageUrl || 'assets/logo.png'" [alt]="rp.name" />
+        <span>{{ rp.name }}</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="ux-panel card ux-goals">
+    <h3 class="ux-panel__title">Tune recommendations</h3>
+    <div class="goals-grid">
+      <label>Sleep need <input type="range" min="1" max="5" [(ngModel)]="goalsSleep" (change)="applyGoals()" /></label>
+      <label>Stress care <input type="range" min="1" max="5" [(ngModel)]="goalsStress" (change)="applyGoals()" /></label>
+      <label>Focus tools <input type="range" min="1" max="5" [(ngModel)]="goalsFocus" (change)="applyGoals()" /></label>
+    </div>
+  </section>
+
+  <section class="ux-panel card">
+    <h3 class="ux-panel__title">Saved searches & alerts</h3>
+    <div class="save-search-row">
+      <input type="text" [(ngModel)]="savedSearchNameInput" placeholder="Name this search" aria-label="Saved search name" />
+      <button type="button" class="btn btn-secondary" (click)="saveNamedSearch()">Save current filters</button>
+    </div>
+    <ul class="saved-list" *ngIf="savedSearches().length > 0">
+      <li *ngFor="let ss of savedSearches()">
+        <button type="button" class="linkish" (click)="applySavedSearch(ss)">{{ ss.name }}</button>
+        <label class="alert-toggle">
+          <input type="checkbox" [checked]="alertOn(ss)" (change)="toggleAlert(ss, $event)" />
+          Alert
+        </label>
+        <button type="button" class="btn btn-link" (click)="removeSaved(ss, $event)">Remove</button>
+      </li>
+    </ul>
+    <p class="muted small" *ngIf="savedSearches().length === 0">Save a search to get a heads-up when new listings match these filters.</p>
+  </section>
 
   <section class="quiz-card" *ngIf="showQuiz">
     <h3>Quick wellness match</h3>
@@ -101,8 +167,11 @@
           <span class="rec-category">{{ item.category }}</span>
         </div>
         <strong class="rec-score">{{ item.confidence }}% match</strong>
-        <p>{{ item.reason }}</p>
-        <button class="btn btn-secondary" type="button" (click)="openDetails(item.productId)">View</button>
+        <div class="explain-match">
+          <h5>Why this match</h5>
+          <p>{{ item.reason }}</p>
+          <a class="btn btn-secondary" [routerLink]="['/marketplace/product', item.productId]">Open product</a>
+        </div>
       </article>
     </div>
   </section>
@@ -114,36 +183,102 @@
     <span>Loading catalog…</span>
   </div>
 
-  <div class="grid" *ngIf="!loading && hasResults">
-    <article
-      class="product-card"
-      *ngFor="let product of products"
-      tabindex="0"
-      role="link"
-      [attr.aria-label]="'Open details for ' + product.name"
-      (click)="openDetails(product.id)"
-      (keydown.enter)="openDetails(product.id)"
-      (keydown.space)="$event.preventDefault(); openDetails(product.id)">
-      <div class="thumb-wrap">
-        <img [src]="product.imageUrl || 'assets/logo.png'" [alt]="product.name" />
-        <span class="type-pill">{{ product.type === 'DIGITAL' ? 'Digital' : 'Physical' }}</span>
-      </div>
-      <div class="content">
-        <h3>{{ product.name }}</h3>
-        <p>{{ product.description }}</p>
-        <div class="meta">
-          <span class="meta-pill">{{ product.category }}</span>
-        </div>
-        <strong class="price">{{ product.price | currency:'TND ' }}</strong>
-        <p class="supportive-note" *ngIf="isDigital(product)">Includes a preview before you request full access.</p>
-        <span class="card-hint">Open for details, preview, and wishlist</span>
-      </div>
-    </article>
+  <div class="catalog-toolbar" *ngIf="!loading && hasVisibleResults">
+    <div class="catalog-toolbar-left">
+      <label class="sort-label">
+        <span class="sort-label-text">Sort</span>
+        <select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()" aria-label="Sort catalog">
+          <option *ngFor="let o of sortOptions" [ngValue]="o.value">{{ o.label }}</option>
+        </select>
+      </label>
+      <p class="catalog-stats">
+        Showing <strong>{{ showingFrom }}–{{ showingTo }}</strong> of {{ visibleSortedProducts.length }}
+      </p>
+    </div>
+    <p class="catalog-spread-hint" aria-hidden="true">Flip through spreads like a catalogue</p>
   </div>
+
+  <div class="catalog-scene" *ngIf="!loading && hasVisibleResults">
+    <div class="catalog-spread" [class.catalog-turning]="catalogTurning">
+      <div class="catalog-grid">
+        <article class="product-card" *ngFor="let product of paginatedProducts; trackBy: trackByProductId">
+          <div
+            class="product-card__main"
+            tabindex="0"
+            role="link"
+            [attr.aria-label]="'Open details for ' + product.name"
+            (click)="openDetails(product.id)"
+            (keydown.enter)="openDetails(product.id)"
+            (keydown.space)="$event.preventDefault(); openDetails(product.id)">
+            <div class="product-inner">
+              <div class="thumb-wrap">
+                <img [src]="product.imageUrl || 'assets/logo.png'" [alt]="product.name" />
+                <span class="type-pill">{{ product.type === 'DIGITAL' ? 'Digital' : 'Physical' }}</span>
+              </div>
+              <div class="content">
+                <h3>{{ product.name }}</h3>
+                <p>{{ product.description }}</p>
+                <div class="meta">
+                  <span class="meta-pill">{{ product.category }}</span>
+                </div>
+                <strong class="price">{{ product.price | currency:'TND ' }}</strong>
+                <p class="stock-line" *ngIf="!isDigital(product)">
+                  <ng-container *ngIf="(product.stockQuantity ?? 0) > 0">{{ product.stockQuantity }} in stock</ng-container>
+                  <ng-container *ngIf="(product.stockQuantity ?? 0) <= 0">Out of stock</ng-container>
+                </p>
+                <p class="supportive-note" *ngIf="isDigital(product)">Includes a preview before you request full access.</p>
+                <span class="card-hint">Open for details, preview, and wishlist</span>
+              </div>
+            </div>
+          </div>
+          <div class="product-card__actions" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              [class.btn-primary]="isComparing(product.id)"
+              (click)="toggleCompare(product, $event)">
+              {{ isComparing(product.id) ? 'In compare' : 'Compare' }}
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" (click)="hideFromFeed(product, $event)">Not interested</button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              *ngIf="canUseCart(product)"
+              [disabled]="!isDigital(product) && (product.stockQuantity ?? 0) <= 0"
+              (click)="addToCart(product, $event)">
+              Add
+            </button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <nav class="catalog-pagination" *ngIf="!loading && hasVisibleResults && totalPages > 1" aria-label="Catalog pages">
+    <button type="button" class="pager-edge" (click)="prevPage()" [disabled]="currentPage <= 1">
+      <span class="pager-edge-label">Previous spread</span>
+      <span class="pager-edge-glyph" aria-hidden="true">‹</span>
+    </button>
+    <ul class="pager-nums">
+      <li *ngFor="let n of pageNumbers">
+        <button type="button" class="pager-num" [class.active]="n === currentPage" (click)="goToPage(n)">{{ n }}</button>
+      </li>
+    </ul>
+    <button type="button" class="pager-edge" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+      <span class="pager-edge-label">Next spread</span>
+      <span class="pager-edge-glyph" aria-hidden="true">›</span>
+    </button>
+  </nav>
 
   <section class="empty-state" *ngIf="!loading && !hasResults">
     <h3>No matches yet</h3>
     <p>Try a shorter search, pick another category, or reset filters to see more.</p>
     <button class="btn btn-secondary" type="button" (click)="clearFiltersSmooth()">Clear filters</button>
+  </section>
+
+  <section class="empty-state" *ngIf="!loading && hasResults && !hasVisibleResults">
+    <h3>Nothing to show</h3>
+    <p>Items you marked as not interested are hidden on this device.</p>
+    <button type="button" class="btn btn-primary" (click)="restoreHidden()">Show hidden items again</button>
   </section>
 </section>

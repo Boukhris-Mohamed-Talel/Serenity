@@ -1,0 +1,67 @@
+// Shared marketplace atmosphere — uses theme tokens only (no new palette).
+
+.mp-root {
+  position: relative;
+  isolation: isolate;
+}
+
+.mp-root::before {
+  content: '';
+  position: absolute;
+  inset: -12% -8% auto;
+  height: min(56vh, 520px);
+  background:
+    radial-gradient(ellipse 90% 58% at 50% -10%, var(--primary-light), transparent 58%),
+    radial-gradient(ellipse 52% 44% at 94% 8%, var(--accent-light, var(--primary-light)), transparent 50%),
+    radial-gradient(ellipse 44% 38% at 4% 18%, var(--primary-light), transparent 56%);
+  opacity: 0.88;
+  pointer-events: none;
+  z-index: 0;
+  animation: mp-skin-drift 22s ease-in-out infinite alternate;
+}
+
+.mp-root::after {
+  content: '';
+  position: absolute;
+  inset: auto -15% -25% -15%;
+  height: min(42vh, 380px);
+  background: radial-gradient(ellipse 70% 70% at 50% 100%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 68%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  animation: mp-skin-rise 18s ease-in-out infinite alternate;
+}
+
+@keyframes mp-skin-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.82;
+  }
+  100% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.04);
+    opacity: 0.95;
+  }
+}
+
+@keyframes mp-skin-rise {
+  0% {
+    transform: translate3d(0, 6px, 0) scale(1);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate3d(-1.5%, -4px, 0) scale(1.06);
+    opacity: 0.62;
+  }
+}
+
+.mp-root > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-root::before,
+  .mp-root::after {
+    animation: none !important;
+  }
+}
