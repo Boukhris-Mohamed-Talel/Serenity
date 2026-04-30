@@ -94,4 +94,17 @@ export class MarketplaceAdminOrdersComponent implements OnInit {
   getTotalItems(order: MarketplaceOrder): number {
     return order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
   }
+
+  statusLabel(status: MarketplaceOrderStatus): string {
+    if (status === 'CREATED') {
+      return 'Pending';
+    }
+    if (status === 'PAID') {
+      return 'Confirmed';
+    }
+    if (status === 'CANCELLED') {
+      return 'Cancelled';
+    }
+    return status;
+  }
 }

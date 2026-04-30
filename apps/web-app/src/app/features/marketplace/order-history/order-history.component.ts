@@ -91,4 +91,20 @@ export class OrderHistoryComponent implements OnInit {
   openArticle(productId: number): void {
     this.router.navigate(['/marketplace/product', productId]);
   }
+
+  statusLabel(status: 'ALL' | MarketplaceOrderStatus): string {
+    if (status === 'ALL') {
+      return 'All';
+    }
+    if (status === 'CREATED') {
+      return 'Pending';
+    }
+    if (status === 'PAID') {
+      return 'Confirmed';
+    }
+    if (status === 'CANCELLED') {
+      return 'Cancelled';
+    }
+    return status;
+  }
 }

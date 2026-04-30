@@ -2,6 +2,22 @@
   padding: 1.5rem 0;
 }
 
+.loading-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.loading-panel.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
 .detail-card {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -21,6 +37,98 @@
 
 .info {
   padding: 1rem;
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+}
+
+.btn-outline-heart {
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  &.in-wishlist {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary-dark);
+  }
+}
+
+.heart-label {
+  font-weight: 700;
+}
+
+.price-line {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.chip {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.chip-accent {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary) !important;
+}
+
+.notice-banner {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--primary-light);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  a {
+    font-weight: 800;
+  }
+}
+
+.qty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-light);
+
+  input {
+    max-width: 100px;
+    padding: 0.5rem 0.65rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+  }
 }
 
 .info p {
@@ -163,7 +271,7 @@
 .paywall {
   position: fixed;
   inset: 0;
-  background: rgba(20, 34, 49, 0.48);
+  background: rgba(42, 71, 69, 0.45);
   display: grid;
   place-items: center;
   z-index: 30;
@@ -172,11 +280,11 @@
 
 .paywall-dialog {
   width: min(520px, 100%);
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #d6e3f2;
-  box-shadow: 0 20px 40px rgba(18, 30, 46, 0.24);
-  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 1.25rem;
 }
 
 .paywall-dialog h3 {
@@ -185,7 +293,7 @@
 
 .paywall-dialog p {
   margin: 0.5rem 0;
-  color: #3f5874;
+  color: var(--text-light);
 }
 
 .paywall-dialog .sub {

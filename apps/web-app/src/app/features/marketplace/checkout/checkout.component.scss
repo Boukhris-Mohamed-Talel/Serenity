@@ -3,6 +3,13 @@
   max-width: 720px;
 }
 
+.lead {
+  margin: 0 0 1rem;
+  color: var(--text-light);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .empty-cart {
   border: 1px dashed #c8d4e2;
   background: #f8fbff;

@@ -41,13 +41,13 @@ export class CheckoutComponent {
     this.error = '';
 
     if (this.isCartEmpty) {
-      this.error = 'Your cart is empty. Add an item before continuing to payment.';
+      this.error = 'Your cart is empty. Add an item before submitting a request.';
       return;
     }
 
     if (this.checkoutForm.invalid) {
       this.checkoutForm.markAllAsTouched();
-      this.error = 'Please provide a valid shipping address before payment.';
+      this.error = 'Please provide valid delivery or contact details before submitting.';
       return;
     }
 

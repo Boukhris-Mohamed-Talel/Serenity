@@ -1,44 +1,53 @@
 <section class="marketplace-page container">
   <header class="hero">
-    <h1>Articles Discovery</h1>
-    <p>Explore calm, supportive digital content through short previews before choosing to unlock.</p>
+    <div class="hero-copy">
+      <p class="eyebrow">Marketplace</p>
+      <h1>Care products & calm content</h1>
+      <p class="hero-lead">
+        Browse physical essentials and supportive digital resources. Preview digital items first; full access is confirmed by our team (no online payment yet).
+      </p>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-secondary" routerLink="/marketplace/cart">Cart</a>
+      <a class="btn btn-secondary" routerLink="/marketplace/orders">My orders</a>
+      <a class="btn btn-secondary" routerLink="/marketplace/wishlist">Wishlist</a>
+    </div>
   </header>
 
-  <div class="toolbar">
+  <div class="toolbar card-toolbar">
     <div class="filters">
       <input
-        type="text"
-        placeholder="Search products"
+        type="search"
+        placeholder="Search by name"
         [(ngModel)]="query"
         (ngModelChange)="onQueryInputChange()"
-        (keyup.enter)="loadProducts()" />
+        (keyup.enter)="loadProducts()"
+        aria-label="Search marketplace" />
 
-      <select [(ngModel)]="selectedCategory" (change)="loadProducts()">
+      <select [(ngModel)]="selectedCategory" (change)="loadProducts()" aria-label="Category">
         <option value="">All categories</option>
         <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
       </select>
 
-      <select [(ngModel)]="selectedType" (change)="loadProducts()">
+      <select [(ngModel)]="selectedType" (change)="loadProducts()" aria-label="Product type">
         <option value="">All types</option>
         <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
       </select>
     </div>
 
     <div class="actions">
-      <a class="btn btn-secondary" routerLink="/marketplace/cart">Cart</a>
-      <a class="btn btn-secondary" routerLink="/marketplace/orders">My Unlocks</a>
       <button class="btn btn-secondary" type="button" (click)="toggleQuiz()">
-        {{ showQuiz ? 'Hide Scan' : 'Find My Match' }}
+        {{ showQuiz ? 'Hide match finder' : 'Find my match' }}
       </button>
       <button class="btn btn-reset" type="button" [class.animating]="resetAnimating" (click)="clearFiltersSmooth()">
-        Reset
+        Reset filters
       </button>
     </div>
   </div>
 
   <section class="quiz-card" *ngIf="showQuiz">
-    <h3>30-second Wellness Scan</h3>
-    <p>Answer 3 quick questions and get product suggestions focused on your current needs.</p>
+    <h3>Quick wellness match</h3>
+    <p>Three questions — gentle suggestions based on how you feel today.</p>
 
     <div class="quiz-grid">
       <label>
@@ -77,9 +86,9 @@
 
     <div class="quiz-actions">
       <button class="btn btn-primary" type="button" [disabled]="quizSubmitting" (click)="submitQuiz()">
-        {{ quizSubmitting ? 'Analyzing...' : 'Get Recommendations' }}
+        {{ quizSubmitting ? 'Finding matches…' : 'Get suggestions' }}
       </button>
-      <button class="btn btn-outline" type="button" (click)="resetQuiz()">Reset Scan</button>
+      <button class="btn btn-outline" type="button" (click)="resetQuiz()">Reset</button>
     </div>
 
     <p class="quiz-error" *ngIf="quizError">{{ quizError }}</p>
@@ -98,37 +107,43 @@
     </div>
   </section>
 
-  <p class="hint" *ngIf="isManager()">Manager mode enabled: catalog management APIs are active.</p>
+  <p class="hint" *ngIf="isManager()">You have catalog management access for this marketplace.</p>
 
-  <p *ngIf="loading">Loading products...</p>
+  <div class="loading-row" *ngIf="loading">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Loading catalog…</span>
+  </div>
 
   <div class="grid" *ngIf="!loading && hasResults">
     <article
       class="product-card"
       *ngFor="let product of products"
       tabindex="0"
-      role="button"
+      role="link"
+      [attr.aria-label]="'Open details for ' + product.name"
       (click)="openDetails(product.id)"
       (keydown.enter)="openDetails(product.id)"
       (keydown.space)="$event.preventDefault(); openDetails(product.id)">
-      <img [src]="product.imageUrl || 'assets/logo.png'" [alt]="product.name" />
+      <div class="thumb-wrap">
+        <img [src]="product.imageUrl || 'assets/logo.png'" [alt]="product.name" />
+        <span class="type-pill">{{ product.type === 'DIGITAL' ? 'Digital' : 'Physical' }}</span>
+      </div>
       <div class="content">
         <h3>{{ product.name }}</h3>
         <p>{{ product.description }}</p>
         <div class="meta">
-          <span>{{ product.category }}</span>
-          <span>{{ product.type }}</span>
+          <span class="meta-pill">{{ product.category }}</span>
         </div>
         <strong class="price">{{ product.price | currency:'TND ' }}</strong>
-        <p class="supportive-note" *ngIf="isDigital(product)">Start with a gentle preview. Unlock only when you feel ready.</p>
-        <span class="card-hint">Tap to open details and preview options</span>
+        <p class="supportive-note" *ngIf="isDigital(product)">Includes a preview before you request full access.</p>
+        <span class="card-hint">Open for details, preview, and wishlist</span>
       </div>
     </article>
   </div>
 
   <section class="empty-state" *ngIf="!loading && !hasResults">
-    <h3>No articles match these filters yet</h3>
-    <p>Try broadening your search terms or clearing one filter to keep exploring calmly.</p>
+    <h3>No matches yet</h3>
+    <p>Try a shorter search, pick another category, or reset filters to see more.</p>
     <button class="btn btn-secondary" type="button" (click)="clearFiltersSmooth()">Clear filters</button>
   </section>
 </section>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CartItem,
@@ -21,12 +21,14 @@ import {
 })
 export class MarketplaceService {
 
-  private static readonly UNLOCKED_ARTICLES_KEY = 'unlocked_article_ids';
+  private static readonly CART_STORAGE_KEY = 'marketplace_cart_v1';
   private readonly API_URL = `${environment.marketplaceServiceApiUrl}/api/articles`;
   private readonly cartSubject = new BehaviorSubject<CartItem[]>([]);
   readonly cart$ = this.cartSubject.asObservable();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    this.restoreCartFromStorage();
+  }
 
   getProducts(filters?: {
     query?: string;
@@ -80,46 +82,28 @@ export class MarketplaceService {
     return this.http.get<MarketplaceOrder>(`${this.API_URL}/orders/${orderId}`);
   }
 
-  unlockArticle(product: MarketplaceProduct): Observable<MarketplaceOrder> {
+  /** Submit a request for full digital access (no online payment). Staff confirms in admin. */
+  requestDigitalAccess(product: MarketplaceProduct, customerNote?: string): Observable<MarketplaceOrder> {
     const request: CheckoutRequest = {
       items: [{ productId: product.id, quantity: 1 }],
-      shippingAddress: 'Digital delivery',
-      customerNote: `Unlock article: ${product.name}`
+      shippingAddress: 'Digital access request',
+      customerNote: customerNote?.trim() || `Full access request: ${product.name}`
     };
 
     return this.http.post<MarketplaceOrder>(`${this.API_URL}/orders/checkout`, request);
   }
 
-  isArticleUnlocked(productId: number): boolean {
-    return this.getUnlockedArticleIds().includes(productId);
-  }
-
-  markArticleUnlocked(productId: number): void {
-    const current = new Set(this.getUnlockedArticleIds());
-    current.add(productId);
-    localStorage.setItem(
-      MarketplaceService.UNLOCKED_ARTICLES_KEY,
-      JSON.stringify(Array.from(current))
+  /** True if the signed-in user has a confirmed (PAID) order that includes this product. */
+  hasPaidAccessForProduct(productId: number): Observable<boolean> {
+    return this.getMyOrders().pipe(
+      map(orders =>
+        orders.some(
+          o =>
+            o.status === 'PAID' &&
+            (o.items ?? []).some(i => i.productId === productId)
+        )
+      )
     );
-  }
-
-  getUnlockedArticleIds(): number[] {
-    const raw = localStorage.getItem(MarketplaceService.UNLOCKED_ARTICLES_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-      return parsed
-        .map((id) => Number(id))
-        .filter((id) => Number.isFinite(id));
-    } catch {
-      return [];
-    }
   }
 
   updateOrderStatus(orderId: number, status: MarketplaceOrderStatus): Observable<MarketplaceOrder> {
@@ -163,6 +147,7 @@ export class MarketplaceService {
     }
 
     this.cartSubject.next(current);
+    this.persistCart();
   }
 
   isCartEligible(product: MarketplaceProduct): boolean {
@@ -174,14 +159,17 @@ export class MarketplaceService {
       .map(item => item.product.id === productId ? { ...item, quantity } : item)
       .filter(item => item.quantity > 0);
     this.cartSubject.next(current);
+    this.persistCart();
   }
 
   removeFromCart(productId: number): void {
     this.cartSubject.next(this.cartSubject.value.filter(item => item.product.id !== productId));
+    this.persistCart();
   }
 
   clearCart(): void {
     this.cartSubject.next([]);
+    this.persistCart();
   }
 
   getCartSnapshot(): CartItem[] {
@@ -236,6 +224,46 @@ export class MarketplaceService {
 
   deleteReview(reviewId: number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/reviews/${reviewId}`);
+  }
+
+  private restoreCartFromStorage(): void {
+    try {
+      const raw = localStorage.getItem(MarketplaceService.CART_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+      const items: CartItem[] = [];
+      for (const row of parsed) {
+        if (
+          row &&
+          typeof row === 'object' &&
+          'quantity' in row &&
+          'product' in row &&
+          row.product &&
+          typeof (row as CartItem).product.id === 'number' &&
+          typeof (row as CartItem).quantity === 'number'
+        ) {
+          items.push({ product: (row as CartItem).product, quantity: (row as CartItem).quantity });
+        }
+      }
+      if (items.length > 0) {
+        this.cartSubject.next(items);
+      }
+    } catch {
+      /* ignore corrupt cart */
+    }
+  }
+
+  private persistCart(): void {
+    try {
+      localStorage.setItem(MarketplaceService.CART_STORAGE_KEY, JSON.stringify(this.cartSubject.value));
+    } catch {
+      /* ignore quota errors */
+    }
   }
 
 }

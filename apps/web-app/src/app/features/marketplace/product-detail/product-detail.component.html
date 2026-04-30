@@ -1,5 +1,12 @@
+<section class="container detail-page" *ngIf="loading">
+  <div class="loading-panel card">
+    <span class="spinner" aria-hidden="true"></span>
+    <p>Loading product…</p>
+  </div>
+</section>
+
 <section class="container detail-page" *ngIf="!loading && product as p">
-  <button class="btn btn-link" type="button" routerLink="/marketplace">Back to discovery</button>
+  <button class="btn btn-link" type="button" routerLink="/marketplace">Back to marketplace</button>
 
   <div class="detail-card">
     <img [src]="p.imageUrl || 'assets/logo.png'" [alt]="p.name" />
@@ -7,50 +14,58 @@
     <div class="info">
       <div class="header-row">
         <h2>{{ p.name }}</h2>
-        <button 
+        <button
+          type="button"
           class="btn btn-outline-heart"
           [class.in-wishlist]="inWishlist"
           (click)="toggleWishlist()"
-          title="Add to wishlist"
-        >
-          {{ inWishlist ? '❤️' : '🤍' }}
+          [attr.aria-pressed]="inWishlist"
+          [attr.aria-label]="inWishlist ? 'Remove from wishlist' : 'Add to wishlist'">
+          <span class="heart-label">{{ inWishlist ? 'Saved' : 'Save' }}</span>
         </button>
       </div>
       <p>{{ p.description }}</p>
       <div class="chips">
-        <span>{{ p.category }}</span>
-        <span>{{ p.type }}</span>
-        <span *ngIf="usesPreviewFlow">Freemium Preview</span>
+        <span class="chip">{{ p.category }}</span>
+        <span class="chip">{{ p.type }}</span>
+        <span class="chip chip-accent" *ngIf="usesPreviewFlow">Preview available</span>
       </div>
-      <strong>{{ p.price | currency:'TND ' }}</strong>
+      <strong class="price-line">{{ p.price | currency:'TND ' }}</strong>
+
+      <p class="notice-banner" *ngIf="accessRequestSent && !isUnlocked">
+        Request received. Our team will confirm your access; you can track status under <a routerLink="/marketplace/orders">My orders</a>.
+      </p>
 
       <div class="supportive-msg" *ngIf="usesPreviewFlow && !isUnlocked">
-        You can preview gently before deciding. Full access unlocks when you feel ready.
+        Try a gentle preview first. Full access is granted after we confirm your request (no online payment yet).
       </div>
 
       <div class="order-row" *ngIf="usesPreviewFlow">
-        <button class="btn btn-primary" type="button" (click)="openPreview()">Start Preview</button>
+        <button class="btn btn-primary" type="button" (click)="openPreview()">Start preview</button>
         <button class="btn btn-secondary" type="button" [disabled]="unlocking" (click)="requestUnlock()">
-          {{ unlocking ? 'Unlocking...' : ('Unlock for ' + (p.price | currency:'TND ')) }}
+          {{ unlocking ? 'Submitting…' : 'Request full access' }}
         </button>
-        <button class="btn btn-outline" type="button" (click)="restartPreview()">Restart</button>
+        <button class="btn btn-outline" type="button" (click)="restartPreview()">Restart preview</button>
       </div>
 
       <div class="order-row" *ngIf="!usesPreviewFlow">
-        <input type="number" min="1" [(ngModel)]="quantity" />
-        <button class="btn btn-primary" type="button" (click)="addToCart()">Add to Cart</button>
+        <label class="qty">
+          <span>Quantity</span>
+          <input type="number" min="1" [(ngModel)]="quantity" />
+        </label>
+        <button class="btn btn-primary" type="button" (click)="addToCart()">Add to cart</button>
       </div>
 
       <div class="unlock-state" *ngIf="isUnlocked">
-        Full content unlocked. You can continue at your own pace.
+        You have full access. Continue at your own pace.
       </div>
 
       <div class="unlock-error" *ngIf="unlockError">{{ unlockError }}</div>
       <div class="unlock-error" *ngIf="mediaError">{{ mediaError }}</div>
 
       <section class="preview-card" *ngIf="usesPreviewFlow && experienceType === 'PODCAST'">
-        <h3>Podcast Preview</h3>
-        <p>Free preview is limited to {{ previewLimitSeconds }} seconds. Seeking beyond the cap is disabled.</p>
+        <h3>Audio preview</h3>
+        <p>Preview is limited to {{ previewLimitSeconds }} seconds. Seeking past the limit is disabled.</p>
         <audio
           #previewAudio
           [src]="getPodcastPreviewUrl(p.id)"
@@ -66,8 +81,8 @@
       </section>
 
       <section class="preview-card" *ngIf="usesPreviewFlow && experienceType === 'VIDEO'">
-        <h3>Video Preview</h3>
-        <p>Free preview is limited to {{ previewLimitSeconds }} seconds. Unlock to continue.</p>
+        <h3>Video preview</h3>
+        <p>Preview is limited to {{ previewLimitSeconds }} seconds.</p>
         <video
           #previewVideo
           [src]="getVideoPreviewUrl(p.id)"
@@ -83,7 +98,7 @@
       </section>
 
       <section class="preview-card" *ngIf="usesPreviewFlow && experienceType === 'BOOK'">
-        <h3>Book Preview</h3>
+        <h3>Reading preview</h3>
         <p class="preview-text">{{ currentBookPreviewText }}</p>
         <div class="preview-actions">
           <button class="btn btn-outline" type="button" [disabled]="currentBookPage === 0" (click)="previousBookPage()">Previous</button>
@@ -94,7 +109,7 @@
       </section>
 
       <section class="preview-card" *ngIf="usesPreviewFlow && experienceType === 'EXERCISE'">
-        <h3>Guided Exercise Preview</h3>
+        <h3>Exercise preview</h3>
         <ul class="exercise-list">
           <li *ngFor="let step of exerciseSteps; let i = index">
             <button
@@ -112,34 +127,19 @@
     </div>
   </div>
 
-  <!-- Reviews Section -->
   <div class="reviews-section">
     <app-reviews [productId]="p.id"></app-reviews>
   </div>
 
-  <div class="paywall" *ngIf="showPaywall">
+  <div class="paywall" *ngIf="showPaywall" role="dialog" aria-modal="true" aria-labelledby="paywall-title">
     <div class="paywall-dialog">
-      <h3>Continue With Full Access</h3>
+      <h3 id="paywall-title">Continue with full access</h3>
       <p>{{ paywallReason }}</p>
-      <p class="sub">You have seen the free preview. Unlocking gives complete access without interruptions.</p>
+      <p class="sub">You can request full access without paying online. We will confirm your order when ready.</p>
       <div class="paywall-actions">
-        <button class="btn btn-secondary" type="button" (click)="closePaywall()">Maybe later</button>
+        <button class="btn btn-secondary" type="button" (click)="closePaywall()">Not now</button>
         <button class="btn btn-primary" type="button" [disabled]="unlocking" (click)="requestUnlock()">
-          {{ unlocking ? 'Unlocking...' : ('Unlock now for ' + (p.price | currency:'TND ')) }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="paywall" *ngIf="showMockPayment">
-    <div class="paywall-dialog">
-      <h3>Mock Payment Confirmation</h3>
-      <p>You are about to unlock full access for {{ p.price | currency:'TND ' }}.</p>
-      <p class="sub">This is a simulated checkout flow for now. Stripe integration is planned next.</p>
-      <div class="paywall-actions">
-        <button class="btn btn-secondary" type="button" [disabled]="mockPaymentProcessing" (click)="closeMockPayment()">Cancel</button>
-        <button class="btn btn-primary" type="button" [disabled]="mockPaymentProcessing || unlocking" (click)="confirmMockPayment()">
-          {{ mockPaymentProcessing ? 'Processing...' : 'Confirm payment' }}
+          {{ unlocking ? 'Submitting…' : 'Request full access' }}
         </button>
       </div>
     </div>

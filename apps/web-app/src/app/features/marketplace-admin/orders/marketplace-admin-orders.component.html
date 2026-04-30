@@ -69,7 +69,7 @@
             </td>
             <td class="col-status">
               <span class="status-badge" [ngClass]="getStatusClass(order.status)">
-                {{ order.status }}
+                {{ statusLabel(order.status) }}
               </span>
             </td>
             <td class="col-date">
@@ -78,7 +78,7 @@
             <td class="col-actions">
               <div class="action-buttons">
                 <select class="status-select" [value]="order.status" (change)="updateStatus(order.id, $any($event.target).value)">
-                  <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+                  <option *ngFor="let status of statuses" [value]="status">{{ statusLabel(status) }}</option>
                 </select>
                 <button
                   class="btn-delete"
@@ -106,7 +106,7 @@
                   <div class="detail-section">
                     <h4>Order Information</h4>
                     <p><strong>Order ID:</strong> #{{ order.id }}</p>
-                    <p><strong>Status:</strong> <span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span></p>
+                    <p><strong>Status:</strong> <span class="status-badge" [ngClass]="getStatusClass(order.status)">{{ statusLabel(order.status) }}</span></p>
                     <p><strong>Created:</strong> {{ order.createdAt | date:'medium' }}</p>
                   </div>
 

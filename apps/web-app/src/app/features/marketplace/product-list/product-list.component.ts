@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import {
@@ -42,10 +42,17 @@ export class ProductListComponent implements OnInit, OnDestroy {
   constructor(
     private readonly marketplaceService: MarketplaceService,
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap.get('q') ?? '';
+    const cat = (this.route.snapshot.queryParamMap.get('category') ?? '') as MarketplaceProductCategory | '';
+    const typ = (this.route.snapshot.queryParamMap.get('type') ?? '') as MarketplaceProductType | '';
+    this.query = q;
+    this.selectedCategory = MARKETPLACE_CATEGORIES.some(c => c.value === cat) ? cat : '';
+    this.selectedType = MARKETPLACE_TYPES.some(t => t.value === typ) ? typ : '';
     this.loadProducts();
   }
 
@@ -66,10 +73,23 @@ export class ProductListComponent implements OnInit, OnDestroy {
       next: products => {
         this.products = products;
         this.loading = false;
+        this.syncFiltersToUrl();
       },
       error: () => {
         this.loading = false;
       }
+    });
+  }
+
+  private syncFiltersToUrl(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        q: this.query?.trim() ? this.query.trim() : undefined,
+        category: this.selectedCategory || undefined,
+        type: this.selectedType || undefined
+      },
+      replaceUrl: true
     });
   }
 

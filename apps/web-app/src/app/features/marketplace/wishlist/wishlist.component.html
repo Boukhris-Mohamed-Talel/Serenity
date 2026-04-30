@@ -28,7 +28,7 @@
         </div>
         <div class="item-content">
           <h5 class="item-name">{{ item.productName }}</h5>
-          <p class="item-price">{{ item.productPrice | currency }}</p>
+          <p class="item-price">{{ item.productPrice | currency:'TND ' }}</p>
           <p class="item-date">Added: {{ item.addedAt | date: 'short' }}</p>
         </div>
         <div class="item-actions">

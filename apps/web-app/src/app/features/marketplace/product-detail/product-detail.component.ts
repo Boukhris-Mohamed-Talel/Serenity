@@ -23,13 +23,16 @@ export class ProductDetailComponent implements OnInit {
   quantity = 1;
   inWishlist = false;
   userId: number | null = null;
+  /** Full digital access granted after staff confirms the order (server: PAID). */
+  hasServerAccess = false;
+  accessRequestSent = false;
   showPaywall = false;
-  paywallReason = 'Preview finished. Unlock to continue with the full content.';
+  paywallReason = 'Preview finished. Request full access to continue.';
   unlocking = false;
   unlockError = '';
-  showMockPayment = false;
-  mockPaymentProcessing = false;
   mediaError = '';
+
+  private productId = 0;
 
   bookPreviewPages: string[] = [];
   currentBookPage = 0;
@@ -51,6 +54,7 @@ export class ProductDetailComponent implements OnInit {
       this.router.navigate(['/marketplace']);
       return;
     }
+    this.productId = id;
 
     this.loading = true;
     this.marketplaceService.getProductById(id).subscribe({
@@ -59,6 +63,7 @@ export class ProductDetailComponent implements OnInit {
         this.bootstrapPreviewContent(product);
         this.loading = false;
         this.checkWishlistStatus(id);
+        this.refreshAccess();
       },
       error: () => {
         this.loading = false;
@@ -84,7 +89,22 @@ export class ProductDetailComponent implements OnInit {
   }
 
   get isUnlocked(): boolean {
-    return this.product ? this.marketplaceService.isArticleUnlocked(this.product.id) : false;
+    return this.hasServerAccess;
+  }
+
+  private refreshAccess(): void {
+    if (!this.productId || !this.authService.isLoggedIn()) {
+      this.hasServerAccess = false;
+      return;
+    }
+    this.marketplaceService.hasPaidAccessForProduct(this.productId).subscribe({
+      next: ok => {
+        this.hasServerAccess = ok;
+      },
+      error: () => {
+        this.hasServerAccess = false;
+      }
+    });
   }
 
   get isDigitalArticle(): boolean {
@@ -192,7 +212,7 @@ export class ProductDetailComponent implements OnInit {
     if (audio.currentTime >= ProductDetailComponent.AUDIO_PREVIEW_LIMIT_SECONDS) {
       audio.currentTime = ProductDetailComponent.AUDIO_PREVIEW_LIMIT_SECONDS;
       this.pauseAudio();
-      this.openPaywall('Your preview ended. Unlock for the full podcast session.');
+      this.openPaywall('Your preview ended. Request full access for the complete session.');
     }
   }
 
@@ -207,7 +227,7 @@ export class ProductDetailComponent implements OnInit {
     if (audio.currentTime > ProductDetailComponent.AUDIO_PREVIEW_LIMIT_SECONDS) {
       audio.currentTime = ProductDetailComponent.AUDIO_PREVIEW_LIMIT_SECONDS;
       this.pauseAudio();
-      this.openPaywall('Preview limit reached. Unlock to continue listening.');
+      this.openPaywall('Preview limit reached. Request full access to keep listening.');
     }
   }
 
@@ -215,7 +235,7 @@ export class ProductDetailComponent implements OnInit {
     if (!this.usesPreviewFlow || this.isUnlocked) {
       return;
     }
-    this.openPaywall('Preview completed. Unlock to continue listening.');
+    this.openPaywall('Preview completed. Request full access to continue listening.');
   }
 
   onAudioError(): void {
@@ -235,7 +255,7 @@ export class ProductDetailComponent implements OnInit {
     if (video.currentTime >= ProductDetailComponent.VIDEO_PREVIEW_LIMIT_SECONDS) {
       video.currentTime = ProductDetailComponent.VIDEO_PREVIEW_LIMIT_SECONDS;
       video.pause();
-      this.openPaywall('Your video preview ended. Unlock to continue watching.');
+      this.openPaywall('Your video preview ended. Request full access to keep watching.');
     }
   }
 
@@ -252,7 +272,7 @@ export class ProductDetailComponent implements OnInit {
     if (video.currentTime > ProductDetailComponent.VIDEO_PREVIEW_LIMIT_SECONDS) {
       video.currentTime = ProductDetailComponent.VIDEO_PREVIEW_LIMIT_SECONDS;
       video.pause();
-      this.openPaywall('Preview limit reached. Unlock to continue watching.');
+      this.openPaywall('Preview limit reached. Request full access to keep watching.');
     }
   }
 
@@ -260,7 +280,7 @@ export class ProductDetailComponent implements OnInit {
     if (!this.usesPreviewFlow || this.isUnlocked) {
       return;
     }
-    this.openPaywall('Video preview completed. Unlock to continue watching.');
+    this.openPaywall('Video preview completed. Request full access to keep watching.');
   }
 
   onVideoError(): void {
@@ -284,7 +304,7 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
 
-    this.openPaywall('Preview pages completed. Unlock to continue reading.');
+    this.openPaywall('Preview pages completed. Request full access to keep reading.');
   }
 
   previousBookPage(): void {
@@ -303,7 +323,7 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
 
-    this.openPaywall('You completed the free exercise preview. Unlock to continue.');
+    this.openPaywall('You completed the free exercise preview. Request full access to continue.');
   }
 
   requestUnlock(): void {
@@ -318,47 +338,18 @@ export class ProductDetailComponent implements OnInit {
       return;
     }
 
-    this.showMockPayment = true;
-    this.unlockError = '';
-  }
-
-  closeMockPayment(): void {
-    if (this.mockPaymentProcessing) {
-      return;
-    }
-    this.showMockPayment = false;
-  }
-
-  confirmMockPayment(): void {
-    if (!this.product || this.mockPaymentProcessing || this.unlocking) {
-      return;
-    }
-
-    this.mockPaymentProcessing = true;
-    window.setTimeout(() => {
-      this.mockPaymentProcessing = false;
-      this.unlockNow();
-    }, 900);
-  }
-
-  private unlockNow(): void {
-    if (!this.product) {
-      return;
-    }
-
     this.unlocking = true;
     this.unlockError = '';
-    this.marketplaceService.unlockArticle(this.product).subscribe({
+    this.marketplaceService.requestDigitalAccess(this.product).subscribe({
       next: () => {
-        this.marketplaceService.markArticleUnlocked(this.product!.id);
         this.unlocking = false;
         this.showPaywall = false;
-        this.showMockPayment = false;
+        this.accessRequestSent = true;
+        this.refreshAccess();
       },
       error: () => {
         this.unlocking = false;
-        this.showMockPayment = false;
-        this.unlockError = 'Unable to unlock right now. Please try again in a moment.';
+        this.unlockError = 'Unable to submit your request right now. Please try again in a moment.';
       }
     });
   }
@@ -441,7 +432,7 @@ export class ProductDetailComponent implements OnInit {
   private buildBookPreviewPages(product: MarketplaceProduct): string[] {
     const base = product.description?.trim() || 'This article shares practical techniques to support emotional balance.';
     return [
-      `${base} This opening preview helps you understand the tone and approach before unlocking full access.`,
+      `${base} This opening preview helps you understand the tone and approach before requesting full access.`,
       'In the full version, you will receive guided structure, reflective prompts, and calm step-by-step progression.'
     ];
   }
