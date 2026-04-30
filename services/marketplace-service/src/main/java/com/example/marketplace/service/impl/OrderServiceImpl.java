@@ -36,8 +36,9 @@ public class OrderServiceImpl implements OrderService {
                 .shippingAddress(request.getShippingAddress().trim())
                 .customerNote(request.getCustomerNote())
                 .status(OrderStatus.CREATED)
+                // DB may still constrain payment_status to legacy mock enum values; keep it stable until payments exist.
                 .paymentStatus(PaymentStatus.MOCK_AUTHORIZED)
-                .paymentReference("MOCK-" + UUID.randomUUID())
+                .paymentReference("REQ-" + UUID.randomUUID())
                 .totalAmount(BigDecimal.ZERO)
                 .currency("TND")
                 .build();
@@ -66,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setTotalAmount(total);
-        order.setStatus(OrderStatus.PAID);
+        // No payment integration: order stays CREATED until staff confirms (PAID) in admin.
 
         MarketplaceOrder saved = marketplaceOrderRepository.save(order);
         return toResponse(saved);
@@ -126,6 +127,9 @@ public class OrderServiceImpl implements OrderService {
                 MarketplaceOrder order = findOrderById(orderId);
                 validateStatusTransition(order.getStatus(), request.getStatus());
                 order.setStatus(request.getStatus());
+                if (request.getStatus() == OrderStatus.PAID) {
+                        order.setPaymentReference("CONFIRMED-" + order.getId());
+                }
                 return toResponse(marketplaceOrderRepository.save(order));
         }
 
@@ -170,12 +174,16 @@ public class OrderServiceImpl implements OrderService {
                         .build())
                 .toList();
 
+        String message = switch (order.getStatus()) {
+                case CREATED -> "Request received; awaiting confirmation (no online payment yet).";
+                case PAID -> "Confirmed.";
+                case CANCELLED -> "Cancelled.";
+        };
+
         PaymentAttemptDTO payment = PaymentAttemptDTO.builder()
                 .reference(order.getPaymentReference())
                 .status(order.getPaymentStatus())
-                .message(order.getPaymentStatus() == PaymentStatus.MOCK_AUTHORIZED
-                        ? "Mock payment authorized"
-                        : "Mock payment declined")
+                .message(message)
                 .build();
 
         return OrderResponseDTO.builder()
