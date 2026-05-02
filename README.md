@@ -125,3 +125,11 @@ Appointment-service is strict about required env vars; see:
 - **One folder = one deployable**: apps under `apps/`, services under `services/`
 - **Gateway-first routing**: the SPA should call backends via the gateway (`:8082`) unless you’re intentionally bypassing it for debugging
 - **Aggregator Maven POM**: the root `pom.xml` is an IntelliJ-friendly aggregator so multiple services show up together
+
+## Collaborators 
+- [Haythem Abdellaoui](https://github.com/haythem-abdellaoui)
+- [Ahmed Hamda](https://github.com/scyllastrikes)
+- [Rayen Derbel](https://github.com/rayenderbel100)
+- [Mohamed Raef Hosni](https://github.com/itsRaeff)
+- [Rayen Boussaidi](https://github.com/rayenboussaidi)
+- [Talel Ben Aziza]
