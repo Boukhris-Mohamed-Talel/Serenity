@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/articles/products/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/marketplace/recommendations/quiz").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/articles/recommendations/quiz").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/marketplace/recommendations/olist").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/articles/recommendations/olist").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

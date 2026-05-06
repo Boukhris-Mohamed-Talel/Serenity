@@ -62,6 +62,9 @@ services/whisper-ai-service/data/
 
 services/whisper-ai-service/.env  
 services/monitoring-service/.env  
+
+# Olist ML service (local venv + downloaded CSVs)
+services/marketplace-recommendation-ml/.venv/
 services/pharmacy-service/.env   
 services/derbelmicroservice/.env   
 services/insurance-service/.env    

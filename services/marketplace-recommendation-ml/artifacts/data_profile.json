@@ -1,0 +1,20 @@
+{
+  "raw_rows": {
+    "customers": 99441,
+    "orders": 99441,
+    "order_items": 112650,
+    "products": 32951
+  },
+  "dropped_line_items_unknown_product": 0,
+  "clean_rows": {
+    "customers": 99441,
+    "orders": 96478,
+    "order_items": 112650,
+    "products": 32951,
+    "line_items": 110197
+  },
+  "order_purchase_timestamp": {
+    "min": "2016-09-15 12:16:38+00:00",
+    "max": "2018-08-29 15:00:37+00:00"
+  }
+}

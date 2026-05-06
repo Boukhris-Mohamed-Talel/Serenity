@@ -1,0 +1,43 @@
+{
+  "cleaning": {
+    "raw_rows": {
+      "customers": 99441,
+      "orders": 99441,
+      "order_items": 112650,
+      "products": 32951
+    },
+    "dropped_line_items_unknown_product": 0,
+    "clean_rows": {
+      "customers": 99441,
+      "orders": 96478,
+      "order_items": 112650,
+      "products": 32951,
+      "line_items": 110197
+    },
+    "order_purchase_timestamp": {
+      "min": "2016-09-15 12:16:38+00:00",
+      "max": "2018-08-29 15:00:37+00:00"
+    }
+  },
+  "matrix": {
+    "n_users": 1503,
+    "n_products": 882,
+    "nnz_full": 1934,
+    "nnz_train_for_eval": 1647
+  },
+  "config": {
+    "n_components": 32,
+    "min_user_purchases": 3,
+    "min_product_purchases": 10,
+    "test_fraction": 0.2,
+    "eval_k": 10
+  },
+  "evaluation": {
+    "hit_rate_at_k": 0.06818181818181818,
+    "mean_rank_percentile": 0.3822876896089154,
+    "n_evaluated": 44,
+    "n_skipped_cold_user": 222,
+    "test_edges": 303,
+    "note": "SVD fit on train-time matrix only; final saved model is fit on full interactions."
+  }
+}

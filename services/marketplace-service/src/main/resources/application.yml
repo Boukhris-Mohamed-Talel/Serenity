@@ -20,3 +20,6 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47}
+  ml:
+    # Optional: Python Olist recommender (see services/marketplace-recommendation-ml). Example: http://127.0.0.1:8095
+    olist-base-url: ${ML_OLIST_BASE_URL:}

@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "healthcare-system",
+      "path": "."
+    },
+    {
+      "name": "marketplace-recommendation-ml",
+      "path": "services/marketplace-recommendation-ml"
+    }
+  ],
+  "settings": {}
+}

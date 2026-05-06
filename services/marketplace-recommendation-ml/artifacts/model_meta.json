@@ -1,0 +1,7 @@
+{
+  "n_users": 1503,
+  "n_products": 882,
+  "n_components": 32,
+  "data_dir": "C:\\Users\\ambro\\healthcare-system\\services\\marketplace-recommendation-ml\\data\\olist",
+  "model_path": "C:\\Users\\ambro\\healthcare-system\\services\\marketplace-recommendation-ml\\artifacts\\model.joblib"
+}
