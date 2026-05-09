@@ -1,0 +1,122 @@
+services:
+
+  mysql-db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: healthcare_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  postgres-db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: doctor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: always
+
+  user-service:
+    image: rayen209/serenity-user-service:latest
+    restart: always
+    depends_on:
+      - mysql-db
+      - redis
+    environment:
+      SERVER_PORT: 8081
+      USER_PUBLIC_BASE_URL: http://localhost:8081
+
+      DB_URL: jdbc:mysql://mysql-db:3306/healthcare_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+      UPLOAD_DIR: uploads
+
+      INSURANCE_API_URL: http://insurance-service:3000/api
+
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47
+      JWT_EXPIRATION: 86400000
+
+      INTERNAL_API_KEY: serenity-internal-key-dev
+
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USERNAME: raefhossni@gmail.com
+      SMTP_PASSWORD: "rhwt ksis csqy pezj"
+
+      MAIL_FROM: raefhossni@gmail.com
+
+      GOOGLE_CLIENT_ID: 839671631677-mn9nlmrhu23km56obikov37g1vnh08m3.apps.googleusercontent.com
+
+      FACEBOOK_APP_ID: ""
+      FACEBOOK_APP_SECRET: ""
+
+      PASSWORD_RESET_OTP_LENGTH: 6
+      PASSWORD_RESET_OTP_TTL_SECONDS: 300
+      PASSWORD_RESET_OTP_MAX_ATTEMPTS: 5
+      PASSWORD_RESET_TOKEN_TTL_SECONDS: 900
+
+      BAN_CLEANUP_CRON: "0 0/30 * * * *"
+      BAN_CLEANUP_ZONE: Africa/Tunis
+
+  doctor-service:
+    image: rayen209/serenity-doctor-service:latest
+    restart: always
+    depends_on:
+      - postgres-db
+      - redis
+    environment:
+      SERVER_PORT: 8083
+
+      SPRING_PROFILES_ACTIVE: dev
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/doctor_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+      SPRING_SECURITY_USER_NAME: admin
+      SPRING_SECURITY_PASSWORD: admin123
+
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47
+      JWT_EXPIRATION: 86400000
+
+      SCHEDULER_JWT: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJoYXl0aGVtLmFiZGVsbGFvdWlAZ21haWwuY29tIiwicm9sZXMiOiJST0xFX0FETUlOIiwicm9sZSI6IlJPTEVfQURNSU4iLCJpYXQiOjE3NzYyNjQyNzcsImV4cCI6MTc3NjM1MDY3NywidXNlcklkIjoxMzV9.IxpvsARveGHKsQEBl3fNaH0OutNjAmD8Af2dOQhxojOZFe6FiRefEgYSa8oEb2zp4x3W4THa8nTFoyHo5N1SPg
+
+  api-gateway:
+    image: rayen209/serenity-api-gateway:latest
+    restart: always
+    depends_on:
+      - user-service
+      - doctor-service
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      USER_SERVICE_URL: http://user-service:8081
+      DOCTOR_SERVICE_URL: http://doctor-service:8083
+
+volumes:
+  mysql_data:
+  postgres_data:
