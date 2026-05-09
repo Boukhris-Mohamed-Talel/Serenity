@@ -61,20 +61,20 @@ export class DoctorService {
    * Get all patients assigned to a doctor (doctor sees names, not IDs).
    */
   getPatientsForDoctor(doctorId: number): Observable<PatientInfo[]> {
-    return this.http.get<PatientInfo[]>(`${this.MONITORING_URL}/${doctorId}/patients`);
+    return this.http.get<PatientInfo[]>(`${this.API_URL}/${doctorId}/patients`);
   }
 
   /**
    * Get the doctor responsible for a patient.
    */
   getDoctorForPatient(patientId: number): Observable<DoctorInfo> {
-    return this.http.get<DoctorInfo>(`${this.MONITORING_URL}/patients/${patientId}/doctor`);
+    return this.http.get<DoctorInfo>(`${this.API_URL}/patients/${patientId}/doctor`);
   }
 
   /**
    * Assign/reassign doctor to patient (optional helper for future UI flows).
    */
   assignDoctorToPatient(doctorId: number, patientId: number): Observable<PatientInfo> {
-    return this.http.post<PatientInfo>(`${this.MONITORING_URL}/${doctorId}/patients/${patientId}`, {});
+    return this.http.post<PatientInfo>(`${this.API_URL}/${doctorId}/patients/${patientId}`, {});
   }
 }

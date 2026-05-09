@@ -15,7 +15,7 @@ import tn.esprit.arctic.derbelmicroservice.service.IMedicineService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/medicines")
+@RequestMapping("/api/medicines")
 @RequiredArgsConstructor
 public class MedicineController {
 

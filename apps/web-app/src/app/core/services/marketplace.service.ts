@@ -23,7 +23,7 @@ import {
 export class MarketplaceService {
 
   private static readonly CART_STORAGE_KEY = 'marketplace_cart_v1';
-  private readonly API_URL = `${environment.marketplaceServiceApiUrl}/api/articles`;
+  private readonly API_URL = `${environment.apiUrl}/articles`;
   private readonly cartSubject = new BehaviorSubject<CartItem[]>([]);
   readonly cart$ = this.cartSubject.asObservable();
 

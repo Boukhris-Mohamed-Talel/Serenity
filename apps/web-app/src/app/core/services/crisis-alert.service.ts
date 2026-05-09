@@ -6,13 +6,14 @@ import {
   WeeklyDoctorDigestPayload
 } from '../../shared/models/mood.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CrisisAlertService {
 
-  private readonly API_URL = 'http://localhost:8085/api/monitoring/alerts/stream';
+  private readonly API_URL = '${environment.apiUrl}/monitoring/alerts/stream';
 
   private eventSource: EventSource | null = null;
   private connectedDoctorId: number | null = null;

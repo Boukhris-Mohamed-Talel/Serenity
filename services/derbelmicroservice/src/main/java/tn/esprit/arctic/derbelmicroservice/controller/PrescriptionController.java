@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import java.util.List;
 
 @RestController
-@RequestMapping("/prescriptions")
+@RequestMapping("/api/prescriptions")
 @RequiredArgsConstructor
 public class PrescriptionController {
 

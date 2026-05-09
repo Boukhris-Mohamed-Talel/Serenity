@@ -15,7 +15,7 @@ import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IAiSeverityService;
 
 @RestController
-@RequestMapping("/records/ai-severity")
+@RequestMapping("/api/records/ai-severity")
 @RequiredArgsConstructor
 public class AiSeverityController {
 

@@ -19,7 +19,7 @@ import { PageResponseDTO } from '../../models/page-response.model';
 })
 export class InsuranceService {
 
-  private readonly API_URL = `${environment.insuranceApiUrl}/insurance`;
+  private readonly API_URL = `${environment.apiUrl}/insurance`;
 
   constructor(private readonly http: HttpClient) {}
 

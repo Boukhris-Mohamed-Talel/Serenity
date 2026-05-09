@@ -1,116 +1,118 @@
 spring:
   application:
-    name: API_Gateway
-
+    name: API_Gatewya
   codec:
     max-in-memory-size: 32MB
-
   cloud:
     gateway:
       default-filters:
+        # User-service also sets CORS headers; dedupe avoids browser rejection
+        # ("Access-Control-Allow-Origin contains multiple values").
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
-
       routes:
-
-        # =========================
-        # USER SERVICE
-        # =========================
-        - id: auth-service
-          uri: http://user-service:8081
-          predicates:
-            - Path=/api/auth/**
-
-        - id: user-service
-          uri: http://user-service:8081
-          predicates:
-            - Path=/api/users/**
-
-        - id: user-internal
-          uri: http://user-service:8081
-          predicates:
-            - Path=/api/internal/**
-
-        - id: uploads
-          uri: http://user-service:8081
-          predicates:
-            - Path=/uploads/**
-
-        # =========================
-        # DOCTOR SERVICE
-        # =========================
-        - id: doctor-service
-          uri: http://doctor-service:8083
-          predicates:
-            - Path=/api/doctors/**
-
-        - id: doctor-verification
-          uri: http://doctor-service:8083
-          predicates:
-            - Path=/api/doctor-verifications/**
-
-        - id: doctor-conversation
-          uri: http://doctor-service:8083
-          predicates:
-            - Path=/api/conversations/**
-
-        - id: doctor-messages
-          uri: http://doctor-service:8083
-          predicates:
-            - Path=/api/messages/**
-
-        # =========================
-        # DERBEL SERVICE (remis correctement)
-        # =========================
-        - id: derbel-service
-          uri: http://derbel-service:8099
-          predicates:
-            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
-
-        # =========================
-        # AUTRES MICROSERVICES
-        # =========================
+        # Must match /api/appointments/** (e.g. calendar-hints, list, patient-request). If this route is missing,
+        # requests fall through and return 404 "No static resource api/appointments/...".
         - id: appointment-service
-          uri: http://appointment-service:8091
+          uri: http://localhost:8091
           predicates:
             - Path=/api/appointments/**
-
-        - id: whisper-service
-          uri: http://whisper-service:5002
+        - id: whisper-ai-service
+          uri: http://localhost:5002
           predicates:
             - Path=/api/whisper/**
-
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+        # Service-to-service (appointment-service → user emails). Must be before generic user routes if paths overlap.
+        - id: user-service-internal
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/internal/**
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**
         - id: pharmacy-service
-          uri: http://pharmacy-service:8093
+          uri: http://localhost:8093
           predicates:
             - Path=/api/pharmacy/**
-
         - id: insurance-service
-          uri: http://insurance-service:8090
+          uri: http://localhost:8090
           predicates:
             - Path=/api/insurance/**
-
         - id: insurance-files
-          uri: http://insurance-service:8090
+          uri: http://localhost:8090
           predicates:
             - Path=/api/files/**
-
-        # =========================
-        # WEBSOCKETS
-        # =========================
-        - id: websocket-user
-          uri: ws://user-service:8081
+        - id : doctor-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/doctors/**
+        - id : image-uploads
+          uri: http://localhost:8081
+          predicates:
+            - Path=/uploads/**
+        - id: doctor-microservice
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/doctor-verifications/**
+        - id: doctor-microservice-conversation
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/conversations/**
+        - id: doctor-microservice-messages
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/messages/**
+        - id: websocket-route-doctor
+          uri: ws://localhost:8081
           predicates:
             - Path=/ws/**
-
-        - id: websocket-doctor-verification
-          uri: ws://doctor-service:8083
+        - id: websocket-route-doctor-verification
+          uri: ws://localhost:8083
           predicates:
             - Path=/ws-doctor-verification/**
-
-        - id: websocket-contract
-          uri: ws://doctor-service:8083
+        - id: websocket-route-approved-contract
+          uri: ws://localhost:8083
           predicates:
             - Path=/ws-approve-contract/**
+        - id: derbel-service
+          uri: http://localhost:8099
+          predicates:
+            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
+        - id : doctor-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/doctors/**
+        - id : image-uploads
+          uri: http://localhost:8081
+          predicates:
+            - Path=/uploads/**
+        - id: doctor-microservice
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/doctor-verifications/**
+        - id: doctor-microservice-conversation
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/conversations/**
+        - id: doctor-microservice-messages
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/messages/**
+        - id: websocket-route-doctor
+          uri: ws://localhost:8081
+          predicates:
+            - Path=/ws/**
+        - id: websocket-route-doctor-verification
+          uri: ws://localhost:8083
+          predicates:
+            - Path=/ws-doctor-verification/**
+        - id: derbel-service
+          uri: http://localhost:8099
+          predicates:
+            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
 
       globalcors:
         add-to-simple-url-handler-mapping: true
@@ -119,6 +121,7 @@ spring:
             allowed-origins:
               - "http://localhost:4200"
               - "http://localhost:3000"
+              #- "http://192.168.1.145:4200"
             allowed-methods:
               - GET
               - POST
@@ -138,6 +141,7 @@ spring:
 
 server:
   port: 8082
+  #address: 0.0.0.0
 
 app:
   jwt:

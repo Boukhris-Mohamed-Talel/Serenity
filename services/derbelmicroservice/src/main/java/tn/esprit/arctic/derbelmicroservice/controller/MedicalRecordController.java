@@ -19,7 +19,7 @@ import tn.esprit.arctic.derbelmicroservice.service.IMedicalRecordService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/records")
+@RequestMapping("/api/records")
 @RequiredArgsConstructor
 public class MedicalRecordController {
 

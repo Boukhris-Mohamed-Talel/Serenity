@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/dashboard")
+@RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {
 

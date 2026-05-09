@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   debugModeAvailable: false,
-  apiUrl: 'https://your-production-api.com/api',
+  apiUrl: 'https://api.serenity.com/api',
   insuranceApiUrl: 'https://your-insurance-service.com/api',
   marketplaceServiceApiUrl: 'https://your-marketplace-service.com',
   monitoringUrl: 'http://localhost:8085',

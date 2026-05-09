@@ -10,14 +10,15 @@ import {
   MoodEntryResponse
 } from '../../shared/models/mood.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MonitoringService {
 
-  private readonly API_URL = 'http://localhost:8085/api/monitoring/mood';
-  private readonly TRIGGER_API_URL = 'http://localhost:8085/api/monitoring/triggers';
+  private readonly API_URL = `${environment.apiUrl}/monitoring/mood`;
+  private readonly TRIGGER_API_URL = `${environment.apiUrl}}/monitoring/triggers`;
 
   constructor(
     private readonly http: HttpClient,

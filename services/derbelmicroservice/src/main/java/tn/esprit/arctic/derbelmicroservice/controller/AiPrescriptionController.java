@@ -15,7 +15,7 @@ import tn.esprit.arctic.derbelmicroservice.security.DerbelAuth;
 import tn.esprit.arctic.derbelmicroservice.service.IAiRecommendationService;
 
 @RestController
-@RequestMapping("/records/ai-prescriptions")
+@RequestMapping("/api/records/ai-prescriptions")
 @RequiredArgsConstructor
 public class AiPrescriptionController {
 

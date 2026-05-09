@@ -8,7 +8,7 @@ import { unwrapApiResponse } from '../../shared/utils/api-response.utils';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private readonly base = environment.medicalApiUrl;
+  private readonly base = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 
