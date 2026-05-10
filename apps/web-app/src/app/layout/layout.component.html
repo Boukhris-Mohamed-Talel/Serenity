@@ -8,17 +8,25 @@
     </a>
 
     <div class="navbar-links" *ngIf="authService.isLoggedIn()">
+      <!-- Overview -->
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-      <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
-      <a routerLink="/statistics" routerLinkActive="active" *ngIf="authService.isDoctor()">Statistics</a>
-      <a routerLink="/patients" routerLinkActive="active" *ngIf="authService.isDoctor()">Patients</a>
-      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+
+      <!-- Daily activity -->
       <a routerLink="/appointments" routerLinkActive="active">Appointments</a>
+      <a routerLink="/messagerie" routerLinkActive="active">Messagerie</a>
+
+      <!-- Care & health features -->
+      <a routerLink="/patients" routerLinkActive="active" *ngIf="authService.isDoctor()">Patients</a>
+      <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
       <a routerLink="/pharmacy" routerLinkActive="active" *ngIf="authService.hasRole('PHARMACIST')">Pharmacy</a>
       <a routerLink="/pharmacy/patient" routerLinkActive="active" *ngIf="authService.hasRole('PATIENT')">Pharmacy</a>
-      <a routerLink="/monitoring" routerLinkActive="active" *ngIf="authService.isPatient() || authService.isDoctor()">Monitoring</a>
-      <a routerLink="/articles" routerLinkActive="active">Articles</a>
       <a routerLink="/insurance" routerLinkActive="active" *ngIf="authService.isPatient()">Insurance</a>
+
+      <!-- Discovery -->
+      <a routerLink="/articles" routerLinkActive="active">Articles</a>
+
+      <!-- Analytics / admin -->
+      <a routerLink="/statistics" routerLinkActive="active" *ngIf="authService.isDoctor()">Statistics</a>
       <a routerLink="/users" routerLinkActive="active" *ngIf="authService.isAdmin()">Users</a>
     </div>
 
@@ -118,8 +126,6 @@
         </div>
       </div>
 
-      <span class="user-greeting" *ngIf="user">Hi, {{ getDisplayName() }}</span>
-
       <!-- 👇 Notification Bell -->
       <div class="notif-wrapper">
         <button class="notif-btn" (click)="toggleNotifDropdown(); $event.stopPropagation()">
@@ -154,6 +160,17 @@
         </div>
       </div>
       <!-- 👆 End Bell -->
+
+      <a
+        class="profile-chip"
+        routerLink="/profile"
+        routerLinkActive="active"
+        [attr.aria-label]="'Open profile for ' + getDisplayName()"
+        title="Your profile"
+      >
+        <span class="profile-avatar">{{ getCharacterEmoji() }}</span>
+        <span class="profile-name" *ngIf="user">Hi, {{ getDisplayName() }}</span>
+      </a>
 
       <button class="btn btn-secondary btn-sm" (click)="logout()">Sign Out</button>
     </div>

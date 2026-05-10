@@ -14,9 +14,11 @@ import { DoctorVerificationPendingComponent } from './doctor-verification-pendin
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { ForgotPasswordOtpComponent } from './forgot-password-otp/forgot-password-otp.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { RoleLoadingComponent } from './role-loading/role-loading.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'loading', component: RoleLoadingComponent, canActivate: [AuthGuard] },
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'forgot-password/otp', component: ForgotPasswordOtpComponent },
@@ -41,7 +43,8 @@ const routes: Routes = [
     SelectRoleComponent,
     ForgotPasswordComponent,
     ForgotPasswordOtpComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    RoleLoadingComponent
   ],
   imports: [
     SharedModule,

@@ -1,0 +1,251 @@
+<div class="loader-page" [ngClass]="config.themeClass">
+  <div class="ambient-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <div class="loader-card" role="status" aria-live="polite">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Serenity" class="brand-logo" />
+      <span class="brand-name">Serenity</span>
+    </div>
+
+    <div class="stage" [class.is-done]="done">
+      <ng-container [ngSwitch]="config.key">
+        <ng-container *ngSwitchCase="'doctor'">
+          <ng-container *ngTemplateOutlet="doctorArt"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchCase="'pharmacist'">
+          <ng-container *ngTemplateOutlet="pharmacistArt"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchCase="'patient'">
+          <ng-container *ngTemplateOutlet="patientArt"></ng-container>
+        </ng-container>
+        <ng-container *ngSwitchDefault>
+          <ng-container *ngTemplateOutlet="defaultArt"></ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="copy">
+      <h1 class="greeting">{{ config.greeting }}</h1>
+      <p class="subtitle">{{ config.subtitle }}</p>
+    </div>
+
+    <div class="progress-track" aria-hidden="true">
+      <div class="progress-fill" [style.width.%]="progress"></div>
+    </div>
+
+    <ul class="steps">
+      <li
+        *ngFor="let step of config.steps; let i = index"
+        [class.is-active]="i === currentStep"
+        [class.is-complete]="i < currentStep || (done && i === currentStep)"
+      >
+        <span class="step-dot">
+          <span class="material-icons" *ngIf="i < currentStep || (done && i === currentStep)">check</span>
+        </span>
+        <span class="step-label">{{ step }}</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DOCTOR: pulse ring + medical cross + animated ECG heartbeat   -->
+<!-- ============================================================ -->
+<ng-template #doctorArt>
+  <svg class="art art-doctor" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="docGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#3BA4A0" />
+        <stop offset="100%" stop-color="#2D8E8A" />
+      </linearGradient>
+    </defs>
+
+    <circle class="pulse-ring pulse-ring-1" cx="120" cy="100" r="48" />
+    <circle class="pulse-ring pulse-ring-2" cx="120" cy="100" r="48" />
+    <circle class="pulse-ring pulse-ring-3" cx="120" cy="100" r="48" />
+
+    <circle cx="120" cy="100" r="44" fill="url(#docGrad)" class="badge-fill" />
+
+    <g class="cross" transform="translate(120 100)">
+      <rect x="-6" y="-22" width="12" height="44" rx="3" fill="#ffffff" />
+      <rect x="-22" y="-6" width="44" height="12" rx="3" fill="#ffffff" />
+    </g>
+
+    <path
+      class="ecg-line"
+      d="M 12 150 H 70 L 78 150 L 84 130 L 92 170 L 100 110 L 108 160 L 116 150 H 228"
+      fill="none"
+      stroke="#3BA4A0"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+</ng-template>
+
+<!-- ============================================================ -->
+<!-- PHARMACIST: floating capsules + rotating mortar/cross         -->
+<!-- ============================================================ -->
+<ng-template #pharmacistArt>
+  <svg class="art art-pharmacist" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="pharmGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#7CB87A" />
+        <stop offset="100%" stop-color="#5DAF6A" />
+      </linearGradient>
+      <clipPath id="capsuleClip">
+        <rect x="-22" y="-9" width="44" height="18" rx="9" />
+      </clipPath>
+    </defs>
+
+    <circle class="pulse-ring pulse-ring-1" cx="120" cy="100" r="48" />
+    <circle class="pulse-ring pulse-ring-2" cx="120" cy="100" r="48" />
+
+    <circle cx="120" cy="100" r="44" fill="url(#pharmGrad)" class="badge-fill" />
+
+    <!-- ================================================================ -->
+    <!-- Pharmacy emblem: chalice atop a rod with a snake coiled around it -->
+    <!-- ================================================================ -->
+    <g class="hygieia" transform="translate(120 100)">
+      <!-- Pedestal base (wide trapezoid) -->
+      <path d="M -9 22 L -17 28 L 17 28 L 9 22 Z" fill="#ffffff" />
+      <rect x="-18" y="27.5" width="36" height="2.5" rx="1" fill="#ffffff" />
+
+      <!-- Vertical rod / staff -->
+      <rect x="-2.5" y="-3" width="5" height="25" fill="#ffffff" />
+      <!-- Mid-rod ring decoration -->
+      <rect x="-4" y="9" width="8" height="2.5" rx="0.5" fill="#ffffff" />
+
+      <!-- Snake front body — two visible "front" swoops crossing the rod
+           (the eye fills in the back parts, where the rod hides them) -->
+      <g class="snake-body" fill="none" stroke="#ffffff" stroke-width="4.4"
+         stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 14 21 C 12 17, 4 14, -4 14 C -12 14, -14 12, -13 8" />
+        <path d="M 11 5 C 4 3, -4 0, -10 -3 C -13 -4, -14 -5, -13 -8" />
+      </g>
+      <!-- Subtle dark outline so the snake stays readable where it crosses the rod -->
+      <g class="snake-outline" fill="none" stroke="#1F5C50" stroke-width="0.6"
+         stroke-linecap="round" stroke-linejoin="round" opacity="0.45">
+        <path d="M 14 21 C 12 17, 4 14, -4 14 C -12 14, -14 12, -13 8" />
+        <path d="M 11 5 C 4 3, -4 0, -10 -3 C -13 -4, -14 -5, -13 -8" />
+      </g>
+
+      <!-- Bowl / chalice (drawn over the rod & middle snake swoop) -->
+      <path d="M -16 -10 Q -16 -2, -4 -2 L 4 -2 Q 16 -2, 16 -10 Z" fill="#ffffff" />
+      <ellipse cx="0" cy="-10" rx="16" ry="3" fill="#EBF5EB" />
+      <ellipse cx="0" cy="-10" rx="13" ry="1.6" fill="#2A4745" opacity="0.18" />
+
+      <!-- Upper neck: arches up from behind the bowl on the right, over the top -->
+      <g class="snake-neck" fill="none" stroke="#ffffff" stroke-width="4.4"
+         stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 12 -10 C 17 -16, 12 -22, 4 -22" />
+      </g>
+      <g class="snake-neck-outline" fill="none" stroke="#1F5C50" stroke-width="0.6"
+         stroke-linecap="round" stroke-linejoin="round" opacity="0.45">
+        <path d="M 12 -10 C 17 -16, 12 -22, 4 -22" />
+      </g>
+
+      <!-- Snake head (above bowl, looking left, mouth open with forked tongue) -->
+      <g class="snake-head" transform="translate(0 -22)">
+        <ellipse cx="0" cy="0" rx="5" ry="3.4" fill="#ffffff"
+                 stroke="#1F5C50" stroke-width="0.6" stroke-opacity="0.45" />
+        <!-- Eye -->
+        <circle cx="2" cy="-1" r="0.85" fill="#2A4745" />
+        <!-- Mouth slit -->
+        <path d="M -3.5 0.8 Q -2.5 1.6 -1.5 1.4" stroke="#1F5C50"
+              stroke-width="0.5" fill="none" opacity="0.55" />
+        <!-- Forked tongue (animated flick) -->
+        <g class="snake-tongue">
+          <path d="M -4 0.6 L -10 -0.4 L -8.5 0.8 M -10 -0.4 L -8.5 -1.8"
+                stroke="#D96B6B" stroke-width="0.95" fill="none"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+      </g>
+    </g>
+
+    <!-- Two balanced floating capsules (right + bottom-left) -->
+    <g class="capsule capsule-2" transform="translate(202 64) rotate(28)">
+      <g clip-path="url(#capsuleClip)">
+        <rect x="-22" y="-9" width="22" height="18" fill="#3BA4A0" />
+        <rect x="0" y="-9" width="22" height="18" fill="#E4F4F3" />
+      </g>
+      <rect x="-22" y="-9" width="44" height="18" rx="9" fill="none" stroke="#2D8E8A" stroke-width="1.5" />
+    </g>
+
+    <g class="capsule capsule-3" transform="translate(50 156) rotate(14)">
+      <g clip-path="url(#capsuleClip)">
+        <rect x="-22" y="-9" width="22" height="18" fill="#7CB87A" />
+        <rect x="0" y="-9" width="22" height="18" fill="#EBF5EB" />
+      </g>
+      <rect x="-22" y="-9" width="44" height="18" rx="9" fill="none" stroke="#5DAF6A" stroke-width="1.5" />
+    </g>
+  </svg>
+</ng-template>
+
+<!-- ============================================================ -->
+<!-- PATIENT: breathing circle + heart with leaf + drifting petals -->
+<!-- ============================================================ -->
+<ng-template #patientArt>
+  <svg class="art art-patient" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="patGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#3BA4A0" />
+        <stop offset="100%" stop-color="#7CB87A" />
+      </linearGradient>
+    </defs>
+
+    <circle class="breath-ring breath-ring-3" cx="120" cy="100" r="56" />
+    <circle class="breath-ring breath-ring-2" cx="120" cy="100" r="56" />
+    <circle class="breath-ring breath-ring-1" cx="120" cy="100" r="56" />
+
+    <circle cx="120" cy="100" r="50" fill="url(#patGrad)" class="badge-fill" />
+
+    <g class="heart" transform="translate(120 100)">
+      <path
+        d="M0 14 C -18 -2, -22 -22, -8 -22 C 0 -22, 0 -14, 0 -10 C 0 -14, 0 -22, 8 -22 C 22 -22, 18 -2, 0 14 Z"
+        fill="#ffffff"
+      />
+      <path
+        class="leaf"
+        d="M 4 -22 C 14 -34, 26 -32, 26 -32 C 26 -32, 24 -20, 14 -14 C 8 -10, 4 -14, 4 -22 Z"
+        fill="#7CB87A"
+      />
+      <path d="M 4 -22 C 12 -28, 22 -30, 24 -30" stroke="#5DAF6A" stroke-width="1.2" fill="none" />
+    </g>
+
+    <g class="petal petal-1">
+      <ellipse cx="40" cy="60" rx="6" ry="3" fill="#7CB87A" opacity="0.55" transform="rotate(-30 40 60)" />
+    </g>
+    <g class="petal petal-2">
+      <ellipse cx="200" cy="64" rx="6" ry="3" fill="#3BA4A0" opacity="0.55" transform="rotate(20 200 64)" />
+    </g>
+    <g class="petal petal-3">
+      <ellipse cx="56" cy="160" rx="6" ry="3" fill="#7CB87A" opacity="0.5" transform="rotate(40 56 160)" />
+    </g>
+    <g class="petal petal-4">
+      <ellipse cx="190" cy="156" rx="6" ry="3" fill="#3BA4A0" opacity="0.5" transform="rotate(-25 190 156)" />
+    </g>
+  </svg>
+</ng-template>
+
+<!-- ============================================================ -->
+<!-- DEFAULT (admin / insurer / unknown)                            -->
+<!-- ============================================================ -->
+<ng-template #defaultArt>
+  <svg class="art art-default" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="defGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#3BA4A0" />
+        <stop offset="100%" stop-color="#7CB87A" />
+      </linearGradient>
+    </defs>
+    <circle class="pulse-ring pulse-ring-1" cx="120" cy="100" r="48" />
+    <circle class="pulse-ring pulse-ring-2" cx="120" cy="100" r="48" />
+    <circle cx="120" cy="100" r="44" fill="url(#defGrad)" class="badge-fill" />
+    <path d="M120 76 L120 124 M96 100 L144 100" stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
+  </svg>
+</ng-template>

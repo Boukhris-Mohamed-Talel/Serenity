@@ -1,0 +1,471 @@
+/* =========================================================
+   Role-aware login loading screen
+   Theme-aware: leverages global CSS vars from styles.scss
+   --primary #3BA4A0  --accent #7CB87A  --text #2A4745
+   ========================================================= */
+
+:host {
+  --loader-accent: var(--primary);
+  --loader-accent-soft: var(--primary-light);
+  --loader-bg-from: #e8f6f5;
+  --loader-bg-to: #eef5eb;
+}
+
+.loader-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--loader-bg-from) 0%, #f5faf9 50%, var(--loader-bg-to) 100%);
+  overflow: hidden;
+  animation: page-fade-in 0.4s ease-out both;
+  z-index: 50;
+}
+
+/* Per-role color shift */
+.theme-doctor {
+  --loader-accent: #3BA4A0;
+  --loader-accent-soft: #E4F4F3;
+  --loader-bg-from: #e8f6f5;
+  --loader-bg-to: #f5faf9;
+}
+
+.theme-pharmacist {
+  --loader-accent: #5DAF6A;
+  --loader-accent-soft: #EBF5EB;
+  --loader-bg-from: #ecf6ec;
+  --loader-bg-to: #f5faf6;
+}
+
+.theme-patient {
+  --loader-accent: #3BA4A0;
+  --loader-accent-soft: #E4F4F3;
+  --loader-bg-from: #e8f6f5;
+  --loader-bg-to: #ebf5eb;
+}
+
+.theme-default {
+  --loader-accent: #3BA4A0;
+  --loader-accent-soft: #E4F4F3;
+}
+
+/* ---------- Ambient floating orbs ---------- */
+.ambient-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(36px);
+  opacity: 0.45;
+  background: var(--loader-accent);
+  animation: orb-drift 14s ease-in-out infinite;
+}
+
+.orb-1 { width: 220px; height: 220px; top: -80px; left: -60px; }
+.orb-2 { width: 280px; height: 280px; bottom: -120px; right: -80px; animation-delay: -4s; opacity: 0.35; background: #7CB87A; }
+.orb-3 { width: 160px; height: 160px; top: 50%; left: 60%; animation-delay: -7s; opacity: 0.25; }
+
+/* ---------- Card ---------- */
+.loader-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 2.5rem 2.25rem 2rem;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  text-align: center;
+  animation: card-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.brand-name {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Stage / SVG art ---------- */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.5rem 0 1rem;
+  height: 200px;
+  position: relative;
+}
+
+.art {
+  width: 100%;
+  max-width: 280px;
+  height: 100%;
+  overflow: visible;
+}
+
+.badge-fill {
+  filter: drop-shadow(0 8px 20px rgba(59, 164, 160, 0.25));
+  animation: badge-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: 120px 100px;
+}
+
+/* Generic pulsing rings (doctor + pharmacist + default) */
+.pulse-ring {
+  fill: none;
+  stroke: var(--loader-accent);
+  stroke-width: 2;
+  opacity: 0;
+  transform-origin: 120px 100px;
+  animation: pulse-out 2.4s ease-out infinite;
+}
+
+.pulse-ring-2 { animation-delay: -0.8s; }
+.pulse-ring-3 { animation-delay: -1.6s; }
+
+/* =========================================================
+   DOCTOR
+   ========================================================= */
+.art-doctor {
+  .cross {
+    transform-origin: 120px 100px;
+    animation: cross-pulse 1.6s ease-in-out infinite;
+  }
+
+  .ecg-line {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: ecg-draw 2.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(59, 164, 160, 0.45));
+  }
+}
+
+/* =========================================================
+   PHARMACIST
+   ========================================================= */
+.art-pharmacist {
+  .hygieia {
+    transform-origin: 120px 100px;
+    animation: hygieia-bob 2.6s ease-in-out infinite;
+  }
+
+  .hygieia .snake-tongue {
+    transform-box: fill-box;
+    transform-origin: 100% 50%;
+    animation: tongue-flick 1.8s ease-in-out infinite;
+  }
+
+  .capsule {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: float-y 3.6s ease-in-out infinite;
+  }
+
+  .capsule-2 { animation-delay: -1.1s; animation-duration: 3.6s; }
+  .capsule-3 { animation-delay: -2s;   animation-duration: 4.0s; }
+}
+
+/* =========================================================
+   PATIENT
+   ========================================================= */
+.art-patient {
+  .breath-ring {
+    fill: none;
+    stroke: var(--loader-accent);
+    stroke-width: 2;
+    opacity: 0.35;
+    transform-origin: 120px 100px;
+    animation: breath 4s ease-in-out infinite;
+  }
+
+  .breath-ring-2 { animation-delay: -1.3s; opacity: 0.25; }
+  .breath-ring-3 { animation-delay: -2.6s; opacity: 0.18; }
+
+  .heart {
+    transform-origin: 120px 100px;
+    animation: heartbeat 1.4s ease-in-out infinite;
+  }
+
+  .heart .leaf {
+    transform-box: fill-box;
+    transform-origin: 0% 100%;
+    animation: leaf-sway 2.6s ease-in-out infinite;
+  }
+
+  .petal {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: petal-drift 6s ease-in-out infinite;
+  }
+
+  .petal-1 { animation-delay: 0s; }
+  .petal-2 { animation-delay: -1.5s; animation-duration: 7s; }
+  .petal-3 { animation-delay: -3s;   animation-duration: 6.5s; }
+  .petal-4 { animation-delay: -4.5s; animation-duration: 7.5s; }
+}
+
+/* ---------- Copy ---------- */
+.copy {
+  margin-bottom: 1.25rem;
+  animation: copy-fade 0.6s ease-out 0.2s both;
+}
+
+.greeting {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* ---------- Progress ---------- */
+.progress-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--loader-accent-soft);
+  overflow: hidden;
+  margin: 0 0 1.25rem;
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--loader-accent), #7CB87A);
+  transition: width 0.18s ease-out;
+  box-shadow: 0 0 12px rgba(59, 164, 160, 0.45);
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* ---------- Steps ---------- */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  display: grid;
+  gap: 0.5rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.825rem;
+    color: var(--text-light);
+    opacity: 0.55;
+    transform: translateY(2px);
+    transition: opacity 0.25s ease, color 0.25s ease, transform 0.25s ease;
+  }
+
+  li.is-active {
+    opacity: 1;
+    color: var(--text);
+    transform: translateY(0);
+
+    .step-dot {
+      background: var(--loader-accent);
+      box-shadow: 0 0 0 4px var(--loader-accent-soft);
+      animation: dot-pulse 1.2s ease-in-out infinite;
+    }
+  }
+
+  li.is-complete {
+    opacity: 1;
+    color: var(--text);
+
+    .step-dot {
+      background: var(--loader-accent);
+      box-shadow: none;
+      animation: none;
+
+      .material-icons {
+        font-size: 14px;
+        color: #ffffff;
+        animation: check-pop 0.3s ease-out both;
+      }
+    }
+  }
+}
+
+.step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.step-label {
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* =========================================================
+   KEYFRAMES
+   ========================================================= */
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes copy-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes badge-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-out {
+  0%   { transform: scale(0.6); opacity: 0.6; }
+  80%  { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);   box-shadow: 0 0 0 4px var(--loader-accent-soft); }
+  50%      { transform: scale(1.18); box-shadow: 0 0 0 6px var(--loader-accent-soft); }
+}
+
+@keyframes check-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ---- Doctor ---- */
+@keyframes cross-pulse {
+  0%, 100% { transform: translate(120px, 100px) scale(1); }
+  50%      { transform: translate(120px, 100px) scale(1.08); }
+}
+
+@keyframes ecg-draw {
+  0%   { stroke-dashoffset: 600; }
+  60%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -600; }
+}
+
+/* ---- Pharmacist ---- */
+@keyframes hygieia-bob {
+  0%, 100% { transform: translate(120px, 100px) scale(1); }
+  50%      { transform: translate(120px, 100px) scale(1.04); }
+}
+
+@keyframes tongue-flick {
+  0%, 60%, 100% { transform: scaleX(0.3); opacity: 0; }
+  70%, 90%      { transform: scaleX(1);   opacity: 1; }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* ---- Patient ---- */
+@keyframes breath {
+  0%, 100% { transform: scale(0.85); opacity: 0.18; }
+  50%      { transform: scale(1.12); opacity: 0.45; }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: translate(120px, 100px) scale(1); }
+  20%      { transform: translate(120px, 100px) scale(1.12); }
+  40%      { transform: translate(120px, 100px) scale(0.96); }
+  60%      { transform: translate(120px, 100px) scale(1.06); }
+}
+
+@keyframes leaf-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-8deg); }
+}
+
+@keyframes petal-drift {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.6; }
+  50%  { transform: translate(8px, -10px) rotate(20deg); opacity: 0.85; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.6; }
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(20px, -30px) scale(1.08); }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .pulse-ring,
+  .breath-ring,
+  .ecg-line,
+  .cross,
+  .hygieia,
+  .snake-tongue,
+  .heart,
+  .leaf,
+  .capsule,
+  .petal,
+  .progress-fill::after,
+  .step-dot {
+    animation: none !important;
+  }
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 520px) {
+  .loader-card { padding: 2rem 1.5rem 1.75rem; }
+  .stage { height: 170px; }
+  .greeting { font-size: 1.2rem; }
+}

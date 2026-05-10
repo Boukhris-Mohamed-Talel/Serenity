@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      this.redirectAfterLogin();
+      this.redirectExisting();
     }
 
     this.loginForm = this.fb.group({
@@ -162,6 +162,10 @@ export class LoginComponent implements OnInit, AfterViewInit {
   }
 
   private redirectAfterLogin(): void {
+    this.router.navigate(['/auth/loading']);
+  }
+
+  private redirectExisting(): void {
     const destination = this.authService.isAdmin() ? '/admin' : '/';
     this.router.navigate([destination]);
   }
