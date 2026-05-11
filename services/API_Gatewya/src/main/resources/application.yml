@@ -12,9 +12,6 @@ spring:
 
       routes:
 
-        # =========================
-        # USER SERVICE
-        # =========================
         - id: auth-service
           uri: http://user-service:8081
           predicates:
@@ -35,9 +32,6 @@ spring:
           predicates:
             - Path=/uploads/**
 
-        # =========================
-        # DOCTOR SERVICE
-        # =========================
         - id: doctor-service
           uri: http://doctor-service:8083
           predicates:
@@ -58,17 +52,15 @@ spring:
           predicates:
             - Path=/api/messages/**
 
-        # =========================
-        # DERBEL SERVICE (remis correctement)
-        # =========================
         - id: derbel-service
           uri: http://derbel-service:8099
           predicates:
-            - Path=/patients/**,/records/**,/prescriptions/**,/medicines/**,/dashboard/**
+            - Path=/patients/**
+            - Path=/records/**
+            - Path=/prescriptions/**
+            - Path=/medicines/**
+            - Path=/dashboard/**
 
-        # =========================
-        # AUTRES MICROSERVICES
-        # =========================
         - id: appointment-service
           uri: http://appointment-service:8091
           predicates:
@@ -94,9 +86,6 @@ spring:
           predicates:
             - Path=/api/files/**
 
-        # =========================
-        # WEBSOCKETS
-        # =========================
         - id: websocket-user
           uri: ws://user-service:8081
           predicates:
@@ -120,6 +109,10 @@ spring:
               - "http://localhost:4200"
               - "http://localhost:3000"
               - "http://192.168.1.247:32500"
+              - "http://192.168.1.247:30080"
+              - "http://51.120.25.196:30080"
+              - "http://serenity-frontend.norwayeast.cloudapp.azure.com"
+
             allowed-methods:
               - GET
               - POST
@@ -127,6 +120,7 @@ spring:
               - PATCH
               - DELETE
               - OPTIONS
+
             allowed-headers:
               - Authorization
               - Content-Type
@@ -135,6 +129,7 @@ spring:
               - X-Requested-With
               - Access-Control-Request-Method
               - Access-Control-Request-Headers
+
             allow-credentials: true
 
 server:
