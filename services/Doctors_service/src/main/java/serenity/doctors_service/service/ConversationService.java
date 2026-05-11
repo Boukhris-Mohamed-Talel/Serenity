@@ -26,6 +26,9 @@ public class ConversationService implements IConversationService {
     private final RestTemplate restTemplate;
     private final MessageRepository messageRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.ai-service.base-url:http://localhost:8000}")
+    private String aiServiceBaseUrl;
+
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMapper conversationMapper,
                                RestTemplate restTemplate,
@@ -89,7 +92,7 @@ public class ConversationService implements IConversationService {
     public String analyzeConversation(Long conversationId) {
         List<String> messages = getMessagesText(conversationId);
 
-        String url = "http://localhost:8000/predict-conversation";
+        String url = aiServiceBaseUrl + "/predict-conversation";
 
         MessagesRequest request = new MessagesRequest(messages);
 

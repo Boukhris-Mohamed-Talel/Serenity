@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { DoctorResponse } from '../../shared/models/doctor.model';
 import { DoctorVerification } from '../../shared/models/doctor-verification.model';
 import { MessageDTO } from '../../shared/models/message.model'; // 👈 à créer si pas encore fait
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -72,25 +73,25 @@ export class WebSocketService {
       };
 
       this.doctorClient = createClient(
-        'ws://localhost:8081/ws',
+        `${environment.wsUrl}/ws`,
         '/topic/doctors',
         (doctor) => this.newDoctorSubject.next(doctor)
       );
 
       this.verificationClient = createClient(
-        'ws://localhost:8083/ws-doctor-verification',
+        `${environment.wsUrl}/ws-doctor-verification`,
         '/topic/doctor-verifications',
         (verification) => this.newVerificationSubject.next(verification)
       );
 
       this.contractClient = createClient(
-        'ws://localhost:8083/ws-approve-contract',
+        `${environment.wsUrl}/ws-approve-contract`,
         '/topic/contract-approved',
         (verification) => this.contractApprovedSubject.next(verification)
       );
 
       this.chatClient = createClient(  // 👈
-        'ws://localhost:8083/ws-chat-messages',
+        `${environment.wsUrl}/ws-chat-messages`,
         '/topic/chat-messages',
         (message) => this.newMessageSubject.next(message)
       );
@@ -137,4 +138,4 @@ export class WebSocketService {
     if (this.chatClient?.active) this.chatClient.deactivate();  // 👈
     console.log('🔌 All WebSockets disconnected');
   }
-}
+}

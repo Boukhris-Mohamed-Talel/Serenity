@@ -10,6 +10,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -63,9 +64,10 @@ export class AuthInterceptor implements HttpInterceptor {
       return true;
     }
 
-    return url.startsWith('http://localhost:8082') ||
-      url.startsWith('http://localhost:8085') ||
-      url.startsWith('http://localhost:8099') ||
+    // Match the API gateway base URL (works for both dev localhost and prod deployment)
+    const apiBase = environment.apiUrl.replace('/api', '');
+    return url.startsWith(apiBase) ||
       url.includes('/api/');
   }
 }
+

@@ -103,6 +103,8 @@ services:
       JWT_EXPIRATION: 86400000
 
       SCHEDULER_JWT: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJoYXl0aGVtLmFiZGVsbGFvdWlAZ21haWwuY29tIiwicm9sZXMiOiJST0xFX0FETUlOIiwicm9sZSI6IlJPTEVfQURNSU4iLCJpYXQiOjE3NzYyNjQyNzcsImV4cCI6MTc3NjM1MDY3NywidXNlcklkIjoxMzV9.IxpvsARveGHKsQEBl3fNaH0OutNjAmD8Af2dOQhxojOZFe6FiRefEgYSa8oEb2zp4x3W4THa8nTFoyHo5N1SPg
+      USER_SERVICE_BASE_URL: http://user-service:8081
+      FRONTEND_BASE_URL: http://192.168.1.247:30080
 
   api-gateway:
     image: rayen209/serenity-api-gateway:latest
@@ -111,9 +113,10 @@ services:
       - user-service
       - doctor-service
     ports:
-      - "8080:8080"
+      - "8082:8082"
     environment:
-      SERVER_PORT: 8080
+      SERVER_PORT: 8082
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970337336763979244226452948404D635166546A576E5A7234753778214125442A47
       USER_SERVICE_URL: http://user-service:8081
       DOCTOR_SERVICE_URL: http://doctor-service:8083
 

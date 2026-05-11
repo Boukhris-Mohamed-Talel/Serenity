@@ -47,6 +47,12 @@ public class DoctorVerificationService implements IDoctorVerificationService {
     @Value("${SCHEDULER_JWT}")
     private String schedulerJwt;
 
+    @Value("${app.user-service.base-url:http://localhost:8081}")
+    private String userServiceBaseUrl;
+
+    @Value("${app.frontend.base-url:http://localhost:4200}")
+    private String frontendBaseUrl;
+
     @Override
     public DoctorVerification save(DoctorVerification verification) {
         return repository.save(verification);
@@ -121,7 +127,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         repository.save(verification);
 
         Long doctor_id = verification.getDoctorId();
-        String url = "http://localhost:8081/api/doctors/email?doctorId=" + doctor_id;
+        String url = userServiceBaseUrl + "/api/doctors/email?doctorId=" + doctor_id;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", authHeader);
@@ -131,7 +137,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
         String email = response.getBody();
         String subject = "Verification Approved – Serenity";
-        String link = "http://localhost:4200/contrat?token=" + token;
+        String link = frontendBaseUrl + "/contrat?token=" + token;
 
         String message = "<p>Dear Doctor,</p>"
                 + "<p>We are pleased to inform you that your verification with <strong>Serenity</strong> has been successfully approved.</p>"
@@ -151,7 +157,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
 
 
         Long doctor_id = verification.getDoctorId();
-        String url = "http://localhost:8081/api/doctors/email?doctorId=" + doctor_id;
+        String url = userServiceBaseUrl + "/api/doctors/email?doctorId=" + doctor_id;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", authHeader);
@@ -180,7 +186,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
         String message = "<p>Dear Doctor,</p>"
                 + "<p>We are pleased to inform you that your verification with <strong>Serenity</strong> has been successfully approved.</p>"
                 + "<p>You can access your contract by clicking the link below:</p>"
-                + "<p><a href='http://localhost:4200/contrat'>View Contract</a></p>"
+                + "<p><a href='" + frontendBaseUrl + "/contrat'>View Contract</a></p>"
                 + "<p>Thank you for being part of Serenity.</p>"
                 + "<p>Best regards,<br>Serenity Team</p>";
 
@@ -221,7 +227,7 @@ public class DoctorVerificationService implements IDoctorVerificationService {
                     HttpEntity<Void> entity = new HttpEntity<>(headers);
 
                     restTemplate.exchange(
-                            "http://localhost:8081/api/doctors/" + doctorId,
+                            userServiceBaseUrl + "/api/doctors/" + doctorId,
                             HttpMethod.DELETE,
                             entity,
                             Void.class

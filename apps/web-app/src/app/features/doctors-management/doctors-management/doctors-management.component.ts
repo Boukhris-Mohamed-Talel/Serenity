@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-doctors-management',
@@ -225,7 +226,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     }
 
     // Load image through HTTP client (with JWT auth)
-    const imageUrl = `http://localhost:8082/${normalizedPath}`;
+    const apiBase = environment.apiUrl.replace('/api', '');
+    const imageUrl = `${apiBase}/${normalizedPath}`;
     this.httpClient.get(imageUrl, { responseType: 'blob' }).subscribe({
       next: (imageBlob) => {
         const objectUrl = URL.createObjectURL(imageBlob);
@@ -244,7 +246,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     if (!documentPath) return;
 
     const normalizedPath = documentPath.replace(/\\\\/g, '/');
-    const imageUrl = `http://localhost:8082/${normalizedPath}`;
+    const apiBase = environment.apiUrl.replace('/api', '');
+    const imageUrl = `${apiBase}/${normalizedPath}`;
 
     // Check if cached, if not load it
     if (this.documentImageCache.has(normalizedPath)) {
@@ -466,7 +469,8 @@ export class DoctorsManagementComponent implements OnInit, OnDestroy {
     }
 
     // Load image through HTTP client (with JWT auth)
-    const imageUrl = `http://localhost:8082/${doctor.profilePictureUrl}`;
+    const apiBase = environment.apiUrl.replace('/api', '');
+    const imageUrl = `${apiBase}/${doctor.profilePictureUrl}`;
     this.httpClient.get(imageUrl, { responseType: 'blob' }).subscribe({
       next: (imageBlob) => {
         const objectUrl = URL.createObjectURL(imageBlob);

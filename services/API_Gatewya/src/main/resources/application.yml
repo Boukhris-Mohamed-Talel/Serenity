@@ -110,8 +110,10 @@ spring:
               - "http://localhost:3000"
               - "http://192.168.1.247:32500"
               - "http://192.168.1.247:30080"
+              - "http://192.168.1.236:30080"
               - "http://51.120.25.196:30080"
               - "http://serenity-frontend.norwayeast.cloudapp.azure.com"
+              - "http://api.serenity.com"
 
             allowed-methods:
               - GET
@@ -133,7 +135,7 @@ spring:
             allow-credentials: true
 
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 app:
   jwt:

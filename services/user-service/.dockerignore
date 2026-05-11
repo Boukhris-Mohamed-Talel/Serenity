@@ -1,0 +1,7 @@
+target
+.env
+.git
+.idea
+*.iml
+docker-compose.yml
+.ai
